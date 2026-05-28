@@ -1831,15 +1831,14 @@ async function loadFromFirebase(){
       });
       try{localStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
     }
-    // Migração v2: inicializar campos novos em equipamentos existentes
-    let migCount=0;
+    // Migração v2: inicializar campos novos em equipamentos existentes (sem escrever no Firebase)
     Object.values(state).forEach(eq=>{
-      if(eq.ciclos_operacao===undefined){eq.ciclos_operacao=0;migCount++;}
+      if(eq.ciclos_operacao===undefined)eq.ciclos_operacao=0;
       if(eq.novo===undefined)eq.novo=false;
       if(!eq.linhaProduto)eq.linhaProduto='';
       if(!eq.planta)eq.planta='';if(!eq.estado)eq.estado='';if(!eq.municipio)eq.municipio='';
     });
-    if(migCount>0){saveToFirebase(Object.keys(state));console.log(`Migração v2: ${migCount} equipamentos inicializados`);}
+    // Não escrever no Firebase na migração — campos serão salvos na próxima operação normal
     reRenderAtivo();setSyncStatus('ok');fbListen();
   }catch(e){
     console.error('[Firebase erro]',e.message||e);
@@ -1866,7 +1865,7 @@ async function saveToFirebase(eqIds){
           tempo_etapas:eq.tempo_etapas||{},semana_anterior:eq.semana_anterior||null,
           etapa_interna:eq.etapa_interna||null,etapa_interna_desde:eq.etapa_interna_desde||null,
           baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
-          frota:eq.frota||'',
+          frota:eq.frota||'',ciclos_operacao:eq.ciclos_operacao||0,novo:eq.novo||false,
           dataEmbarque:eq.dataEmbarque||'',prevLiberacao:eq.prevLiberacao||'',prevLiberacaoOriginal:eq.prevLiberacaoOriginal||'',reprogramacoes:eq.reprogramacoes||[],nReprog:eq.nReprog||0,destinacao:eq.destinacao||'',localMap:eq.localMap||'',historico:eq.historico||[],
         ordens:eq.ordens||[],reqCompra:eq.reqCompra||'',tipoManut:eq.tipoManut||'',
         };
@@ -1885,7 +1884,7 @@ async function saveToFirebase(eqIds){
           tempo_etapas:eq.tempo_etapas||{},semana_anterior:eq.semana_anterior||null,
           etapa_interna:eq.etapa_interna||null,etapa_interna_desde:eq.etapa_interna_desde||null,
           baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
-          frota:eq.frota||'',
+          frota:eq.frota||'',ciclos_operacao:eq.ciclos_operacao||0,novo:eq.novo||false,
           dataEmbarque:eq.dataEmbarque||'',prevLiberacao:eq.prevLiberacao||'',prevLiberacaoOriginal:eq.prevLiberacaoOriginal||'',reprogramacoes:eq.reprogramacoes||[],nReprog:eq.nReprog||0,destinacao:eq.destinacao||'',localMap:eq.localMap||'',historico:eq.historico||[],
           ordens:eq.ordens||[],reqCompra:eq.reqCompra||'',tipoManut:eq.tipoManut||'',
         });
