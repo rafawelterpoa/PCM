@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Mills — Kanban Oficinas</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -1846,6 +1849,7 @@ async function loadFromFirebase(){
     try{const _ls=localStorage.getItem('mills_csvStats');if(_ls){const _d=JSON.parse(_ls);if(_d&&_d.paraLocacao!==undefined)_lsStats=_d;}}catch(e){}
     if(_fbStats&&_lsStats){window._csvStats=(_fbStats.ts||0)>=(_lsStats.ts||0)?_fbStats:_lsStats;}
     else{window._csvStats=_fbStats||_lsStats||window._csvStats||null;}
+    console.log('[Boot] _csvStats fonte:',(window._csvStats?'totalFrota='+window._csvStats.totalFrota+' paraLocacao='+window._csvStats.paraLocacao:'NULO'),'fbStats:',(!!_fbStats),'lsStats:',(!!_lsStats));
     reRenderAtivo();setSyncStatus('ok');fbListen();
   }catch(e){
     console.error('Firebase error:',e);
@@ -10907,7 +10911,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef1f6;color:#1a1a2
 
 </script>
 
-<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.43</div>
+<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.44</div>
 
 
 <script>
