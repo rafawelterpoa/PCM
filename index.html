@@ -1787,6 +1787,7 @@ async function loadFromFirebase(){
             baixado:(_orig&&_orig.status!=='Alugado')?false:(d.baixado||false),
             reservado:d.reservado||false,
             cliente:d.cliente||'',
+            frota:d.frota||state[id].frota||'',
             dataEmbarque:d.dataEmbarque||'',
             prevLiberacao:d.prevLiberacao||'',
             prevLiberacaoOriginal:d.prevLiberacaoOriginal||'',
@@ -1818,7 +1819,7 @@ async function loadFromFirebase(){
           };
         }
       });
-      try{sessionStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
+      try{localStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
     }
     // Migração v2: inicializar campos novos em equipamentos existentes
     let migCount=0;
@@ -1829,12 +1830,17 @@ async function loadFromFirebase(){
       if(!eq.planta)eq.planta='';if(!eq.estado)eq.estado='';if(!eq.municipio)eq.municipio='';
     });
     if(migCount>0){saveToFirebase(Object.keys(state));console.log(`Migração v2: ${migCount} equipamentos inicializados`);}
-    // Carregar stats do último CSV (Card 2)
+    // Carregar stats do último CSV (Card 2) — Firebase primeiro, localStorage como fallback
     try{const _rs=await fetch(FB_BASE+'/csv_stats.json');if(_rs.ok){const _ds=await _rs.json();if(_ds&&_ds.paraLocacao!==undefined)window._csvStats=_ds;}}catch(e){}
+    if(!window._csvStats||!window._csvStats.paraLocacao){
+      try{const _ls=localStorage.getItem('mills_csvStats');if(_ls){const _d=JSON.parse(_ls);if(_d&&_d.paraLocacao!==undefined)window._csvStats=_d;}}catch(e){}
+    }
     reRenderAtivo();setSyncStatus('ok');fbListen();
   }catch(e){
     console.error('Firebase error:',e);
     setSyncStatus('error');
+    // Modo offline — carregar csvStats do localStorage
+    try{const _ls=localStorage.getItem('mills_csvStats');if(_ls){const _d=JSON.parse(_ls);if(_d&&_d.paraLocacao!==undefined)window._csvStats=_d;}}catch(ex){}
     showToast('⚠ Modo offline — usando dados locais');
     fbListen();
   }
@@ -1881,19 +1887,19 @@ async function saveToFirebase(eqIds){
         });
       }
     }
-    setSyncStatus('ok');
-  }catch(e){setSyncStatus('error');showToast('⚠ Erro ao salvar');}
+    setSyncStatus('ok');return true;
+  }catch(e){setSyncStatus('error');showToast('⚠ Erro ao salvar no Firebase — dados salvos localmente');return false;}
 }
 
 function saveState(ids){
-  try{sessionStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
+  try{localStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
   if(!ids||!ids.length)return;
   clearTimeout(syncTimer);syncTimer=setTimeout(()=>saveToFirebase(ids),600);
 }
 
 // Salva imediatamente — sem delay — para dados críticos como ordens
 function saveStateImediato(ids){
-  try{sessionStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
+  try{localStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
   if(!ids||!ids.length)return;
   clearTimeout(syncTimer);
   saveToFirebase(ids);
@@ -2741,7 +2747,7 @@ function proximaSemana(sv){const i=SEMANAS_LISTA.findIndex(s=>s.value===sv);retu
 function semanaPassada(v){return v<semanaAtual();}
 
 function init(){
-  let saved=null;try{saved=JSON.parse(sessionStorage.getItem('mills_v4'));}catch(e){}
+  let saved=null;try{saved=JSON.parse(localStorage.getItem('mills_v4'));}catch(e){}
   EQUIPAMENTOS_ORIG.forEach(e=>{
     const sv=saved&&saved[e.id];
     let ed=Date.now();
@@ -2761,8 +2767,20 @@ function init(){
       destinacao:sv?sv.destinacao||'':'',
       localMap:sv?sv.localMap||'':'',
       historico:sv?sv.historico||[]:[],ordens:sv?sv.ordens||[]:[],reqCompra:sv?sv.reqCompra||'':'',tipoManut:sv?sv.tipoManut||'':'',
+      frota:sv?sv.frota||'':'',
     };
   });
+  // Restaurar equipamentos do localStorage que não estão em EQUIPAMENTOS_ORIG (adicionados via CSV)
+  if(saved){
+    const origIds=new Set(EQUIPAMENTOS_ORIG.map(e=>e.id));
+    Object.values(saved).forEach(sv=>{
+      if(sv&&sv.id&&sv.equipamento&&!origIds.has(sv.id)&&!sv.baixado){
+        state[sv.id]=sv;
+      }
+    });
+  }
+  // Carregar csvStats do localStorage (fallback antes do Firebase)
+  try{const _ls=localStorage.getItem('mills_csvStats');if(_ls){const _d=JSON.parse(_ls);if(_d&&_d.paraLocacao!==undefined)window._csvStats=_d;}}catch(e){}
   document.getElementById('header-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
   const oficinas=[...new Set(EQUIPAMENTOS_ORIG.map(e=>e.oficina).filter(Boolean))].sort();
   ['prog-oficina-sel','graf-oficina-sel','res-oficina-sel'].forEach(id=>{
@@ -2777,7 +2795,7 @@ function init(){
   SEMANAS_LISTA.forEach(s=>{const o=document.createElement('option');o.value=s.value;o.textContent=s.label;ss.appendChild(o);});
   renderBiEtapas();updateKpisDinamicos();renderHome();
   // Carregar alterações salvas
-  try{const a=sessionStorage.getItem('mills_alteracoes');if(a)alteracoesBase=JSON.parse(a);}catch(e){}
+  try{const a=localStorage.getItem('mills_alteracoes');if(a)alteracoesBase=JSON.parse(a);}catch(e){}
   atualizarTabAlteracoes();
   atualizarContagemTabs();
 }
@@ -4433,17 +4451,20 @@ async function doBaseUpdate(){
   closeModal('modal-base');
   reRenderAtivo();
   atualizarTabAlteracoes();
-  // Salvar local imediatamente
-  try{sessionStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
+  // Salvar local imediatamente (localStorage persiste entre sessões)
+  try{localStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
+  try{localStorage.setItem('mills_csvStats',JSON.stringify(window._csvStats));}catch(e){}
   // Gravar no Firebase e aguardar confirmação
   showToast(`Salvando ${Object.keys(state).length} equipamentos no Firebase...`);
-  await saveToFirebase(Object.keys(state));
+  const fbOk=await saveToFirebase(Object.keys(state));
   // Salvar base atual no Firebase para referência dinâmica
   try{
     const baseObj={};novos.forEach(n=>{baseObj[n.id]={id:n.id,status:n.status,oficina:n.oficina,ts:agora};});
     await fetch(FB_BASE+'/base_atual.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(baseObj)});
   }catch(e){console.warn('base_atual save:',e);}
-  if(adicionados>0||baixados>0){
+  if(!fbOk){
+    showToast(`⚠ Firebase indisponível — base salva localmente (${Object.keys(state).length} equip.)`);
+  } else if(adicionados>0||baixados>0){
     showToast(`✓ Base salva! ${adicionados} novos · ${atualizados} atualizados · ${baixados} baixados — ver ⚡ Alterações`);
   } else {
     showToast(`✓ Base salva! ${atualizados} equipamentos verificados`);
@@ -4589,7 +4610,7 @@ function renderAlteracoes(){
 function limparAlteracoes(){
   if(!confirm('Limpar registro de alterações?'))return;
   alteracoesBase=[];
-  try{sessionStorage.removeItem('mills_alteracoes');}catch(e){}
+  try{localStorage.removeItem('mills_alteracoes');}catch(e){}
   atualizarTabAlteracoes();
   renderAlteracoes();
   showToast('Registro de alterações limpo');
@@ -4602,7 +4623,7 @@ function registrarAlteracao(tipo, id, nome, oficina, perfil, deOficina){
   // Limpar entradas com mais de 24h
   const h24=Date.now()-86400000;
   alteracoesBase=alteracoesBase.filter(a=>a.ts>=h24);
-  try{sessionStorage.setItem('mills_alteracoes',JSON.stringify(alteracoesBase));}catch(e){}
+  try{localStorage.setItem('mills_alteracoes',JSON.stringify(alteracoesBase));}catch(e){}
   atualizarTabAlteracoes();
 }
 
@@ -11103,7 +11124,7 @@ async function restaurarBackupJSON(jsonText){
     const ids=Object.keys(data);if(!ids.length)throw new Error('Vazio');
     ids.forEach(id=>{if(data[id])state[id]=data[id];});
     await saveToFirebase(ids);
-    try{sessionStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
+    try{localStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
     reRenderAtivo();showToast(`✅ Backup restaurado: ${ids.length} equipamentos`);
   }catch(e){showToast('⚠ Erro ao restaurar: '+e.message);}
 }
