@@ -1707,11 +1707,9 @@ function fbListen(){
           if(state[id]){
             // Preservar ordens locais se Firebase vier com array vazio
             const ordensAntes=state[id].ordens||[];
-            if((d.etapa_desde||0)>=(state[id].etapa_desde||0)){
-              Object.assign(state[id],d);
-              const _o=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
-              if(_o){if(_o.status==='Alugado')state[id].etapa='alugado';else{state[id].baixado=false;if(state[id].etapa==='alugado')state[id].etapa=etapaInicial(_o.status);}}
-            }
+            Object.assign(state[id],d);
+            const _o=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
+            if(_o){if(_o.status==='Alugado')state[id].etapa='alugado';else{state[id].baixado=false;if(state[id].etapa==='alugado')state[id].etapa=etapaInicial(_o.status);}}
             if((!state[id].ordens||state[id].ordens.length===0)&&ordensAntes.length>0)state[id].ordens=ordensAntes;
           }
           else if(d.id&&d.equipamento&&!d.baixado){
@@ -1719,7 +1717,7 @@ function fbListen(){
           }
         });
       }
-      else{const p=msg.path.split('/').filter(Boolean);const id=p[0];if(!state[id])return;if(p.length===1){if((msg.data.etapa_desde||0)>=(state[id].etapa_desde||0))Object.assign(state[id],msg.data);}else state[id][p[1]]=msg.data;}
+      else{const p=msg.path.split('/').filter(Boolean);const id=p[0];if(!state[id])return;if(p.length===1){Object.assign(state[id],msg.data);}else state[id][p[1]]=msg.data;}
       reRenderAtivo();setSyncStatus('ok');
     }catch(ex){}
   });
@@ -1772,11 +1770,12 @@ async function loadFromFirebase(){
   }catch(e){console.warn('base_atual load:',e);}
   try{
     const rem=await fbGetAll();
+    console.log("[FB Load] equipamentos recebidos:",rem?Object.keys(rem).length:0);
     if(rem&&Object.keys(rem).length>0){
       Object.entries(rem).forEach(([id,d])=>{
         if(!d||!d.equipamento)return;
         if(state[id]){
-          // Mesclar — Firebase é fonte de verdade para estado do kanban
+          // Firebase é sempre fonte de verdade no carregamento inicial
           const _orig=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
           Object.assign(state[id],{
             equipamento:d.equipamento||state[id].equipamento,
@@ -1840,6 +1839,7 @@ async function loadFromFirebase(){
       if(!eq.planta)eq.planta='';if(!eq.estado)eq.estado='';if(!eq.municipio)eq.municipio='';
     });
     // Não escrever no Firebase na migração — campos serão salvos na próxima operação normal
+    console.log("[FB Load] CCB02905 etapa final:", state["CCB02905"]?state["CCB02905"].etapa:"nao encontrado");
     reRenderAtivo();setSyncStatus('ok');fbListen();
   }catch(e){
     console.error('[Firebase erro]',e.message||e);
@@ -10902,7 +10902,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef1f6;color:#1a1a2
 
 </script>
 
-<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.44</div>
+<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.45</div>
 
 
 <script>
