@@ -1682,7 +1682,7 @@ const TIPOS_LISTA = ["Caminhão Basculante", "Caminhão Betoneira", "Caminhão C
 const SEM_MOTOR_SET = new Set(["Kit Rádio Controle", "Implemento Rodoviário", "Implemento Sobre Chassis Caminhão Pipa", "Implemento Máquina Grade Aradora", "Bateria Tracionária", "Garra Florestal", "Implemento Sobre Chassis Caminhão Guindauto", "Implemento Sobre Chassis Caminhão Betoneira", "Implemento Máquina Caçamba Carregadeira", "Kit Anfibio", "Implemento Máquina Rompedor Hidráulico", "Implemento Sistema 3", "Carregador de bateria", "Medidor Volumétrico de Carga", "Boom Híbrido", "Base de Bateria", "Container", "Implemento Sobre Chassis Caminhão Comboio", "Implemento Giratório", "Material Rodante", "Implemento Máquina Garfo Pallet", "Semirreboque Florestal", "Implemento Sobre Chassis Caminhão Bau", "Implemento Máquina Engate Rápido Carregadeira", "Implemento Máquina Plaina", "Georeferenciador", "Carretinha", "Boom Diesel"]);
 const SENHAS_OFICINA = {"Assis (SP)": "1999", "Contagem (MG)": "3540", "Osasco (SP)": "5919", "Parauapebas (PA)": "6181", "Santos (SP)": "9140", "Sumaré (SP)": "9131", "São José dos Pinhais (PR)": "9150"};
 
-const FB_BASE = 'https://mills-frota-default-rtdb.firebaseio.com';
+const FB_BASE = 'https://mills-frota-default-rtdb.firebaseio.com/pcm';
 let syncTimer = null;
 
 function setSyncStatus(s){
@@ -1896,6 +1896,7 @@ async function saveToFirebase(eqIds){
 }
 
 function saveState(ids){
+  console.log('[saveState]',ids);
   try{localStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
   if(!ids||!ids.length)return;
   clearTimeout(syncTimer);syncTimer=setTimeout(()=>saveToFirebase(ids),600);
@@ -3145,6 +3146,7 @@ function renderBoard(sid,visao){
 }
 
 function applyMove(eq,from,toId,sid,visao,perfil){
+  console.log('[applyMove]',eq.id,from,'→',toId);
   if(from==='cl_saida'&&toId==='manutencao'){eq.retrabalho=(eq.retrabalho||0)+1;showToast('⚠ Retrabalho: '+eq.id+' ('+eq.retrabalho+'x)');}
   if(!eq.tempo_etapas)eq.tempo_etapas={};
   const d=Math.floor((Date.now()-(eq.etapa_desde||Date.now()))/86400000);
