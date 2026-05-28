@@ -1812,6 +1812,7 @@ async function loadFromFirebase(){
           });
         } else {
           // Equipamento novo — não está no EQUIPAMENTOS_ORIG (adicionado via Nova base)
+          const _origNew=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
           state[id]={
             id:d.id||id,equipamento:d.equipamento,modelo:d.modelo||'',
             tipo:d.tipo||'',oficina:d.oficina||'',status:d.status||'Disponível',
@@ -1820,7 +1821,7 @@ async function loadFromFirebase(){
             prioridade:d.prioridade||null,semana:d.semana||null,semana_locked:d.semana_locked||false,
             obs:d.obs||'',retrabalho:d.retrabalho||0,tempo_etapas:d.tempo_etapas||{},
             assinaturas:d.assinaturas||{},semana_anterior:d.semana_anterior||null,
-            baixado:(_orig&&_orig.status!=='Alugado')?false:(d.baixado||false),reservado:d.reservado||false,cliente:d.cliente||'',
+            baixado:(_origNew&&_origNew.status!=='Alugado')?false:(d.baixado||false),reservado:d.reservado||false,cliente:d.cliente||'',
             dataEmbarque:d.dataEmbarque||'',historico:d.historico||[],
             ordens:d.ordens||[],reqCompra:d.reqCompra||'',
             ciclos_operacao:d.ciclos_operacao||0,novo:d.novo||false,
