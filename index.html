@@ -1747,19 +1747,26 @@ function reRenderAtivo(){
 
 async function loadFromFirebase(){
   setSyncStatus('loading');
+  // Carregar _csvStats PRIMEIRO (pequeno, rápido) — garante Cards 1/2 mesmo se equipment falhar
+  try{
+    let _fbStats=null,_lsStats=null;
+    try{const _rs=await fetch(FB_BASE+'/csv_stats.json');if(_rs.ok){const _ds=await _rs.json();if(_ds&&_ds.paraLocacao!==undefined)_fbStats=_ds;}}catch(e){}
+    try{const _ls=localStorage.getItem('mills_csvStats');if(_ls){const _d=JSON.parse(_ls);if(_d&&_d.paraLocacao!==undefined)_lsStats=_d;}}catch(e){}
+    if(_fbStats&&_lsStats){window._csvStats=(_fbStats.ts||0)>=(_lsStats.ts||0)?_fbStats:_lsStats;}
+    else{window._csvStats=_fbStats||_lsStats||window._csvStats||null;}
+    console.log('[Boot] csvStats carregado:',window._csvStats?'totalFrota='+window._csvStats.totalFrota:'NULO');
+  }catch(e){console.warn('csvStats load error:',e);}
   // Carregar base_atual do Firebase (mais recente que o ORIG hardcoded)
   try{
     const rb=await fetch(FB_BASE+'/base_atual.json');
     if(rb.ok){
       const bd=await rb.json();
       if(bd&&typeof bd==='object'&&Object.keys(bd).length>0){
-        // Atualizar status do EQUIPAMENTOS_ORIG com dados do Firebase
         const origMap={};EQUIPAMENTOS_ORIG.forEach(e=>{origMap[e.id]=e;});
         Object.entries(bd).forEach(([id,b])=>{
           if(origMap[id])origMap[id].status=b.status||origMap[id].status;
           else if(b.status){EQUIPAMENTOS_ORIG.push({id,status:b.status,oficina:b.oficina||''});}
         });
-        console.log('base_atual carregada do Firebase');
       }
     }
   }catch(e){console.warn('base_atual load:',e);}
@@ -1769,12 +1776,8 @@ async function loadFromFirebase(){
       Object.entries(rem).forEach(([id,d])=>{
         if(!d||!d.equipamento)return;
         if(state[id]){
-          // Mesclar — usa o mais recente entre Firebase e localStorage (evita sobrescrever dados novos com velhos)
-          const localTs=state[id]._uploadTs||state[id].etapa_desde||0;
-          const fbTs=d._uploadTs||d.etapa_desde||0;
+          // Mesclar — Firebase é fonte de verdade para estado do kanban
           const _orig=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
-          // Se dado local é mais recente que Firebase, preserva (ex: upload CSV acabou de rodar)
-          if(fbTs>=localTs){
           Object.assign(state[id],{
             equipamento:d.equipamento||state[id].equipamento,
             modelo:d.modelo||state[id].modelo,
@@ -1807,12 +1810,6 @@ async function loadFromFirebase(){
             reqCompra:d.reqCompra||'',
             tipoManut:d.tipoManut||'',
           });
-          } else {
-            // Local é mais recente — só atualiza campos não-kanban do Firebase (frota, reservado, cliente)
-            if(d.frota)state[id].frota=d.frota;
-            if(d.reservado!==undefined)state[id].reservado=d.reservado;
-            if(d.cliente)state[id].cliente=d.cliente;
-          }
         } else {
           // Equipamento novo — não está no EQUIPAMENTOS_ORIG (adicionado via Nova base)
           state[id]={
@@ -1843,20 +1840,12 @@ async function loadFromFirebase(){
       if(!eq.planta)eq.planta='';if(!eq.estado)eq.estado='';if(!eq.municipio)eq.municipio='';
     });
     if(migCount>0){saveToFirebase(Object.keys(state));console.log(`Migração v2: ${migCount} equipamentos inicializados`);}
-    // Carregar stats do último CSV — usa o mais recente entre Firebase e localStorage
-    let _fbStats=null,_lsStats=null;
-    try{const _rs=await fetch(FB_BASE+'/csv_stats.json');if(_rs.ok){const _ds=await _rs.json();if(_ds&&_ds.paraLocacao!==undefined)_fbStats=_ds;}}catch(e){}
-    try{const _ls=localStorage.getItem('mills_csvStats');if(_ls){const _d=JSON.parse(_ls);if(_d&&_d.paraLocacao!==undefined)_lsStats=_d;}}catch(e){}
-    if(_fbStats&&_lsStats){window._csvStats=(_fbStats.ts||0)>=(_lsStats.ts||0)?_fbStats:_lsStats;}
-    else{window._csvStats=_fbStats||_lsStats||window._csvStats||null;}
-    console.log('[Boot] _csvStats fonte:',(window._csvStats?'totalFrota='+window._csvStats.totalFrota+' paraLocacao='+window._csvStats.paraLocacao:'NULO'),'fbStats:',(!!_fbStats),'lsStats:',(!!_lsStats));
     reRenderAtivo();setSyncStatus('ok');fbListen();
   }catch(e){
-    console.error('Firebase error:',e);
+    console.error('[Firebase erro]',e.message||e);
     setSyncStatus('error');
-    // Modo offline — carregar csvStats do localStorage
-    try{const _ls=localStorage.getItem('mills_csvStats');if(_ls){const _d=JSON.parse(_ls);if(_d&&_d.paraLocacao!==undefined)window._csvStats=_d;}}catch(ex){}
     showToast('⚠ Modo offline — usando dados locais');
+    reRenderAtivo();
     fbListen();
   }
 }
