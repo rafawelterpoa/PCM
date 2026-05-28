@@ -1856,6 +1856,7 @@ async function saveToFirebase(eqIds){
           tempo_etapas:eq.tempo_etapas||{},semana_anterior:eq.semana_anterior||null,
           etapa_interna:eq.etapa_interna||null,etapa_interna_desde:eq.etapa_interna_desde||null,
           baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
+          frota:eq.frota||'',
           dataEmbarque:eq.dataEmbarque||'',prevLiberacao:eq.prevLiberacao||'',prevLiberacaoOriginal:eq.prevLiberacaoOriginal||'',reprogramacoes:eq.reprogramacoes||[],nReprog:eq.nReprog||0,destinacao:eq.destinacao||'',localMap:eq.localMap||'',historico:eq.historico||[],
         ordens:eq.ordens||[],reqCompra:eq.reqCompra||'',tipoManut:eq.tipoManut||'',
         };
@@ -1874,6 +1875,7 @@ async function saveToFirebase(eqIds){
           tempo_etapas:eq.tempo_etapas||{},semana_anterior:eq.semana_anterior||null,
           etapa_interna:eq.etapa_interna||null,etapa_interna_desde:eq.etapa_interna_desde||null,
           baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
+          frota:eq.frota||'',
           dataEmbarque:eq.dataEmbarque||'',prevLiberacao:eq.prevLiberacao||'',prevLiberacaoOriginal:eq.prevLiberacaoOriginal||'',reprogramacoes:eq.reprogramacoes||[],nReprog:eq.nReprog||0,destinacao:eq.destinacao||'',localMap:eq.localMap||'',historico:eq.historico||[],
           ordens:eq.ordens||[],reqCompra:eq.reqCompra||'',tipoManut:eq.tipoManut||'',
         });
@@ -4413,7 +4415,7 @@ async function doBaseUpdate(){
     }
   });
   // Calcular e salvar estatísticas do CSV (Cards 1 e 2 — fonte de verdade = CSV)
-  {
+  try{
     // Card 1: usa _csvParseStats que contou TODOS (gerencial=sim + status válido, inclui venda)
     const _tot=_csvParseStats.totalAll;
     const _nEq=_csvParseStats.nEq;
@@ -4425,8 +4427,9 @@ async function doBaseUpdate(){
     const _pL=novos.filter(_isL).length;
     const _lo=novos.filter(n=>_isL(n)&&n.status==='Alugado').length;
     window._csvStats={totalFrota:_tot,nEq:_nEq,nImp:_nImp,nAc:_nAc,nOut:_nOut,paraLocacao:_pL,locados:_lo,tu:_pL>0?Math.round(_lo/_pL*100):0,ts:agora};
-    try{await fetch(FB_BASE+'/csv_stats.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._csvStats)});}catch(e){}
-  }
+    console.log('[CSV Stats]',window._csvStats);
+    try{await fetch(FB_BASE+'/csv_stats.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._csvStats)});}catch(e){console.warn('csv_stats save:',e);}
+  }catch(e){console.error('[CSV Stats ERRO]',e);}
   closeModal('modal-base');
   reRenderAtivo();
   atualizarTabAlteracoes();
@@ -4467,13 +4470,15 @@ function parseCSVToEquipamentos(csvText){
     }
     return equips;
   }
-  // Formatos com 2 linhas de cabeçalho — detectar variante pelo header
+  // Formatos com 2 linhas de cabeçalho — detectar variante pelo header (case-insensitive)
   const hdr=(lines[1]||'');
-  const temLinhaP=hdr.includes('Linha de produto');
-  const temGerencial=hdr.includes('Exibir gerencialmente');
+  const hdrL=hdr.toLowerCase();
+  const temLinhaP=hdrL.includes('linha de produto');
+  const temGerencial=hdrL.includes('exibir gerencialmente');
   for(let i=2;i<lines.length;i++){
     const c=lines[i].split(';').map(x=>x.replace(/^"|"$/g,'').trim());
     let frota,id,linhaProduto,familia,grupo,gerencial,fabric,modelo,clienteRes,oficina,tipoContrato,clienteNfe,planta,estado,municipio,status;
+    if(temLinhaP&&c.length<18){continue;} // linha malformada de formato 36 — pular
     if(temLinhaP&&c.length>=18){
       // Formato 36 — padrão atual (18 cols): Frota|Série|ID|Placa|LinhaProd|Familia|Grupo|Gerencial|Fabric|Modelo|ClienteRes|Filial|TipoCtrt|ClienteNFe|Planta|Estado|Municipio|Status
       frota=c[0];id=c[2];linhaProduto=c[4];familia=c[5];grupo=c[6];gerencial=c[7];fabric=c[8];modelo=c[9];clienteRes=c[10];oficina=c[11];tipoContrato=c[12];clienteNfe=c[13];planta=c[14];estado=c[15];municipio=c[16];status=c[17];
