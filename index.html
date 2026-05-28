@@ -1766,8 +1766,12 @@ async function loadFromFirebase(){
       Object.entries(rem).forEach(([id,d])=>{
         if(!d||!d.equipamento)return;
         if(state[id]){
-          // Mesclar — Firebase é fonte de verdade para estado do kanban
+          // Mesclar — usa o mais recente entre Firebase e localStorage (evita sobrescrever dados novos com velhos)
+          const localTs=state[id]._uploadTs||state[id].etapa_desde||0;
+          const fbTs=d._uploadTs||d.etapa_desde||0;
           const _orig=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
+          // Se dado local é mais recente que Firebase, preserva (ex: upload CSV acabou de rodar)
+          if(fbTs>=localTs){
           Object.assign(state[id],{
             equipamento:d.equipamento||state[id].equipamento,
             modelo:d.modelo||state[id].modelo,
@@ -1800,6 +1804,12 @@ async function loadFromFirebase(){
             reqCompra:d.reqCompra||'',
             tipoManut:d.tipoManut||'',
           });
+          } else {
+            // Local é mais recente — só atualiza campos não-kanban do Firebase (frota, reservado, cliente)
+            if(d.frota)state[id].frota=d.frota;
+            if(d.reservado!==undefined)state[id].reservado=d.reservado;
+            if(d.cliente)state[id].cliente=d.cliente;
+          }
         } else {
           // Equipamento novo — não está no EQUIPAMENTOS_ORIG (adicionado via Nova base)
           state[id]={
@@ -1830,11 +1840,12 @@ async function loadFromFirebase(){
       if(!eq.planta)eq.planta='';if(!eq.estado)eq.estado='';if(!eq.municipio)eq.municipio='';
     });
     if(migCount>0){saveToFirebase(Object.keys(state));console.log(`Migração v2: ${migCount} equipamentos inicializados`);}
-    // Carregar stats do último CSV (Card 2) — Firebase primeiro, localStorage como fallback
-    try{const _rs=await fetch(FB_BASE+'/csv_stats.json');if(_rs.ok){const _ds=await _rs.json();if(_ds&&_ds.paraLocacao!==undefined)window._csvStats=_ds;}}catch(e){}
-    if(!window._csvStats||!window._csvStats.paraLocacao){
-      try{const _ls=localStorage.getItem('mills_csvStats');if(_ls){const _d=JSON.parse(_ls);if(_d&&_d.paraLocacao!==undefined)window._csvStats=_d;}}catch(e){}
-    }
+    // Carregar stats do último CSV — usa o mais recente entre Firebase e localStorage
+    let _fbStats=null,_lsStats=null;
+    try{const _rs=await fetch(FB_BASE+'/csv_stats.json');if(_rs.ok){const _ds=await _rs.json();if(_ds&&_ds.paraLocacao!==undefined)_fbStats=_ds;}}catch(e){}
+    try{const _ls=localStorage.getItem('mills_csvStats');if(_ls){const _d=JSON.parse(_ls);if(_d&&_d.paraLocacao!==undefined)_lsStats=_d;}}catch(e){}
+    if(_fbStats&&_lsStats){window._csvStats=(_fbStats.ts||0)>=(_lsStats.ts||0)?_fbStats:_lsStats;}
+    else{window._csvStats=_fbStats||_lsStats||window._csvStats||null;}
     reRenderAtivo();setSyncStatus('ok');fbListen();
   }catch(e){
     console.error('Firebase error:',e);
@@ -4452,8 +4463,14 @@ async function doBaseUpdate(){
   reRenderAtivo();
   atualizarTabAlteracoes();
   // Salvar local imediatamente (localStorage persiste entre sessões)
-  try{localStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
+  // Marcar timestamp de upload em todos os itens para vencer merge com Firebase antigo
+  Object.values(state).forEach(eq=>{eq._uploadTs=agora;});
+  try{localStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){
+    // Se payload muito grande, salva versão mínima (sem historico/ordens)
+    try{const mini={};Object.values(state).forEach(eq=>{mini[eq.id]={id:eq.id,equipamento:eq.equipamento,modelo:eq.modelo||'',tipo:eq.tipo||'',oficina:eq.oficina||'',status:eq.status||'',etapa:eq.etapa,etapa_desde:eq.etapa_desde,_uploadTs:agora,frota:eq.frota||'',baixado:eq.baixado||false,prioridade:eq.prioridade||null,semana:eq.semana||null,semana_locked:eq.semana_locked||false,obs:eq.obs||''};});localStorage.setItem('mills_v4',JSON.stringify(mini));}catch(e2){}
+  }
   try{localStorage.setItem('mills_csvStats',JSON.stringify(window._csvStats));}catch(e){}
+  try{localStorage.setItem('mills_uploadTs',agora.toString());}catch(e){}
   // Gravar no Firebase e aguardar confirmação
   showToast(`Salvando ${Object.keys(state).length} equipamentos no Firebase...`);
   const fbOk=await saveToFirebase(Object.keys(state));
