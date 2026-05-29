@@ -4466,8 +4466,29 @@ async function doBaseUpdate(){
   }
   try{localStorage.setItem('mills_csvStats',JSON.stringify(window._csvStats));}catch(e){}
   try{localStorage.setItem('mills_uploadTs',agora.toString());}catch(e){}
-  // Gravar no Firebase e aguardar confirmação
+  // Gravar no Firebase — preservar etapas já movimentadas manualmente
   showToast(`Salvando ${Object.keys(state).length} equipamentos no Firebase...`);
+  try{
+    const fbAtual=await fbGetAll();
+    if(fbAtual&&Object.keys(fbAtual).length>0){
+      Object.entries(fbAtual).forEach(([id,d])=>{
+        if(state[id]&&d&&d.etapa&&d.etapa_desde){
+          // Só preserva se o equipamento foi movido manualmente (etapa diferente da inicial)
+          const etapaInicial_=etapaInicial(state[id].status||'Disponível');
+          if(d.etapa!==etapaInicial_){
+            state[id].etapa=d.etapa;
+            state[id].etapa_desde=d.etapa_desde;
+            state[id].etapa_interna=d.etapa_interna||null;
+            state[id].etapa_interna_desde=d.etapa_interna_desde||null;
+            state[id].assinaturas=d.assinaturas||{};
+            state[id].historico=d.historico||[];
+            state[id].obs=d.obs||state[id].obs;
+            state[id].ordens=d.ordens||state[id].ordens||[];
+          }
+        }
+      });
+    }
+  }catch(e){console.warn('merge firebase:',e);}
   const fbOk=await saveToFirebase(Object.keys(state));
   // Salvar base atual no Firebase para referência dinâmica
   try{
@@ -10902,7 +10923,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef1f6;color:#1a1a2
 
 </script>
 
-<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.45</div>
+<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.46</div>
 
 
 <script>
