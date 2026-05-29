@@ -1709,7 +1709,7 @@ function fbListen(){
             const ordensAntes=state[id].ordens||[];
             Object.assign(state[id],d);
             const _o=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
-            if(_o){if(_o.status==='Alugado')state[id].etapa='alugado';else{state[id].baixado=false;if(state[id].etapa==='alugado')state[id].etapa=etapaInicial(_o.status);}}
+            if(_o){if(_o.status==='Alugado'){state[id].etapa='alugado';}else{if(state[id].etapa==='alugado')state[id].etapa=etapaInicial(_o.status);}}
             if((!state[id].ordens||state[id].ordens.length===0)&&ordensAntes.length>0)state[id].ordens=ordensAntes;
           }
           else if(d.id&&d.equipamento&&!d.baixado){
@@ -1793,7 +1793,7 @@ async function loadFromFirebase(){
             tempo_etapas:d.tempo_etapas||{},
             assinaturas:d.assinaturas||{},
             semana_anterior:d.semana_anterior||null,
-            baixado:(_orig&&_orig.status!=='Alugado')?false:(d.baixado||false),
+            baixado:d.baixado||false,
             reservado:d.reservado||false,
             cliente:d.cliente||'',
             frota:d.frota||state[id].frota||'',
@@ -1820,7 +1820,7 @@ async function loadFromFirebase(){
             prioridade:d.prioridade||null,semana:d.semana||null,semana_locked:d.semana_locked||false,
             obs:d.obs||'',retrabalho:d.retrabalho||0,tempo_etapas:d.tempo_etapas||{},
             assinaturas:d.assinaturas||{},semana_anterior:d.semana_anterior||null,
-            baixado:(_origNew&&_origNew.status!=='Alugado')?false:(d.baixado||false),reservado:d.reservado||false,cliente:d.cliente||'',
+            baixado:d.baixado||false,reservado:d.reservado||false,cliente:d.cliente||'',
             dataEmbarque:d.dataEmbarque||'',historico:d.historico||[],
             ordens:d.ordens||[],reqCompra:d.reqCompra||'',
             ciclos_operacao:d.ciclos_operacao||0,novo:d.novo||false,
@@ -10923,7 +10923,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef1f6;color:#1a1a2
 
 </script>
 
-<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.46</div>
+<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.47</div>
 
 
 <script>
