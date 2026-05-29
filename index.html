@@ -10943,7 +10943,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef1f6;color:#1a1a2
 
 </script>
 
-<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.49</div>
+<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.50</div>
 
 
 <script>
@@ -11699,7 +11699,7 @@ function patioRender(){
   const filtOf=document.getElementById('patio-filtro-of')?.value||'';
   const filtTipo=document.getElementById('patio-filtro-tipo')?.value||'';
 
-  let equips=Object.values(state).filter(e=>e.etapa==='pronto'&&!e.baixado);
+  let equips=Object.values(state).filter(e=>e.baixado&&e.etapa!=='alugado');
   if(filtOf)equips=equips.filter(e=>e.oficina===filtOf);
   if(filtTipo){const ids=new Set(EQUIPAMENTOS_ORIG.filter(o=>o.tipoFrota===filtTipo).map(o=>o.id));equips=equips.filter(e=>ids.has(e.id));}
   if(busca)equips=equips.filter(e=>(e.id||'').toLowerCase().includes(busca)||(e.equipamento||'').toLowerCase().includes(busca)||(e.modelo||'').toLowerCase().includes(busca));
