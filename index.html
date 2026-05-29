@@ -1728,7 +1728,7 @@ function reRenderAtivo(){
   renderBiEtapas();updateKpisDinamicos();atualizarContagemTabs();
   // Atualizar contagem disponíveis
   const tabDispN=document.getElementById('tab-disp-n');
-  if(tabDispN){const n=Object.values(state).filter(e=>!e.baixado&&e.etapa==='pronto').length;tabDispN.textContent=n;}
+  if(tabDispN){const n=Object.values(state).filter(e=>e.baixado&&e.etapa!=='alugado').length;tabDispN.textContent=n;}
   const at=document.querySelector('.tab.active');if(!at)return;
   const tab=at.dataset.tab;
   if(tab==='programacao')renderProgramacao();
@@ -4678,8 +4678,8 @@ function renderDisponiveis(){
   if(tipoSel){const cv=tipoSel.value;tipoSel.innerHTML='<option value="">Todos os tipos</option>'+tipos.map(t=>`<option value="${t}"${t===cv?' selected':''}>${t}</option>`).join('');}
   if(ofSel){const cv=ofSel.value;ofSel.innerHTML='<option value="">Todas as oficinas</option>'+oficinas.map(o=>`<option value="${o}"${o===cv?' selected':''}>${o}</option>`).join('');}
 
-  // Filtrar: etapa pronto OU chegada (disponíveis)
-  let equips=Object.values(state).filter(e=>!e.baixado&&e.etapa==='pronto');
+  // Filtrar: baixado=true (saíram da oficina e estão no pátio)
+  let equips=Object.values(state).filter(e=>e.baixado&&e.etapa!=='alugado');
   if(fv)equips=equips.filter(e=>e.id.toLowerCase().includes(fv)||e.equipamento.toLowerCase().includes(fv)||(e.modelo||'').toLowerCase().includes(fv));
   if(tipoFil)equips=equips.filter(e=>e.tipo===tipoFil);
   if(ofFil)equips=equips.filter(e=>e.oficina===ofFil);
@@ -4736,9 +4736,29 @@ function renderDisponiveis(){
         <div style="font-size:10px;color:var(--text2);display:flex;align-items:center;gap:4px">📍 ${eq.oficina}</div>
         <div style="font-size:10px;color:var(--text3);margin-top:2px">Etapa: <b>${etLbl}</b></div>
         ${cliH}${embH}${tmH}${destH}
+        <div style="margin-top:8px;border-top:1px solid var(--borda);padding-top:8px">
+          <button onclick="event.stopPropagation();retornarParaOficina('${eq.id}')" style="width:100%;padding:5px;background:#FFF3E0;color:#C24003;border:1px solid #FFCC80;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">↩ Retornar para Oficina</button>
+        </div>
       </div>
     </div>`;
   }).join('');
+}
+
+// ===== RETORNAR PARA OFICINA =====
+async function retornarParaOficina(id){
+  const eq=state[id];
+  if(!eq)return;
+  if(!confirm('Retornar '+eq.id+' para a oficina '+eq.oficina+' em Aguard. Movimentação?'))return;
+  const agora=Date.now();
+  eq.baixado=false;
+  eq.etapa='chegada';
+  eq.etapa_desde=agora;
+  eq.historico=eq.historico||[];
+  eq.historico.push({data:new Date().toLocaleDateString('pt-BR'),hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),from:'Pátio',to:'Aguard. Movimentação',perfil:currentUser?.nome||'',ts:agora});
+  saveState([id]);
+  renderDisponiveis();
+  reRenderAtivo();
+  showToast('✅ '+eq.id+' retornado para '+eq.oficina);
 }
 
 // ===== MAPA INTERATIVO — SUMARÉ (SP) =====
@@ -10923,7 +10943,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef1f6;color:#1a1a2
 
 </script>
 
-<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.47</div>
+<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.49</div>
 
 
 <script>
