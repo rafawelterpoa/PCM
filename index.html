@@ -1682,7 +1682,7 @@ const TIPOS_LISTA = ["Caminhão Basculante", "Caminhão Betoneira", "Caminhão C
 const SEM_MOTOR_SET = new Set(["Kit Rádio Controle", "Implemento Rodoviário", "Implemento Sobre Chassis Caminhão Pipa", "Implemento Máquina Grade Aradora", "Bateria Tracionária", "Garra Florestal", "Implemento Sobre Chassis Caminhão Guindauto", "Implemento Sobre Chassis Caminhão Betoneira", "Implemento Máquina Caçamba Carregadeira", "Kit Anfibio", "Implemento Máquina Rompedor Hidráulico", "Implemento Sistema 3", "Carregador de bateria", "Medidor Volumétrico de Carga", "Boom Híbrido", "Base de Bateria", "Container", "Implemento Sobre Chassis Caminhão Comboio", "Implemento Giratório", "Material Rodante", "Implemento Máquina Garfo Pallet", "Semirreboque Florestal", "Implemento Sobre Chassis Caminhão Bau", "Implemento Máquina Engate Rápido Carregadeira", "Implemento Máquina Plaina", "Georeferenciador", "Carretinha", "Boom Diesel"]);
 const SENHAS_OFICINA = {"Assis (SP)": "1999", "Contagem (MG)": "3540", "Osasco (SP)": "5919", "Parauapebas (PA)": "6181", "Santos (SP)": "9140", "Sumaré (SP)": "9131", "São José dos Pinhais (PR)": "9150"};
 
-const FB_BASE = 'https://mills-frota-default-rtdb.firebaseio.com';
+const FB_BASE = 'https://mills-frota-default-rtdb.firebaseio.com/pcm';
 let syncTimer = null;
 
 function setSyncStatus(s){
@@ -1707,11 +1707,9 @@ function fbListen(){
           if(state[id]){
             // Preservar ordens locais se Firebase vier com array vazio
             const ordensAntes=state[id].ordens||[];
-            if((d.etapa_desde||0)>=(state[id].etapa_desde||0)){
-              Object.assign(state[id],d);
-              const _o=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
-              if(_o){if(_o.status==='Alugado')state[id].etapa='alugado';else{state[id].baixado=false;if(state[id].etapa==='alugado')state[id].etapa=etapaInicial(_o.status);}}
-            }
+            Object.assign(state[id],d);
+            const _o=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
+            if(_o){if(_o.status==='Alugado'){state[id].etapa='alugado';}else{if(state[id].etapa==='alugado')state[id].etapa=etapaInicial(_o.status);}}
             if((!state[id].ordens||state[id].ordens.length===0)&&ordensAntes.length>0)state[id].ordens=ordensAntes;
           }
           else if(d.id&&d.equipamento&&!d.baixado){
@@ -1719,7 +1717,7 @@ function fbListen(){
           }
         });
       }
-      else{const p=msg.path.split('/').filter(Boolean);const id=p[0];if(!state[id])return;if(p.length===1){if((msg.data.etapa_desde||0)>=(state[id].etapa_desde||0))Object.assign(state[id],msg.data);}else state[id][p[1]]=msg.data;}
+      else{const p=msg.path.split('/').filter(Boolean);const id=p[0];if(!state[id])return;if(p.length===1){Object.assign(state[id],msg.data);}else state[id][p[1]]=msg.data;}
       reRenderAtivo();setSyncStatus('ok');
     }catch(ex){}
   });
@@ -1730,7 +1728,7 @@ function reRenderAtivo(){
   renderBiEtapas();updateKpisDinamicos();atualizarContagemTabs();
   // Atualizar contagem disponíveis
   const tabDispN=document.getElementById('tab-disp-n');
-  if(tabDispN){const n=Object.values(state).filter(e=>!e.baixado&&e.etapa==='pronto').length;tabDispN.textContent=n;}
+  if(tabDispN){const n=Object.values(state).filter(e=>e.baixado&&e.etapa!=='alugado').length;tabDispN.textContent=n;}
   const at=document.querySelector('.tab.active');if(!at)return;
   const tab=at.dataset.tab;
   if(tab==='programacao')renderProgramacao();
@@ -1772,11 +1770,12 @@ async function loadFromFirebase(){
   }catch(e){console.warn('base_atual load:',e);}
   try{
     const rem=await fbGetAll();
+    console.log("[FB Load] equipamentos recebidos:",rem?Object.keys(rem).length:0);
     if(rem&&Object.keys(rem).length>0){
       Object.entries(rem).forEach(([id,d])=>{
         if(!d||!d.equipamento)return;
         if(state[id]){
-          // Mesclar — Firebase é fonte de verdade para estado do kanban
+          // Firebase é sempre fonte de verdade no carregamento inicial
           const _orig=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
           Object.assign(state[id],{
             equipamento:d.equipamento||state[id].equipamento,
@@ -1794,7 +1793,7 @@ async function loadFromFirebase(){
             tempo_etapas:d.tempo_etapas||{},
             assinaturas:d.assinaturas||{},
             semana_anterior:d.semana_anterior||null,
-            baixado:(_orig&&_orig.status!=='Alugado')?false:(d.baixado||false),
+            baixado:d.baixado||false,
             reservado:d.reservado||false,
             cliente:d.cliente||'',
             frota:d.frota||state[id].frota||'',
@@ -1812,6 +1811,7 @@ async function loadFromFirebase(){
           });
         } else {
           // Equipamento novo — não está no EQUIPAMENTOS_ORIG (adicionado via Nova base)
+          const _origNew=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
           state[id]={
             id:d.id||id,equipamento:d.equipamento,modelo:d.modelo||'',
             tipo:d.tipo||'',oficina:d.oficina||'',status:d.status||'Disponível',
@@ -1820,7 +1820,7 @@ async function loadFromFirebase(){
             prioridade:d.prioridade||null,semana:d.semana||null,semana_locked:d.semana_locked||false,
             obs:d.obs||'',retrabalho:d.retrabalho||0,tempo_etapas:d.tempo_etapas||{},
             assinaturas:d.assinaturas||{},semana_anterior:d.semana_anterior||null,
-            baixado:(_orig&&_orig.status!=='Alugado')?false:(d.baixado||false),reservado:d.reservado||false,cliente:d.cliente||'',
+            baixado:d.baixado||false,reservado:d.reservado||false,cliente:d.cliente||'',
             dataEmbarque:d.dataEmbarque||'',historico:d.historico||[],
             ordens:d.ordens||[],reqCompra:d.reqCompra||'',
             ciclos_operacao:d.ciclos_operacao||0,novo:d.novo||false,
@@ -1839,6 +1839,7 @@ async function loadFromFirebase(){
       if(!eq.planta)eq.planta='';if(!eq.estado)eq.estado='';if(!eq.municipio)eq.municipio='';
     });
     // Não escrever no Firebase na migração — campos serão salvos na próxima operação normal
+    console.log("[FB Load] CCB02905 etapa final:", state["CCB02905"]?state["CCB02905"].etapa:"nao encontrado");
     reRenderAtivo();setSyncStatus('ok');fbListen();
   }catch(e){
     console.error('[Firebase erro]',e.message||e);
@@ -1895,6 +1896,7 @@ async function saveToFirebase(eqIds){
 }
 
 function saveState(ids){
+  console.log('[saveState]',ids);
   try{localStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
   if(!ids||!ids.length)return;
   clearTimeout(syncTimer);syncTimer=setTimeout(()=>saveToFirebase(ids),600);
@@ -3002,7 +3004,7 @@ function atualizarContagemTabs(){
 }
 
 // KANBAN
-function getEquipsByOficinaSid(s){return Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.oficina&&e.oficina.replace(/ /g,'_').replace(/[()]/g,'').replace(/\//g,'_')===s);}
+function getEquipsByOficinaSid(s){return Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.etapa!=='pronto'&&e.oficina&&e.oficina.replace(/ /g,'_').replace(/[()]/g,'').replace(/\//g,'_')===s);}
 
 function renderBoard(sid,visao){
   const boardId=`board-${sid}-${visao}`;
@@ -3144,6 +3146,7 @@ function renderBoard(sid,visao){
 }
 
 function applyMove(eq,from,toId,sid,visao,perfil){
+  console.log('[applyMove]',eq.id,from,'→',toId);
   if(from==='cl_saida'&&toId==='manutencao'){eq.retrabalho=(eq.retrabalho||0)+1;showToast('⚠ Retrabalho: '+eq.id+' ('+eq.retrabalho+'x)');}
   if(!eq.tempo_etapas)eq.tempo_etapas={};
   const d=Math.floor((Date.now()-(eq.etapa_desde||Date.now()))/86400000);
@@ -4463,8 +4466,29 @@ async function doBaseUpdate(){
   }
   try{localStorage.setItem('mills_csvStats',JSON.stringify(window._csvStats));}catch(e){}
   try{localStorage.setItem('mills_uploadTs',agora.toString());}catch(e){}
-  // Gravar no Firebase e aguardar confirmação
+  // Gravar no Firebase — preservar etapas já movimentadas manualmente
   showToast(`Salvando ${Object.keys(state).length} equipamentos no Firebase...`);
+  try{
+    const fbAtual=await fbGetAll();
+    if(fbAtual&&Object.keys(fbAtual).length>0){
+      Object.entries(fbAtual).forEach(([id,d])=>{
+        if(state[id]&&d&&d.etapa&&d.etapa_desde){
+          // Só preserva se o equipamento foi movido manualmente (etapa diferente da inicial)
+          const etapaInicial_=etapaInicial(state[id].status||'Disponível');
+          if(d.etapa!==etapaInicial_){
+            state[id].etapa=d.etapa;
+            state[id].etapa_desde=d.etapa_desde;
+            state[id].etapa_interna=d.etapa_interna||null;
+            state[id].etapa_interna_desde=d.etapa_interna_desde||null;
+            state[id].assinaturas=d.assinaturas||{};
+            state[id].historico=d.historico||[];
+            state[id].obs=d.obs||state[id].obs;
+            state[id].ordens=d.ordens||state[id].ordens||[];
+          }
+        }
+      });
+    }
+  }catch(e){console.warn('merge firebase:',e);}
   const fbOk=await saveToFirebase(Object.keys(state));
   // Salvar base atual no Firebase para referência dinâmica
   try{
@@ -4654,8 +4678,8 @@ function renderDisponiveis(){
   if(tipoSel){const cv=tipoSel.value;tipoSel.innerHTML='<option value="">Todos os tipos</option>'+tipos.map(t=>`<option value="${t}"${t===cv?' selected':''}>${t}</option>`).join('');}
   if(ofSel){const cv=ofSel.value;ofSel.innerHTML='<option value="">Todas as oficinas</option>'+oficinas.map(o=>`<option value="${o}"${o===cv?' selected':''}>${o}</option>`).join('');}
 
-  // Filtrar: etapa pronto OU chegada (disponíveis)
-  let equips=Object.values(state).filter(e=>!e.baixado&&e.etapa==='pronto');
+  // Filtrar: baixado=true (saíram da oficina e estão no pátio)
+  let equips=Object.values(state).filter(e=>e.baixado&&e.etapa!=='alugado');
   if(fv)equips=equips.filter(e=>e.id.toLowerCase().includes(fv)||e.equipamento.toLowerCase().includes(fv)||(e.modelo||'').toLowerCase().includes(fv));
   if(tipoFil)equips=equips.filter(e=>e.tipo===tipoFil);
   if(ofFil)equips=equips.filter(e=>e.oficina===ofFil);
@@ -4712,9 +4736,29 @@ function renderDisponiveis(){
         <div style="font-size:10px;color:var(--text2);display:flex;align-items:center;gap:4px">📍 ${eq.oficina}</div>
         <div style="font-size:10px;color:var(--text3);margin-top:2px">Etapa: <b>${etLbl}</b></div>
         ${cliH}${embH}${tmH}${destH}
+        <div style="margin-top:8px;border-top:1px solid var(--borda);padding-top:8px">
+          <button onclick="event.stopPropagation();retornarParaOficina('${eq.id}')" style="width:100%;padding:5px;background:#FFF3E0;color:#C24003;border:1px solid #FFCC80;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">↩ Retornar para Oficina</button>
+        </div>
       </div>
     </div>`;
   }).join('');
+}
+
+// ===== RETORNAR PARA OFICINA =====
+async function retornarParaOficina(id){
+  const eq=state[id];
+  if(!eq)return;
+  if(!confirm('Retornar '+eq.id+' para a oficina '+eq.oficina+' em Aguard. Movimentação?'))return;
+  const agora=Date.now();
+  eq.baixado=false;
+  eq.etapa='chegada';
+  eq.etapa_desde=agora;
+  eq.historico=eq.historico||[];
+  eq.historico.push({data:new Date().toLocaleDateString('pt-BR'),hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),from:'Pátio',to:'Aguard. Movimentação',perfil:currentUser?.nome||'',ts:agora});
+  saveState([id]);
+  renderDisponiveis();
+  reRenderAtivo();
+  showToast('✅ '+eq.id+' retornado para '+eq.oficina);
 }
 
 // ===== MAPA INTERATIVO — SUMARÉ (SP) =====
@@ -8688,6 +8732,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <div class="tp-tab"        id="tptab-metas"    onclick="todoMudarAba('metas')">🎯 Metas</div>
       <div class="tp-tab" id="tptab-reuniao" onclick="todoMudarAba('reuniao')" style="display:none">📋 Reunião Semanal</div>
       <div class="tp-tab" id="tptab-rg" onclick="todoMudarAba('rg')">🏢 Reun. Gerenciais</div>
+      <div class="tp-tab" id="tptab-gestprog" onclick="todoMudarAba('gestprog')">📊 Gest. Programação</div>
     </div>
 
     <!-- ABA TO-DO -->
@@ -8946,11 +8991,10 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
             <input class="gi-input" id="rs-ind-nome" placeholder="Ex: Leadtime médio de oficina"></div>
           <div><label class="gi-label">Descrição</label>
             <input class="gi-input" id="rs-ind-desc" placeholder="Descreva o que este indicador mede..."></div>
-          <div><label class="gi-label">Área</label>
+          <div><label class="gi-label">Área / Grupo</label>
             <select class="gi-select" id="rs-ind-area" onchange="rsIndUpdateSub()">
               <option value="">—</option>
-              <option>Avarias</option><option>Garantias</option><option>PCM</option>
-              <option>MRO e Pneus</option><option>Medição</option><option>Gestão de Ativos</option><option>Performance</option>
+              <option>S&OP / Implantação</option><option>Estoque de Equipamentos</option><option>PCM</option><option>Avarias/Garantias</option><option>Telemetria</option>
             </select></div>
           <div><label class="gi-label">Subárea</label>
             <select class="gi-select" id="rs-ind-subarea"><option value="">—</option></select></div>
@@ -8988,10 +9032,9 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Indicadores Cadastrados</span>
           <div style="display:flex;gap:6px">
-            <select class="gi-select" style="width:150px;font-size:11px" id="rs-fil-ind-area" onchange="rsIndRenderLista()">
-              <option value="">Área — Todas</option>
-              <option>Avarias</option><option>Garantias</option><option>PCM</option>
-              <option>MRO e Pneus</option><option>Medição</option><option>Gestão de Ativos</option><option>Performance</option>
+            <select class="gi-select" style="width:180px;font-size:11px" id="rs-fil-ind-area" onchange="rsIndRenderLista()">
+              <option value="">Grupo — Todos</option>
+              <option>S&OP / Implantação</option><option>Estoque de Equipamentos</option><option>PCM</option><option>Avarias/Garantias</option><option>Telemetria</option>
             </select>
             <select class="gi-select" style="width:150px;font-size:11px" id="rs-fil-ind-resp" onchange="rsIndRenderLista()">
               <option value="">Responsável — Todos</option>
@@ -9010,10 +9053,16 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
           <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b" id="rs-sem-label">Adicionar Valor de Semana</span>
           <button class="gi-btn ghost" id="rs-sem-cancelar-btn" style="display:none;font-size:11px;padding:6px 14px" onclick="rsSemCancelar()">✕ Cancelar</button>
         </div>
-        <div class="gi-form-row" style="grid-template-columns:1fr 1fr 1fr 2fr;margin-bottom:10px">
+        <div class="gi-form-row" style="grid-template-columns:1fr 1fr 1fr 1fr 2fr;margin-bottom:10px">
           <div><label class="gi-label">Indicador</label>
             <select class="gi-select" id="rs-sem-ind"><option value="">Selecione...</option></select></div>
-          <div><label class="gi-label">Semana (ex: S21/2026)</label>
+          <div><label class="gi-label">Tipo de Período</label>
+            <div style="display:flex;gap:6px;margin-top:2px">
+              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;white-space:nowrap"><input type="radio" name="rs-sem-modo" value="semana" checked onchange="rsSemModoChange()"> Semana</label>
+              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;white-space:nowrap"><input type="radio" name="rs-sem-modo" value="mes" onchange="rsSemModoChange()"> 📅 Mês</label>
+            </div>
+          </div>
+          <div><label class="gi-label" id="rs-sem-semana-lbl">Semana (ex: S21/2026)</label>
             <input class="gi-input" id="rs-sem-semana" placeholder="S21/2026"></div>
           <div><label class="gi-label">Valor</label>
             <input class="gi-input" id="rs-sem-valor" placeholder="0" type="number" step="any" style="font-weight:700"></div>
@@ -9029,10 +9078,9 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <!-- Filtros e tabela -->
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px">
         <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Filtros</div>
-        <select class="gi-select" style="width:150px;font-size:11px" id="rs-tab-area" onchange="rsRenderTabela()">
-          <option value="">Área — Todas</option>
-          <option>Avarias</option><option>Garantias</option><option>PCM</option>
-          <option>MRO e Pneus</option><option>Medição</option><option>Gestão de Ativos</option><option>Performance</option>
+        <select class="gi-select" style="width:190px;font-size:11px" id="rs-tab-area" onchange="rsRenderTabela()">
+          <option value="">Grupo — Todos</option>
+          <option>S&OP / Implantação</option><option>Estoque de Equipamentos</option><option>PCM</option><option>Avarias/Garantias</option><option>Telemetria</option>
         </select>
         <select class="gi-select" style="width:150px;font-size:11px" id="rs-tab-resp" onchange="rsRenderTabela()">
           <option value="">Responsável — Todos</option>
@@ -9211,6 +9259,82 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
           <button class="gi-btn ghost" onclick="fecharModalTodo()">Cancelar</button>
         </div>
       </div>
+    </div>
+
+    <!-- ABA GESTÃO DA PROGRAMAÇÃO -->
+    <div id="tp-aba-gestprog" class="gi-body" style="display:none">
+      <div class="gi-page-title">📊 Gestão da Programação</div>
+      <div class="gi-page-sub">Acompanhamento semanal e mensal de indicadores por programador — PCM</div>
+
+      <!-- Formulário de lançamento -->
+      <div class="gi-form-card" id="gp-form-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b" id="gp-form-label">Novo Lançamento</span>
+          <button class="gi-btn ghost" id="gp-cancelar-btn" style="display:none;font-size:11px;padding:6px 14px" onclick="gpCancelar()">✕ Cancelar</button>
+        </div>
+        <!-- Linha 1: Programador + Tipo + Período -->
+        <div class="gi-form-row" style="grid-template-columns:2fr 1fr 1fr;margin-bottom:10px">
+          <div>
+            <label class="gi-label">Programador</label>
+            <select class="gi-select" id="gp-programador">
+              <option value="">— Selecione —</option>
+              <option>João Moisés</option><option>Wagner Vilar</option><option>Diego Soares</option>
+              <option>Henrique Melo</option><option>Alex Sandro</option><option>Bruno Vinicius</option>
+              <option>Lucas Dutra</option><option>Rafael Welter</option><option>Luana Macedo</option>
+            </select>
+          </div>
+          <div>
+            <label class="gi-label">Tipo de Período</label>
+            <div style="display:flex;gap:6px;margin-top:4px">
+              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;white-space:nowrap"><input type="radio" name="gp-modo" value="semana" checked onchange="gpModoChange()"> Semana</label>
+              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;white-space:nowrap"><input type="radio" name="gp-modo" value="mes" onchange="gpModoChange()"> 📅 Mês</label>
+            </div>
+          </div>
+          <div>
+            <label class="gi-label" id="gp-periodo-lbl">Semana (ex: S21/2026)</label>
+            <input class="gi-input" id="gp-periodo" placeholder="S21/2026">
+          </div>
+        </div>
+        <!-- Linha 2: Indicadores numéricos (4 colunas) -->
+        <div class="gi-form-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:10px">
+          <div><label class="gi-label">Nº Operações</label><input class="gi-input" id="gp-n-op" type="number" min="0" placeholder="0"></div>
+          <div><label class="gi-label">Nº Equipamentos</label><input class="gi-input" id="gp-n-equip" type="number" min="0" placeholder="0"></div>
+          <div><label class="gi-label">Máquinas Paradas</label><input class="gi-input" id="gp-maq-paradas" type="number" min="0" placeholder="0"></div>
+          <div><label class="gi-label">Prev. Atrasadas</label><input class="gi-input" id="gp-prev-atras" type="number" min="0" placeholder="0"></div>
+        </div>
+        <!-- Linha 3: Restantes + Observação -->
+        <div class="gi-form-row" style="grid-template-columns:1fr 1fr 1fr 2fr;margin-bottom:10px">
+          <div><label class="gi-label">Pendências Abertas</label><input class="gi-input" id="gp-pend-abertas" type="number" min="0" placeholder="0"></div>
+          <div><label class="gi-label">Ordens Abertas</label><input class="gi-input" id="gp-ordens-abertas" type="number" min="0" placeholder="0"></div>
+          <div><label class="gi-label">Glosa de Contrato (R$)</label><input class="gi-input" id="gp-glosa" type="number" min="0" step="0.01" placeholder="0,00"></div>
+          <div><label class="gi-label">Observação</label><input class="gi-input" id="gp-obs" placeholder="Destaques, contexto, ações..."></div>
+        </div>
+        <input type="hidden" id="gp-editing-id">
+        <div style="display:flex;gap:8px">
+          <button class="gi-btn" id="gp-salvar-btn" onclick="gpSalvar()">💾 Salvar Lançamento</button>
+        </div>
+      </div>
+
+      <!-- Filtros e seleção de view -->
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px">
+        <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Filtros</div>
+        <select class="gi-select" style="width:170px;font-size:11px" id="gp-fil-prog" onchange="gpRenderTabela()">
+          <option value="">Programador — Todos</option>
+          <option>João Moisés</option><option>Wagner Vilar</option><option>Diego Soares</option>
+          <option>Henrique Melo</option><option>Alex Sandro</option><option>Bruno Vinicius</option>
+          <option>Lucas Dutra</option><option>Rafael Welter</option><option>Luana Macedo</option>
+        </select>
+        <select class="gi-select" style="width:180px;font-size:11px" id="gp-fil-view" onchange="gpRenderTabela()">
+          <option value="historico">Visão: Histórico Geral</option>
+          <option value="comparativo">Visão: Comparativo por Período</option>
+        </select>
+        <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;white-space:nowrap">Períodos:</div>
+        <div id="gp-periodo-checks" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        <button class="gi-btn ghost" style="font-size:11px;padding:6px 12px" onclick="gpLimparFiltros()">✕ Limpar</button>
+      </div>
+
+      <!-- Área da tabela -->
+      <div id="gp-tabela" style="overflow-x:auto"></div>
     </div>
 
   </div>
@@ -10041,14 +10165,15 @@ function tkpiRenderTabela(){
 // ── Navegação abas ──
 function todoMudarAba(aba){
   _todoAba=aba;
-  const abas={todo:'tp-aba-todo',graficos:'tp-aba-graficos',kpi:'tp-aba-kpi',metas:'tp-aba-metas',reuniao:'tp-aba-reuniao',rg:'tp-aba-rg'};
-  const tabs={todo:'tptab-todo',graficos:'tptab-graficos',kpi:'tptab-kpi',metas:'tptab-metas',reuniao:'tptab-reuniao',rg:'tptab-rg'};
+  const abas={todo:'tp-aba-todo',graficos:'tp-aba-graficos',kpi:'tp-aba-kpi',metas:'tp-aba-metas',reuniao:'tp-aba-reuniao',rg:'tp-aba-rg',gestprog:'tp-aba-gestprog'};
+  const tabs={todo:'tptab-todo',graficos:'tptab-graficos',kpi:'tptab-kpi',metas:'tptab-metas',reuniao:'tptab-reuniao',rg:'tptab-rg',gestprog:'tptab-gestprog'};
   Object.entries(abas).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.style.display=k===aba?'':'none';});
   Object.entries(tabs).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',k===aba);});
   if(aba==='graficos')setTimeout(giRenderGraficos,100);
   if(aba==='metas')setTimeout(metasRender,100);
   if(aba==='reuniao'){rsLoadFromFirebase();}
   if(aba==='rg'){rgAba(rgAbaAtual||'saop');}
+  if(aba==='gestprog'){gpLoadFromFirebase();}
 }
 
 function abrirTodo(){
@@ -10899,7 +11024,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef1f6;color:#1a1a2
 
 </script>
 
-<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.44</div>
+<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.50</div>
 
 
 <script>
@@ -10908,13 +11033,15 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef1f6;color:#1a1a2
 let _rsIndicadores=[];
 let _rsValores={};
 
-function rsParseWeek(s){const m=(s||'').match(/S(\d+)[_\/](\d+)/i);return m?parseInt(m[2])*100+parseInt(m[1]):0;}
+function rsParseWeek(s){const mW=(s||'').match(/S(\d+)[_\/](\d+)/i);if(mW)return parseInt(mW[2])*10000+parseInt(mW[1])*2;const mM=(s||'').match(/M(\d+)[_\/](\d+)/i);if(mM)return parseInt(mM[2])*10000+Math.round(parseInt(mM[1])*52/12)*2+1;return 0;}
+function rsIsMes(s){return/^M\d+[_\/]/i.test(s||'');}
 function rsTipoLabel(t){return{'pct-mais':'% ↑','pct-menos':'% ↓','dias-mais':'Dias ↑','dias-menos':'Dias ↓','rs-mais':'R$ ↑','rs-menos':'R$ ↓','qtd-mais':'Qtd ↑','qtd-menos':'Qtd ↓'}[t]||t;}
 function rsTipoUnidade(t){if(!t)return '';if(t.startsWith('pct'))return '%';if(t.startsWith('dias'))return ' dias';if(t.startsWith('rs'))return ' R$';return '';}
 function rsMaisEMelhor(t){return t&&t.endsWith('-mais');}
 function rsFarol(v,m,t){if(isNaN(v)||isNaN(m)||m===0)return '';const r=rsMaisEMelhor(t)?v/m:m/v;return r>=1?'background:#f0fdf4;color:#16a34a':r>=0.8?'background:#fffbeb;color:#d97706':'background:#fef2f2;color:#dc2626';}
 
-const RS_SUBAREAS={'Avarias':['Avaria total','Custo avaria','Tempo médio'],'Garantias':['Garantia fabricante','Garantia interna'],'PCM':['Planejamento','Programação','Controle'],'MRO e Pneus':['MRO','Pneus','Lubrificantes'],'Medição':['Medição técnica','Validação'],'Gestão de Ativos':['Disponibilidade','Confiabilidade','MTBF','MTTR'],'Performance':['Leadtime','Produtividade','Retrabalho']};
+const RS_SUBAREAS={'S&OP / Implantação':['S&OP','Implantação','Mobilização','KPIs Estratégicos','Planejamento comercial'],'Estoque de Equipamentos':['Estoque próprio','Estoque terceiros','Movimentação','Inventário','Disponibilidade'],'PCM':['Planejamento','Programação','Controle','Backlog','Leadtime'],'Avarias/Garantias':['Avaria total','Custo avaria','Tempo médio','Garantia fabricante','Garantia interna','Sinistro'],'Telemetria':['Rastreamento','Alertas','Disponibilidade de sinal','Utilização','Relatórios']};
+const GRUPO_COR={'S&OP / Implantação':'#2563eb','Estoque de Equipamentos':'#0f766e','PCM':'#F37021','Avarias/Garantias':'#dc2626','Telemetria':'#7c3aed'};
 
 function rsLoadFromFirebase(){
   fetch(FB_BASE+'/gi_reuniao.json').then(r=>r.json()).then(d=>{
@@ -11000,10 +11127,19 @@ function rsPopularSelectInd(){
   if(cur)sel.value=cur;
 }
 
+function rsSemModoChange(){
+  const modo=document.querySelector('input[name="rs-sem-modo"]:checked')?.value||'semana';
+  const lbl=document.getElementById('rs-sem-semana-lbl');
+  const inp=document.getElementById('rs-sem-semana');
+  if(lbl)lbl.textContent=modo==='mes'?'Mês (ex: M06/2026)':'Semana (ex: S21/2026)';
+  if(inp)inp.placeholder=modo==='mes'?'M06/2026':'S21/2026';
+}
 function rsSemSalvar(){
   const indId=document.getElementById('rs-sem-ind')?.value||'';if(!indId)return alert('Selecione um indicador.');
   const semanaRaw=(document.getElementById('rs-sem-semana')?.value||'').trim().toUpperCase();
-  if(!semanaRaw.match(/S\d+[\/]\d+/i))return alert('Semana no formato S21/2026');
+  const modo=document.querySelector('input[name="rs-sem-modo"]:checked')?.value||'semana';
+  if(modo==='semana'&&!semanaRaw.match(/^S\d+\/\d+$/i))return alert('Semana no formato S21/2026');
+  if(modo==='mes'&&!semanaRaw.match(/^M\d+\/\d+$/i))return alert('Mês no formato M06/2026');
   const semana=semanaRaw.replace('/','_');
   const valor=document.getElementById('rs-sem-valor')?.value||'';if(valor==='')return alert('Informe o valor.');
   const obs=(document.getElementById('rs-sem-obs')?.value||'').trim();
@@ -11017,6 +11153,9 @@ function rsSemSalvar(){
 
 function rsSemEditar(indId,semana){
   const v=(_rsValores[indId]||{})[semana];if(!v)return;
+  const modo=rsIsMes(semana)?'mes':'semana';
+  const modoEl=document.querySelector(`input[name="rs-sem-modo"][value="${modo}"]`);
+  if(modoEl){modoEl.checked=true;rsSemModoChange();}
   document.getElementById('rs-sem-ind').value=indId;
   document.getElementById('rs-sem-semana').value=semana.replace('_','/');
   document.getElementById('rs-sem-valor').value=v.valor;
@@ -11029,7 +11168,7 @@ function rsSemEditar(indId,semana){
 }
 
 function rsSemDeletar(indId,semana){if(!confirm('Remover?'))return;if(_rsValores[indId])delete _rsValores[indId][semana];rsSalvarTudo();rsRenderAll();rsRenderSemanaChecks();}
-function rsSemCancelar(){['rs-sem-valor','rs-sem-obs','rs-sem-editing-id'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('rs-sem-label').textContent='Adicionar Valor de Semana';document.getElementById('rs-sem-salvar-btn').textContent='💾 Salvar';document.getElementById('rs-sem-cancelar-btn').style.display='none';}
+function rsSemCancelar(){['rs-sem-valor','rs-sem-obs','rs-sem-editing-id'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('rs-sem-label').textContent='Adicionar Valor de Semana';document.getElementById('rs-sem-salvar-btn').textContent='💾 Salvar';document.getElementById('rs-sem-cancelar-btn').style.display='none';const semEl=document.querySelector('input[name="rs-sem-modo"][value="semana"]');if(semEl){semEl.checked=true;rsSemModoChange();}}
 
 function rsGetTodasSemanas(){const set=new Set();Object.values(_rsValores).forEach(sv=>Object.keys(sv).forEach(s=>set.add(s)));return[...set].sort((a,b)=>rsParseWeek(a)-rsParseWeek(b));}
 function rsGetSemanasSelecionadas(){return Array.from(document.querySelectorAll('.rs-semana-check:checked')).map(c=>c.value);}
@@ -11037,7 +11176,7 @@ function rsGetSemanasSelecionadas(){return Array.from(document.querySelectorAll(
 function rsRenderSemanaChecks(){
   const cont=document.getElementById('rs-semanas-checks');if(!cont)return;
   const todas=rsGetTodasSemanas();const sels=rsGetSemanasSelecionadas();
-  cont.innerHTML=todas.map(s=>`<label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:4px 8px"><input type="checkbox" class="rs-semana-check" value="${s}" ${!sels.length||sels.includes(s)?'checked':''} onchange="rsRenderTabela()">${s.replace('_','/')}</label>`).join('');
+  cont.innerHTML=todas.map(s=>{const isMes=rsIsMes(s);const bg=isMes?'background:#f3e8ff;border-color:#a855f7':'background:#f8fafc;border-color:#e2e8f0';const label=(isMes?'📅 ':'')+s.replace('_','/');return`<label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;${bg};border:1px solid;border-radius:6px;padding:4px 8px"><input type="checkbox" class="rs-semana-check" value="${s}" ${!sels.length||sels.includes(s)?'checked':''} onchange="rsRenderTabela()">${label}</label>`;}).join('');
 }
 
 function rsRenderTabela(){
@@ -11050,15 +11189,15 @@ function rsRenderTabela(){
   if(tabRF)inds=inds.filter(x=>x.resp===tabRF);
   if(tabTF)inds=inds.filter(x=>x.tipo===tabTF);
   if(!inds.length||!sems.length){thead.innerHTML='';tbody.innerHTML='<tr><td colspan="20" style="text-align:center;color:#94a3b8;padding:20px">Nenhum dado para exibir. Cadastre indicadores e adicione valores de semana.</td></tr>';return;}
-  thead.innerHTML=`<tr><th style="min-width:180px">Indicador</th><th style="width:80px">Resp.</th><th style="width:70px;text-align:center">Tipo</th><th style="width:75px;text-align:center;background:#1e40af;color:#fff">Meta</th>${sems.map(s=>`<th style="width:80px;text-align:center;background:#0f172a;color:#94a3b8;font-size:10px">${s.replace('_','/')}</th>`).join('')}<th style="width:90px;text-align:center;color:#1D9E75;background:#f0fdf4">Tendência</th></tr>`;
+  thead.innerHTML=`<tr><th style="min-width:180px">Indicador</th><th style="width:80px">Resp.</th><th style="width:70px;text-align:center">Tipo</th><th style="width:75px;text-align:center;background:#1e40af;color:#fff">Meta</th>${sems.map(s=>{const isMes=rsIsMes(s);return`<th style="width:80px;text-align:center;background:${isMes?'#6d28d9':'#0f172a'};color:${isMes?'#f3e8ff':'#94a3b8'};font-size:10px">${isMes?'📅 ':''}${s.replace('_','/')}</th>`;}).join('')}<th style="width:90px;text-align:center;color:#1D9E75;background:#f0fdf4">Tendência</th></tr>`;
   let lastArea='';
   tbody.innerHTML=inds.map(ind=>{
     const metaNum=parseFloat(ind.meta);
     const vals=sems.map(s=>{const v=(_rsValores[ind.id]||{})[s];return v!=null&&v.valor!=null?parseFloat(v.valor):NaN;});
     const comVal=vals.filter(v=>!isNaN(v));let trend='—';let trendCls='color:#64748b';
     if(comVal.length>=2){const d=comVal[comVal.length-1]-comVal[0];const p=Math.abs((d/comVal[0])*100).toFixed(1);const m=rsMaisEMelhor(ind.tipo)?d>0:d<0;trend=(d>=0?'↑ ':'↓ ')+p+'%';trendCls=m?'color:#16a34a':'color:#dc2626';}
-    let areaRow='';if(ind.area!==lastArea){lastArea=ind.area;areaRow=`<tr style="background:#f8fafc"><td colspan="${4+sems.length+1}" style="padding:6px 12px;font-size:10px;font-weight:700;text-transform:uppercase;color:#475569">${ind.area||'Geral'}</td></tr>`;}
-    const cells=sems.map((s,i)=>{if(isNaN(vals[i]))return`<td style="text-align:center;color:#cbd5e1">—</td>`;const bg=rsFarol(vals[i],metaNum,ind.tipo);const obs=(_rsValores[ind.id]||{})[s]?.obs||'';return`<td style="text-align:center;font-weight:600;${bg};cursor:pointer" title="${obs}" onclick="rsSemEditar('${ind.id}','${s}')">${vals[i]}${rsTipoUnidade(ind.tipo)}</td>`;}).join('');
+    let areaRow='';if(ind.area!==lastArea){lastArea=ind.area;const cor=GRUPO_COR[ind.area]||'#475569';areaRow=`<tr style="background:${cor}18"><td colspan="${4+sems.length+1}" style="padding:9px 14px;font-size:11px;font-weight:800;text-transform:uppercase;color:${cor};border-left:4px solid ${cor};letter-spacing:.06em">${ind.area||'Geral'}</td></tr>`;}
+    const cells=sems.map((s,i)=>{const isMes=rsIsMes(s);const mesStyle=isMes?';border-left:2px solid #a855f7':'';if(isNaN(vals[i]))return`<td style="text-align:center;color:#cbd5e1${mesStyle}">—</td>`;const bg=rsFarol(vals[i],metaNum,ind.tipo);const obs=(_rsValores[ind.id]||{})[s]?.obs||'';return`<td style="text-align:center;font-weight:600;${bg}${mesStyle};cursor:pointer" title="${obs}" onclick="rsSemEditar('${ind.id}','${s}')">${vals[i]}${rsTipoUnidade(ind.tipo)}</td>`;}).join('');
     return areaRow+`<tr><td><div style="font-weight:600;font-size:12px">${ind.nome}</div><div style="font-size:10px;color:#94a3b8">${ind.desc||''}</div></td><td style="font-size:11px;color:#64748b">${(ind.resp||'').split(' ')[0]||'—'}</td><td style="text-align:center;font-size:10px;color:#64748b">${rsTipoLabel(ind.tipo)}</td><td style="text-align:center;color:#60a5fa">${ind.meta||'—'}</td>${cells}<td style="text-align:center;font-size:11px;font-weight:700;${trendCls}">${trend}</td></tr>`;
   }).join('');
 }
@@ -11105,6 +11244,210 @@ function rsPrintRelatorio(){
 }
 
 function rsRenderAll(){rsIndRenderLista();rsRenderTabela();}
+
+// ── GESTÃO DA PROGRAMAÇÃO ─────────────────────────────────────────────────────
+let _gpEntradas=[];
+
+const GP_CAMPOS=[
+  {id:'nOp',      label:'Nº Operações',      short:'Op.',   menos:false},
+  {id:'nEquip',   label:'Nº Equipamentos',   short:'Equip.',menos:false},
+  {id:'maqParadas',label:'Máq. Paradas',     short:'Paradas',menos:true},
+  {id:'prevAtras', label:'Prev. Atrasadas',  short:'Prev.A', menos:true},
+  {id:'pendAbertas',label:'Pend. Abertas',   short:'Pend.',  menos:true},
+  {id:'ordensAbertas',label:'Ordens Abertas',short:'Ordens', menos:true},
+  {id:'glosa',    label:'Glosa (R$)',         short:'Glosa',  menos:true},
+];
+
+async function gpLoadFromFirebase(){
+  try{
+    const r=await fetch(FB_BASE+'/gi_gestprog/shared.json');
+    const d=await r.json();
+    _gpEntradas=d&&typeof d==='object'?Object.values(d).sort((a,b)=>rsParseWeek(b.periodo)-rsParseWeek(a.periodo)):[];
+  }catch(e){_gpEntradas=[];}
+  gpRenderAll();
+}
+
+async function gpSalvarTudo(){
+  const obj={};_gpEntradas.forEach(e=>{obj[e.id]=e;});
+  await fetch(FB_BASE+'/gi_gestprog/shared.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});
+}
+
+function gpModoChange(){
+  const modo=document.querySelector('input[name="gp-modo"]:checked')?.value||'semana';
+  const lbl=document.getElementById('gp-periodo-lbl');
+  const inp=document.getElementById('gp-periodo');
+  if(lbl)lbl.textContent=modo==='mes'?'Mês (ex: M06/2026)':'Semana (ex: S21/2026)';
+  if(inp)inp.placeholder=modo==='mes'?'M06/2026':'S21/2026';
+}
+
+function gpSalvar(){
+  const prog=(document.getElementById('gp-programador')?.value||'').trim();
+  if(!prog)return alert('Selecione o programador.');
+  const periodoRaw=(document.getElementById('gp-periodo')?.value||'').trim().toUpperCase();
+  const modo=document.querySelector('input[name="gp-modo"]:checked')?.value||'semana';
+  if(modo==='semana'&&!periodoRaw.match(/^S\d+\/\d+$/i))return alert('Semana no formato S21/2026');
+  if(modo==='mes'&&!periodoRaw.match(/^M\d+\/\d+$/i))return alert('Mês no formato M06/2026');
+  const periodo=periodoRaw.replace('/','_');
+  const gv=id=>parseFloat(document.getElementById(id)?.value||'0')||0;
+  const obj={
+    programador:prog,periodo,
+    nOp:gv('gp-n-op'),nEquip:gv('gp-n-equip'),maqParadas:gv('gp-maq-paradas'),
+    prevAtras:gv('gp-prev-atras'),pendAbertas:gv('gp-pend-abertas'),
+    ordensAbertas:gv('gp-ordens-abertas'),glosa:gv('gp-glosa'),
+    obs:(document.getElementById('gp-obs')?.value||'').trim()
+  };
+  const editId=document.getElementById('gp-editing-id')?.value||'';
+  if(editId){
+    const idx=_gpEntradas.findIndex(e=>e.id===editId);
+    if(idx>=0)_gpEntradas[idx]={..._gpEntradas[idx],...obj};
+    gpCancelar();
+  }else{
+    obj.id='gp_'+Date.now();obj.ts=Date.now();
+    _gpEntradas.unshift(obj);
+    ['gp-n-op','gp-n-equip','gp-maq-paradas','gp-prev-atras','gp-pend-abertas','gp-ordens-abertas','gp-glosa','gp-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  }
+  gpSalvarTudo();gpRenderAll();showToast('✅ Lançamento salvo!');
+}
+
+function gpEditar(id){
+  const e=_gpEntradas.find(x=>x.id===id);if(!e)return;
+  const sv=(sid,v)=>{const el=document.getElementById(sid);if(el)el.value=v!=null?v:'';};
+  sv('gp-programador',e.programador);sv('gp-periodo',e.periodo.replace('_','/'));
+  sv('gp-n-op',e.nOp);sv('gp-n-equip',e.nEquip);sv('gp-maq-paradas',e.maqParadas);
+  sv('gp-prev-atras',e.prevAtras);sv('gp-pend-abertas',e.pendAbertas);
+  sv('gp-ordens-abertas',e.ordensAbertas);sv('gp-glosa',e.glosa);sv('gp-obs',e.obs);
+  sv('gp-editing-id',id);
+  const isMes=rsIsMes(e.periodo);
+  const modoEl=document.querySelector(`input[name="gp-modo"][value="${isMes?'mes':'semana'}"]`);
+  if(modoEl){modoEl.checked=true;gpModoChange();}
+  document.getElementById('gp-form-label').textContent='Editando: '+e.programador+' — '+e.periodo.replace('_','/');
+  document.getElementById('gp-salvar-btn').textContent='💾 Salvar alterações';
+  document.getElementById('gp-cancelar-btn').style.display='inline-block';
+  document.getElementById('gp-form-card').scrollIntoView({behavior:'smooth'});
+}
+
+function gpDeletar(id){
+  if(!confirm('Remover este lançamento?'))return;
+  _gpEntradas=_gpEntradas.filter(e=>e.id!==id);
+  gpSalvarTudo();gpRenderAll();showToast('🗑 Removido.');
+}
+
+function gpCancelar(){
+  ['gp-n-op','gp-n-equip','gp-maq-paradas','gp-prev-atras','gp-pend-abertas','gp-ordens-abertas','gp-glosa','gp-obs','gp-editing-id'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('gp-form-label').textContent='Novo Lançamento';
+  document.getElementById('gp-salvar-btn').textContent='💾 Salvar Lançamento';
+  document.getElementById('gp-cancelar-btn').style.display='none';
+  const semEl=document.querySelector('input[name="gp-modo"][value="semana"]');if(semEl){semEl.checked=true;gpModoChange();}
+}
+
+function gpGetTodosPeriodos(){
+  const set=new Set(_gpEntradas.map(e=>e.periodo));
+  return[...set].sort((a,b)=>rsParseWeek(b)-rsParseWeek(a));
+}
+
+function gpGetPeriodosSelecionados(){
+  return Array.from(document.querySelectorAll('.gp-periodo-check:checked')).map(c=>c.value);
+}
+
+function gpRenderPeriodoChecks(){
+  const cont=document.getElementById('gp-periodo-checks');if(!cont)return;
+  const todos=gpGetTodosPeriodos();
+  const sels=gpGetPeriodosSelecionados();
+  cont.innerHTML=todos.map(s=>{
+    const isMes=rsIsMes(s);
+    const bg=isMes?'background:#f3e8ff;border-color:#a855f7':'background:#f8fafc;border-color:#e2e8f0';
+    return`<label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;${bg};border:1px solid;border-radius:6px;padding:4px 8px"><input type="checkbox" class="gp-periodo-check" value="${s}" ${!sels.length||sels.includes(s)?'checked':''} onchange="gpRenderTabela()">${isMes?'📅 ':''}${s.replace('_','/')}</label>`;
+  }).join('');
+}
+
+function gpRenderTabela(){
+  const cont=document.getElementById('gp-tabela');if(!cont)return;
+  const filProg=document.getElementById('gp-fil-prog')?.value||'';
+  const view=document.getElementById('gp-fil-view')?.value||'historico';
+  const periodosSel=gpGetPeriodosSelecionados();
+
+  let dados=_gpEntradas;
+  if(filProg)dados=dados.filter(e=>e.programador===filProg);
+  if(periodosSel.length)dados=dados.filter(e=>periodosSel.includes(e.periodo));
+
+  if(!dados.length){cont.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhum dado para exibir. Cadastre lançamentos acima.</div>';return;}
+
+  if(view==='comparativo'){
+    // Agrupa por período — colunas = programadores, linhas = métricas
+    const periodos=[...new Set(dados.map(e=>e.periodo))].sort((a,b)=>rsParseWeek(a)-rsParseWeek(b));
+    const progs=[...new Set(dados.map(e=>e.programador))].sort();
+    const lookup={};dados.forEach(e=>{lookup[e.periodo+'|'+e.programador]=e;});
+    const rows=GP_CAMPOS.map(c=>{
+      const cells=periodos.flatMap(p=>progs.map(pg=>{
+        const e=lookup[p+'|'+pg];
+        const v=e!=null&&e[c.id]!=null?e[c.id]:null;
+        return`<td style="text-align:center;padding:7px 10px;font-weight:600">${v!=null?v:'—'}</td>`;
+      }));
+      return`<tr><td style="padding:7px 12px;font-size:11px;font-weight:700;color:#475569;white-space:nowrap;background:#f8fafc">${c.label}</td>${cells.join('')}</tr>`;
+    });
+    const headerPeriods=periodos.flatMap(p=>{
+      const isMes=rsIsMes(p);
+      return progs.map(pg=>`<th style="padding:8px 10px;text-align:center;font-size:10px;background:${isMes?'#6d28d9':'#0f172a'};color:${isMes?'#f3e8ff':'#94a3b8'};white-space:nowrap">${isMes?'📅 ':''}${p.replace('_','/')}<br><span style="font-size:9px;opacity:.8">${pg.split(' ')[0]}</span></th>`);
+    });
+    cont.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th style="padding:8px 12px;text-align:left;background:#0f172a;color:#fff;font-size:10px">Indicador</th>${headerPeriods.join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+    return;
+  }
+
+  // Visão histórico — linha por entrada
+  const colStyle='padding:8px 12px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;border-bottom:1px solid #e2e8f0';
+  let lastPeriodo='';
+  const rows=dados.map((e,ki)=>{
+    const isMes=rsIsMes(e.periodo);
+    let sepRow='';
+    if(e.periodo!==lastPeriodo){
+      lastPeriodo=e.periodo;
+      const bg=isMes?'#6d28d9':'#0f172a';
+      sepRow=`<tr style="background:${bg}"><td colspan="11" style="padding:7px 14px;font-size:11px;font-weight:800;color:${isMes?'#f3e8ff':'#94a3b8'}">${isMes?'📅 ':''}${e.periodo.replace('_','/')}</td></tr>`;
+    }
+    const bg=ki%2?'#fff':'#fafbff';
+    return sepRow+`<tr style="background:${bg};border-bottom:1px solid #f1f5f9">
+      <td style="padding:8px 12px;font-weight:700;color:#1e293b;white-space:nowrap">${e.programador}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:600;color:#0f766e">${e.nOp??'—'}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:600;color:#0f766e">${e.nEquip??'—'}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.maqParadas>0?'#dc2626':'#16a34a'}">${e.maqParadas??'—'}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.prevAtras>0?'#dc2626':'#16a34a'}">${e.prevAtras??'—'}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.pendAbertas>0?'#d97706':'#16a34a'}">${e.pendAbertas??'—'}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.ordensAbertas>0?'#d97706':'#16a34a'}">${e.ordensAbertas??'—'}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.glosa>0?'#dc2626':'#16a34a'}">${e.glosa>0?'R$ '+e.glosa.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:8px 12px;font-size:11px;color:#64748b;max-width:200px">${e.obs||'—'}</td>
+      <td style="padding:8px 12px;text-align:center">
+        <button onclick="gpEditar('${e.id}')" style="background:none;border:none;cursor:pointer;color:#F37021;font-size:13px" title="Editar">✏</button>
+        <button onclick="gpDeletar('${e.id}')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px" title="Remover">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  cont.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)">
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="background:#f8fafc">
+      <th style="${colStyle};text-align:left">Programador</th>
+      <th style="${colStyle}">Nº Op.</th>
+      <th style="${colStyle}">Nº Equip.</th>
+      <th style="${colStyle}">Máq. Paradas</th>
+      <th style="${colStyle}">Prev. Atras.</th>
+      <th style="${colStyle}">Pend. Abertas</th>
+      <th style="${colStyle}">Ordens Abertas</th>
+      <th style="${colStyle}">Glosa</th>
+      <th style="${colStyle}">Observação</th>
+      <th style="${colStyle}">Ações</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+function gpLimparFiltros(){
+  document.getElementById('gp-fil-prog').value='';
+  document.getElementById('gp-fil-view').value='historico';
+  document.querySelectorAll('.gp-periodo-check').forEach(c=>c.checked=true);
+  gpRenderTabela();
+}
+
+function gpRenderAll(){gpRenderPeriodoChecks();gpRenderTabela();}
 
 function rsCheckAcesso(){
   const tab=document.getElementById('tptab-reuniao');if(!tab)return;
@@ -11613,9 +11956,9 @@ function paginaOficinas(){
 function renderOficinaCards(){
   const grid=document.getElementById('oficinas-cards-grid');if(!grid)return;
   const ETAPAS_OF=new Set(['lavagem','catalogacao','solda','borracharia','funilaria','suprimentos','ag_baia','manut_int']);
-  const oficinas=[...new Set(Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.oficina).map(e=>e.oficina))].sort();
+  const oficinas=[...new Set(Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.etapa!=='pronto'&&e.oficina).map(e=>e.oficina))].sort();
   grid.innerHTML=oficinas.map(of=>{
-    const equips=Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.oficina===of);
+    const equips=Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.etapa!=='pronto'&&e.oficina===of);
     const manut=equips.filter(e=>e.etapa==='manutencao'||ETAPAS_OF.has(e.etapa)).length;
     const sid=of.replace(/ /g,'_').replace(/[()]/g,'').replace(/\//g,'_');
     const pct=equips.length>0?Math.round(manut/equips.length*100):0;
@@ -11655,7 +11998,7 @@ function patioRender(){
   const filtOf=document.getElementById('patio-filtro-of')?.value||'';
   const filtTipo=document.getElementById('patio-filtro-tipo')?.value||'';
 
-  let equips=Object.values(state).filter(e=>e.etapa==='pronto'&&!e.baixado);
+  let equips=Object.values(state).filter(e=>!e.baixado&&e.etapa==='pronto');
   if(filtOf)equips=equips.filter(e=>e.oficina===filtOf);
   if(filtTipo){const ids=new Set(EQUIPAMENTOS_ORIG.filter(o=>o.tipoFrota===filtTipo).map(o=>o.id));equips=equips.filter(e=>ids.has(e.id));}
   if(busca)equips=equips.filter(e=>(e.id||'').toLowerCase().includes(busca)||(e.equipamento||'').toLowerCase().includes(busca)||(e.modelo||'').toLowerCase().includes(busca));
@@ -11795,7 +12138,7 @@ function opRender(){
   let ops=OPERACOES_DATA;
   if(filtEstado)ops=ops.filter(o=>o.estado===filtEstado);
   if(filtFam)ops=ops.filter(o=>o.equips.some(e=>e.familia===filtFam));
-  if(busca)ops=ops.filter(o=>o.nome.toLowerCase().includes(busca)||o.cliente.toLowerCase().includes(busca)||(o.municipio||'').toLowerCase().includes(busca));
+  if(busca)ops=ops.filter(o=>o.nome.toLowerCase().includes(busca)||o.cliente.toLowerCase().includes(busca)||(o.municipio||'').toLowerCase().includes(busca)||o.equips.some(e=>(e.id||'').toLowerCase().includes(busca)||(e.modelo||'').toLowerCase().includes(busca)||(e.familia||'').toLowerCase().includes(busca)));
 
   opRenderChart(ops);
   if(!lista)return;
@@ -11883,8 +12226,8 @@ function rgUpdateHomeKpis(ativos){
   const emPatio=ativos.filter(e=>e.etapa==='pronto');
   // Array real do state — usado internamente pelo board
   const emOperacao=Object.values(state).filter(e=>e.etapa==='alugado');
-  // Número exibido = Locados do CSV (locação + equipamento com motor) — mesma fonte que Card 2
-  const emOpDisplay=(window._csvStats&&window._csvStats.locados)||emOperacao.length;
+  // Número exibido = total de equipamentos em OPERACOES_DATA — mesma fonte que a página interna
+  const emOpDisplay=OPERACOES_DATA.reduce((s,o)=>s+o.equips.length,0)||emOperacao.length;
   const elOf=document.getElementById('home-kpi-oficina');if(elOf)elOf.innerHTML=`<span style="color:#F37021;font-weight:800;font-size:16px">${emOficina.length}</span> em processo`;
   const elPat=document.getElementById('home-kpi-patio');if(elPat)elPat.innerHTML=`<span style="color:#16a34a;font-weight:800;font-size:16px">${emPatio.length}</span> prontos`;
   const elOp=document.getElementById('home-kpi-operacoes');if(elOp)elOp.innerHTML=`<span style="color:#2563eb;font-weight:800;font-size:16px">${emOpDisplay}</span> em operação`;
