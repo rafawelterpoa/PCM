@@ -744,7 +744,7 @@ input.filter-sel{padding:5px 8px;height:34px}
   </div>
   <div class="snav-item" onclick="navegarPara('patio')" title="Pátio" id="snav-patio">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-    <span class="snav-label">Pátio</span>
+    <span class="snav-label">Pátios</span>
   </div>
   <div class="snav-item" onclick="navegarPara('operacoes')" title="Operações" id="snav-operacoes">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -752,18 +752,22 @@ input.filter-sel{padding:5px 8px;height:34px}
   </div>
   <div class="snav-item" onclick="switchTab('programacao')" title="Programação" id="snav-programacao">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-    <span class="snav-label">Program.</span>
+    <span class="snav-label">Prog.Of.</span>
+  </div>
+  <div class="snav-item" id="snav-valepecas" onclick="abrirValePecas()" title="Vale Peças">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+    <span class="snav-label">Vale Peç.</span>
   </div>
   <div class="snav-divider"></div>
   <div class="snav-item" onclick="abrirTodo()" title="Gestão Integrada" id="snav-gi">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
     <span class="snav-label">Gestão</span>
   </div>
-  <div class="snav-item" onclick="abrirHistoricoAtivos()" title="Histórico de Ativos">
+  <div class="snav-item" id="snav-historico" onclick="abrirHistoricoAtivos()" title="Histórico de Ativos">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
     <span class="snav-label">Histórico</span>
   </div>
-  <div class="snav-item" onclick="switchTab('mapa')" title="Mapa">
+  <div class="snav-item" id="snav-mapa" onclick="switchTab('mapa')" title="Mapa">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
     <span class="snav-label">Mapa</span>
   </div>
@@ -905,11 +909,30 @@ input.filter-sel{padding:5px 8px;height:34px}
       </div>
     </div>
 
+    <!-- PROGRAMAÇÃO -->
+    <div class="area-card-new" onclick="switchTab('programacao')" style="border-top:3px solid #7c3aed">
+      <div class="area-card-header">
+        <div class="ac-icon">📅</div>
+        <div class="ac-title">Programação de Oficinas</div>
+        <div class="ac-desc">Visão semanal com data de liberação</div>
+        <div class="ac-kpi" id="home-kpi-prog" style="color:#7c3aed">—</div>
+      </div>
+      <div class="area-card-preview">
+        <div class="mini-cal">
+          <div class="mini-cal-grid">
+            <div class="mini-cal-day">S</div><div class="mini-cal-day">T</div><div class="mini-cal-day">Q</div><div class="mini-cal-day">Q</div><div class="mini-cal-day">S</div><div class="mini-cal-day">S</div><div class="mini-cal-day">D</div>
+            <div class="mini-cal-day has"></div><div class="mini-cal-day has"></div><div class="mini-cal-day today"></div><div class="mini-cal-day has"></div><div class="mini-cal-day"></div><div class="mini-cal-day has"></div><div class="mini-cal-day"></div>
+            <div class="mini-cal-day"></div><div class="mini-cal-day has"></div><div class="mini-cal-day has"></div><div class="mini-cal-day"></div><div class="mini-cal-day has"></div><div class="mini-cal-day"></div><div class="mini-cal-day"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- PÁTIO -->
     <div class="area-card-new" onclick="navegarPara('patio')" style="border-top:3px solid #16a34a">
       <div class="area-card-header">
         <div class="ac-icon">🏠</div>
-        <div class="ac-title">Pátio</div>
+        <div class="ac-title">Gestão de Pátios</div>
         <div class="ac-desc">Equipamentos prontos para locação ou venda</div>
         <div class="ac-kpi" id="home-kpi-patio" style="color:#16a34a">—</div>
       </div>
@@ -942,25 +965,6 @@ input.filter-sel{padding:5px 8px;height:34px}
           <div class="mini-filter-row"><div class="mini-filter-dot" style="background:#2563eb"></div>Locação<div class="mini-filter-bar" style="background:#bfdbfe"></div></div>
           <div class="mini-filter-row"><div class="mini-filter-dot" style="background:#16a34a"></div>Venda<div class="mini-filter-bar" style="background:#bbf7d0;width:40%"></div></div>
           <div class="mini-filter-row"><div class="mini-filter-dot" style="background:#94a3b8"></div>Standby<div class="mini-filter-bar" style="background:#e2e8f0;width:20%"></div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PROGRAMAÇÃO -->
-    <div class="area-card-new" onclick="switchTab('programacao')" style="border-top:3px solid #7c3aed">
-      <div class="area-card-header">
-        <div class="ac-icon">📅</div>
-        <div class="ac-title">Programação</div>
-        <div class="ac-desc">Visão semanal com data de liberação</div>
-        <div class="ac-kpi" id="home-kpi-prog" style="color:#7c3aed">—</div>
-      </div>
-      <div class="area-card-preview">
-        <div class="mini-cal">
-          <div class="mini-cal-grid">
-            <div class="mini-cal-day">S</div><div class="mini-cal-day">T</div><div class="mini-cal-day">Q</div><div class="mini-cal-day">Q</div><div class="mini-cal-day">S</div><div class="mini-cal-day">S</div><div class="mini-cal-day">D</div>
-            <div class="mini-cal-day has"></div><div class="mini-cal-day has"></div><div class="mini-cal-day today"></div><div class="mini-cal-day has"></div><div class="mini-cal-day"></div><div class="mini-cal-day has"></div><div class="mini-cal-day"></div>
-            <div class="mini-cal-day"></div><div class="mini-cal-day has"></div><div class="mini-cal-day has"></div><div class="mini-cal-day"></div><div class="mini-cal-day has"></div><div class="mini-cal-day"></div><div class="mini-cal-day"></div>
-          </div>
         </div>
       </div>
     </div>
@@ -1000,29 +1004,17 @@ input.filter-sel{padding:5px 8px;height:34px}
       </div>
     </div>
 
-    <!-- IMPLANTAÇÃO -->
-    <div class="area-card-new" onclick="abrirImplantacao()" style="border-top:3px solid #6366f1">
+    <!-- VALE PEÇAS -->
+    <div class="area-card-new" onclick="abrirValePecas()" style="border-top:3px solid #dc2626">
       <div class="area-card-header">
-        <div class="ac-icon">🏗️</div>
-        <div class="ac-title">Implantação</div>
-        <div class="ac-desc">PMO de implantação de contratos</div>
-        <div class="ac-kpi" style="color:#6366f1">—</div>
+        <div class="ac-icon">🔩</div>
+        <div class="ac-title">Vale Peças</div>
+        <div class="ac-desc">Controle de retirada e devolução de peças</div>
+        <div class="ac-kpi" id="home-kpi-valepecas" style="color:#dc2626">—</div>
+        <span class="ac-badge" style="background:#fef2f2;color:#dc2626" id="home-badge-valepecas">pendentes</span>
       </div>
-      <div class="area-card-preview" style="background:#f5f3ff">
-        <div style="font-size:11px;color:#6366f1;font-weight:600;text-align:center">Projetos em andamento</div>
-      </div>
-    </div>
-
-    <!-- MEDIÇÃO -->
-    <div class="area-card-new" onclick="abrirMedicao()" style="border-top:3px solid #0891b2">
-      <div class="area-card-header">
-        <div class="ac-icon">📋</div>
-        <div class="ac-title">Medição</div>
-        <div class="ac-desc">Boletins de Medição por contrato</div>
-        <div class="ac-kpi" style="color:#0891b2">—</div>
-      </div>
-      <div class="area-card-preview" style="background:#ecfeff">
-        <div style="font-size:11px;color:#0891b2;font-weight:600;text-align:center">Boletins do período</div>
+      <div class="area-card-preview" style="background:#fff5f5">
+        <div style="font-size:11px;color:#dc2626;font-weight:600;text-align:center;padding:10px">Peças retiradas aguardando devolução</div>
       </div>
     </div>
 
@@ -2812,6 +2804,10 @@ function switchTab(tabId){
   fecharTodosOverlays();
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  // Sincroniza snav
+  const _snavMap={programacao:'snav-programacao',mapa:'snav-mapa',alteracoes:'snav-notif',home:'snav-home'};
+  if(_snavMap[tabId])snavSetActive(_snavMap[tabId]);
+  else{document.querySelectorAll('.snav-item').forEach(el=>el.classList.remove('active'));}
   const te=document.querySelector('[data-tab="'+tabId+'"]');
   const pe=document.getElementById('page-'+tabId);
   if(te)te.classList.add('active');if(pe)pe.classList.add('active');
@@ -8743,7 +8739,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <div class="gi-form-card">
         <div class="gi-form-row" style="grid-template-columns:2fr 1fr 1fr 1fr auto">
           <div><label class="gi-label">Descrição da Tarefa</label><input class="gi-input" id="todo-nova-input" placeholder="O que precisa ser feito?" maxlength="200" onkeydown="if(event.key==='Enter')todoAdicionar()"></div>
-          <div><label class="gi-label">Área</label><select class="gi-select" id="todo-area-sel" onchange="todoUpdateSubarea()"><option value="">Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Medição</option><option>Gestão de Ativos</option><option>Performance</option></select></div>
+          <div><label class="gi-label">Área</label><select class="gi-select" id="todo-area-sel" onchange="todoUpdateSubarea()"><option value="">Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Gestão de Ativos</option><option>Performance</option></select></div>
           <div><label class="gi-label">Subárea</label><select class="gi-select" id="todo-subarea-sel"><option value="">Geral</option></select></div>
           <div><label class="gi-label">Prazo Limite</label><input class="gi-input" type="date" id="todo-dt-entrega"></div>
           <div style="display:flex;align-items:flex-end;gap:8px"><button class="gi-btn" onclick="todoAdicionar()">Salvar Atividade</button></div>
@@ -8826,7 +8822,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <div class="gi-page-title">Dashboard Analítico de Performance</div>
       <div class="gi-page-sub">Monitoramento consolidado e visão integrada de resultados.</div>
       <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-        <select class="gi-select" style="width:180px" id="graf-filtro-area" onchange="giRenderGraficos()"><option value="">Todas as áreas</option><option>Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Medição</option><option>Gestão de Ativos</option><option>Performance</option></select>
+        <select class="gi-select" style="width:180px" id="graf-filtro-area" onchange="giRenderGraficos()"><option value="">Todas as áreas</option><option>Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Gestão de Ativos</option><option>Performance</option></select>
         <select class="gi-select" style="width:180px" id="graf-filtro-status" onchange="giRenderGraficos()"><option value="">Todos os status</option><option value="aberto">Abertos</option><option value="concluido">Concluídos</option><option value="atrasado">Atrasados</option></select>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px" id="gi-charts-container">
@@ -9201,7 +9197,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <div class="gi-page-title">Metas e Desempenho por Área</div>
       <div class="gi-page-sub">Visão consolidada do atingimento de metas 2026 por área e responsável.</div>
       <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-        <select class="gi-select" style="width:180px" id="metas-fil-area" onchange="metasRender()"><option value="">Todas as áreas</option><option>Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Medição</option><option>Gestão de Ativos</option><option>Performance</option></select>
+        <select class="gi-select" style="width:180px" id="metas-fil-area" onchange="metasRender()"><option value="">Todas as áreas</option><option>Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Gestão de Ativos</option><option>Performance</option></select>
         <select class="gi-select" style="width:180px" id="metas-fil-resp" onchange="metasRender()"><option value="">Todos os responsáveis</option></select>
         <select class="gi-select" style="width:150px" id="metas-fil-farol" onchange="metasRender()"><option value="">Todos os farois</option><option value="Atingido">✅ Atingido</option><option value="Em linha">🟡 Em linha</option><option value="Atenção">⚠️ Atenção</option><option value="Crítico">🔴 Crítico</option></select>
       </div>
@@ -9331,7 +9327,6 @@ const TODO_SUBAREAS={
   "Garantias":["Cartas de Serviços","Recuperação","Custos"],
   "PCM":["Planejamento","Programação","Pneus","Rodantes","Confiabilidade","Inspeção","Análise de Falha"],
   "MRO e Pneus":["Marcação Pneus","Aderência Recapagem"],
-  "Medição":["Cronograma Medição","Lead Time Faturamento","Cronograma Faturamento"],
   "Gestão de Ativos":["Logística","Sistema","Cadastro","Frota Leve","Inventário Pátio","Localização Sistema"],
   "Performance":["Telemetria","KPIs","Processos","Contrato","Implantação"]
 };
@@ -9832,7 +9827,7 @@ function giRenderGraficos(){
 
   const RESP_LIST=['Rafael Welter','Luana Macedo','Lucas Dutra','Diego Soares','João Moisés','Wagner Vilar','Alex Sandro','Bruno Vinicius','Henrique Melo'];
   const AREA_CORES=['#1e293b','#F37021','#60a5fa','#1D9E75','#fbbf24','#7F77DD','#C24003'];
-  const AREAS=['Avarias','Garantias','PCM','MRO e Pneus','Medição','Gestão de Ativos','Performance'];
+  const AREAS=['Avarias','Garantias','PCM','MRO e Pneus','Gestão de Ativos','Performance'];
 
   // Filtrar só responsáveis com dados (evitar eixo gigante vazio)
   const respComDados=RESP_LIST.filter(r=>items.some(t=>t.resp===r));
@@ -10162,6 +10157,7 @@ function todoMudarAba(aba){
 function abrirTodo(){
   document.getElementById('todo-overlay').style.display='block';
   giPopularSelects();
+  snavSetActive('snav-gi');
   const nome=(currentUser&&currentUser.nome)||'—';
   const el=document.getElementById('todo-solicitante-nome');
   if(el)el.textContent=nome;
@@ -11433,6 +11429,219 @@ function gpLimparFiltros(){
 
 function gpRenderAll(){gpRenderPeriodoChecks();gpRenderTabela();}
 
+// ── VALE PEÇAS ────────────────────────────────────────────────────────────────
+let _vpRegistros=[];
+
+async function vpLoadFromFirebase(){
+  try{
+    const r=await fetch(FB_BASE+'/vale_pecas.json');
+    const d=await r.json();
+    _vpRegistros=d&&typeof d==='object'?Object.values(d).sort((a,b)=>(b.ts||0)-(a.ts||0)):[];
+  }catch(e){_vpRegistros=[];}
+  vpRender();vpUpdateHomeBadge();
+}
+
+async function vpSalvarTudo(){
+  const obj={};_vpRegistros.forEach(r=>{obj[r.id]=r;});
+  await fetch(FB_BASE+'/vale_pecas.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});
+}
+
+function abrirValePecas(){
+  const ov=document.getElementById('valepecas-overlay');
+  if(ov){ov.style.display='flex';snavSetActive('snav-valepecas');}
+  vpLoadFromFirebase();
+  vpPopularSelectsUsuarios();
+  vpMudarAba('abertas');
+}
+
+function fecharValePecas(){
+  const ov=document.getElementById('valepecas-overlay');
+  if(ov)ov.style.display='none';
+}
+
+function vpPopularSelectsUsuarios(){
+  if(!usuariosCache||!usuariosCache.length)return;
+  const nomes=[...new Set(usuariosCache.map(u=>u.nome).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));
+  ['vp-solicitante','vp-gestor'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const cur=el.value;
+    el.innerHTML='<option value="">— Selecione —</option>'+nomes.map(n=>`<option>${n}</option>`).join('');
+    if(cur)el.value=cur;
+  });
+}
+
+function vpMudarAba(aba){
+  ['abertas','devolvidas','novo'].forEach(a=>{
+    const el=document.getElementById('vp-aba-'+a);if(el)el.style.display=a===aba?'':'none';
+    const btn=document.getElementById('vptab-'+a);
+    if(btn){btn.style.background=a===aba?'#dc2626':'#e2e8f0';btn.style.color=a===aba?'#fff':'#475569';}
+  });
+  if(aba==='abertas'||aba==='devolvidas')vpRender();
+}
+
+function vpSalvar(){
+  const data=document.getElementById('vp-data')?.value||'';
+  const equipRet=(document.getElementById('vp-equip-ret')?.value||'').trim().toUpperCase();
+  const oficina=document.getElementById('vp-oficina')?.value||'';
+  const solicitante=document.getElementById('vp-solicitante')?.value||'';
+  const equipDest=(document.getElementById('vp-equip-dest')?.value||'').trim().toUpperCase();
+  const operacao=(document.getElementById('vp-operacao')?.value||'').trim();
+  const om=(document.getElementById('vp-om')?.value||'').trim();
+  const rc=(document.getElementById('vp-rc')?.value||'').trim();
+  const pn=(document.getElementById('vp-pn')?.value||'').trim();
+  const qtd=parseInt(document.getElementById('vp-qtd')?.value||'1')||1;
+  const dataPrevDev=document.getElementById('vp-data-prev-dev')?.value||'';
+  const gestor=document.getElementById('vp-gestor')?.value||'';
+  const obs=(document.getElementById('vp-obs')?.value||'').trim();
+  if(!equipRet)return alert('Informe o equipamento de retirada.');
+  if(!oficina)return alert('Selecione a oficina.');
+  const obj={data,equipRet,oficina,solicitante,equipDest,operacao,om,rc,pn,qtd,dataPrevDev,gestor,obs,devolvido:false,dataDevolucao:'',obsDev:''};
+  const editId=document.getElementById('vp-editing-id')?.value||'';
+  if(editId){
+    const idx=_vpRegistros.findIndex(r=>r.id===editId);
+    if(idx>=0)_vpRegistros[idx]={..._vpRegistros[idx],...obj};
+    vpCancelar();
+  }else{
+    obj.id='vp_'+Date.now();obj.ts=Date.now();
+    _vpRegistros.unshift(obj);
+    ['vp-data','vp-equip-ret','vp-equip-dest','vp-operacao','vp-om','vp-rc','vp-pn','vp-qtd','vp-data-prev-dev','vp-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    document.getElementById('vp-oficina').value='';
+    document.getElementById('vp-solicitante').value='';
+    document.getElementById('vp-gestor').value='';
+  }
+  vpSalvarTudo();vpRender();vpUpdateHomeBadge();showToast('✅ Vale de peça registrado!');
+}
+
+function vpEditar(id){
+  const r=_vpRegistros.find(x=>x.id===id);if(!r)return;
+  const sv=(sid,v)=>{const el=document.getElementById(sid);if(el)el.value=v||'';};
+  sv('vp-data',r.data);sv('vp-equip-ret',r.equipRet);sv('vp-oficina',r.oficina);
+  sv('vp-solicitante',r.solicitante);sv('vp-equip-dest',r.equipDest);sv('vp-operacao',r.operacao);
+  sv('vp-om',r.om);sv('vp-rc',r.rc);sv('vp-pn',r.pn);sv('vp-qtd',r.qtd);
+  sv('vp-data-prev-dev',r.dataPrevDev);sv('vp-gestor',r.gestor);sv('vp-obs',r.obs);
+  sv('vp-editing-id',id);
+  document.getElementById('vp-form-label').textContent='Editando Vale: '+r.equipRet;
+  document.getElementById('vp-salvar-btn').textContent='💾 Salvar alterações';
+  document.getElementById('vp-cancelar-btn').style.display='inline-block';
+  vpMudarAba('novo');
+}
+
+function vpCancelar(){
+  ['vp-data','vp-equip-ret','vp-equip-dest','vp-operacao','vp-om','vp-rc','vp-pn','vp-qtd','vp-data-prev-dev','vp-obs','vp-editing-id'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('vp-form-label').textContent='Novo Vale de Peça';
+  document.getElementById('vp-salvar-btn').textContent='💾 Registrar Vale';
+  document.getElementById('vp-cancelar-btn').style.display='none';
+}
+
+function vpAbrirDevolucao(id){
+  const modal=document.getElementById('vp-dev-modal');
+  if(!modal)return;
+  document.getElementById('vp-dev-id').value=id;
+  document.getElementById('vp-dev-data').value=new Date().toISOString().split('T')[0];
+  document.getElementById('vp-dev-obs').value='';
+  modal.style.display='flex';
+}
+
+function vpConfirmarDevolucao(){
+  const id=document.getElementById('vp-dev-id')?.value||'';
+  const data=document.getElementById('vp-dev-data')?.value||'';
+  const obs=(document.getElementById('vp-dev-obs')?.value||'').trim();
+  const idx=_vpRegistros.findIndex(r=>r.id===id);if(idx<0)return;
+  _vpRegistros[idx].devolvido=true;
+  _vpRegistros[idx].dataDevolucao=data;
+  _vpRegistros[idx].obsDev=obs;
+  document.getElementById('vp-dev-modal').style.display='none';
+  vpSalvarTudo();vpRender();vpUpdateHomeBadge();showToast('✅ Devolução registrada!');
+}
+
+function vpDeletar(id){
+  if(!confirm('Remover este vale?'))return;
+  _vpRegistros=_vpRegistros.filter(r=>r.id!==id);
+  vpSalvarTudo();vpRender();vpUpdateHomeBadge();
+}
+
+function vpUpdateHomeBadge(){
+  const pendentes=_vpRegistros.filter(r=>!r.devolvido).length;
+  const kpi=document.getElementById('home-kpi-valepecas');
+  const badge=document.getElementById('home-badge-valepecas');
+  if(kpi)kpi.innerHTML=`<span style="color:#dc2626;font-weight:900;font-size:20px">${pendentes}</span>`;
+  if(badge)badge.textContent=pendentes===1?'pendente':'pendentes';
+}
+
+function vpRender(){
+  const filtOf=document.getElementById('vp-fil-oficina')?.value||'';
+  const abertas=_vpRegistros.filter(r=>!r.devolvido&&(!filtOf||r.oficina===filtOf));
+  const devolvidas=_vpRegistros.filter(r=>r.devolvido&&(!filtOf||r.oficina===filtOf));
+
+  const hoje=new Date().toISOString().split('T')[0];
+  const colHd=s=>`<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;border-bottom:1px solid #e2e8f0;background:#f8fafc;white-space:nowrap">${s}</th>`;
+
+  // Pendentes
+  const laEl=document.getElementById('vp-lista-abertas');
+  if(laEl){
+    if(!abertas.length){laEl.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhum vale pendente.</div>';}
+    else{
+      const rows=abertas.map((r,i)=>{
+        const atrasado=r.dataPrevDev&&r.dataPrevDev<hoje;
+        const bgRow=i%2?'#fff':'#fafbff';
+        const dataFmt=d=>d?d.split('-').reverse().join('/'):'—';
+        return`<tr style="background:${bgRow};border-bottom:1px solid #f1f5f9">
+          <td style="padding:8px 10px;font-size:11px">${dataFmt(r.data)}</td>
+          <td style="padding:8px 10px;font-family:monospace;font-weight:700;font-size:12px">${r.equipRet||'—'}</td>
+          <td style="padding:8px 10px;font-family:monospace;font-size:12px;color:#64748b">${r.equipDest||'—'}</td>
+          <td style="padding:8px 10px;font-size:11px">${r.oficina||'—'}</td>
+          <td style="padding:8px 10px;font-size:11px">${r.solicitante||'—'}</td>
+          <td style="padding:8px 10px;font-size:11px">${r.om||'—'}</td>
+          <td style="padding:8px 10px;font-size:11px">${r.rc||'—'}</td>
+          <td style="padding:8px 10px;font-size:11px;font-family:monospace">${r.pn||'—'}</td>
+          <td style="padding:8px 10px;text-align:center;font-weight:700">${r.qtd||1}</td>
+          <td style="padding:8px 10px;font-size:11px;color:${atrasado?'#dc2626':'#64748b'};font-weight:${atrasado?700:400}">${dataFmt(r.dataPrevDev)}${atrasado?' ⚠':''}</td>
+          <td style="padding:8px 10px;font-size:11px">${r.operacao||'—'}</td>
+          <td style="padding:8px 10px;font-size:11px">${r.gestor||'—'}</td>
+          <td style="padding:8px 10px;text-align:center;white-space:nowrap">
+            <button onclick="vpAbrirDevolucao('${r.id}')" style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600" title="Registrar devolução">↩ Devolver</button>
+            <button onclick="vpEditar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#F37021;font-size:13px" title="Editar">✏</button>
+            <button onclick="vpDeletar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px" title="Remover">🗑</button>
+          </td>
+        </tr>`;
+      }).join('');
+      laEl.innerHTML=`<div style="margin-bottom:8px;font-size:11px;color:#94a3b8">${abertas.length} vale(s) pendente(s)</div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
+      <thead><tr>${['Data','Equip. Ret.','Equip. Dest.','Oficina','Solicitante','O.M.','RC','P.N.','Qtd','Prev. Dev.','Operação','Gestor','Ações'].map(colHd).join('')}</tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+    }
+  }
+
+  // Devolvidas
+  const ldEl=document.getElementById('vp-lista-devolvidas');
+  if(ldEl){
+    if(!devolvidas.length){ldEl.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhuma devolução registrada.</div>';}
+    else{
+      const rows=devolvidas.map((r,i)=>{
+        const dataFmt=d=>d?d.split('-').reverse().join('/'):'—';
+        return`<tr style="background:${i%2?'#fff':'#f0fdf4'};border-bottom:1px solid #f1f5f9">
+          <td style="padding:8px 10px;font-size:11px">${dataFmt(r.data)}</td>
+          <td style="padding:8px 10px;font-family:monospace;font-weight:700;font-size:12px">${r.equipRet||'—'}</td>
+          <td style="padding:8px 10px;font-family:monospace;font-size:12px;color:#64748b">${r.equipDest||'—'}</td>
+          <td style="padding:8px 10px;font-size:11px">${r.oficina||'—'}</td>
+          <td style="padding:8px 10px;font-size:11px">${r.solicitante||'—'}</td>
+          <td style="padding:8px 10px;font-size:11px;font-family:monospace">${r.pn||'—'}</td>
+          <td style="padding:8px 10px;text-align:center;font-weight:700">${r.qtd||1}</td>
+          <td style="padding:8px 10px;font-size:11px;color:#16a34a;font-weight:600">${dataFmt(r.dataDevolucao)}</td>
+          <td style="padding:8px 10px;font-size:11px;color:#64748b">${r.obsDev||'—'}</td>
+          <td style="padding:8px 10px;text-align:center">
+            <button onclick="vpDeletar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px" title="Remover">🗑</button>
+          </td>
+        </tr>`;
+      }).join('');
+      ldEl.innerHTML=`<div style="margin-bottom:8px;font-size:11px;color:#94a3b8">${devolvidas.length} devolução(ões)</div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
+      <thead><tr>${['Data Ret.','Equip. Ret.','Equip. Dest.','Oficina','Solicitante','P.N.','Qtd','Data Dev.','Obs. Dev.','Ações'].map(colHd).join('')}</tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+    }
+  }
+}
+
 // ── POPULAR SELECTS DE USUÁRIOS DINAMICAMENTE ────────────────────────────────
 function giPopularSelects(){
   if(!usuariosCache||!usuariosCache.length)return;
@@ -11509,6 +11718,7 @@ function abrirMedicao(){
 
 function abrirHistoricoAtivos(){
   document.getElementById('historico-overlay').style.display='block';
+  snavSetActive('snav-historico');
   histPopularOficinas();
   if(!_histLogs) histCarregarLogs();
   else histMostrarLista();
@@ -11582,6 +11792,8 @@ function histMostrarLista(){
   const busca = (document.getElementById('hist-busca')?.value||'').toLowerCase().trim();
   const filtOficina = document.getElementById('hist-filtro-oficina')?.value||'';
   const filtStatus = document.getElementById('hist-filtro-status')?.value||'';
+  const filtDataISO = document.getElementById('hist-filtro-data')?.value||'';
+  const filtMovimento = document.getElementById('hist-filtro-movimento')?.value||'';
   const lista = document.getElementById('hist-lista');
   const detalhe = document.getElementById('hist-detalhe');
 
@@ -11594,6 +11806,15 @@ function histMostrarLista(){
   if(filtOficina) equips = equips.filter(e => e.oficina === filtOficina);
   if(filtStatus === 'ativo') equips = equips.filter(e => state[e.id] && !state[e.id].baixado && state[e.id].etapa !== 'alugado');
   if(filtStatus === 'saiu') equips = equips.filter(e => !state[e.id] || state[e.id].baixado || state[e.id].etapa === 'alugado');
+  // Filtro por data e tipo de movimentação — busca nos logs do equipamento
+  if(filtDataISO || filtMovimento){
+    const dataFmt=filtDataISO?filtDataISO.split('-').reverse().join('/'):'';
+    equips=equips.filter(e=>e.logs.some(log=>{
+      const mData=!dataFmt||(log.data||''===dataFmt)||(log.data||'')===dataFmt;
+      const mMov=!filtMovimento||(log.to||'').includes(filtMovimento);
+      return mData&&mMov;
+    }));
+  }
 
   _histEquipsFiltrados = equips;
   detalhe.style.display = 'none';
@@ -11751,6 +11972,18 @@ function histVoltarLista(){
         <option value="">Status — Todos</option>
         <option value="ativo">No kanban agora</option>
         <option value="saiu">Saiu do kanban</option>
+      </select>
+      <input type="date" id="hist-filtro-data" onchange="histFiltrar()" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;cursor:pointer" title="Filtrar por data de movimentação">
+      <select id="hist-filtro-movimento" onchange="histFiltrar()" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;min-width:180px">
+        <option value="">Tipo de Movimentação — Todos</option>
+        <option value="Pronto">→ Pronto / Estoque</option>
+        <option value="Manutenção">→ Manutenção</option>
+        <option value="Check List Saída">→ Check List Saída</option>
+        <option value="Aguard. Movimentação">→ Aguard. Movimentação</option>
+        <option value="Lavagem">→ Lavagem</option>
+        <option value="Check List Entrada">→ Check List Entrada</option>
+        <option value="Oficina">→ Mudança de Oficina</option>
+        <option value="Operação">→ Retorno de Operação</option>
       </select>
     </div>
 
@@ -12478,5 +12711,100 @@ function histRenderRevisao(){
 
 </div><!-- fim app-main -->
 </div><!-- fim app-body -->
+
+<!-- VALE PEÇAS OVERLAY -->
+<div id="valepecas-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:2000;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:1100px;min-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden">
+    <div style="background:#0f172a;color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div>
+        <div style="font-size:18px;font-weight:700">🔩 Vale Peças</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:2px">Controle de retirada e devolução de peças entre equipamentos</div>
+      </div>
+      <button onclick="fecharValePecas()" style="background:rgba(255,255,255,.1);border:none;color:#fff;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px">✕ Fechar</button>
+    </div>
+
+    <!-- Filtros e abas -->
+    <div style="background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:12px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="vp-tab active" id="vptab-abertas" onclick="vpMudarAba('abertas')" style="font-size:12px;font-weight:700;padding:7px 16px;border-radius:7px;border:none;cursor:pointer;background:#dc2626;color:#fff">⚠ Pendentes</button>
+      <button class="vp-tab" id="vptab-devolvidas" onclick="vpMudarAba('devolvidas')" style="font-size:12px;font-weight:700;padding:7px 16px;border-radius:7px;border:none;cursor:pointer;background:#e2e8f0;color:#475569">✅ Devolvidas</button>
+      <button class="vp-tab" id="vptab-novo" onclick="vpMudarAba('novo')" style="font-size:12px;font-weight:700;padding:7px 16px;border-radius:7px;border:none;cursor:pointer;background:#e2e8f0;color:#475569">＋ Novo Vale</button>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <select id="vp-fil-oficina" onchange="vpRender()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;background:#fff">
+          <option value="">Oficina — Todas</option>
+          <option>Assis (SP)</option><option>Contagem (MG)</option><option>Osasco (SP)</option>
+          <option>Parauapebas (PA)</option><option>Santos (SP)</option><option>Sumaré (SP)</option>
+          <option>São José dos Pinhais (PR)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Corpo -->
+    <div style="flex:1;padding:20px 24px;overflow-y:auto">
+
+      <!-- ABA: Novo Vale -->
+      <div id="vp-aba-novo" style="display:none">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:14px" id="vp-form-label">Novo Vale de Peça</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+          <div><label class="gi-label">Data</label><input class="gi-input" type="date" id="vp-data"></div>
+          <div><label class="gi-label">Equipamento Retirada (origem)</label><input class="gi-input" id="vp-equip-ret" placeholder="ID do equipamento de origem"></div>
+          <div><label class="gi-label">Oficina</label>
+            <select class="gi-select" id="vp-oficina">
+              <option value="">— Selecione —</option>
+              <option>Assis (SP)</option><option>Contagem (MG)</option><option>Osasco (SP)</option>
+              <option>Parauapebas (PA)</option><option>Santos (SP)</option><option>Sumaré (SP)</option>
+              <option>São José dos Pinhais (PR)</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+          <div><label class="gi-label">Solicitante</label><select class="gi-select" id="vp-solicitante"><option value="">— Selecione —</option></select></div>
+          <div><label class="gi-label">Equipamento Destino</label><input class="gi-input" id="vp-equip-dest" placeholder="ID do equipamento de destino"></div>
+          <div><label class="gi-label">Operação / Contrato</label><input class="gi-input" id="vp-operacao" placeholder="Nome da operação"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+          <div><label class="gi-label">O.M.</label><input class="gi-input" id="vp-om" placeholder="Nº da O.M."></div>
+          <div><label class="gi-label">RC</label><input class="gi-input" id="vp-rc" placeholder="Nº do RC"></div>
+          <div><label class="gi-label">P.N. (Part Number)</label><input class="gi-input" id="vp-pn" placeholder="Código da peça"></div>
+          <div><label class="gi-label">Quantidade</label><input class="gi-input" type="number" min="1" id="vp-qtd" placeholder="1"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+          <div><label class="gi-label">Data Prevista Devolução</label><input class="gi-input" type="date" id="vp-data-prev-dev"></div>
+          <div><label class="gi-label">Gestor</label><select class="gi-select" id="vp-gestor"><option value="">— Selecione —</option></select></div>
+          <div><label class="gi-label">Observação</label><input class="gi-input" id="vp-obs" placeholder="Detalhes adicionais..."></div>
+        </div>
+        <input type="hidden" id="vp-editing-id">
+        <div style="display:flex;gap:8px">
+          <button class="gi-btn" id="vp-salvar-btn" onclick="vpSalvar()">💾 Registrar Vale</button>
+          <button class="gi-btn ghost" id="vp-cancelar-btn" style="display:none" onclick="vpCancelar()">✕ Cancelar</button>
+        </div>
+      </div>
+
+      <!-- ABA: Pendentes -->
+      <div id="vp-aba-abertas">
+        <div id="vp-lista-abertas"></div>
+      </div>
+
+      <!-- ABA: Devolvidas -->
+      <div id="vp-aba-devolvidas" style="display:none">
+        <div id="vp-lista-devolvidas"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal devolução Vale Peças -->
+<div id="vp-dev-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:24px;width:360px;box-shadow:0 10px 40px rgba(0,0,0,.2)">
+    <div style="font-size:15px;font-weight:700;margin-bottom:16px">✅ Registrar Devolução</div>
+    <div style="margin-bottom:12px"><label class="gi-label">Data de Devolução</label><input class="gi-input" type="date" id="vp-dev-data"></div>
+    <div style="margin-bottom:16px"><label class="gi-label">Observação</label><input class="gi-input" id="vp-dev-obs" placeholder="Condição, pendências..."></div>
+    <input type="hidden" id="vp-dev-id">
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="gi-btn ghost" onclick="document.getElementById('vp-dev-modal').style.display='none'">Cancelar</button>
+      <button class="gi-btn" onclick="vpConfirmarDevolucao()" style="background:#16a34a">✅ Confirmar Devolução</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
