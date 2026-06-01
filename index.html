@@ -11450,17 +11450,21 @@ async function vpSalvarTudo(){
 function abrirValePecas(){navegarPara('valepecas');}
 
 function paginaValePecas(){
+  // Oculta todas as páginas normais e o painel de VP
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const pg=document.getElementById('page-valepecas');
-  if(pg)pg.classList.add('active');
-  // Data padrão = hoje
+  document.getElementById('page-valepecas').style.display='block';
+  // Garante que fechar() reseta quando navegar para outra área
   const dataEl=document.getElementById('vp-data');
   if(dataEl&&!dataEl.value)dataEl.value=new Date().toISOString().split('T')[0];
-  if(!_vpItens.length)vpAddItem(); // garante pelo menos 1 item
+  if(!_vpItens.length)vpAddItem();
   vpRenderItens();
   vpLoadFromFirebase();
   vpPopularSelectsUsuarios();
   vpMudarAba('abertas');
+}
+
+function fecharValePecas(){
+  document.getElementById('page-valepecas').style.display='none';
 }
 
 function vpPopularSelectsUsuarios(){
@@ -12204,6 +12208,8 @@ document.head.appendChild(rgStyle);
 function snavSetActive(id){
   document.querySelectorAll('.snav-item').forEach(el=>el.classList.remove('active'));
   const el=document.getElementById(id);if(el)el.classList.add('active');
+  // Oculta painel Vale Peças ao navegar para outra área
+  if(id!=='snav-valepecas'){const vp=document.getElementById('page-valepecas');if(vp)vp.style.display='none';}
 }
 
 function navegarPara(destino){
@@ -12741,8 +12747,8 @@ function histRenderRevisao(){
 </div>
 
 <!-- VALE PEÇAS -->
-<div class="page" id="page-valepecas">
-  <div style="padding:24px 28px">
+<div id="page-valepecas" style="display:none;position:fixed;left:60px;top:56px;right:0;bottom:0;overflow-y:auto;background:#eef1f6;z-index:100">
+  <div style="padding:24px 28px;max-width:1400px">
     <div class="page-hdr">
       <div class="page-hdr-title"><span style="color:#dc2626">🔩</span> Vale Peças</div>
       <div class="page-hdr-sub">Controle de retirada e devolução de peças entre equipamentos</div>
