@@ -12742,7 +12742,7 @@ function histRenderRevisao(){
 
 <!-- VALE PEÇAS -->
 <div class="page" id="page-valepecas">
-  <div style="padding:24px 28px">
+  <div style="padding:24px 28px 24px 32px;min-width:0;overflow-x:hidden">
     <div class="page-hdr">
       <div class="page-hdr-title"><span style="color:#dc2626">🔩</span> Vale Peças</div>
       <div class="page-hdr-sub">Controle de retirada e devolução de peças entre equipamentos</div>
@@ -12755,7 +12755,7 @@ function histRenderRevisao(){
         <button class="gi-btn ghost" id="vp-cancelar-btn" style="display:none;font-size:11px;padding:5px 12px" onclick="vpCancelar()">✕ Cancelar edição</button>
       </div>
       <!-- Linha 1: Dados principais -->
-      <div class="gi-form-row" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr;margin-bottom:10px">
+      <div class="gi-form-row" style="grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:10px">
         <div><label class="gi-label">Data</label><input class="gi-input" type="date" id="vp-data"></div>
         <div><label class="gi-label">Equip. Retirada (origem)</label><input class="gi-input" id="vp-equip-ret" placeholder="ID do equipamento"></div>
         <div><label class="gi-label">Oficina</label>
@@ -12770,7 +12770,7 @@ function histRenderRevisao(){
         <div><label class="gi-label">Gestor</label><select class="gi-select" id="vp-gestor"><option value="">— Selecione —</option></select></div>
       </div>
       <!-- Linha 2: Destino e documentação -->
-      <div class="gi-form-row" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-bottom:10px">
+      <div class="gi-form-row" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:10px">
         <div><label class="gi-label">Equip. Destino</label><input class="gi-input" id="vp-equip-dest" placeholder="ID do equipamento destino"></div>
         <div><label class="gi-label">Operação / Contrato</label><input class="gi-input" id="vp-operacao" placeholder="Nome da operação"></div>
         <div><label class="gi-label">O.M.</label><input class="gi-input" id="vp-om" placeholder="Nº da O.M."></div>
