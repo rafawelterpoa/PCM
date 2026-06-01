@@ -1918,6 +1918,7 @@ let currentUser=null;
 async function initUsuarios(){
   try{const fb=await fbGetUsers();if(fb&&Array.isArray(fb)&&fb.length>0)usuariosCache=fb;else{usuariosCache=[...USUARIOS_PADRAO];await fbSetUsers(usuariosCache);}
   }catch(e){usuariosCache=[...USUARIOS_PADRAO];}
+  if(typeof giPopularSelects==='function')giPopularSelects();
 }
 
 function doLogin(){
@@ -8761,9 +8762,6 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap" id="todo-resp-container">
               <select class="gi-select" id="todo-resp-sel" style="width:180px">
                 <option value="">Selecione o responsável...</option>
-                <option>Rafael Welter</option><option>Luana Macedo</option><option>Lucas Dutra</option>
-                <option>Diego Soares</option><option>João Moisés</option><option>Wagner Vilar</option>
-                <option>Alex Sandro</option><option>Bruno Vinicius</option><option>Henrique Melo</option>
               </select>
               <div id="todo-resp-chips" style="display:flex;gap:4px;flex-wrap:wrap"></div>
               <button type="button" onclick="todoAddResp()" style="background:#e0f2fe;border:1px solid #7dd3fc;color:#0369a1;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">+ Adicionar</button>
@@ -8854,7 +8852,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
           <div style="grid-column:span 4"><label class="gi-label">Descrição do KPI</label><input class="gi-input" id="tkpi-desc" placeholder="O que este indicador mede e como é calculado?"></div>
           <div><label class="gi-label">Unidade</label><select class="gi-select" id="tkpi-unit"><option value="Dias">Dias (Menos é Melhor)</option><option value="%">% (Mais é Melhor)</option>
               <option value="%-inv">% (Menos é Melhor)</option><option value="R$MI">R$MI (Mais é Melhor)</option><option value="Numérico">Numérico</option></select></div>
-          <div><label class="gi-label">Responsável</label><select class="gi-select" id="tkpi-user"><option>Rafael Welter</option><option>Luana Macedo</option><option>Lucas Dutra</option><option>Diego Soares</option><option>João Moisés</option><option>Wagner Vilar</option><option>Alex Sandro</option><option>Bruno Vinicius</option><option>Henrique Melo</option></select></div>
+          <div><label class="gi-label">Responsável</label><select class="gi-select" id="tkpi-user"></select></div>
           <div><label class="gi-label">Referência 2025</label><input class="gi-input" id="tkpi-ref2025" placeholder="Resultado 2025"></div>
           <div><label class="gi-label">Meta Alvo 2026</label><input class="gi-input" type="number" id="tkpi-meta" placeholder="Meta alvo"></div>
         </div>
@@ -9001,9 +8999,6 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
           <div><label class="gi-label">Responsável</label>
             <select class="gi-select" id="rs-ind-resp">
               <option value="">—</option>
-              <option>Rafael Welter</option><option>Luana Macedo</option><option>Lucas Dutra</option>
-              <option>Diego Soares</option><option>João Moisés</option><option>Wagner Vilar</option>
-              <option>Alex Sandro</option><option>Bruno Vinicius</option><option>Henrique Melo</option>
             </select></div>
         </div>
         <div class="gi-form-row" style="grid-template-columns:2fr 1fr;margin-bottom:10px">
@@ -9038,9 +9033,6 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
             </select>
             <select class="gi-select" style="width:150px;font-size:11px" id="rs-fil-ind-resp" onchange="rsIndRenderLista()">
               <option value="">Responsável — Todos</option>
-              <option>Rafael Welter</option><option>Luana Macedo</option><option>Lucas Dutra</option>
-              <option>Diego Soares</option><option>João Moisés</option><option>Wagner Vilar</option>
-              <option>Alex Sandro</option><option>Bruno Vinicius</option><option>Henrique Melo</option>
             </select>
           </div>
         </div>
@@ -9084,9 +9076,6 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
         </select>
         <select class="gi-select" style="width:150px;font-size:11px" id="rs-tab-resp" onchange="rsRenderTabela()">
           <option value="">Responsável — Todos</option>
-          <option>Rafael Welter</option><option>Luana Macedo</option><option>Lucas Dutra</option>
-          <option>Diego Soares</option><option>João Moisés</option><option>Wagner Vilar</option>
-          <option>Alex Sandro</option><option>Bruno Vinicius</option><option>Henrique Melo</option>
         </select>
         <select class="gi-select" style="width:170px;font-size:11px" id="rs-tab-tipo" onchange="rsRenderTabela()">
           <option value="">Tipo — Todos</option>
@@ -9213,7 +9202,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <div class="gi-page-sub">Visão consolidada do atingimento de metas 2026 por área e responsável.</div>
       <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
         <select class="gi-select" style="width:180px" id="metas-fil-area" onchange="metasRender()"><option value="">Todas as áreas</option><option>Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Medição</option><option>Gestão de Ativos</option><option>Performance</option></select>
-        <select class="gi-select" style="width:180px" id="metas-fil-resp" onchange="metasRender()"><option value="">Todos os responsáveis</option><option>Rafael Welter</option><option>Luana Macedo</option><option>Lucas Dutra</option><option>Diego Soares</option><option>João Moisés</option><option>Wagner Vilar</option><option>Alex Sandro</option><option>Bruno Vinicius</option><option>Henrique Melo</option></select>
+        <select class="gi-select" style="width:180px" id="metas-fil-resp" onchange="metasRender()"><option value="">Todos os responsáveis</option></select>
         <select class="gi-select" style="width:150px" id="metas-fil-farol" onchange="metasRender()"><option value="">Todos os farois</option><option value="Atingido">✅ Atingido</option><option value="Em linha">🟡 Em linha</option><option value="Atenção">⚠️ Atenção</option><option value="Crítico">🔴 Crítico</option></select>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
@@ -9250,7 +9239,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
           <div><label class="gi-label">Prazo Limite</label><input class="gi-input" type="date" id="edit-dt-entrega"></div>
         </div>
         <div class="gi-form-row c2">
-          <div><label class="gi-label">Responsável</label><select class="gi-select" id="edit-resp"><option>Rafael Welter</option><option>Luana Macedo</option><option>Lucas Dutra</option><option>Diego Soares</option><option>João Moisés</option><option>Wagner Vilar</option><option>Alex Sandro</option><option>Bruno Vinicius</option><option>Henrique Melo</option></select></div>
+          <div><label class="gi-label">Responsável</label><select class="gi-select" id="edit-resp"></select></div>
           <div><label class="gi-label">Observação</label><input class="gi-input" id="edit-obs" placeholder="Observação..."></div>
         </div>
         <input type="hidden" id="edit-todo-id">
@@ -9278,9 +9267,6 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
             <label class="gi-label">Programador</label>
             <select class="gi-select" id="gp-programador">
               <option value="">— Selecione —</option>
-              <option>João Moisés</option><option>Wagner Vilar</option><option>Diego Soares</option>
-              <option>Henrique Melo</option><option>Alex Sandro</option><option>Bruno Vinicius</option>
-              <option>Lucas Dutra</option><option>Rafael Welter</option><option>Luana Macedo</option>
             </select>
           </div>
           <div>
@@ -9320,9 +9306,6 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
         <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Filtros</div>
         <select class="gi-select" style="width:170px;font-size:11px" id="gp-fil-prog" onchange="gpRenderTabela()">
           <option value="">Programador — Todos</option>
-          <option>João Moisés</option><option>Wagner Vilar</option><option>Diego Soares</option>
-          <option>Henrique Melo</option><option>Alex Sandro</option><option>Bruno Vinicius</option>
-          <option>Lucas Dutra</option><option>Rafael Welter</option><option>Luana Macedo</option>
         </select>
         <select class="gi-select" style="width:180px;font-size:11px" id="gp-fil-view" onchange="gpRenderTabela()">
           <option value="historico">Visão: Histórico Geral</option>
@@ -10178,6 +10161,7 @@ function todoMudarAba(aba){
 
 function abrirTodo(){
   document.getElementById('todo-overlay').style.display='block';
+  giPopularSelects();
   const nome=(currentUser&&currentUser.nome)||'—';
   const el=document.getElementById('todo-solicitante-nome');
   if(el)el.textContent=nome;
@@ -11448,6 +11432,29 @@ function gpLimparFiltros(){
 }
 
 function gpRenderAll(){gpRenderPeriodoChecks();gpRenderTabela();}
+
+// ── POPULAR SELECTS DE USUÁRIOS DINAMICAMENTE ────────────────────────────────
+function giPopularSelects(){
+  if(!usuariosCache||!usuariosCache.length)return;
+  // Nomes únicos ordenados alfabeticamente
+  const nomes=[...new Set(usuariosCache.map(u=>u.nome).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));
+  // Helpers para gerar options preservando o valor selecionado
+  const fill=(id,blank,opts)=>{
+    const el=document.getElementById(id);if(!el)return;
+    const cur=el.value;
+    el.innerHTML=(blank!==null?`<option value="">${blank}</option>`:'')+opts.map(n=>`<option>${n}</option>`).join('');
+    if(cur)el.value=cur;
+  };
+  fill('todo-resp-sel',  'Selecione o responsável...',  nomes);
+  fill('tkpi-user',      null,                           nomes);
+  fill('rs-ind-resp',    '—',                            nomes);
+  fill('rs-fil-ind-resp','Responsável — Todos',          nomes);
+  fill('rs-tab-resp',    'Responsável — Todos',          nomes);
+  fill('metas-fil-resp', 'Todos os responsáveis',        nomes);
+  fill('edit-resp',      null,                           nomes);
+  fill('gp-programador', '— Selecione —',               nomes);
+  fill('gp-fil-prog',    'Programador — Todos',          nomes);
+}
 
 function rsCheckAcesso(){
   const tab=document.getElementById('tptab-reuniao');if(!tab)return;
