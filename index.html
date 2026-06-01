@@ -11431,6 +11431,7 @@ function gpRenderAll(){gpRenderPeriodoChecks();gpRenderTabela();}
 
 // ── VALE PEÇAS ────────────────────────────────────────────────────────────────
 let _vpRegistros=[];
+let _vpItens=[]; // itens do formulário atual [{pn,qtd,desc}]
 
 async function vpLoadFromFirebase(){
   try{
@@ -11452,6 +11453,11 @@ function paginaValePecas(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('page-valepecas');
   if(pg)pg.classList.add('active');
+  // Data padrão = hoje
+  const dataEl=document.getElementById('vp-data');
+  if(dataEl&&!dataEl.value)dataEl.value=new Date().toISOString().split('T')[0];
+  if(!_vpItens.length)vpAddItem(); // garante pelo menos 1 item
+  vpRenderItens();
   vpLoadFromFirebase();
   vpPopularSelectsUsuarios();
   vpMudarAba('abertas');
@@ -11469,12 +11475,38 @@ function vpPopularSelectsUsuarios(){
 }
 
 function vpMudarAba(aba){
-  ['abertas','devolvidas','novo'].forEach(a=>{
-    const el=document.getElementById('vp-aba-'+a);if(el)el.style.display=a===aba?'':'none';
+  const laEl=document.getElementById('vp-lista-abertas');
+  const ldEl=document.getElementById('vp-lista-devolvidas');
+  if(laEl)laEl.style.display=aba==='abertas'?'':'none';
+  if(ldEl)ldEl.style.display=aba==='devolvidas'?'':'none';
+  ['abertas','devolvidas'].forEach(a=>{
     const btn=document.getElementById('vptab-'+a);
     if(btn){btn.style.background=a===aba?'#dc2626':'#e2e8f0';btn.style.color=a===aba?'#fff':'#475569';}
   });
-  if(aba==='abertas'||aba==='devolvidas')vpRender();
+  vpRender();
+}
+
+// Gerenciamento de itens do formulário
+function vpAddItem(){
+  _vpItens.push({pn:'',qtd:1,desc:''});
+  vpRenderItens();
+}
+function vpRemoveItem(i){
+  _vpItens.splice(i,1);
+  if(!_vpItens.length)_vpItens.push({pn:'',qtd:1,desc:''});
+  vpRenderItens();
+}
+function vpItemChange(i,campo,val){
+  if(_vpItens[i])_vpItens[i][campo]= campo==='qtd'?(parseInt(val)||1):val;
+}
+function vpRenderItens(){
+  const tbody=document.getElementById('vp-itens-tbody');if(!tbody)return;
+  tbody.innerHTML=_vpItens.map((it,i)=>`<tr>
+    <td style="padding:4px 6px"><input value="${it.pn||''}" oninput="vpItemChange(${i},'pn',this.value)" placeholder="Ex: FIL-0123" style="width:100%;padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;font-family:monospace"></td>
+    <td style="padding:4px 6px"><input type="number" min="1" value="${it.qtd||1}" oninput="vpItemChange(${i},'qtd',this.value)" style="width:70px;padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;text-align:center"></td>
+    <td style="padding:4px 6px"><input value="${it.desc||''}" oninput="vpItemChange(${i},'desc',this.value)" placeholder="Descrição da peça" style="width:100%;padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px"></td>
+    <td style="padding:4px 6px;text-align:center"><button type="button" onclick="vpRemoveItem(${i})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px;padding:2px 4px" title="Remover item">×</button></td>
+  </tr>`).join('');
 }
 
 function vpSalvar(){
@@ -11486,14 +11518,14 @@ function vpSalvar(){
   const operacao=(document.getElementById('vp-operacao')?.value||'').trim();
   const om=(document.getElementById('vp-om')?.value||'').trim();
   const rc=(document.getElementById('vp-rc')?.value||'').trim();
-  const pn=(document.getElementById('vp-pn')?.value||'').trim();
-  const qtd=parseInt(document.getElementById('vp-qtd')?.value||'1')||1;
   const dataPrevDev=document.getElementById('vp-data-prev-dev')?.value||'';
   const gestor=document.getElementById('vp-gestor')?.value||'';
   const obs=(document.getElementById('vp-obs')?.value||'').trim();
+  const itens=_vpItens.filter(it=>it.pn||it.desc);
   if(!equipRet)return alert('Informe o equipamento de retirada.');
   if(!oficina)return alert('Selecione a oficina.');
-  const obj={data,equipRet,oficina,solicitante,equipDest,operacao,om,rc,pn,qtd,dataPrevDev,gestor,obs,devolvido:false,dataDevolucao:'',obsDev:''};
+  if(!itens.length)return alert('Adicione ao menos um item com P.N. ou descrição.');
+  const obj={data,equipRet,oficina,solicitante,equipDest,operacao,om,rc,itens,dataPrevDev,gestor,obs,devolvido:false,dataDevolucao:'',obsDev:''};
   const editId=document.getElementById('vp-editing-id')?.value||'';
   if(editId){
     const idx=_vpRegistros.findIndex(r=>r.id===editId);
@@ -11502,12 +11534,14 @@ function vpSalvar(){
   }else{
     obj.id='vp_'+Date.now();obj.ts=Date.now();
     _vpRegistros.unshift(obj);
-    ['vp-data','vp-equip-ret','vp-equip-dest','vp-operacao','vp-om','vp-rc','vp-pn','vp-qtd','vp-data-prev-dev','vp-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ['vp-equip-ret','vp-equip-dest','vp-operacao','vp-om','vp-rc','vp-data-prev-dev','vp-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    document.getElementById('vp-data').value=new Date().toISOString().split('T')[0];
     document.getElementById('vp-oficina').value='';
     document.getElementById('vp-solicitante').value='';
     document.getElementById('vp-gestor').value='';
+    _vpItens=[{pn:'',qtd:1,desc:''}];vpRenderItens();
   }
-  vpSalvarTudo();vpRender();vpUpdateHomeBadge();showToast('✅ Vale de peça registrado!');
+  vpSalvarTudo();vpRender();vpUpdateHomeBadge();showToast('✅ Vale registrado!');
 }
 
 function vpEditar(id){
@@ -11515,18 +11549,25 @@ function vpEditar(id){
   const sv=(sid,v)=>{const el=document.getElementById(sid);if(el)el.value=v||'';};
   sv('vp-data',r.data);sv('vp-equip-ret',r.equipRet);sv('vp-oficina',r.oficina);
   sv('vp-solicitante',r.solicitante);sv('vp-equip-dest',r.equipDest);sv('vp-operacao',r.operacao);
-  sv('vp-om',r.om);sv('vp-rc',r.rc);sv('vp-pn',r.pn);sv('vp-qtd',r.qtd);
+  sv('vp-om',r.om);sv('vp-rc',r.rc);
   sv('vp-data-prev-dev',r.dataPrevDev);sv('vp-gestor',r.gestor);sv('vp-obs',r.obs);
   sv('vp-editing-id',id);
-  document.getElementById('vp-form-label').textContent='Editando Vale: '+r.equipRet;
+  _vpItens=(r.itens&&r.itens.length)?r.itens.map(it=>({...it})):[{pn:'',qtd:1,desc:''}];
+  vpRenderItens();
+  document.getElementById('vp-form-label').textContent='Editando: '+r.equipRet;
   document.getElementById('vp-salvar-btn').textContent='💾 Salvar alterações';
   document.getElementById('vp-cancelar-btn').style.display='inline-block';
-  vpMudarAba('novo');
+  document.getElementById('page-valepecas').scrollTop=0;
 }
 
 function vpCancelar(){
-  ['vp-data','vp-equip-ret','vp-equip-dest','vp-operacao','vp-om','vp-rc','vp-pn','vp-qtd','vp-data-prev-dev','vp-obs','vp-editing-id'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('vp-form-label').textContent='Novo Vale de Peça';
+  ['vp-equip-ret','vp-equip-dest','vp-operacao','vp-om','vp-rc','vp-data-prev-dev','vp-obs','vp-editing-id'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('vp-data').value=new Date().toISOString().split('T')[0];
+  document.getElementById('vp-oficina').value='';
+  document.getElementById('vp-solicitante').value='';
+  document.getElementById('vp-gestor').value='';
+  _vpItens=[{pn:'',qtd:1,desc:''}];vpRenderItens();
+  document.getElementById('vp-form-label').textContent='Novo Registro';
   document.getElementById('vp-salvar-btn').textContent='💾 Registrar Vale';
   document.getElementById('vp-cancelar-btn').style.display='none';
 }
@@ -11570,9 +11611,10 @@ function vpRender(){
   const filtOf=document.getElementById('vp-fil-oficina')?.value||'';
   const abertas=_vpRegistros.filter(r=>!r.devolvido&&(!filtOf||r.oficina===filtOf));
   const devolvidas=_vpRegistros.filter(r=>r.devolvido&&(!filtOf||r.oficina===filtOf));
-
   const hoje=new Date().toISOString().split('T')[0];
   const colHd=s=>`<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;border-bottom:1px solid #e2e8f0;background:#f8fafc;white-space:nowrap">${s}</th>`;
+  const dataFmt=d=>d?d.split('-').reverse().join('/'):'—';
+  const itensCell=itens=>{if(!itens||!itens.length)return'—';return itens.map(it=>`<div style="font-size:11px;font-family:monospace"><span style="font-weight:700;color:#dc2626">${it.pn||'—'}</span> <span style="color:#64748b">×${it.qtd||1}</span>${it.desc?` <span style="color:#475569">${it.desc}</span>`:''}</div>`).join('');};
 
   // Pendentes
   const laEl=document.getElementById('vp-lista-abertas');
@@ -11581,60 +11623,50 @@ function vpRender(){
     else{
       const rows=abertas.map((r,i)=>{
         const atrasado=r.dataPrevDev&&r.dataPrevDev<hoje;
-        const bgRow=i%2?'#fff':'#fafbff';
-        const dataFmt=d=>d?d.split('-').reverse().join('/'):'—';
-        return`<tr style="background:${bgRow};border-bottom:1px solid #f1f5f9">
-          <td style="padding:8px 10px;font-size:11px">${dataFmt(r.data)}</td>
+        return`<tr style="background:${i%2?'#fff':'#fafbff'};border-bottom:1px solid #f1f5f9">
+          <td style="padding:8px 10px;font-size:11px;white-space:nowrap">${dataFmt(r.data)}</td>
           <td style="padding:8px 10px;font-family:monospace;font-weight:700;font-size:12px">${r.equipRet||'—'}</td>
           <td style="padding:8px 10px;font-family:monospace;font-size:12px;color:#64748b">${r.equipDest||'—'}</td>
           <td style="padding:8px 10px;font-size:11px">${r.oficina||'—'}</td>
           <td style="padding:8px 10px;font-size:11px">${r.solicitante||'—'}</td>
           <td style="padding:8px 10px;font-size:11px">${r.om||'—'}</td>
           <td style="padding:8px 10px;font-size:11px">${r.rc||'—'}</td>
-          <td style="padding:8px 10px;font-size:11px;font-family:monospace">${r.pn||'—'}</td>
-          <td style="padding:8px 10px;text-align:center;font-weight:700">${r.qtd||1}</td>
-          <td style="padding:8px 10px;font-size:11px;color:${atrasado?'#dc2626':'#64748b'};font-weight:${atrasado?700:400}">${dataFmt(r.dataPrevDev)}${atrasado?' ⚠':''}</td>
+          <td style="padding:8px 10px;min-width:160px">${itensCell(r.itens)}</td>
+          <td style="padding:8px 10px;font-size:11px;color:${atrasado?'#dc2626':'#64748b'};font-weight:${atrasado?700:400};white-space:nowrap">${dataFmt(r.dataPrevDev)}${atrasado?' ⚠':''}</td>
           <td style="padding:8px 10px;font-size:11px">${r.operacao||'—'}</td>
           <td style="padding:8px 10px;font-size:11px">${r.gestor||'—'}</td>
           <td style="padding:8px 10px;text-align:center;white-space:nowrap">
-            <button onclick="vpAbrirDevolucao('${r.id}')" style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600" title="Registrar devolução">↩ Devolver</button>
-            <button onclick="vpEditar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#F37021;font-size:13px" title="Editar">✏</button>
-            <button onclick="vpDeletar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px" title="Remover">🗑</button>
+            <button onclick="vpAbrirDevolucao('${r.id}')" style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600">↩ Devolver</button>
+            <button onclick="vpEditar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#F37021;font-size:13px">✏</button>
+            <button onclick="vpDeletar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px">🗑</button>
           </td>
         </tr>`;
       }).join('');
       laEl.innerHTML=`<div style="margin-bottom:8px;font-size:11px;color:#94a3b8">${abertas.length} vale(s) pendente(s)</div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
-      <thead><tr>${['Data','Equip. Ret.','Equip. Dest.','Oficina','Solicitante','O.M.','RC','P.N.','Qtd','Prev. Dev.','Operação','Gestor','Ações'].map(colHd).join('')}</tr></thead>
+      <thead><tr>${['Data','Equip. Ret.','Equip. Dest.','Oficina','Solicitante','O.M.','RC','Itens / Peças','Prev. Dev.','Operação','Gestor','Ações'].map(colHd).join('')}</tr></thead>
       <tbody>${rows}</tbody></table></div>`;
     }
   }
-
   // Devolvidas
   const ldEl=document.getElementById('vp-lista-devolvidas');
   if(ldEl){
     if(!devolvidas.length){ldEl.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhuma devolução registrada.</div>';}
     else{
-      const rows=devolvidas.map((r,i)=>{
-        const dataFmt=d=>d?d.split('-').reverse().join('/'):'—';
-        return`<tr style="background:${i%2?'#fff':'#f0fdf4'};border-bottom:1px solid #f1f5f9">
-          <td style="padding:8px 10px;font-size:11px">${dataFmt(r.data)}</td>
-          <td style="padding:8px 10px;font-family:monospace;font-weight:700;font-size:12px">${r.equipRet||'—'}</td>
-          <td style="padding:8px 10px;font-family:monospace;font-size:12px;color:#64748b">${r.equipDest||'—'}</td>
-          <td style="padding:8px 10px;font-size:11px">${r.oficina||'—'}</td>
-          <td style="padding:8px 10px;font-size:11px">${r.solicitante||'—'}</td>
-          <td style="padding:8px 10px;font-size:11px;font-family:monospace">${r.pn||'—'}</td>
-          <td style="padding:8px 10px;text-align:center;font-weight:700">${r.qtd||1}</td>
-          <td style="padding:8px 10px;font-size:11px;color:#16a34a;font-weight:600">${dataFmt(r.dataDevolucao)}</td>
-          <td style="padding:8px 10px;font-size:11px;color:#64748b">${r.obsDev||'—'}</td>
-          <td style="padding:8px 10px;text-align:center">
-            <button onclick="vpDeletar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px" title="Remover">🗑</button>
-          </td>
-        </tr>`;
-      }).join('');
+      const rows=devolvidas.map((r,i)=>`<tr style="background:${i%2?'#fff':'#f0fdf4'};border-bottom:1px solid #f1f5f9">
+        <td style="padding:8px 10px;font-size:11px;white-space:nowrap">${dataFmt(r.data)}</td>
+        <td style="padding:8px 10px;font-family:monospace;font-weight:700;font-size:12px">${r.equipRet||'—'}</td>
+        <td style="padding:8px 10px;font-family:monospace;font-size:12px;color:#64748b">${r.equipDest||'—'}</td>
+        <td style="padding:8px 10px;font-size:11px">${r.oficina||'—'}</td>
+        <td style="padding:8px 10px;font-size:11px">${r.solicitante||'—'}</td>
+        <td style="padding:8px 10px;min-width:140px">${itensCell(r.itens)}</td>
+        <td style="padding:8px 10px;font-size:11px;color:#16a34a;font-weight:600;white-space:nowrap">${dataFmt(r.dataDevolucao)}</td>
+        <td style="padding:8px 10px;font-size:11px;color:#64748b">${r.obsDev||'—'}</td>
+        <td style="padding:8px 10px;text-align:center"><button onclick="vpDeletar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px">🗑</button></td>
+      </tr>`).join('');
       ldEl.innerHTML=`<div style="margin-bottom:8px;font-size:11px;color:#94a3b8">${devolvidas.length} devolução(ões)</div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
-      <thead><tr>${['Data Ret.','Equip. Ret.','Equip. Dest.','Oficina','Solicitante','P.N.','Qtd','Data Dev.','Obs. Dev.','Ações'].map(colHd).join('')}</tr></thead>
+      <thead><tr>${['Data Ret.','Equip. Ret.','Equip. Dest.','Oficina','Solicitante','Itens / Peças','Data Dev.','Obs. Dev.','Ações'].map(colHd).join('')}</tr></thead>
       <tbody>${rows}</tbody></table></div>`;
     }
   }
@@ -12715,12 +12747,67 @@ function histRenderRevisao(){
       <div class="page-hdr-title"><span style="color:#dc2626">🔩</span> Vale Peças</div>
       <div class="page-hdr-sub">Controle de retirada e devolução de peças entre equipamentos</div>
     </div>
-    <!-- Filtros e abas -->
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
-      <button class="vp-tab active" id="vptab-abertas" onclick="vpMudarAba('abertas')" style="font-size:12px;font-weight:700;padding:7px 16px;border-radius:7px;border:none;cursor:pointer;background:#dc2626;color:#fff">⚠ Pendentes</button>
-      <button class="vp-tab" id="vptab-devolvidas" onclick="vpMudarAba('devolvidas')" style="font-size:12px;font-weight:700;padding:7px 16px;border-radius:7px;border:none;cursor:pointer;background:#e2e8f0;color:#475569">✅ Devolvidas</button>
-      <button class="vp-tab" id="vptab-novo" onclick="vpMudarAba('novo')" style="font-size:12px;font-weight:700;padding:7px 16px;border-radius:7px;border:none;cursor:pointer;background:#e2e8f0;color:#475569">＋ Novo Vale</button>
-      <div style="margin-left:auto;display:flex;gap:8px">
+
+    <!-- ── FORMULÁRIO (TOPO) ─────────────────────────────────────── -->
+    <div class="gi-form-card" style="margin-bottom:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b" id="vp-form-label">Novo Registro</span>
+        <button class="gi-btn ghost" id="vp-cancelar-btn" style="display:none;font-size:11px;padding:5px 12px" onclick="vpCancelar()">✕ Cancelar edição</button>
+      </div>
+      <!-- Linha 1: Dados principais -->
+      <div class="gi-form-row" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr;margin-bottom:10px">
+        <div><label class="gi-label">Data</label><input class="gi-input" type="date" id="vp-data"></div>
+        <div><label class="gi-label">Equip. Retirada (origem)</label><input class="gi-input" id="vp-equip-ret" placeholder="ID do equipamento"></div>
+        <div><label class="gi-label">Oficina</label>
+          <select class="gi-select" id="vp-oficina">
+            <option value="">— Selecione —</option>
+            <option>Assis (SP)</option><option>Contagem (MG)</option><option>Osasco (SP)</option>
+            <option>Parauapebas (PA)</option><option>Santos (SP)</option><option>Sumaré (SP)</option>
+            <option>São José dos Pinhais (PR)</option>
+          </select>
+        </div>
+        <div><label class="gi-label">Solicitante</label><select class="gi-select" id="vp-solicitante"><option value="">— Selecione —</option></select></div>
+        <div><label class="gi-label">Gestor</label><select class="gi-select" id="vp-gestor"><option value="">— Selecione —</option></select></div>
+      </div>
+      <!-- Linha 2: Destino e documentação -->
+      <div class="gi-form-row" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-bottom:10px">
+        <div><label class="gi-label">Equip. Destino</label><input class="gi-input" id="vp-equip-dest" placeholder="ID do equipamento destino"></div>
+        <div><label class="gi-label">Operação / Contrato</label><input class="gi-input" id="vp-operacao" placeholder="Nome da operação"></div>
+        <div><label class="gi-label">O.M.</label><input class="gi-input" id="vp-om" placeholder="Nº da O.M."></div>
+        <div><label class="gi-label">RC</label><input class="gi-input" id="vp-rc" placeholder="Nº do RC"></div>
+      </div>
+      <!-- Linha 3: Itens / Peças -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#475569">Itens / Peças</span>
+          <button type="button" onclick="vpAddItem()" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer">+ Adicionar Item</button>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:#0f172a;color:#fff">
+            <th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:700">P.N. (Part Number)</th>
+            <th style="padding:6px 10px;text-align:center;font-size:10px;font-weight:700;width:80px">Qtd</th>
+            <th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:700">Descrição da Peça</th>
+            <th style="padding:6px 10px;width:36px"></th>
+          </tr></thead>
+          <tbody id="vp-itens-tbody"></tbody>
+        </table>
+      </div>
+      <!-- Linha 4: Prazo, obs e salvar -->
+      <div style="display:grid;grid-template-columns:180px 1fr auto;gap:12px;align-items:end">
+        <div><label class="gi-label">Data Prev. Devolução</label><input class="gi-input" type="date" id="vp-data-prev-dev"></div>
+        <div><label class="gi-label">Observação</label><input class="gi-input" id="vp-obs" placeholder="Contexto, detalhes..."></div>
+        <div style="display:flex;gap:8px">
+          <button class="gi-btn" id="vp-salvar-btn" onclick="vpSalvar()" style="background:#dc2626;white-space:nowrap">💾 Registrar Vale</button>
+        </div>
+      </div>
+      <input type="hidden" id="vp-editing-id">
+    </div>
+
+    <!-- ── VISUALIZAÇÃO (BAIXO) ──────────────────────────────────── -->
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      <button id="vptab-abertas" onclick="vpMudarAba('abertas')" style="font-size:12px;font-weight:700;padding:7px 18px;border-radius:7px;border:none;cursor:pointer;background:#dc2626;color:#fff">⚠ Pendentes</button>
+      <button id="vptab-devolvidas" onclick="vpMudarAba('devolvidas')" style="font-size:12px;font-weight:700;padding:7px 18px;border-radius:7px;border:none;cursor:pointer;background:#e2e8f0;color:#475569">✅ Devolvidas</button>
+      <div style="margin-left:auto">
         <select id="vp-fil-oficina" onchange="vpRender()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;background:#fff">
           <option value="">Oficina — Todas</option>
           <option>Assis (SP)</option><option>Contagem (MG)</option><option>Osasco (SP)</option>
@@ -12729,56 +12816,8 @@ function histRenderRevisao(){
         </select>
       </div>
     </div>
-
-    <!-- Corpo -->
-
-      <!-- ABA: Novo Vale -->
-      <div id="vp-aba-novo" style="display:none">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:14px" id="vp-form-label">Novo Vale de Peça</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
-          <div><label class="gi-label">Data</label><input class="gi-input" type="date" id="vp-data"></div>
-          <div><label class="gi-label">Equipamento Retirada (origem)</label><input class="gi-input" id="vp-equip-ret" placeholder="ID do equipamento de origem"></div>
-          <div><label class="gi-label">Oficina</label>
-            <select class="gi-select" id="vp-oficina">
-              <option value="">— Selecione —</option>
-              <option>Assis (SP)</option><option>Contagem (MG)</option><option>Osasco (SP)</option>
-              <option>Parauapebas (PA)</option><option>Santos (SP)</option><option>Sumaré (SP)</option>
-              <option>São José dos Pinhais (PR)</option>
-            </select>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
-          <div><label class="gi-label">Solicitante</label><select class="gi-select" id="vp-solicitante"><option value="">— Selecione —</option></select></div>
-          <div><label class="gi-label">Equipamento Destino</label><input class="gi-input" id="vp-equip-dest" placeholder="ID do equipamento de destino"></div>
-          <div><label class="gi-label">Operação / Contrato</label><input class="gi-input" id="vp-operacao" placeholder="Nome da operação"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:12px">
-          <div><label class="gi-label">O.M.</label><input class="gi-input" id="vp-om" placeholder="Nº da O.M."></div>
-          <div><label class="gi-label">RC</label><input class="gi-input" id="vp-rc" placeholder="Nº do RC"></div>
-          <div><label class="gi-label">P.N. (Part Number)</label><input class="gi-input" id="vp-pn" placeholder="Código da peça"></div>
-          <div><label class="gi-label">Quantidade</label><input class="gi-input" type="number" min="1" id="vp-qtd" placeholder="1"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
-          <div><label class="gi-label">Data Prevista Devolução</label><input class="gi-input" type="date" id="vp-data-prev-dev"></div>
-          <div><label class="gi-label">Gestor</label><select class="gi-select" id="vp-gestor"><option value="">— Selecione —</option></select></div>
-          <div><label class="gi-label">Observação</label><input class="gi-input" id="vp-obs" placeholder="Detalhes adicionais..."></div>
-        </div>
-        <input type="hidden" id="vp-editing-id">
-        <div style="display:flex;gap:8px">
-          <button class="gi-btn" id="vp-salvar-btn" onclick="vpSalvar()">💾 Registrar Vale</button>
-          <button class="gi-btn ghost" id="vp-cancelar-btn" style="display:none" onclick="vpCancelar()">✕ Cancelar</button>
-        </div>
-      </div>
-
-      <!-- ABA: Pendentes -->
-      <div id="vp-aba-abertas">
-        <div id="vp-lista-abertas"></div>
-      </div>
-
-      <!-- ABA: Devolvidas -->
-      <div id="vp-aba-devolvidas" style="display:none">
-        <div id="vp-lista-devolvidas"></div>
-      </div>
+    <div id="vp-lista-abertas"></div>
+    <div id="vp-lista-devolvidas" style="display:none"></div>
 
   </div><!-- fim padding -->
 </div><!-- fim page-valepecas -->
