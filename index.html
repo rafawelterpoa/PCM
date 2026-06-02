@@ -754,6 +754,10 @@ input.filter-sel{padding:5px 8px;height:34px}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     <span class="snav-label">Prog.Of.</span>
   </div>
+  <div class="snav-item" id="snav-manuterceiros" onclick="navegarPara('manuterceiros')" title="Manut. Terceiros">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+    <span class="snav-label">M. Terc.</span>
+  </div>
   <div class="snav-item" id="snav-valepecas" onclick="navegarPara('valepecas')" title="Vale Peças">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
     <span class="snav-label">Vale Peç.</span>
@@ -1004,6 +1008,19 @@ input.filter-sel{padding:5px 8px;height:34px}
       </div>
     </div>
 
+    <!-- MANUTENÇÃO DE TERCEIROS -->
+    <div class="area-card-new" onclick="navegarPara('manuterceiros')" style="border-top:3px solid #7c3aed">
+      <div class="area-card-header">
+        <div class="ac-icon">🏭</div>
+        <div class="ac-title">Manut. Terceiros</div>
+        <div class="ac-desc">Serviços externos e M.O. de terceiros</div>
+        <div class="ac-kpi" id="home-kpi-manuterceiros" style="color:#7c3aed">—</div>
+        <span class="ac-badge" style="background:#f3e8ff;color:#7c3aed" id="home-badge-manuterceiros">registros</span>
+      </div>
+      <div class="area-card-preview" style="background:#faf5ff">
+        <div style="font-size:11px;color:#7c3aed;font-weight:600;text-align:center;padding:10px">Controle de serviços de terceiros</div>
+      </div>
+    </div>
     <!-- VALE PEÇAS -->
     <div class="area-card-new" onclick="navegarPara('valepecas')" style="border-top:3px solid #dc2626">
       <div class="area-card-header">
@@ -1566,6 +1583,16 @@ input.filter-sel{padding:5px 8px;height:34px}
         <div style="display:flex;gap:6px">
           <input type="text" id="mc-ordem-input" placeholder="Nº da ordem..." maxlength="40" style="flex:1;padding:7px 10px;border:1px solid var(--borda);border-radius:7px;font-size:12px;background:#fff;outline:none;color:var(--text)" onkeydown="if(event.key==='Enter'){event.preventDefault();addOrdem();}">
           <button class="btn btn-orange btn-sm" onclick="addOrdem()">+ Adicionar</button>
+        </div>
+      </div>
+      <!-- Complexidade -->
+      <div>
+        <div class="mc-section-title">Complexidade da Manutenção</div>
+        <div class="prio-opts">
+          <div class="prio-opt" id="comp-facil" onclick="setComplexidade('facil')" style="color:#16a34a">🟢 Fácil</div>
+          <div class="prio-opt" id="comp-medio" onclick="setComplexidade('medio')" style="color:#d97706">🟡 Médio</div>
+          <div class="prio-opt" id="comp-dificil" onclick="setComplexidade('dificil')" style="color:#dc2626">🔴 Difícil</div>
+          <div class="prio-opt" id="comp-none" onclick="setComplexidade('')">✕ Limpar</div>
         </div>
       </div>
       <div class="mc-row2">
@@ -2805,7 +2832,7 @@ function switchTab(tabId){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   // Sincroniza snav
-  const _snavMap={programacao:'snav-programacao',mapa:'snav-mapa',alteracoes:'snav-notif',home:'snav-home',valepecas:'snav-valepecas'};
+  const _snavMap={programacao:'snav-programacao',mapa:'snav-mapa',alteracoes:'snav-notif',home:'snav-home',valepecas:'snav-valepecas',manuterceiros:'snav-manuterceiros'};
   if(_snavMap[tabId])snavSetActive(_snavMap[tabId]);
   else{document.querySelectorAll('.snav-item').forEach(el=>el.classList.remove('active'));}
   const te=document.querySelector('[data-tab="'+tabId+'"]');
@@ -3078,6 +3105,9 @@ function renderBoard(sid,visao){
       const assinHTML=assin?`<div class="card-assinatura">🔑 ${assin.perfil} · ${assin.data}</div>`:'';
       const osHTML=(eq.ordens&&eq.ordens.length)?`<div style="font-size:9px;color:#7F77DD;margin-top:2px;font-weight:500">📋 ${eq.ordens.length} OS: ${eq.ordens.join(', ')}</div>`:'';
       const tipoManutHTML=eq.tipoManut?`<div style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;margin-top:2px;display:inline-block;background:#FFF8E6;color:#7A5500;border:1px solid #EFD87A">⚙ ${eq.tipoManut}</div>`:'';;;
+      const complexCorMap={facil:'#16a34a',medio:'#d97706',dificil:'#dc2626'};
+      const complexLblMap={facil:'Fácil',medio:'Médio',dificil:'Difícil'};
+      const complexHTML=eq.complexidade?`<div style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;margin-top:2px;display:inline-block;background:${complexCorMap[eq.complexidade]}18;color:${complexCorMap[eq.complexidade]};border:1px solid ${complexCorMap[eq.complexidade]}44">⚡ ${complexLblMap[eq.complexidade]}</div>`:''
       const liberadoBtn=''; // removido — agora é via modal
 
       card.innerHTML=`
@@ -3096,6 +3126,7 @@ function renderBoard(sid,visao){
         ${eq.retrabalho>0?`<div style="font-size:9px;color:var(--terra);margin-top:3px;font-weight:600">↻ Retrabalho: ${eq.retrabalho}x</div>`:''}
         ${ciclosHTML}
         ${tipoManutHTML}
+        ${complexHTML}
         ${assinHTML}
         ${osHTML}
         ${liberadoBtn}`;
@@ -3251,6 +3282,11 @@ function openCardModal(eqId,visao){
   const ci=etapaGeralIndex(eq.etapa);
   document.getElementById('mc-etapa-flow').innerHTML=ETAPAS_GERAL.map((e,i)=>`<span class="etapa-step${i<ci?' done':i===ci?' current':''}">${e.label}</span>`).join('');
   updatePrioOpts(eq.prioridade);
+  // Complexidade
+  ['facil','medio','dificil','none'].forEach(v=>{
+    const el=document.getElementById('comp-'+v);
+    if(el)el.classList.toggle('active',(eq.complexidade?v===eq.complexidade:v==='none'));
+  });
   // Manutenção finalizada — só aparece se eq.etapa === 'manutencao'
   const mcManut = document.getElementById('mc-manut-section');
   if (mcManut) {
@@ -3346,6 +3382,16 @@ function openCardModal(eqId,visao){
 }
 function updatePrioOpts(p){['critica','alta','media','baixa'].forEach(x=>{document.getElementById('prio-'+x).className='prio-opt'+(p===x?' sel-'+x:'');});}
 function setPrioridade(p){const cur=pendingCardChanges.prioridade!==undefined?pendingCardChanges.prioridade:state[currentCardId]?.prioridade;const np=cur===p?null:p;pendingCardChanges.prioridade=np;updatePrioOpts(np);}
+function setComplexidade(val){
+  const eq=state[currentCardId];if(!eq)return;
+  eq.complexidade=val||undefined;
+  ['facil','medio','dificil','none'].forEach(v=>{
+    const el=document.getElementById('comp-'+v);
+    if(el)el.classList.toggle('active',(val==='none'?v==='none':v===val)||(!val&&v==='none'));
+  });
+  salvarCard(currentCardId);
+  renderBoard(currentCardSid,currentCardVisao);
+}
 function setSemana(v){pendingCardChanges.semana=v||null;}
 function setObs(v){pendingCardChanges.obs=v;}
 function setCliente(v){pendingCardChanges.cliente=v;}
@@ -11676,6 +11722,237 @@ function vpRender(){
   }
 }
 
+// ── GESTÃO DE MANUTENÇÃO DE TERCEIROS ────────────────────────────────────────
+let _mtRegistros=[];
+
+async function mtLoadFromFirebase(){
+  try{
+    const r=await fetch(FB_BASE+'/manut_terceiros.json');
+    const d=await r.json();
+    _mtRegistros=d&&typeof d==='object'?Object.values(d).sort((a,b)=>(b.ts||0)-(a.ts||0)):[];
+  }catch(e){_mtRegistros=[];}
+  mtRender();mtUpdateHomeBadge();mtPopularFiltroFornecedor();
+}
+
+async function mtSalvarTudo(obj){
+  await fetch(FB_BASE+'/manut_terceiros/'+obj.id+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});
+}
+
+async function mtDeleteFirebase(id){
+  await fetch(FB_BASE+'/manut_terceiros/'+id+'.json',{method:'DELETE'});
+}
+
+function abrirManutTerceiros(){navegarPara('manuterceiros');}
+
+function paginaManutTerceiros(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg=document.getElementById('page-manuterceiros');
+  if(pg)pg.classList.add('active');
+  mtLoadFromFirebase();
+  mtPopularSelectsUsuarios();
+}
+
+function mtPopularSelectsUsuarios(){
+  if(!usuariosCache||!usuariosCache.length)return;
+  const nomes=[...new Set(usuariosCache.map(u=>u.nome).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));
+  ['mt-solicitante','mt-aprovador'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const cur=el.value;
+    el.innerHTML='<option value="">— Selecione —</option>'+nomes.map(n=>`<option>${n}</option>`).join('');
+    if(cur)el.value=cur;
+  });
+}
+
+function mtAutoFillFamilia(){
+  const id=(document.getElementById('mt-equip-id')?.value||'').trim().toUpperCase();
+  const eq=EQUIPAMENTOS_ORIG&&EQUIPAMENTOS_ORIG.find(e=>e.id===id);
+  const fam=eq?.tipo||eq?.equipamento||'';
+  const el=document.getElementById('mt-familia');if(el)el.value=fam;
+}
+
+function mtSalvar(){
+  const equipId=(document.getElementById('mt-equip-id')?.value||'').trim().toUpperCase();
+  if(!equipId)return alert('Informe o ID do equipamento.');
+  const tipo=document.getElementById('mt-tipo')?.value||'';
+  if(!tipo)return alert('Selecione o tipo de manutenção.');
+  const obj={
+    equipId,
+    familia:(document.getElementById('mt-familia')?.value||'').trim(),
+    tipo,
+    solicitante:document.getElementById('mt-solicitante')?.value||'',
+    justificativa:(document.getElementById('mt-justificativa')?.value||'').trim(),
+    fornecedor:(document.getElementById('mt-fornecedor')?.value||'').trim(),
+    aprovador:document.getElementById('mt-aprovador')?.value||'',
+    om:(document.getElementById('mt-om')?.value||'').trim(),
+    rc:(document.getElementById('mt-rc')?.value||'').trim(),
+    pc:(document.getElementById('mt-pc')?.value||'').trim(),
+    descricao:(document.getElementById('mt-descricao')?.value||'').trim(),
+    valor:parseFloat(document.getElementById('mt-valor')?.value||'0')||0,
+    dataRegistro:new Date().toLocaleDateString('pt-BR')
+  };
+  const editId=document.getElementById('mt-editing-id')?.value||'';
+  if(editId){
+    const idx=_mtRegistros.findIndex(r=>r.id===editId);
+    if(idx>=0)_mtRegistros[idx]={..._mtRegistros[idx],...obj};
+    obj.id=editId;obj.ts=_mtRegistros.find(r=>r.id===editId)?.ts||Date.now();
+    mtCancelar();
+  }else{
+    obj.id='MT_'+Date.now();obj.ts=Date.now();
+    _mtRegistros.unshift(obj);
+    ['mt-equip-id','mt-familia','mt-fornecedor','mt-om','mt-rc','mt-pc','mt-descricao','mt-valor','mt-justificativa'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    document.getElementById('mt-tipo').value='';
+    document.getElementById('mt-solicitante').value='';
+    document.getElementById('mt-aprovador').value='';
+  }
+  mtSalvarTudo(obj);mtRender();mtUpdateHomeBadge();mtPopularFiltroFornecedor();showToast('✅ Registro salvo!');
+}
+
+function mtEditar(id){
+  const r=_mtRegistros.find(x=>x.id===id);if(!r)return;
+  const sv=(sid,v)=>{const el=document.getElementById(sid);if(el)el.value=v||'';};
+  sv('mt-equip-id',r.equipId);sv('mt-familia',r.familia);sv('mt-tipo',r.tipo);
+  sv('mt-solicitante',r.solicitante);sv('mt-justificativa',r.justificativa);
+  sv('mt-fornecedor',r.fornecedor);sv('mt-aprovador',r.aprovador);
+  sv('mt-om',r.om);sv('mt-rc',r.rc);sv('mt-pc',r.pc);
+  sv('mt-descricao',r.descricao);sv('mt-valor',r.valor);sv('mt-editing-id',id);
+  document.getElementById('mt-form-label').textContent='Editando: '+r.equipId+' — '+r.fornecedor;
+  document.getElementById('mt-salvar-btn').textContent='💾 Salvar alterações';
+  document.getElementById('mt-cancelar-btn').style.display='inline-block';
+  document.getElementById('page-manuterceiros').scrollTop=0;
+}
+
+async function mtDeletar(id){
+  if(!confirm('Remover este registro?'))return;
+  _mtRegistros=_mtRegistros.filter(r=>r.id!==id);
+  await mtDeleteFirebase(id);
+  mtRender();mtUpdateHomeBadge();mtPopularFiltroFornecedor();showToast('🗑 Registro removido.');
+}
+
+function mtCancelar(){
+  ['mt-equip-id','mt-familia','mt-fornecedor','mt-om','mt-rc','mt-pc','mt-descricao','mt-valor','mt-justificativa','mt-editing-id'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('mt-tipo').value='';
+  document.getElementById('mt-solicitante').value='';
+  document.getElementById('mt-aprovador').value='';
+  document.getElementById('mt-form-label').textContent='Novo Registro';
+  document.getElementById('mt-salvar-btn').textContent='💾 Registrar';
+  document.getElementById('mt-cancelar-btn').style.display='none';
+}
+
+function mtUpdateHomeBadge(){
+  const total=_mtRegistros.length;
+  const kpi=document.getElementById('home-kpi-manuterceiros');
+  const badge=document.getElementById('home-badge-manuterceiros');
+  if(kpi)kpi.innerHTML=`<span style="color:#7c3aed;font-weight:900;font-size:20px">${total}</span>`;
+  if(badge)badge.textContent=total===1?'registro':'registros';
+}
+
+function mtPopularFiltroFornecedor(){
+  const sel=document.getElementById('mt-fil-fornecedor');if(!sel)return;
+  const cur=sel.value;
+  const fornecedores=[...new Set(_mtRegistros.map(r=>r.fornecedor).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">Fornecedor — Todos</option>'+fornecedores.map(f=>`<option>${f}</option>`).join('');
+  if(cur)sel.value=cur;
+}
+
+function mtRender(){
+  const busca=(document.getElementById('mt-busca')?.value||'').toLowerCase();
+  const filtTipo=document.getElementById('mt-fil-tipo')?.value||'';
+  const filtForn=document.getElementById('mt-fil-fornecedor')?.value||'';
+  let dados=_mtRegistros;
+  if(busca)dados=dados.filter(r=>(r.equipId||'').toLowerCase().includes(busca)||(r.fornecedor||'').toLowerCase().includes(busca)||(r.familia||'').toLowerCase().includes(busca)||(r.descricao||'').toLowerCase().includes(busca));
+  if(filtTipo)dados=dados.filter(r=>r.tipo===filtTipo);
+  if(filtForn)dados=dados.filter(r=>r.fornecedor===filtForn);
+
+  // KPIs
+  const kpiEl=document.getElementById('mt-kpis');
+  if(kpiEl){
+    const totalValor=_mtRegistros.reduce((s,r)=>s+(r.valor||0),0);
+    const porTipo={};_mtRegistros.forEach(r=>{if(r.tipo)porTipo[r.tipo]=(porTipo[r.tipo]||0)+1;});
+    const topTipo=Object.entries(porTipo).sort((a,b)=>b[1]-a[1])[0];
+    kpiEl.innerHTML=[
+      {l:'Total de Registros',v:_mtRegistros.length,c:'#7c3aed',s:'serviços cadastrados'},
+      {l:'Valor Total',v:'R$ '+totalValor.toLocaleString('pt-BR',{minimumFractionDigits:2}),c:'#dc2626',s:'em serviços externos'},
+      {l:'Fornecedores',v:[...new Set(_mtRegistros.map(r=>r.fornecedor).filter(Boolean))].length,c:'#0f766e',s:'fornecedores diferentes'},
+      {l:'Tipo Mais Freq.',v:topTipo?topTipo[0]:'—',c:'#d97706',s:topTipo?topTipo[1]+' registros':''},
+    ].map(k=>`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 18px;border-top:3px solid ${k.c}">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:6px">${k.l}</div>
+      <div style="font-size:22px;font-weight:900;color:${k.c};line-height:1.1;margin-bottom:2px">${k.v}</div>
+      <div style="font-size:11px;color:#94a3b8">${k.s}</div>
+    </div>`).join('');
+  }
+
+  // Tabela
+  const tabEl=document.getElementById('mt-tabela');if(!tabEl)return;
+  if(!dados.length){tabEl.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhum registro encontrado.</div>';return;}
+  const colHd=s=>`<th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;border-bottom:1px solid #e2e8f0;background:#f8fafc;white-space:nowrap">${s}</th>`;
+  const tipoCor={Corretiva:'#dc2626',Sinistro:'#d97706','Preparação para Mobilização':'#2563eb',Preventiva:'#16a34a'};
+  const rows=dados.map((r,i)=>`<tr style="background:${i%2?'#fff':'#fafbff'};border-bottom:1px solid #f1f5f9">
+    <td style="padding:8px 12px;font-family:monospace;font-weight:700;font-size:12px;color:#1e293b">${r.equipId||'—'}</td>
+    <td style="padding:8px 12px;font-size:11px;color:#64748b">${r.familia||'—'}</td>
+    <td style="padding:8px 12px"><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:${tipoCor[r.tipo]||'#94a3b8'}18;color:${tipoCor[r.tipo]||'#94a3b8'}">${r.tipo||'—'}</span></td>
+    <td style="padding:8px 12px;font-size:11px">${r.fornecedor||'—'}</td>
+    <td style="padding:8px 12px;font-size:11px;color:#64748b">${r.solicitante||'—'}</td>
+    <td style="padding:8px 12px;font-size:11px;color:#64748b">${r.aprovador||'—'}</td>
+    <td style="padding:8px 12px;font-family:monospace;font-size:11px">${r.om||'—'}</td>
+    <td style="padding:8px 12px;font-family:monospace;font-size:11px">${r.rc||'—'}</td>
+    <td style="padding:8px 12px;font-family:monospace;font-size:11px">${r.pc||'—'}</td>
+    <td style="padding:8px 12px;font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.descricao||''}">${r.descricao||'—'}</td>
+    <td style="padding:8px 12px;text-align:right;font-weight:700;color:#dc2626">${r.valor?'R$ '+r.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'}</td>
+    <td style="padding:8px 12px;font-size:11px;color:#94a3b8">${r.dataRegistro||'—'}</td>
+    <td style="padding:8px 12px;text-align:center;white-space:nowrap">
+      <button onclick="mtEditar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#F37021;font-size:13px" title="Editar">✏</button>
+      <button onclick="mtDeletar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px" title="Remover">🗑</button>
+    </td>
+  </tr>`).join('');
+  tabEl.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)">
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr>${['ID Equip.','Família','Tipo','Fornecedor','Solicitante','Aprovador','O.M.','RC','PC','Descrição','Valor','Data','Ações'].map(colHd).join('')}</tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+function mtGerarRelatorio(){
+  const filtTipo=document.getElementById('mt-fil-tipo')?.value||'';
+  const filtForn=document.getElementById('mt-fil-fornecedor')?.value||'';
+  let dados=_mtRegistros;
+  if(filtTipo)dados=dados.filter(r=>r.tipo===filtTipo);
+  if(filtForn)dados=dados.filter(r=>r.fornecedor===filtForn);
+  if(!dados.length){showToast('Nenhum dado para gerar relatório.');return;}
+  const totalValor=dados.reduce((s,r)=>s+(r.valor||0),0);
+  const porForn={};dados.forEach(r=>{if(r.fornecedor){if(!porForn[r.fornecedor])porForn[r.fornecedor]={count:0,valor:0};porForn[r.fornecedor].count++;porForn[r.fornecedor].valor+=(r.valor||0);}});
+  const hoje=new Date().toLocaleDateString('pt-BR');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório Manut. Terceiros</title>
+  <style>body{font-family:Arial,sans-serif;font-size:12px;color:#1e293b;margin:20px}
+  h1{font-size:18px;color:#7c3aed;border-bottom:3px solid #7c3aed;padding-bottom:8px;margin-bottom:16px}
+  h2{font-size:13px;font-weight:700;color:#475569;margin:16px 0 6px}
+  table{width:100%;border-collapse:collapse;margin-bottom:16px}
+  th{background:#0f172a;color:#fff;padding:7px 10px;text-align:left;font-size:10px}
+  td{padding:6px 10px;border-bottom:1px solid #f1f5f9}
+  tr:nth-child(even){background:#f8fafc}
+  .kpi{display:inline-block;background:#f3e8ff;border:1px solid #a855f7;border-radius:8px;padding:8px 14px;margin:4px;text-align:center}
+  .kpi-v{font-size:20px;font-weight:900;color:#7c3aed}
+  .kpi-l{font-size:10px;color:#64748b}
+  @media print{button{display:none}}</style></head><body>
+  <div style="text-align:right;font-size:10px;color:#94a3b8">Gerado em ${hoje}</div>
+  <h1>🏭 Relatório — Manutenção de Terceiros</h1>
+  <div>
+    <div class="kpi"><div class="kpi-v">${dados.length}</div><div class="kpi-l">Registros</div></div>
+    <div class="kpi"><div class="kpi-v">R$ ${totalValor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="kpi-l">Valor Total</div></div>
+    <div class="kpi"><div class="kpi-v">${Object.keys(porForn).length}</div><div class="kpi-l">Fornecedores</div></div>
+  </div>
+  <h2>Por Fornecedor</h2>
+  <table><thead><tr><th>Fornecedor</th><th>Qtd</th><th>Valor Total</th></tr></thead><tbody>
+  ${Object.entries(porForn).sort((a,b)=>b[1].valor-a[1].valor).map(([f,v])=>`<tr><td>${f}</td><td>${v.count}</td><td>R$ ${v.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td></tr>`).join('')}
+  </tbody></table>
+  <h2>Todos os Registros</h2>
+  <table><thead><tr><th>ID Equip.</th><th>Tipo</th><th>Fornecedor</th><th>Solicitante</th><th>O.M.</th><th>RC</th><th>PC</th><th>Descrição</th><th>Valor</th><th>Data</th></tr></thead>
+  <tbody>${dados.map(r=>`<tr><td>${r.equipId||'—'}</td><td>${r.tipo||'—'}</td><td>${r.fornecedor||'—'}</td><td>${r.solicitante||'—'}</td><td>${r.om||'—'}</td><td>${r.rc||'—'}</td><td>${r.pc||'—'}</td><td>${r.descricao||'—'}</td><td>${r.valor?'R$ '+r.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'}</td><td>${r.dataRegistro||'—'}</td></tr>`).join('')}
+  </tbody></table>
+  <button onclick="window.print()" style="background:#7c3aed;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:13px">🖨 Imprimir</button>
+  </body></html>`;
+  const w=window.open('','_blank');w.document.write(html);w.document.close();
+}
+
 // ── POPULAR SELECTS DE USUÁRIOS DINAMICAMENTE ────────────────────────────────
 function giPopularSelects(){
   if(!usuariosCache||!usuariosCache.length)return;
@@ -11697,6 +11974,8 @@ function giPopularSelects(){
   fill('edit-resp',      null,                           nomes);
   fill('gp-programador', '— Selecione —',               nomes);
   fill('gp-fil-prog',    'Programador — Todos',          nomes);
+  // Manutenção de Terceiros
+  if(typeof mtPopularSelectsUsuarios==='function')mtPopularSelectsUsuarios();
 }
 
 function rsCheckAcesso(){
@@ -12220,6 +12499,7 @@ function navegarPara(destino){
   if(destino==='patio'){paginaPatio();snavSetActive('snav-patio');return;}
   if(destino==='operacoes'){paginaOperacoes();snavSetActive('snav-operacoes');return;}
   if(destino==='valepecas'){paginaValePecas();snavSetActive('snav-valepecas');return;}
+  if(destino==='manuterceiros'){paginaManutTerceiros();snavSetActive('snav-manuterceiros');return;}
 }
 
 // ── OFICINAS ─────────────────────────────────────────────────────────────────
@@ -12743,6 +13023,76 @@ function histRenderRevisao(){
       <button class="btn btn-outline" onclick="confirmProntoNao()" style="min-width:90px;font-size:13px">Não</button>
       <button class="btn btn-orange" onclick="confirmProntoSim()" style="min-width:90px;font-size:13px">Sim</button>
     </div>
+  </div>
+</div>
+
+<!-- MANUTENÇÃO DE TERCEIROS -->
+<div class="page" id="page-manuterceiros">
+  <div style="padding:24px 28px">
+    <div class="page-hdr">
+      <div class="page-hdr-title"><span style="color:#7c3aed">🏭</span> Manutenção de Terceiros</div>
+      <div class="page-hdr-sub">Controle de serviços externos e mão de obra de terceiros</div>
+    </div>
+
+    <!-- FORMULÁRIO -->
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b" id="mt-form-label">Novo Registro</span>
+        <button class="gi-btn ghost" id="mt-cancelar-btn" style="display:none;font-size:11px;padding:5px 12px" onclick="mtCancelar()">✕ Cancelar</button>
+      </div>
+      <!-- Linha 1 -->
+      <div class="gi-form-row" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:10px">
+        <div><label class="gi-label">ID Equipamento</label><input class="gi-input" id="mt-equip-id" placeholder="Ex: MCP04741" oninput="mtAutoFillFamilia()"></div>
+        <div><label class="gi-label">Família</label><input class="gi-input" id="mt-familia" placeholder="Auto-preenchido" readonly style="background:#f8fafc"></div>
+        <div><label class="gi-label">Tipo de Manutenção</label>
+          <select class="gi-select" id="mt-tipo">
+            <option value="">— Selecione —</option>
+            <option>Corretiva</option><option>Sinistro</option><option>Preparação para Mobilização</option><option>Preventiva</option>
+          </select></div>
+        <div><label class="gi-label">Solicitante</label><select class="gi-select" id="mt-solicitante"><option value="">— Selecione —</option></select></div>
+      </div>
+      <!-- Linha 2 -->
+      <div class="gi-form-row" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:10px">
+        <div><label class="gi-label">Fornecedor</label><input class="gi-input" id="mt-fornecedor" placeholder="Nome do fornecedor"></div>
+        <div><label class="gi-label">Aprovador</label><select class="gi-select" id="mt-aprovador"><option value="">— Selecione —</option></select></div>
+        <div><label class="gi-label">O.M.</label><input class="gi-input" id="mt-om" placeholder="Nº da O.M."></div>
+        <div><label class="gi-label">RC</label><input class="gi-input" id="mt-rc" placeholder="Nº do RC"></div>
+      </div>
+      <!-- Linha 3 -->
+      <div class="gi-form-row" style="grid-template-columns:1fr 2fr 1fr;margin-bottom:10px">
+        <div><label class="gi-label">Pedido de Compras</label><input class="gi-input" id="mt-pc" placeholder="Nº do PC"></div>
+        <div><label class="gi-label">Descrição do Serviço</label><input class="gi-input" id="mt-descricao" placeholder="Descreva o serviço realizado"></div>
+        <div><label class="gi-label">Valor do Serviço (R$)</label><input class="gi-input" type="number" min="0" step="0.01" id="mt-valor" placeholder="0,00"></div>
+      </div>
+      <!-- Linha 4 -->
+      <div class="gi-form-row" style="grid-template-columns:1fr;margin-bottom:14px">
+        <div><label class="gi-label">Justificativa</label><input class="gi-input" id="mt-justificativa" placeholder="Justifique a necessidade do serviço externo"></div>
+      </div>
+      <input type="hidden" id="mt-editing-id">
+      <div style="display:flex;gap:8px">
+        <button class="gi-btn" id="mt-salvar-btn" onclick="mtSalvar()" style="background:#7c3aed">💾 Registrar</button>
+      </div>
+    </div>
+
+    <!-- FILTROS + TABELA -->
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px">
+      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Filtros</div>
+      <input id="mt-busca" oninput="mtRender()" placeholder="🔍 ID, equipamento, fornecedor..." style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;flex:1;min-width:160px;outline:none">
+      <select id="mt-fil-tipo" onchange="mtRender()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;background:#fff">
+        <option value="">Tipo — Todos</option>
+        <option>Corretiva</option><option>Sinistro</option><option>Preparação para Mobilização</option><option>Preventiva</option>
+      </select>
+      <select id="mt-fil-fornecedor" onchange="mtRender()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;background:#fff">
+        <option value="">Fornecedor — Todos</option>
+      </select>
+      <button onclick="mtGerarRelatorio()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:11px;font-weight:700;cursor:pointer;margin-left:auto">📊 Relatório</button>
+    </div>
+
+    <!-- KPIs rápidos -->
+    <div id="mt-kpis" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px"></div>
+
+    <!-- Tabela -->
+    <div id="mt-tabela" style="overflow-x:auto"></div>
   </div>
 </div>
 
