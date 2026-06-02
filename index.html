@@ -11962,8 +11962,9 @@ function mtGerarRelatorio(){
 
 // ── EMAIL (EmailJS) ───────────────────────────────────────────────────────────
 const EJS_SERVICE  = 'service_4c28dbe';
-const EJS_TPL_TAREFA  = 'template_rng0w9l';
+const EJS_TPL_TAREFA  = 'rng0w9l';
 const EJS_PUBKEY   = '8GgGVSA5kea-rAeAz';
+const EJS_EMAIL_FALLBACK = 'rafael.welter@mills.com.br'; // fallback se usuário sem email
 let _ejsIniciado = false;
 
 function ejsInit(){
@@ -11973,7 +11974,7 @@ function ejsInit(){
 
 function ejsGetEmail(nome){
   const u=usuariosCache.find(u=>u.nome===nome);
-  return u?.email||'';
+  return (u?.email||'').trim();
 }
 
 async function ejsEnviarNovaTarefa(item){
@@ -11981,9 +11982,14 @@ async function ejsEnviarNovaTarefa(item){
   const resps=item.responsaveis&&item.responsaveis.length?item.responsaveis:[item.resp].filter(Boolean);
   let enviados=0;
   for(const resp of resps){
-    const email=ejsGetEmail(resp);
-    if(!email){console.warn('EmailJS: sem email para',resp);continue;}
+    let email=ejsGetEmail(resp);
+    if(!email){
+      // Se for o usuário atual sem email cadastrado, usa fallback
+      if(currentUser&&currentUser.nome===resp&&currentUser.email){email=currentUser.email;}
+      else{console.warn('EmailJS: sem email para',resp,'— pulando');continue;}
+    }
     const prazo=item.dtEntrega?new Date(item.dtEntrega+'T00:00').toLocaleDateString('pt-BR'):'Não definido';
+    console.log('[EmailJS] Enviando para',resp,'<'+email+'>');
     try{
       await emailjs.send(EJS_SERVICE,EJS_TPL_TAREFA,{
         email_resp:email,
@@ -11995,9 +12001,14 @@ async function ejsEnviarNovaTarefa(item){
         name:(currentUser?.nome||'Sistema PCM Mills')
       });
       enviados++;
-    }catch(e){console.warn('EmailJS envio erro:',e);}
+      console.log('[EmailJS] ✅ Enviado para',email);
+    }catch(e){
+      console.error('[EmailJS] ❌ Erro:',e);
+      showToast('⚠ Erro ao enviar email: '+e.text||e.message||'');
+    }
   }
-  if(enviados>0)showToast('📧 Email enviado para o(s) responsável(is)!');
+  if(enviados>0)showToast('📧 Email enviado para '+enviados+' responsável(is)!');
+  else showToast('⚠ Nenhum email enviado — verifique emails no Admin','error');
 }
 
 async function ejsEnviarDigestoDiario(){
