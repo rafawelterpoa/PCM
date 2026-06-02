@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -9581,6 +9582,8 @@ function todoAdicionar(){
   inp.value='';_todoResps=[];todoRenderRespChips();
   const de=document.getElementById('todo-dt-entrega');if(de)de.value='';
   todoSalvar();todoRenderLista();inp.focus();
+  // Enviar email para o(s) responsável(is)
+  ejsEnviarNovaTarefa(item);
 }
 
 function todoConcluirEv(el){
@@ -10207,6 +10210,8 @@ function abrirTodo(){
   document.getElementById('todo-overlay').style.display='block';
   giPopularSelects();
   snavSetActive('snav-gi');
+  // Verificar e enviar digest diário se estiver na janela de horário
+  setTimeout(ejsEnviarDigestoDiario, 3000);
   const nome=(currentUser&&currentUser.nome)||'—';
   const el=document.getElementById('todo-solicitante-nome');
   if(el)el.textContent=nome;
@@ -11953,6 +11958,92 @@ function mtGerarRelatorio(){
   <button onclick="window.print()" style="background:#7c3aed;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:13px">🖨 Imprimir</button>
   </body></html>`;
   const w=window.open('','_blank');w.document.write(html);w.document.close();
+}
+
+// ── EMAIL (EmailJS) ───────────────────────────────────────────────────────────
+const EJS_SERVICE  = 'service_4c28dbe';
+const EJS_TPL_TAREFA  = 'template_rng0w9l';
+const EJS_PUBKEY   = '8GgGVSA5kea-rAeAz';
+let _ejsIniciado = false;
+
+function ejsInit(){
+  if(_ejsIniciado)return;
+  try{emailjs.init({publicKey:EJS_PUBKEY});_ejsIniciado=true;}catch(e){console.warn('EmailJS init:',e);}
+}
+
+function ejsGetEmail(nome){
+  const u=usuariosCache.find(u=>u.nome===nome);
+  return u?.email||'';
+}
+
+async function ejsEnviarNovaTarefa(item){
+  ejsInit();
+  const resps=item.responsaveis&&item.responsaveis.length?item.responsaveis:[item.resp].filter(Boolean);
+  let enviados=0;
+  for(const resp of resps){
+    const email=ejsGetEmail(resp);
+    if(!email){console.warn('EmailJS: sem email para',resp);continue;}
+    const prazo=item.dtEntrega?new Date(item.dtEntrega+'T00:00').toLocaleDateString('pt-BR'):'Não definido';
+    try{
+      await emailjs.send(EJS_SERVICE,EJS_TPL_TAREFA,{
+        email_resp:email,
+        nome_resp:resp,
+        titulo:item.texto,
+        area:(item.area||'—')+(item.subarea?' / '+item.subarea:''),
+        prazo,
+        descricao:item.obs||'—',
+        name:(currentUser?.nome||'Sistema PCM Mills')
+      });
+      enviados++;
+    }catch(e){console.warn('EmailJS envio erro:',e);}
+  }
+  if(enviados>0)showToast('📧 Email enviado para o(s) responsável(is)!');
+}
+
+async function ejsEnviarDigestoDiario(){
+  ejsInit();
+  const agora=Date.now();
+  const ultimoEnvio=parseInt(localStorage.getItem('mills_ejs_ultimo_digest')||'0');
+  // Enviar apenas se passaram mais de 22h desde o último envio
+  if(agora-ultimoEnvio < 22*3600*1000)return;
+  const hora=new Date().getHours();
+  // Enviar apenas entre 07:00 e 08:59 (janela de envio do digest)
+  if(hora<7||hora>8)return;
+
+  // Agrupar tarefas pendentes por responsável
+  const porResp={};
+  _todoItems.filter(t=>!t.feito).forEach(t=>{
+    const resps=t.responsaveis&&t.responsaveis.length?t.responsaveis:[t.resp].filter(Boolean);
+    resps.forEach(r=>{if(!porResp[r])porResp[r]=[];porResp[r].push(t);});
+  });
+
+  const hoje=new Date().toLocaleDateString('pt-BR');
+  let enviados=0;
+  for(const [resp,tarefas] of Object.entries(porResp)){
+    const email=ejsGetEmail(resp);
+    if(!email)continue;
+    const lista=tarefas.map((t,i)=>{
+      const prazo=t.dtEntrega?new Date(t.dtEntrega+'T00:00').toLocaleDateString('pt-BR'):'Sem prazo';
+      const atrasado=t.dtEntrega&&new Date(t.dtEntrega)<new Date()?'⚠ ATRASADA':'';
+      return `${i+1}. ${t.texto} [${t.area||'Geral'}] — Prazo: ${prazo} ${atrasado}`;
+    }).join('\n');
+    try{
+      await emailjs.send(EJS_SERVICE,EJS_TPL_TAREFA,{
+        email_resp:email,
+        nome_resp:resp,
+        titulo:`Resumo Diário — ${tarefas.length} pendência(s)`,
+        area:'Gestão Integrada PCM',
+        prazo:hoje,
+        descricao:lista,
+        name:'Sistema PCM Mills'
+      });
+      enviados++;
+    }catch(e){console.warn('EmailJS digest erro:',e);}
+  }
+  if(enviados>0){
+    localStorage.setItem('mills_ejs_ultimo_digest',String(agora));
+    console.log(`[EmailJS] Digest diário enviado para ${enviados} pessoa(s)`);
+  }
 }
 
 // ── POPULAR SELECTS DE USUÁRIOS DINAMICAMENTE ────────────────────────────────
