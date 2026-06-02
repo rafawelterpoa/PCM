@@ -11746,8 +11746,7 @@ function abrirManutTerceiros(){navegarPara('manuterceiros');}
 
 function paginaManutTerceiros(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const pg=document.getElementById('page-manuterceiros');
-  if(pg)pg.classList.add('active');
+  document.getElementById('page-manuterceiros').style.display='block';
   mtLoadFromFirebase();
   mtPopularSelectsUsuarios();
 }
@@ -11986,16 +11985,42 @@ function rsCheckAcesso(){
 
 // ── Backup & Restauração ─────────────────────────────────────────────────────
 async function exportarBackup(){
-  showToast('Gerando backup...');
+  showToast('Gerando backup completo...');
   try{
-    const r=await fetch(`${FB_BASE}/equipamentos.json`);if(!r.ok)throw new Error('Erro '+r.status);
-    const data=await r.json();
+    const nos=[
+      'equipamentos','logs','usuarios',
+      'vale_pecas','manut_terceiros',
+      'gi_todos/shared','gi_kpis/shared','gi_gestprog/shared',
+      'reuniao_semanal/indicadores','reuniao_semanal/valores'
+    ];
+    const resultados=await Promise.allSettled(nos.map(n=>fetch(`${FB_BASE}/${n}.json`).then(r=>r.json())));
+    const backup={};
+    nos.forEach((n,i)=>{
+      if(resultados[i].status==='fulfilled')backup[n.replace('/','__')]=resultados[i].value;
+    });
     const dt=new Date();const pad=n=>String(n).padStart(2,'0');
-    const nome=`mills-backup-${dt.getFullYear()}${pad(dt.getMonth()+1)}${pad(dt.getDate())}-${pad(dt.getHours())}${pad(dt.getMinutes())}.json`;
-    const blob=new Blob([JSON.stringify({versao:'1.0',data:dt.toLocaleString('pt-BR'),ts:dt.getTime(),equipamentos:data},null,2)],{type:'application/json'});
+    const nome=`mills-backup-completo-${dt.getFullYear()}${pad(dt.getMonth()+1)}${pad(dt.getDate())}-${pad(dt.getHours())}${pad(dt.getMinutes())}.json`;
+    const payload={
+      versao:'2.0',
+      geradoEm:dt.toLocaleString('pt-BR'),
+      ts:dt.getTime(),
+      modulos:{
+        equipamentos:backup['equipamentos'],
+        logs:backup['logs'],
+        usuarios:backup['usuarios'],
+        vale_pecas:backup['vale_pecas'],
+        manut_terceiros:backup['manut_terceiros'],
+        gi_atividades:backup['gi_todos__shared'],
+        gi_kpis:backup['gi_kpis__shared'],
+        gi_gestprog:backup['gi_gestprog__shared'],
+        reuniao_indicadores:backup['reuniao_semanal__indicadores'],
+        reuniao_valores:backup['reuniao_semanal__valores']
+      }
+    };
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=nome;a.click();URL.revokeObjectURL(url);
-    showToast('✅ Backup salvo: '+nome);
-  }catch(e){showToast('⚠ Erro: '+e.message);}
+    showToast('✅ Backup completo salvo: '+nome);
+  }catch(e){showToast('⚠ Erro no backup: '+e.message);}
 }
 
 async function restaurarBackupJSON(jsonText){
@@ -12487,8 +12512,9 @@ document.head.appendChild(rgStyle);
 function snavSetActive(id){
   document.querySelectorAll('.snav-item').forEach(el=>el.classList.remove('active'));
   const el=document.getElementById(id);if(el)el.classList.add('active');
-  // Oculta painel Vale Peças ao navegar para outra área
+  // Oculta painéis fixos ao navegar para outra área
   if(id!=='snav-valepecas'){const vp=document.getElementById('page-valepecas');if(vp)vp.style.display='none';}
+  if(id!=='snav-manuterceiros'){const mt=document.getElementById('page-manuterceiros');if(mt)mt.style.display='none';}
 }
 
 function navegarPara(destino){
@@ -13027,8 +13053,8 @@ function histRenderRevisao(){
 </div>
 
 <!-- MANUTENÇÃO DE TERCEIROS -->
-<div class="page" id="page-manuterceiros">
-  <div style="padding:24px 28px">
+<div id="page-manuterceiros" style="display:none;position:fixed;left:60px;top:56px;right:0;bottom:0;overflow-y:auto;background:#eef1f6;z-index:100">
+  <div style="padding:24px 28px;max-width:1400px">
     <div class="page-hdr">
       <div class="page-hdr-title"><span style="color:#7c3aed">🏭</span> Manutenção de Terceiros</div>
       <div class="page-hdr-sub">Controle de serviços externos e mão de obra de terceiros</div>
