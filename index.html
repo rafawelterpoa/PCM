@@ -1727,9 +1727,18 @@ function fbListen(){
           if(state[id]){
             // Preservar ordens locais se Firebase vier com array vazio
             const ordensAntes=state[id].ordens||[];
-            Object.assign(state[id],d);
+            // Antes do assign, verificar se Firebase tem etapa errada vs ORIG
             const _o=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
-            if(_o){if(_o.status==='Alugado'){state[id].etapa='alugado';}else{if(state[id].etapa==='alugado')state[id].etapa=etapaInicial(_o.status);}}
+            const origNaoAlugado=_o&&_o.status!=='Alugado';
+            // Se ORIG diz que não é Alugado mas Firebase veio com alugado → não aplicar etapa do Firebase
+            if(origNaoAlugado&&d.etapa==='alugado'){
+              const etapaCorreta=etapaInicial(_o.status);
+              d={...d,etapa:etapaCorreta};
+              // Persistir correção no Firebase
+              fetch(`${FB_BASE}/equipamentos/${id}/etapa.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(etapaCorreta)}).catch(()=>{});
+            }
+            Object.assign(state[id],d);
+            if(_o){if(_o.status==='Alugado'){state[id].etapa='alugado';}else{if(state[id].etapa==='alugado'){const ne=etapaInicial(_o.status);state[id].etapa=ne;fetch(`${FB_BASE}/equipamentos/${id}/etapa.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ne)}).catch(()=>{});}}}
             if((!state[id].ordens||state[id].ordens.length===0)&&ordensAntes.length>0)state[id].ordens=ordensAntes;
           }
           else if(d.id&&d.equipamento&&!d.baixado){
@@ -1802,7 +1811,7 @@ async function loadFromFirebase(){
             modelo:d.modelo||state[id].modelo,
             tipo:d.tipo||state[id].tipo,
             oficina:d.oficina||state[id].oficina,
-            etapa:_orig?(_orig.status==='Alugado'?'alugado':(d.etapa==='alugado'?(()=>{const ne=etapaInicial(_orig.status);setTimeout(()=>{fetch(`${FB_BASE}/equipamentos/${id}/etapa.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ne)}).catch(()=>{});},500);return ne;})():(d.etapa||state[id].etapa))):(d.etapa||state[id].etapa),
+            etapa:_orig?(_orig.status==='Alugado'?'alugado':(d.etapa==='alugado'?(()=>{const ne=etapaInicial(_orig.status);fetch(`${FB_BASE}/equipamentos/${id}/etapa.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ne)}).catch(()=>{});return ne;})():(d.etapa||state[id].etapa))):(d.etapa||state[id].etapa),
             etapa_desde:d.etapa_desde||state[id].etapa_desde,
             etapa_interna:d.etapa_interna!==undefined?d.etapa_interna:null,
             etapa_interna_desde:d.etapa_interna_desde||null,
