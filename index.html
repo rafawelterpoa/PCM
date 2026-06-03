@@ -4448,6 +4448,7 @@ async function doBaseUpdate(){
       registrarAlteracao('saida',eq.id,eq.equipamento,eq.oficina,user);
     }
   });
+  const _recentRetornos=new Set(); // IDs que retornaram NESTE upload
   novos.forEach(n=>{
     if(state[n.id]){
       const eq=state[n.id];
@@ -4465,16 +4466,18 @@ async function doBaseUpdate(){
       // Considera retorno também quando alugaradoFilial=true (alugado mas fisicamente na oficina)
       if(eq.etapa==='alugado'&&(n.status!=='Alugado'||n.alugaradoFilial)){
         eq.etapa='chegada';eq.etapa_desde=agora;
+        _recentRetornos.add(n.id); // marcar como retorno recente
         eq.ciclos_operacao=(eq.ciclos_operacao||0)+1;
         if(!eq.historico)eq.historico=[];
         eq.historico.push({from:'Operação (Alugado)',to:'Oficina — Aguardando Movimentação',ts:agora,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:'regra-sistema',ciclo:eq.ciclos_operacao});
         fbLogMove({eqId:eq.id,nome:eq.equipamento,from:'Operação (Alugado)',to:`Oficina — Aguard. Movim. (Ciclo ${eq.ciclos_operacao})`,ts:agora,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:'regra-sistema',oficina:n.oficina,visao:'retorno_operacao'});
       }
       // REGRA: equipamento saiu para operação (CSV marca como Alugado)
-      if(n.status==='Alugado'&&eq.etapa!=='alugado'){eq.etapa='alugado';}
-      // REGRA: equipamento em chegada sem ação na oficina + CSV Disponível → vai para pátio
+      if(n.status==='Alugado'&&eq.etapa!=='alugado'&&!n.alugaradoFilial){eq.etapa='alugado';}
+      // REGRA: equipamento em chegada sem ação + CSV Disponível → vai para pátio
+      // Só aplica se o retorno aconteceu NESTE upload (evita mover equipamentos que já estavam em chegada)
       const semAcaoOficina=eq.etapa==='chegada'&&!Object.keys(eq.assinaturas||{}).length&&!eq.etapa_interna&&!Object.keys(eq.tempo_etapas||{}).filter(k=>k!=='chegada').length;
-      if(semAcaoOficina&&n.status==='Disponível'){eq.etapa='pronto';eq.etapa_desde=agora;}
+      if(semAcaoOficina&&n.status==='Disponível'&&_recentRetornos.has(n.id)){eq.etapa='pronto';eq.etapa_desde=agora;}
       // Sincronizar reserva/cliente da base (fonte da verdade é o CSV)
       const clienteAntes=eq.cliente;const reservadoAntes=eq.reservado;
       eq.cliente=n.cliente||'';eq.reservado=!!n.cliente;
