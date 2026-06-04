@@ -11515,6 +11515,44 @@ function gpRenderAll(){gpRenderPeriodoChecks();gpRenderTabela();}
 // ── VALE PEÇAS ────────────────────────────────────────────────────────────────
 let _vpRegistros=[];
 let _vpItens=[]; // itens do formulário atual [{pn,qtd,desc}]
+let _pcmColabs=[]; // 402 colaboradores do headcount
+
+async function vpCarregarColabs(){
+  if(_pcmColabs.length)return;
+  try{
+    const r=await fetch(FB_BASE+'/colaboradores.json');
+    const d=await r.json();
+    _pcmColabs=d&&typeof d==='object'?Object.values(d).filter(Boolean).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt')):[];
+  }catch(e){_pcmColabs=[];}
+}
+
+function vpPreencherDataLists(){
+  // Equipamentos
+  const dlEq=document.getElementById('vp-dl-equips');
+  if(dlEq&&!dlEq.childElementCount){
+    const eqs=[...new Set(Object.values(state||{}).filter(e=>e&&e.id).map(e=>e.id+' — '+(e.equipamento||'')))].sort();
+    dlEq.innerHTML=eqs.map(e=>`<option value="${e.split(' — ')[0]}">${e}</option>`).join('');
+  }
+  // Operações
+  const dlOp=document.getElementById('vp-dl-operacoes');
+  if(dlOp&&!dlOp.childElementCount&&typeof OPERACOES_DATA!=='undefined'){
+    dlOp.innerHTML=OPERACOES_DATA.map(o=>`<option value="${o.nome}">`).join('');
+  }
+  // Colaboradores
+  const dlCo=document.getElementById('vp-dl-colabs');
+  if(dlCo&&_pcmColabs.length&&!dlCo.childElementCount){
+    dlCo.innerHTML=_pcmColabs.map(c=>`<option value="${c.nome}">${c.matricula?'['+c.matricula+'] ':''}</option>`).join('');
+  }
+}
+
+function vpAutoFill(input,tipo){
+  // Auto preencher oficina quando selecionar equipamento de retirada
+  if(tipo==='ret'){
+    const id=(input.value||'').trim().toUpperCase();
+    const eq=EQUIPAMENTOS_ORIG&&EQUIPAMENTOS_ORIG.find(e=>e.id===id);
+    if(eq&&eq.oficina){const of=document.getElementById('vp-oficina');if(of)of.value=eq.oficina;}
+  }
+}
 
 async function vpLoadFromFirebase(){
   try{
@@ -11542,6 +11580,8 @@ function paginaValePecas(){
   if(!_vpItens.length)vpAddItem();
   vpRenderItens();
   vpLoadFromFirebase();
+  vpCarregarColabs().then(vpPreencherDataLists);
+  vpPreencherDataLists();
   vpPopularSelectsUsuarios();
   vpMudarAba('abertas');
 }
@@ -11551,13 +11591,12 @@ function fecharValePecas(){
 }
 
 function vpPopularSelectsUsuarios(){
-  if(!usuariosCache||!usuariosCache.length)return;
-  const nomes=[...new Set(usuariosCache.map(u=>u.nome).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));
-  ['vp-solicitante','vp-gestor'].forEach(id=>{
-    const el=document.getElementById(id);if(!el)return;
-    const cur=el.value;
-    el.innerHTML='<option value="">— Selecione —</option>'+nomes.map(n=>`<option>${n}</option>`).join('');
-    if(cur)el.value=cur;
+  // Agora solicitante e gestor são inputs com datalist — preencher datalist de colaboradores
+  vpCarregarColabs().then(()=>{
+    const dlCo=document.getElementById('vp-dl-colabs');
+    if(dlCo&&_pcmColabs.length&&!dlCo.childElementCount){
+      dlCo.innerHTML=_pcmColabs.map(c=>`<option value="${c.nome}">${c.matricula?'['+c.matricula+'] ':''}</option>`).join('');
+    }
   });
 }
 
@@ -13271,9 +13310,15 @@ function histRenderRevisao(){
         <button class="gi-btn ghost" id="vp-cancelar-btn" style="display:none;font-size:11px;padding:5px 12px" onclick="vpCancelar()">✕ Cancelar edição</button>
       </div>
       <!-- Linha 1: Dados principais -->
+      <!-- datalists para autocomplete -->
+      <datalist id="vp-dl-equips"></datalist>
+      <datalist id="vp-dl-operacoes"></datalist>
+      <datalist id="vp-dl-colabs"></datalist>
+
       <div class="gi-form-row" style="grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:10px">
         <div><label class="gi-label">Data</label><input class="gi-input" type="date" id="vp-data"></div>
-        <div><label class="gi-label">Equip. Retirada (origem)</label><input class="gi-input" id="vp-equip-ret" placeholder="ID do equipamento"></div>
+        <div><label class="gi-label">Equip. Retirada (origem)</label>
+          <input class="gi-input" id="vp-equip-ret" placeholder="Digite ID completo..." list="vp-dl-equips" autocomplete="off" oninput="vpAutoFill(this,'ret')"></div>
         <div><label class="gi-label">Oficina</label>
           <select class="gi-select" id="vp-oficina">
             <option value="">— Selecione —</option>
@@ -13282,13 +13327,17 @@ function histRenderRevisao(){
             <option>São José dos Pinhais (PR)</option>
           </select>
         </div>
-        <div><label class="gi-label">Solicitante</label><select class="gi-select" id="vp-solicitante"><option value="">— Selecione —</option></select></div>
-        <div><label class="gi-label">Gestor</label><select class="gi-select" id="vp-gestor"><option value="">— Selecione —</option></select></div>
+        <div><label class="gi-label">Solicitante</label>
+          <input class="gi-input" id="vp-solicitante" placeholder="Digite nome..." list="vp-dl-colabs" autocomplete="off"></div>
+        <div><label class="gi-label">Gestor</label>
+          <input class="gi-input" id="vp-gestor" placeholder="Digite nome..." list="vp-dl-colabs" autocomplete="off"></div>
       </div>
       <!-- Linha 2: Destino e documentação -->
       <div class="gi-form-row" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:10px">
-        <div><label class="gi-label">Equip. Destino</label><input class="gi-input" id="vp-equip-dest" placeholder="ID do equipamento destino"></div>
-        <div><label class="gi-label">Operação / Contrato</label><input class="gi-input" id="vp-operacao" placeholder="Nome da operação"></div>
+        <div><label class="gi-label">Equip. Destino</label>
+          <input class="gi-input" id="vp-equip-dest" placeholder="Digite ID completo..." list="vp-dl-equips" autocomplete="off"></div>
+        <div><label class="gi-label">Operação / Contrato</label>
+          <input class="gi-input" id="vp-operacao" placeholder="Digite operação..." list="vp-dl-operacoes" autocomplete="off"></div>
         <div><label class="gi-label">O.M.</label><input class="gi-input" id="vp-om" placeholder="Nº da O.M."></div>
         <div><label class="gi-label">RC</label><input class="gi-input" id="vp-rc" placeholder="Nº do RC"></div>
       </div>
