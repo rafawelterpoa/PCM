@@ -821,6 +821,7 @@ input.filter-sel{padding:5px 8px;height:34px}
         <option value="locação">Locação</option>
         <option value="venda">Venda</option>
         <option value="standby">Standby</option>
+        <option value="__sem__">Sem Identificação</option>
       </select>
     </div>
     <!-- KPIs rápidos -->
@@ -12740,7 +12741,12 @@ function patioRender(){
 
   let equips=Object.values(state).filter(e=>!e.baixado&&e.etapa==='pronto');
   if(filtOf)equips=equips.filter(e=>e.oficina===filtOf);
-  if(filtTipo){const ids=new Set(EQUIPAMENTOS_ORIG.filter(o=>o.tipoFrota===filtTipo).map(o=>o.id));equips=equips.filter(e=>ids.has(e.id));}
+  if(filtTipo==='__sem__'){
+    const idsComTipo=new Set(EQUIPAMENTOS_ORIG.filter(o=>o.tipoFrota&&['locação','venda','standby'].includes(o.tipoFrota.toLowerCase())).map(o=>o.id));
+    equips=equips.filter(e=>!idsComTipo.has(e.id));
+  }else if(filtTipo){
+    const ids=new Set(EQUIPAMENTOS_ORIG.filter(o=>o.tipoFrota===filtTipo).map(o=>o.id));equips=equips.filter(e=>ids.has(e.id));
+  }
   if(busca)equips=equips.filter(e=>(e.id||'').toLowerCase().includes(busca)||(e.equipamento||'').toLowerCase().includes(busca)||(e.modelo||'').toLowerCase().includes(busca));
 
   const getTipoFrota=id=>{const o=EQUIPAMENTOS_ORIG.find(x=>x.id===id);return o?.tipoFrota||'';};
