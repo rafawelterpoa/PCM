@@ -12674,10 +12674,33 @@ function rgRenderSemanal(aba){
   const areas=RG_AREA_MAP[aba]||[];
   const inds=(_rsIndicadores||[]).filter(ind=>areas.some(a=>(ind.area||'').toLowerCase().includes(a.toLowerCase())));
   if(!inds.length){cont.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhum indicador cadastrado para esta área.<br><br>Cadastre na aba <strong>Reunião Semanal</strong> com a área correspondente.</div>';return;}
-  const todasSems=[...new Set(Object.values(_rsValores||{}).flatMap(sv=>Object.keys(sv)))].sort((a,b)=>rsParseWeek(a)-rsParseWeek(b));
-  if(!todasSems.length){cont.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhum valor de semana registrado ainda.</div>';return;}
-  const rows=inds.map((ind,ki)=>{const mN=parseFloat(ind.meta);const vals=todasSems.map(s=>{const v=(_rsValores[ind.id]||{})[s];return v!=null?parseFloat(v.valor):NaN;});const cV=vals.filter(v=>!isNaN(v));let tr='—';let tc='color:#64748b';if(cV.length>=2){const d=cV[cV.length-1]-cV[0];const p=Math.abs((d/cV[0])*100).toFixed(1);const m=rsMaisEMelhor(ind.tipo)?d>0:d<0;tr=(d>=0?'↑ ':'↓ ')+p+'%';tc=m?'color:#16a34a':'color:#dc2626';}return`<tr style="background:${ki%2?'#fff':'#f8fafc'};border-bottom:1px solid #f1f5f9"><td style="padding:8px 12px;font-weight:600">${ind.nome}<div style="font-size:10px;color:#94a3b8">${ind.desc||''}</div></td><td style="padding:8px 12px;font-size:11px;color:#64748b">${(ind.resp||'').split(' ')[0]||'—'}</td><td style="padding:8px 12px;text-align:center;color:#60a5fa">${ind.meta||'—'}</td>${vals.map(v=>{if(isNaN(v))return'<td style="padding:8px 12px;text-align:center;color:#cbd5e1">—</td>';const bg=rsFarol(v,mN,ind.tipo);return`<td style="padding:8px 12px;text-align:center;font-weight:700;${bg}">${v}${rsTipoUnidade(ind.tipo)}</td>`;}).join('')}<td style="padding:8px 12px;text-align:center;font-weight:700;${tc}">${tr}</td></tr>`;}).join('');
-  cont.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden"><thead><tr style="background:#0f172a;color:#fff"><th style="padding:8px 12px;text-align:left;min-width:200px">Indicador</th><th style="padding:8px 12px;text-align:left">Resp.</th><th style="padding:8px 12px;text-align:center">Meta</th>${todasSems.map(s=>`<th style="padding:8px 12px;text-align:center;font-size:11px">${s.replace('_','/')}</th>`).join('')}<th style="padding:8px 12px;text-align:center;background:#0f766e">Tendência</th></tr></thead><tbody>${rows}</tbody></table>`;
+  // Usar os mesmos períodos selecionados na Reunião Semanal
+  const todosDisp=[...new Set(Object.values(_rsValores||{}).flatMap(sv=>Object.keys(sv)))].sort((a,b)=>rsParseWeek(a)-rsParseWeek(b));
+  const selReuniao=rsGetSemanasSelecionadas();
+  const todasSems=todosDisp.filter(s=>!selReuniao.length||selReuniao.includes(s));
+  if(!todasSems.length){cont.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhum período selecionado.<br>Selecione semanas/meses na aba <strong>Reunião Semanal</strong>.</div>';return;}
+  const rows=inds.map((ind,ki)=>{
+    const mN=parseFloat(ind.meta);
+    const vals=todasSems.map(s=>{const v=(_rsValores[ind.id]||{})[s];return v!=null?parseFloat(v.valor):NaN;});
+    const cV=vals.filter(v=>!isNaN(v));let tr='—';let tc='color:#64748b';
+    if(cV.length>=2){const d=cV[cV.length-1]-cV[0];const p=Math.abs((d/cV[0])*100).toFixed(1);const m=rsMaisEMelhor(ind.tipo)?d>0:d<0;tr=(d>=0?'↑ ':'↓ ')+p+'%';tc=m?'color:#16a34a':'color:#dc2626';}
+    return`<tr style="background:${ki%2?'#fff':'#f8fafc'};border-bottom:1px solid #f1f5f9">
+      <td style="padding:8px 12px;font-weight:600">${ind.nome}<div style="font-size:10px;color:#94a3b8">${ind.desc||''}</div></td>
+      <td style="padding:8px 12px;font-size:11px;color:#64748b">${(ind.resp||'').split(' ')[0]||'—'}</td>
+      <td style="padding:8px 12px;text-align:center;color:#60a5fa">${ind.meta||'—'}</td>
+      ${vals.map(v=>{if(isNaN(v))return'<td style="padding:8px 12px;text-align:center;color:#cbd5e1">—</td>';const bg=rsFarol(v,mN,ind.tipo);return`<td style="padding:8px 12px;text-align:center;font-weight:700;${bg}">${v}${rsTipoUnidade(ind.tipo)}</td>`;}).join('')}
+      <td style="padding:8px 12px;text-align:center;font-weight:700;${tc}">${tr}</td>
+    </tr>`;}).join('');
+  cont.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+    <thead><tr style="background:#0f172a;color:#fff">
+      <th style="padding:8px 12px;text-align:left;min-width:200px">Indicador</th>
+      <th style="padding:8px 12px;text-align:left">Resp.</th>
+      <th style="padding:8px 12px;text-align:center">Meta</th>
+      ${todasSems.map(s=>{const isMes=rsIsMes(s);return`<th style="padding:8px 12px;text-align:center;font-size:11px;background:${isMes?'#6d28d9':'#0f172a'};color:${isMes?'#f3e8ff':'#94a3b8'}">${isMes?'📅 ':''}${s.replace('_','/')}</th>`;}).join('')}
+      <th style="padding:8px 12px;text-align:center;background:#0f766e">Tendência</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
 }
 
 // CSS
