@@ -12749,11 +12749,13 @@ function patioRender(){
   const kpisEl=document.getElementById('patio-kpis');
   if(kpisEl){
     const por_tipo=Counter_js(equips.map(e=>getTipoFrota(e.id)||'outros'));
+    const semClassif=equips.length-(por_tipo['locação']||0)-(por_tipo['venda']||0)-(por_tipo['standby']||0);
     kpisEl.innerHTML=[
       {l:'Total',v:equips.length,c:'#0f766e'},
       {l:'Locação',v:por_tipo['locação']||0,c:'#2563eb'},
       {l:'Venda',v:por_tipo['venda']||0,c:'#16a34a'},
       {l:'Standby',v:por_tipo['standby']||0,c:'#7c3aed'},
+      ...(semClassif>0?[{l:'Sem Classif.',v:semClassif,c:'#94a3b8'}]:[]),
     ].map(k=>`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;border-top:3px solid ${k.c};box-shadow:0 1px 4px rgba(0,0,0,.04)"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:8px">${k.l}</div><div style="font-size:30px;font-weight:900;color:${k.c};line-height:1;margin-bottom:3px">${k.v}</div><div style="font-size:11px;color:#94a3b8">prontos no pátio</div></div>`).join('');
   }
 
