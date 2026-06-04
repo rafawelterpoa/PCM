@@ -9216,60 +9216,6 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <div id="rg-aba-preventiva" style="display:none"><div id="rg-prev-content"></div></div>
       <!-- AVARIAS -->
       <div id="rg-aba-avarias" class="rg-aba" style="display:none">
-        <div class="gi-form-card">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:14px" id="rg-av-form-label">Registrar Semana</div>
-          <div class="gi-form-row" style="grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-            <div>
-              <div style="font-size:11px;font-weight:700;color:#F37021;text-transform:uppercase;margin-bottom:8px">Avarias de Desmobilização</div>
-              <div class="gi-form-row" style="grid-template-columns:1fr 1fr 1fr;gap:8px">
-                <div><label class="gi-label">Semana</label><input class="gi-input" id="rg-av-semana" placeholder="S21/2026"></div>
-                <div><label class="gi-label">Qtd Desmobilizados</label><input class="gi-input" id="rg-av-desm-qtd" type="number" placeholder="0"></div>
-                <div><label class="gi-label">Qtd Orçamentos</label><input class="gi-input" id="rg-av-desm-orc" type="number" placeholder="0"></div>
-              </div>
-              <div class="gi-form-row" style="grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-                <div><label class="gi-label">Qtd Faturados</label><input class="gi-input" id="rg-av-desm-fat" type="number" placeholder="0"></div>
-                <div><label class="gi-label">Obs</label><input class="gi-input" id="rg-av-desm-obs" placeholder="..."></div>
-              </div>
-            </div>
-            <div>
-              <div style="font-size:11px;font-weight:700;color:#1e40af;text-transform:uppercase;margin-bottom:8px">Avarias de Contrato</div>
-              <div class="gi-form-row" style="grid-template-columns:1fr 1fr;gap:8px">
-                <div><label class="gi-label">Solicitadas</label><input class="gi-input" id="rg-av-cont-sol" type="number" placeholder="0"></div>
-                <div><label class="gi-label">Orç. Aprovados</label><input class="gi-input" id="rg-av-cont-aprov" type="number" placeholder="0"></div>
-              </div>
-              <div class="gi-form-row" style="grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
-                <div><label class="gi-label">Realizadas</label><input class="gi-input" id="rg-av-cont-real" type="number" placeholder="0"></div>
-                <div><label class="gi-label">Faturadas</label><input class="gi-input" id="rg-av-cont-fat" type="number" placeholder="0"></div>
-                <div><label class="gi-label">Obs</label><input class="gi-input" id="rg-av-cont-obs" placeholder="..."></div>
-              </div>
-            </div>
-          </div>
-          <input type="hidden" id="rg-av-editing">
-          <div style="display:flex;gap:8px">
-            <button class="gi-btn" onclick="rgAvSalvar()">💾 Salvar</button>
-            <button class="gi-btn ghost" id="rg-av-cancel-btn" style="display:none" onclick="rgAvCancelar()">✕ Cancelar</button>
-          </div>
-        </div>
-        <div style="overflow-x:auto;margin-top:16px">
-          <table class="gi-table">
-            <thead>
-              <tr>
-                <th rowspan="2" style="vertical-align:middle">Semana</th>
-                <th colspan="3" style="text-align:center;background:#fef3c7;color:#92400e">Desmobilização</th>
-                <th style="background:#fff7ed;color:#c2410c;text-align:center">Backlog</th>
-                <th colspan="4" style="text-align:center;background:#dbeafe;color:#1e40af">Contrato</th>
-                <th rowspan="2" style="vertical-align:middle">Ações</th>
-              </tr>
-              <tr>
-                <th style="background:#fef9e7;color:#92400e">Desmob.</th><th style="background:#fef9e7;color:#92400e">Orçados</th><th style="background:#fef9e7;color:#92400e">Faturados</th>
-                <th style="background:#fff7ed;color:#c2410c">Orç−Desmob.</th>
-                <th style="background:#eff6ff;color:#1e40af">Solicit.</th><th style="background:#eff6ff;color:#1e40af">Aprovadas</th><th style="background:#eff6ff;color:#1e40af">Realizadas</th><th style="background:#eff6ff;color:#1e40af">Faturadas</th>
-              </tr>
-            </thead>
-            <tbody id="rg-av-tbody"></tbody>
-          </table>
-        </div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#dc2626;margin:16px 0 8px">📊 Indicadores da Reunião Semanal</div>
         <div id="rg-avarias-content"></div>
       </div>
       <!-- TELEMETRIA -->
@@ -12552,7 +12498,7 @@ function rgAba(aba){
   if(tab) tab.classList.add('active');
   if(el) el.style.display = 'block';
   if(aba === 'estoque'){ rgRenderEstoque(); rgRenderSemanal('estoque'); }
-  if(aba === 'avarias'){ rgAvLoad(); rgRenderSemanal('avarias'); }
+  if(aba === 'avarias') rgRenderSemanal('avarias');
   if(aba === 'pcm') rgRenderSemanal('pcm');
   if(['saop','telemetria'].includes(aba)) rgRenderSemanal(aba);
 }
