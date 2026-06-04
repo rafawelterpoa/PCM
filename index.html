@@ -9185,13 +9185,12 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
     <!-- ABA REUNIÕES GERENCIAIS -->
     <div id="tp-aba-rg" class="gi-body" style="display:none">
       <div class="gi-page-title">🏢 Reuniões Gerenciais</div>
-      <div class="gi-page-sub">S&OP · Estoque · Programação · Preventiva/Preditiva · Avarias/Garantia · Telemetria</div>
+      <div class="gi-page-sub">S&OP · Estoque · PCM · Avarias/Garantia · Telemetria</div>
 
       <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:20px;overflow-x:auto;flex-wrap:nowrap">
         <button class="rg-tab active" onclick="rgAba('saop')" id="rg-tab-saop">S&OP / Implantação</button>
         <button class="rg-tab" onclick="rgAba('estoque')" id="rg-tab-estoque">📦 Estoque</button>
-        <button class="rg-tab" onclick="rgAba('programacao')" id="rg-tab-programacao">📅 Programação</button>
-        <button class="rg-tab" onclick="rgAba('preventiva')" id="rg-tab-preventiva">🔧 Preventiva/Preditiva</button>
+        <button class="rg-tab" onclick="rgAba('pcm')" id="rg-tab-pcm">⚙️ PCM</button>
         <button class="rg-tab" onclick="rgAba('avarias')" id="rg-tab-avarias">⚠️ Avarias/Garantia</button>
         <button class="rg-tab" onclick="rgAba('telemetria')" id="rg-tab-telemetria">📡 Telemetria</button>
       </div>
@@ -9208,10 +9207,13 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:8px;margin-top:8px">📊 Indicadores da Reunião Semanal</div>
         <div id="rg-estoque-content"></div>
       </div>
-      <!-- PROGRAMAÇÃO -->
-      <div id="rg-aba-programacao" class="rg-aba" style="display:none"><div id="rg-prog-content"></div></div>
-      <!-- PREVENTIVA -->
-      <div id="rg-aba-preventiva" class="rg-aba" style="display:none"><div id="rg-prev-content"></div></div>
+      <!-- PCM (Programação + Preventiva/Preditiva unificados) -->
+      <div id="rg-aba-pcm" class="rg-aba" style="display:none">
+        <div id="rg-pcm-content"></div>
+      </div>
+      <!-- mantidos para compatibilidade mas ocultos -->
+      <div id="rg-aba-programacao" style="display:none"><div id="rg-prog-content"></div></div>
+      <div id="rg-aba-preventiva" style="display:none"><div id="rg-prev-content"></div></div>
       <!-- AVARIAS -->
       <div id="rg-aba-avarias" class="rg-aba" style="display:none">
         <div class="gi-form-card">
@@ -12551,7 +12553,8 @@ function rgAba(aba){
   if(el) el.style.display = 'block';
   if(aba === 'estoque'){ rgRenderEstoque(); rgRenderSemanal('estoque'); }
   if(aba === 'avarias'){ rgAvLoad(); rgRenderSemanal('avarias'); }
-  if(['saop','programacao','preventiva','telemetria'].includes(aba)) rgRenderSemanal(aba);
+  if(aba === 'pcm') rgRenderSemanal('pcm');
+  if(['saop','telemetria'].includes(aba)) rgRenderSemanal(aba);
 }
 
 // ── ESTOQUE ──────────────────────────────────────────────────────────────────
@@ -12666,10 +12669,10 @@ function rgAvRender(){
 }
 
 // ── ABAS DA REUNIÃO SEMANAL ──────────────────────────────────────────────────
-const RG_AREA_MAP={saop:['S&OP / Implantação'],estoque:['Estoque de Equipamentos'],programacao:['PCM'],preventiva:['PCM'],avarias:['Avarias/Garantias'],telemetria:['Telemetria']};
+const RG_AREA_MAP={saop:['S&OP / Implantação'],estoque:['Estoque de Equipamentos'],pcm:['PCM'],programacao:['PCM'],preventiva:['PCM'],avarias:['Avarias/Garantias'],telemetria:['Telemetria']};
 
 function rgRenderSemanal(aba){
-  const contId={saop:'rg-saop-content',estoque:'rg-estoque-content',programacao:'rg-prog-content',preventiva:'rg-prev-content',avarias:'rg-avarias-content',telemetria:'rg-tel-content'}[aba];
+  const contId={saop:'rg-saop-content',estoque:'rg-estoque-content',pcm:'rg-pcm-content',programacao:'rg-prog-content',preventiva:'rg-prev-content',avarias:'rg-avarias-content',telemetria:'rg-tel-content'}[aba];
   const cont=document.getElementById(contId);if(!cont)return;
   const areas=RG_AREA_MAP[aba]||[];
   const inds=(_rsIndicadores||[]).filter(ind=>areas.some(a=>(ind.area||'').toLowerCase().includes(a.toLowerCase())));
