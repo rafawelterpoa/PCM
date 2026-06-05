@@ -12788,6 +12788,24 @@ function renderOficinaCards(){
 }
 
 // ── PÁTIO ─────────────────────────────────────────────────────────────────────
+async function patioVoltarManutenção(id){
+  const eq=state[id];if(!eq)return;
+  const motivo=prompt(`Retornar ${id} (${eq.equipamento||''}) para manutenção?\n\nMotivo (opcional):`);
+  if(motivo===null)return; // cancelou
+  const user=currentUser?currentUser.nome:'sistema';
+  eq.etapa='chegada';
+  eq.etapa_desde=Date.now();
+  if(!eq.historico)eq.historico=[];
+  eq.historico.push({from:'Pronto/Pátio',to:'Aguardando Movimentação (retorno)',ts:Date.now(),hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:user,obs:motivo||'Retorno manual via pátio'});
+  fbLogMove({eqId:id,nome:eq.equipamento,from:'Pronto/Pátio',to:'Aguardando Movimentação',ts:Date.now(),hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:user,oficina:eq.oficina,visao:'retorno_patio'});
+  try{
+    await saveToFirebase([id]);
+    showToast(`✅ ${id} retornado para Aguardando Movimentação em ${eq.oficina||''}!`);
+    patioRender();
+    rgUpdateHomeKpis();
+  }catch(e){showToast('⚠ Erro ao salvar: '+e.message);}
+}
+
 function paginaPatio(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('page-patio');
@@ -12863,9 +12881,12 @@ function patioRender(){
         <td style="padding:8px 12px;text-align:center"><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:${cor_tf}22;color:${cor_tf}">${tf||'—'}</span></td>
         <td style="padding:8px 12px;text-align:center;color:${diasPronto>7?'#dc2626':diasPronto>3?'#d97706':'#16a34a'};font-weight:700">${diasPronto}d</td>
         ${e.reservado?`<td style="padding:8px 12px"><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:#dbeafe;color:#1e40af">🔒 ${e.cliente||'Reservado'}</span></td>`:'<td style="padding:8px 12px;color:#94a3b8;font-size:11px">—</td>'}
+        <td style="padding:8px 12px;text-align:center">
+          <button onclick="patioVoltarManutenção('${e.id}')" title="Retornar para Manutenção" style="background:#fff3e6;border:1px solid #F37021;color:#F37021;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap">🔧 → Manutenção</button>
+        </td>
       </tr>`;
     }).join('');
-    lista.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#f8fafc"><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">ID</th><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Equipamento</th><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Modelo</th><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Oficina</th><th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Tipo Frota</th><th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Dias Pronto</th><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Reserva</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    lista.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#f8fafc"><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">ID</th><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Equipamento</th><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Modelo</th><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Oficina</th><th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Tipo Frota</th><th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Dias Pronto</th><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Reserva</th><th style="padding:10px 14px;border-bottom:1px solid #e2e8f0"></th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
 
   // Por família
