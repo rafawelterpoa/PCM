@@ -9094,6 +9094,8 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
               <option value="dias-menos">Dias — Menos é Melhor</option>
               <option value="rs-mais">R$ — Mais é Melhor</option>
               <option value="rs-menos">R$ — Menos é Melhor</option>
+              <option value="rsMI-mais">R$ MI — Mais é Melhor</option>
+              <option value="rsMI-menos">R$ MI — Menos é Melhor</option>
               <option value="qtd-mais">Quantidade — Mais é Melhor</option>
               <option value="qtd-menos">Quantidade — Menos é Melhor</option>
             </select></div>
@@ -9166,6 +9168,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
           <option value="pct-mais">% Mais é Melhor</option><option value="pct-menos">% Menos é Melhor</option>
           <option value="dias-mais">Dias Mais é Melhor</option><option value="dias-menos">Dias Menos é Melhor</option>
           <option value="rs-mais">R$ Mais é Melhor</option><option value="rs-menos">R$ Menos é Melhor</option>
+          <option value="rsMI-mais">R$ MI Mais é Melhor</option><option value="rsMI-menos">R$ MI Menos é Melhor</option>
           <option value="qtd-mais">Qtd Mais é Melhor</option><option value="qtd-menos">Qtd Menos é Melhor</option>
         </select>
         <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-left:8px">Semanas:</div>
@@ -11059,8 +11062,8 @@ let _rsValores={};
 
 function rsParseWeek(s){const mW=(s||'').match(/S(\d+)[_\/](\d+)/i);if(mW)return parseInt(mW[2])*10000+parseInt(mW[1])*2;const mM=(s||'').match(/M(\d+)[_\/](\d+)/i);if(mM)return parseInt(mM[2])*10000+Math.round(parseInt(mM[1])*52/12)*2+1;return 0;}
 function rsIsMes(s){return/^M\d+[_\/]/i.test(s||'');}
-function rsTipoLabel(t){return{'pct-mais':'% ↑','pct-menos':'% ↓','dias-mais':'Dias ↑','dias-menos':'Dias ↓','rs-mais':'R$ ↑','rs-menos':'R$ ↓','qtd-mais':'Qtd ↑','qtd-menos':'Qtd ↓'}[t]||t;}
-function rsTipoUnidade(t){if(!t)return '';if(t.startsWith('pct'))return '%';if(t.startsWith('dias'))return ' dias';if(t.startsWith('rs'))return ' R$';return '';}
+function rsTipoLabel(t){return{'pct-mais':'% ↑','pct-menos':'% ↓','dias-mais':'Dias ↑','dias-menos':'Dias ↓','rs-mais':'R$ ↑','rs-menos':'R$ ↓','rsMI-mais':'R$ MI ↑','rsMI-menos':'R$ MI ↓','qtd-mais':'Qtd ↑','qtd-menos':'Qtd ↓'}[t]||t;}
+function rsTipoUnidade(t){if(!t)return '';if(t.startsWith('pct'))return '%';if(t.startsWith('dias'))return ' dias';if(t==='rsMI-mais'||t==='rsMI-menos')return ' MI';if(t.startsWith('rs'))return ' R$';return '';}
 function rsMaisEMelhor(t){return t&&t.endsWith('-mais');}
 function rsFarol(v,m,t){if(isNaN(v)||isNaN(m)||m===0)return '';const r=rsMaisEMelhor(t)?v/m:m/v;return r>=1?'background:#f0fdf4;color:#16a34a':r>=0.8?'background:#fffbeb;color:#d97706':'background:#fef2f2;color:#dc2626';}
 
