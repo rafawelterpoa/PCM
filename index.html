@@ -11060,11 +11060,37 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef1f6;color:#1a1a2
 let _rsIndicadores=[];
 let _rsValores={};
 
-function rsParseWeek(s){const mW=(s||'').match(/S(\d+)[_\/](\d+)/i);if(mW)return parseInt(mW[2])*10000+parseInt(mW[1])*2;const mM=(s||'').match(/M(\d+)[_\/](\d+)/i);if(mM)return parseInt(mM[2])*10000+Math.round(parseInt(mM[1])*52/12)*2+1;return 0;}
-function rsIsMes(s){return/^M\d+[_\/]/i.test(s||'');}
+const RS_MESES_PT=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function rsParseWeek(s){
+  const sl=(s||'').toLowerCase();
+  const mW=(s||'').match(/S(\d+)[_\/](\d+)/i);if(mW)return parseInt(mW[2])*10000+parseInt(mW[1])*2;
+  // Novo formato: jan/2026, fev_2026, etc.
+  for(let i=0;i<RS_MESES_PT.length;i++){
+    if(sl.startsWith(RS_MESES_PT[i]+'/')||sl.startsWith(RS_MESES_PT[i]+'_')){
+      const ano=parseInt(s.split(/[\/\_]/)[1])||2026;
+      return ano*10000+Math.round((i+1)*52/12)*2+1;
+    }
+  }
+  // Legado: M01/2026 (leitura retrocompatível)
+  const mM=(s||'').match(/M(\d+)[_\/](\d+)/i);if(mM)return parseInt(mM[2])*10000+Math.round(parseInt(mM[1])*52/12)*2+1;
+  return 0;
+}
+function rsIsMes(s){
+  const sl=(s||'').toLowerCase();
+  return RS_MESES_PT.some(m=>sl.startsWith(m+'/')||sl.startsWith(m+'_'))||/^M\d+[_\/]/i.test(s||'');
+}
+function rsMesLabel(s){
+  // Exibe jan/2026, legado M01 → jan
+  const sl=(s||'').toLowerCase().replace('_','/');
+  const mM=s.match(/M(\d+)[_\/](\d+)/i);
+  if(mM){const idx=parseInt(mM[1])-1;return(RS_MESES_PT[idx]||'M??')+'/'+mM[2];}
+  return sl;
+}
 function rsTipoLabel(t){return{'pct-mais':'% ↑','pct-menos':'% ↓','dias-mais':'Dias ↑','dias-menos':'Dias ↓','rs-mais':'R$ ↑','rs-menos':'R$ ↓','rsMI-mais':'R$ MI ↑','rsMI-menos':'R$ MI ↓','qtd-mais':'Qtd ↑','qtd-menos':'Qtd ↓'}[t]||t;}
 function rsTipoUnidade(t){if(!t)return '';if(t.startsWith('pct'))return '%';if(t.startsWith('dias'))return ' dias';if(t==='rsMI-mais'||t==='rsMI-menos')return ' MI';if(t.startsWith('rs'))return ' R$';return '';}
 function rsMaisEMelhor(t){return t&&t.endsWith('-mais');}
+// Exibição de período: jan/2026 para meses, S21/2026 para semanas. Converte M01 legado → jan
+function rsDisplayPer(s){return rsIsMes(s)?rsMesLabel(s):(s||'').replace('_','/');}
 function rsFarol(v,m,t){if(isNaN(v)||isNaN(m)||m===0)return '';const r=rsMaisEMelhor(t)?v/m:m/v;return r>=1?'background:#f0fdf4;color:#16a34a':r>=0.8?'background:#fffbeb;color:#d97706':'background:#fef2f2;color:#dc2626';}
 
 const RS_SUBAREAS={'S&OP / Implantação':['S&OP','Implantação','Mobilização','KPIs Estratégicos','Planejamento comercial'],'Estoque de Equipamentos':['Estoque próprio','Estoque terceiros','Movimentação','Inventário','Disponibilidade'],'PCM':['Planejamento','Programação','Controle','Backlog','Leadtime'],'Avarias/Garantias':['Avaria total','Custo avaria','Tempo médio','Garantia fabricante','Garantia interna','Sinistro'],'Telemetria':['Rastreamento','Alertas','Disponibilidade de sinal','Utilização','Relatórios']};
@@ -11158,15 +11184,16 @@ function rsSemModoChange(){
   const modo=document.querySelector('input[name="rs-sem-modo"]:checked')?.value||'semana';
   const lbl=document.getElementById('rs-sem-semana-lbl');
   const inp=document.getElementById('rs-sem-semana');
-  if(lbl)lbl.textContent=modo==='mes'?'Mês (ex: M06/2026)':'Semana (ex: S21/2026)';
-  if(inp)inp.placeholder=modo==='mes'?'M06/2026':'S21/2026';
+  if(lbl)lbl.textContent=modo==='mes'?'Mês (ex: jan/2026)':'Semana (ex: S21/2026)';
+  if(inp)inp.placeholder=modo==='mes'?'jan/2026':'S21/2026';
 }
 function rsSemSalvar(){
   const indId=document.getElementById('rs-sem-ind')?.value||'';if(!indId)return alert('Selecione um indicador.');
-  const semanaRaw=(document.getElementById('rs-sem-semana')?.value||'').trim().toUpperCase();
+  const semanaRawOrig=(document.getElementById('rs-sem-semana')?.value||'').trim();
   const modo=document.querySelector('input[name="rs-sem-modo"]:checked')?.value||'semana';
+  const semanaRaw=modo==='semana'?semanaRawOrig.toUpperCase():semanaRawOrig.toLowerCase();
   if(modo==='semana'&&!semanaRaw.match(/^S\d+\/\d+$/i))return alert('Semana no formato S21/2026');
-  if(modo==='mes'&&!semanaRaw.match(/^M\d+\/\d+$/i))return alert('Mês no formato M06/2026');
+  if(modo==='mes'){const validoMes=RS_MESES_PT.some(m=>semanaRaw===m+'/'+semanaRaw.split('/')[1]&&semanaRaw.split('/')[1]?.match(/^\d{4}$/));if(!validoMes)return alert('Mês no formato jan/2026, fev/2026, mar/2026 etc.');}
   const semana=semanaRaw.replace('/','_');
   const valor=document.getElementById('rs-sem-valor')?.value||'';if(valor==='')return alert('Informe o valor.');
   const obs=(document.getElementById('rs-sem-obs')?.value||'').trim();
@@ -11203,7 +11230,7 @@ function rsGetSemanasSelecionadas(){return Array.from(document.querySelectorAll(
 function rsRenderSemanaChecks(){
   const cont=document.getElementById('rs-semanas-checks');if(!cont)return;
   const todas=rsGetTodasSemanas();const sels=rsGetSemanasSelecionadas();
-  cont.innerHTML=todas.map(s=>{const isMes=rsIsMes(s);const bg=isMes?'background:#f3e8ff;border-color:#a855f7':'background:#f8fafc;border-color:#e2e8f0';const label=(isMes?'📅 ':'')+s.replace('_','/');return`<label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;${bg};border:1px solid;border-radius:6px;padding:4px 8px"><input type="checkbox" class="rs-semana-check" value="${s}" ${!sels.length||sels.includes(s)?'checked':''} onchange="rsRenderTabela()">${label}</label>`;}).join('');
+  cont.innerHTML=todas.map(s=>{const isMes=rsIsMes(s);const bg=isMes?'background:#f3e8ff;border-color:#a855f7':'background:#f8fafc;border-color:#e2e8f0';const label=(isMes?'📅 ':'')+rsDisplayPer(s);return`<label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;${bg};border:1px solid;border-radius:6px;padding:4px 8px"><input type="checkbox" class="rs-semana-check" value="${s}" ${!sels.length||sels.includes(s)?'checked':''} onchange="rsRenderTabela()">${label}</label>`;}).join('');
 }
 
 function rsRenderTabela(){
@@ -11224,7 +11251,7 @@ function rsRenderTabela(){
     return(a.ts||0)-(b.ts||0);
   });
   if(!inds.length||!sems.length){thead.innerHTML='';tbody.innerHTML='<tr><td colspan="20" style="text-align:center;color:#94a3b8;padding:20px">Nenhum dado para exibir. Cadastre indicadores e adicione valores de semana.</td></tr>';return;}
-  thead.innerHTML=`<tr><th style="min-width:180px">Indicador</th><th style="width:80px">Resp.</th><th style="width:70px;text-align:center">Tipo</th><th style="width:75px;text-align:center;background:#1e40af;color:#fff">Meta</th>${sems.map(s=>{const isMes=rsIsMes(s);return`<th style="width:80px;text-align:center;background:${isMes?'#6d28d9':'#0f172a'};color:${isMes?'#f3e8ff':'#94a3b8'};font-size:10px">${isMes?'📅 ':''}${s.replace('_','/')}</th>`;}).join('')}<th style="width:90px;text-align:center;color:#1D9E75;background:#f0fdf4">Tendência</th></tr>`;
+  thead.innerHTML=`<tr><th style="min-width:180px">Indicador</th><th style="width:80px">Resp.</th><th style="width:70px;text-align:center">Tipo</th><th style="width:75px;text-align:center;background:#1e40af;color:#fff">Meta</th>${sems.map(s=>{const isMes=rsIsMes(s);return`<th style="width:80px;text-align:center;background:${isMes?'#6d28d9':'#0f172a'};color:${isMes?'#f3e8ff':'#94a3b8'};font-size:10px">${isMes?'📅 ':''}${rsDisplayPer(s)}</th>`;}).join('')}<th style="width:90px;text-align:center;color:#1D9E75;background:#f0fdf4">Tendência</th></tr>`;
   let lastArea='';
   tbody.innerHTML=inds.map(ind=>{
     const metaNum=parseFloat(ind.meta);
@@ -11311,8 +11338,8 @@ function gpModoChange(){
   const modo=document.querySelector('input[name="gp-modo"]:checked')?.value||'semana';
   const lbl=document.getElementById('gp-periodo-lbl');
   const inp=document.getElementById('gp-periodo');
-  if(lbl)lbl.textContent=modo==='mes'?'Mês (ex: M06/2026)':'Semana (ex: S21/2026)';
-  if(inp)inp.placeholder=modo==='mes'?'M06/2026':'S21/2026';
+  if(lbl)lbl.textContent=modo==='mes'?'Mês (ex: jan/2026)':'Semana (ex: S21/2026)';
+  if(inp)inp.placeholder=modo==='mes'?'jan/2026':'S21/2026';
 }
 
 function gpSalvar(){
@@ -11321,8 +11348,8 @@ function gpSalvar(){
   const periodoRaw=(document.getElementById('gp-periodo')?.value||'').trim().toUpperCase();
   const modo=document.querySelector('input[name="gp-modo"]:checked')?.value||'semana';
   if(modo==='semana'&&!periodoRaw.match(/^S\d+\/\d+$/i))return alert('Semana no formato S21/2026');
-  if(modo==='mes'&&!periodoRaw.match(/^M\d+\/\d+$/i))return alert('Mês no formato M06/2026');
-  const periodo=periodoRaw.replace('/','_');
+  if(modo==='mes'){const pl=periodoRaw.toLowerCase();const validoMes=RS_MESES_PT.some(m=>pl===m+'/'+pl.split('/')[1]&&pl.split('/')[1]?.match(/^\d{4}$/));if(!validoMes)return alert('Mês no formato jan/2026, fev/2026 etc.');}
+  const periodo=(modo==='mes'?periodoRaw.toLowerCase():periodoRaw).replace('/','_');
   const gv=id=>parseFloat(document.getElementById(id)?.value||'0')||0;
   const obj={
     programador:prog,periodo,
