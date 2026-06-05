@@ -11096,11 +11096,41 @@ function rsFarol(v,m,t){if(isNaN(v)||isNaN(m)||m===0)return '';const r=rsMaisEMe
 const RS_SUBAREAS={'S&OP / Implantação':['S&OP','Implantação','Mobilização','KPIs Estratégicos','Planejamento comercial'],'Estoque de Equipamentos':['Estoque próprio','Estoque terceiros','Movimentação','Inventário','Disponibilidade'],'PCM':['Planejamento','Programação','Controle','Backlog','Leadtime'],'Avarias/Garantias':['Avaria total','Custo avaria','Tempo médio','Garantia fabricante','Garantia interna','Sinistro'],'Telemetria':['Rastreamento','Alertas','Disponibilidade de sinal','Utilização','Relatórios']};
 const GRUPO_COR={'S&OP / Implantação':'#2563eb','Estoque de Equipamentos':'#0f766e','PCM':'#F37021','Avarias/Garantias':'#dc2626','Telemetria':'#7c3aed'};
 
+function rsLimparPeriodosInvalidos(valores){
+  // Converte M01_YYYY → jan_YYYY e remove M1_YYYY (sem zero)
+  let alterou=false;
+  for(const indId of Object.keys(valores)){
+    const sv=valores[indId];if(!sv)continue;
+    for(const k of Object.keys(sv)){
+      const mM=k.match(/^M(\d+)_(\d{4})$/i);
+      if(mM){
+        const num=parseInt(mM[1]),ano=mM[2];
+        if(num>=1&&num<=12&&k.match(/^M0?\d_/)){
+          // Converter para novo formato: M01_2026 → jan_2026
+          const novoKey=RS_MESES_PT[num-1]+'_'+ano;
+          if(novoKey!==k){
+            if(!sv[novoKey])sv[novoKey]=sv[k]; // só migra se não existir
+            delete sv[k];
+            alterou=true;
+          }
+        } else {
+          // M1_, M2_ sem zero — inválido, deletar
+          delete sv[k];
+          alterou=true;
+        }
+      }
+    }
+  }
+  return alterou;
+}
+
 function rsLoadFromFirebase(){
   fetch(FB_BASE+'/gi_reuniao.json').then(r=>r.json()).then(d=>{
     if(!d){_rsIndicadores=[];_rsValores={};rsRenderAll();return;}
     _rsIndicadores=Object.values(d.indicadores||{}).sort((a,b)=>a.ts-b.ts);
     _rsValores=d.valores||{};
+    // Limpar e migrar períodos no formato M antigo
+    if(rsLimparPeriodosInvalidos(_rsValores))rsSalvarTudo();
     rsRenderAll();rsPopularSelectInd();rsRenderSemanaChecks();
   }).catch(()=>{_rsIndicadores=[];_rsValores={};rsRenderAll();});
 }
