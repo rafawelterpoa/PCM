@@ -2076,9 +2076,10 @@ function gerarRelatorio(){
       const rep=prev.filter(e=>e.semana_anterior===semAnterior&&e.semana!==semAnterior);
       // Concluídos: estavam originalmente na semana anterior E concluíram (pronto)
       // Excluir os reprogramados do cômputo de concluídos
-      const concluidos=prev.filter(e=>!(e.semana_anterior===semAnterior&&e.semana!==semAnterior)&&e.etapa==='pronto');
+      // Concluídos: pronto no pátio OU já mobilizado (alugado) — ambos são sucesso
+      const concluidos=prev.filter(e=>!(e.semana_anterior===semAnterior&&e.semana!==semAnterior)&&(e.etapa==='pronto'||e.etapa==='alugado'));
       // Pendentes: estavam na semana, não concluíram e não foram reprogramados
-      const pend=prev.filter(e=>!(e.semana_anterior===semAnterior&&e.semana!==semAnterior)&&e.etapa!=='pronto');
+      const pend=prev.filter(e=>!(e.semana_anterior===semAnterior&&e.semana!==semAnterior)&&e.etapa!=='pronto'&&e.etapa!=='alugado');
       const pct=prev.length?Math.round(concluidos.length/prev.length*100):0;
       despOf[of]={prev:prev.length,conc:concluidos.length,rep:rep.length,pend:pend.length,pct};
     });
@@ -4161,10 +4162,12 @@ function renderProgramacao(){
     if(nReprogAuto>0)sub+=` <span style="background:#FFF3E0;color:#E65100;border-radius:6px;padding:1px 6px;font-size:10px">↻ ${nReprogAuto} não concluído${nReprogAuto>1?'s':''} de semanas anteriores</span>`;
 
     const cards=items.map(eq=>{
-      const etLbl=ETAPAS_GERAL.find(e=>e.id===eq.etapa)?.label||eq.etapa;
-      const isConc=eq.etapa==='pronto',atrD=(!isConc&&ehPass&&!eq._reprog)?diasAtraso(sem):0,isAtr=atrD>0;
+      const etLbl=ETAPAS_GERAL.find(e=>e.id===eq.etapa)?.label||(eq.etapa==='alugado'?'Mobilizado':eq.etapa);
+      // Concluído = pronto no pátio OU já mobilizado (alugado) — ambos são sucesso da programação
+      const isConc=eq.etapa==='pronto'||eq.etapa==='alugado';
+      const atrD=(!isConc&&ehPass&&!eq._reprog)?diasAtraso(sem):0,isAtr=atrD>0;
       const prioPill=eq.prioridade&&!isConc?`<span class="prio-pill prio-${eq.prioridade}" style="font-size:9px">${prioLabel(eq.prioridade)}</span>`:'';
-      const sBadge=isConc?'<span class="concluido-badge">✓ Concluído</span>':isAtr?`<span class="atraso-badge">⚠ ${atrD}d</span>`:'';
+      const sBadge=isConc?`<span class="concluido-badge">✓ ${eq.etapa==='alugado'?'Mobilizado':'Concluído'}</span>`:isAtr?`<span class="atraso-badge">⚠ ${atrD}d</span>`:'';
       const reprogBadge=eq._reprog
         ?`<span class="reprogramado-badge">↻ Reprogramado → ${semanaLabel(eq._novaSemana)}</span>`
         :eq._reprogAuto
