@@ -4977,9 +4977,9 @@ function renderMapa(){
   const contW=container.clientWidth||1200;
   const BOX_AREA_FIXED=150; // largura fixa da área de boxes
   const PATIO_AVAILABLE=contW-BOX_AREA_FIXED-20;
-  const MAX_VAGAS=26;
-  // Calcular CARD_W para preencher a largura disponível com 26 vagas
-  const CARD_W=Math.max(38,Math.floor((PATIO_AVAILABLE-40)/(MAX_VAGAS+1)));
+  const MAX_VAGAS=30;
+  // Calcular CARD_W para preencher a largura disponível com 30 vagas (Fila A)
+  const CARD_W=Math.max(32,Math.floor((PATIO_AVAILABLE-40)/(MAX_VAGAS+1)));
   const CARD_H=30, GAP=2;
   const BOX_W=BOX_AREA_FIXED-10, BOX_H=30;
   const BOX_AREA_W=BOX_AREA_FIXED;
@@ -4991,23 +4991,29 @@ function renderMapa(){
   const OFICINA_H=70;
   const Y_MOB=Y_OFICINA+OFICINA_H+12;
   const MOB_H=FILA_H;
-  // Y coordinates para 8 filas (A-H), 2 por rua
-  const Y_RUA1=Y_MOB+MOB_H+6;
-  const Y_FILA=Y_RUA1+16;      // Fila A
-  const Y_FILB=Y_FILA+FILA_H+GAP;  // Fila B
-  const Y_RUA2=Y_FILB+FILA_H+6;
-  const Y_FILC=Y_RUA2+16;      // Fila C
-  const Y_FILD=Y_FILC+FILA_H+GAP;  // Fila D
-  const Y_RUA3=Y_FILD+FILA_H+6;
-  const Y_FILE=Y_RUA3+16;      // Fila E
-  const Y_FILF=Y_FILE+FILA_H+GAP;  // Fila F
-  const Y_RUA4=Y_FILF+FILA_H+6;
-  const Y_FILG=Y_RUA4+16;      // Fila G
-  const Y_FILH=Y_FILG+FILA_H+GAP;  // Fila H
+  // Fila A — pátio, logo abaixo de MOB/DESM (sem rua antes)
+  const Y_FILA=Y_MOB+MOB_H+6;       // Fila A (30 vagas, sozinha)
+  // RUA 01 separa Fila A de B+C
+  const Y_RUA1=Y_FILA+FILA_H+6;
+  const Y_FILB=Y_RUA1+16;            // Fila B
+  const Y_FILC=Y_FILB+FILA_H+GAP;   // Fila C
+  const Y_RUA2=Y_FILC+FILA_H+6;
+  const Y_FILD=Y_RUA2+16;            // Fila D
+  const Y_FILE=Y_FILD+FILA_H+GAP;   // Fila E
+  const Y_RUA3=Y_FILE+FILA_H+6;
+  const Y_FILF=Y_RUA3+16;            // Fila F
+  const Y_FILG=Y_FILF+FILA_H+GAP;   // Fila G
+  const Y_RUA4=Y_FILG+FILA_H+6;
+  const Y_FILH=Y_RUA4+16;            // Fila H
   const Y_IMPL=Y_FILH+FILA_H+12;
   const IMPL_H=FILA_H+10;
+  // Vendas e Implementos
+  const Y_VEND=Y_IMPL+IMPL_H+10;
+  const VEND_H=FILA_H;
+  const Y_IMPL_EQ=Y_VEND+VEND_H+8;
+  const IMPL_EQ_H=FILA_H;
 
-  const TOTAL_H=Y_IMPL+IMPL_H+30;
+  const TOTAL_H=Y_IMPL_EQ+IMPL_EQ_H+30;
   // Boxes precisam de altura suficiente para 22 boxes
   const BOX_TOTAL_H=22*(BOX_H+3)+40;
   const TOTAL_H_FINAL=Math.max(TOTAL_H, Y_OFICINA-18+BOX_TOTAL_H+10);
@@ -5184,17 +5190,17 @@ function renderMapa(){
     svg+=`<text x="${PATIO_W/2}" y="${yx+11}" text-anchor="middle" font-size="9" fill="#fff" font-weight="600" letter-spacing="3">${lbl}   →</text>`;
   }
 
+  renderFileira('fila_A','A',30,Y_FILA,'patio');  // Fila A — 30 vagas, sozinha antes da RUA 01
   ruaLabel(Y_RUA1,'RUA 01');
-  renderFileira('fila_A','A',30,Y_FILA,'patio');  // Fila A — pátio, 30 vagas
   renderFileira('fila_B','B',26,Y_FILB,'patio');
-  ruaLabel(Y_RUA2,'RUA 02');
   renderFileira('fila_C','C',26,Y_FILC,'patio');
+  ruaLabel(Y_RUA2,'RUA 02');
   renderFileira('fila_D','D',26,Y_FILD,'patio');
-  ruaLabel(Y_RUA3,'RUA 03');
   renderFileira('fila_E','E',26,Y_FILE,'patio');
+  ruaLabel(Y_RUA3,'RUA 03');
   renderFileira('fila_F','F',26,Y_FILF,'patio');
-  ruaLabel(Y_RUA4,'RUA 04');
   renderFileira('fila_G','G',26,Y_FILG,'patio');
+  ruaLabel(Y_RUA4,'RUA 04');
   renderFileira('fila_H','H',12,Y_FILH,'patio');
 
   // ── IMPLANTAÇÃO ──
@@ -5209,6 +5215,38 @@ function renderMapa(){
   });
   if((porZona['implantacao']||[]).length>26){
     svg+=`<text x="${8+26*(CARD_W+GAP)+32}" y="${Y_IMPL+FILA_H/2+4}" font-size="8" fill="#94A3B8" font-weight="700">+${(porZona['implantacao']||[]).length-26}</text>`;
+  }
+
+  // ── VENDAS (V01-V27) ──
+  const VEND_VAGAS=27;
+  svg+=`<rect x="5" y="${Y_VEND}" width="${PATIO_W}" height="${VEND_H}" fill="rgba(16,185,129,.06)" rx="3" stroke="#059669" stroke-width="1.5"/>`;
+  svg+=`<text x="10" y="${Y_VEND+11}" font-size="9" fill="#065F46" font-weight="700">VENDAS  V01 – V27</text>`;
+  (porZona['vendas']||[]).slice(0,VEND_VAGAS).forEach((eq,v)=>{
+    const vx=8+v*(CARD_W+GAP)+28; const vy=Y_VEND+14;
+    const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
+    svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
+    svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700">${eq.id}</text>`;
+    svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)">${eq.equipamento.substring(0,9)}</text>`;
+  });
+  for(let v=(porZona['vendas']||[]).length;v<VEND_VAGAS;v++){
+    const vx=8+v*(CARD_W+GAP)+28; const vy=Y_VEND+14;
+    svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.04)" rx="2" stroke="rgba(5,150,105,.3)" stroke-width="0.5"/>`;
+    svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(5,150,105,.5)">V${String(v+1).padStart(2,'0')}</text>`;
+  }
+
+  // ── IMPLEMENTOS ──
+  const IMP_MAX=MAX_VAGAS;
+  svg+=`<rect x="5" y="${Y_IMPL_EQ}" width="${PATIO_W}" height="${IMPL_EQ_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5"/>`;
+  svg+=`<text x="10" y="${Y_IMPL_EQ+11}" font-size="9" fill="#3730A3" font-weight="700">IMPLEMENTOS</text>`;
+  (porZona['implementos']||[]).slice(0,IMP_MAX).forEach((eq,v)=>{
+    const vx=8+v*(CARD_W+GAP)+28; const vy=Y_IMPL_EQ+14;
+    const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
+    svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
+    svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700">${eq.id}</text>`;
+    svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)">${eq.equipamento.substring(0,9)}</text>`;
+  });
+  if(!(porZona['implementos']||[]).length){
+    svg+=`<text x="${PATIO_W/2}" y="${Y_IMPL_EQ+IMPL_EQ_H/2+4}" text-anchor="middle" font-size="9" fill="rgba(79,70,229,.3)">área vazia</text>`;
   }
 
   // Aviso sem localização
