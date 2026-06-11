@@ -5006,13 +5006,13 @@ function renderMapa(){
   const Y_FILG=Y_FILF+FILA_H+GAP;
   const Y_RUA4=Y_FILG+FILA_H+6;
   const Y_FILH=Y_RUA4+16;
-  // Vendas e Implementos — lado a lado, após Fila H (sem IMPLANTAÇÃO)
+  // Vendas e Implementos — linhas separadas, após Fila H
   const Y_VEND=Y_FILH+FILA_H+12;
   const VEND_H=FILA_H;
   const Y_IMPL_EQ=Y_VEND+VEND_H+8;
   const IMPL_EQ_H=FILA_H;
 
-  const TOTAL_H=Y_VEND+VEND_H+30;
+  const TOTAL_H=Y_IMPL_EQ+IMPL_EQ_H+30;
   // Boxes precisam de altura suficiente para 22 boxes
   const BOX_TOTAL_H=22*(BOX_H+3)+40;
   const TOTAL_H_FINAL=Math.max(TOTAL_H, Y_OFICINA-18+BOX_TOTAL_H+10);
@@ -5196,10 +5196,9 @@ function renderMapa(){
   ruaLabel(Y_RUA4,'RUA 04');
   renderFileira('fila_H','H',12,Y_FILH,'patio');
 
-  // ── VENDAS (V01-V27) e IMPLEMENTOS — lado a lado ──
+  // ── VENDAS (V01-V27) — linha própria, largura exata das 27 vagas ──
   const VEND_VAGAS=27;
   const VEND_W=VEND_VAGAS*(CARD_W+GAP)+GAP+32;
-  // Vendas
   svg+=`<rect x="5" y="${Y_VEND}" width="${VEND_W}" height="${VEND_H}" fill="rgba(16,185,129,.06)" rx="3" stroke="#059669" stroke-width="1.5"/>`;
   svg+=`<text x="10" y="${Y_VEND+11}" font-size="9" fill="#065F46" font-weight="700">VENDAS  V01 – V27</text>`;
   (porZona['vendas']||[]).slice(0,VEND_VAGAS).forEach((eq,v)=>{
@@ -5214,21 +5213,21 @@ function renderMapa(){
     svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.04)" rx="2" stroke="rgba(5,150,105,.3)" stroke-width="0.5"/>`;
     svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(5,150,105,.5)">V${String(v+1).padStart(2,'0')}</text>`;
   }
-  // Implementos — ao lado de Vendas, preenche o restante do PATIO_W
-  const IMPL_EQ_X=VEND_W+8;
-  const IMPL_EQ_W=PATIO_W-IMPL_EQ_X-5;
+
+  // ── IMPLEMENTOS — linha separada abaixo de Vendas, largura proporcional ──
+  const IMPL_EQ_W=VEND_W;  // mesma largura de Vendas para manter proporção visual
   const IMP_MAX=Math.floor((IMPL_EQ_W-32)/(CARD_W+GAP));
-  svg+=`<rect x="${IMPL_EQ_X}" y="${Y_VEND}" width="${IMPL_EQ_W}" height="${VEND_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5"/>`;
-  svg+=`<text x="${IMPL_EQ_X+5}" y="${Y_VEND+11}" font-size="9" fill="#3730A3" font-weight="700">IMPLEMENTOS</text>`;
+  svg+=`<rect x="5" y="${Y_IMPL_EQ}" width="${IMPL_EQ_W}" height="${IMPL_EQ_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5"/>`;
+  svg+=`<text x="10" y="${Y_IMPL_EQ+11}" font-size="9" fill="#3730A3" font-weight="700">IMPLEMENTOS</text>`;
   (porZona['implementos']||[]).slice(0,IMP_MAX).forEach((eq,v)=>{
-    const vx=IMPL_EQ_X+3+v*(CARD_W+GAP)+28; const vy=Y_VEND+14;
+    const vx=8+v*(CARD_W+GAP)+28; const vy=Y_IMPL_EQ+14;
     const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
     svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
     svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700">${eq.id}</text>`;
     svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)">${eq.equipamento.substring(0,9)}</text>`;
   });
   if(!(porZona['implementos']||[]).length){
-    svg+=`<text x="${IMPL_EQ_X+IMPL_EQ_W/2}" y="${Y_VEND+VEND_H/2+4}" text-anchor="middle" font-size="9" fill="rgba(79,70,229,.3)">área vazia</text>`;
+    svg+=`<text x="${10+IMPL_EQ_W/2}" y="${Y_IMPL_EQ+IMPL_EQ_H/2+4}" text-anchor="middle" font-size="9" fill="rgba(79,70,229,.3)">área vazia</text>`;
   }
 
   // Implantação removida do mapa visual (área não existe mais no layout)
