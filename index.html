@@ -4991,18 +4991,19 @@ function renderMapa(){
   const OFICINA_H=70;
   const Y_MOB=Y_OFICINA+OFICINA_H+12;
   const MOB_H=FILA_H;
-  const Y_INSP=Y_MOB;
+  // Y coordinates para 8 filas (A-H), 2 por rua
   const Y_RUA1=Y_MOB+MOB_H+6;
-  const Y_FILC=Y_RUA1+16;
-  const Y_FILD=Y_FILC+FILA_H+GAP;
-  const Y_RUA2=Y_FILD+FILA_H+6;
-  const Y_FILE=Y_RUA2+16;
-  const Y_FILF=Y_FILE+FILA_H+GAP;
-  const Y_RUA3=Y_FILF+FILA_H+6;
-  const Y_FILG=Y_RUA3+16;
-  const Y_FILGG=Y_FILG+FILA_H+GAP;
-  const Y_RUA4=Y_FILGG+FILA_H+6;
-  const Y_FILH=Y_RUA4+16;
+  const Y_FILA=Y_RUA1+16;      // Fila A
+  const Y_FILB=Y_FILA+FILA_H+GAP;  // Fila B
+  const Y_RUA2=Y_FILB+FILA_H+6;
+  const Y_FILC=Y_RUA2+16;      // Fila C
+  const Y_FILD=Y_FILC+FILA_H+GAP;  // Fila D
+  const Y_RUA3=Y_FILD+FILA_H+6;
+  const Y_FILE=Y_RUA3+16;      // Fila E
+  const Y_FILF=Y_FILE+FILA_H+GAP;  // Fila F
+  const Y_RUA4=Y_FILF+FILA_H+6;
+  const Y_FILG=Y_RUA4+16;      // Fila G
+  const Y_FILH=Y_FILG+FILA_H+GAP;  // Fila H
   const Y_IMPL=Y_FILH+FILA_H+12;
   const IMPL_H=FILA_H+10;
 
@@ -5137,12 +5138,12 @@ function renderMapa(){
     }
   }
 
-  // ── MOBILIZAÇÃO / INSPEÇÃO ──
-  const MOB_VAGAS=20, INSP_VAGAS=20;
-  const HALF_W=MOB_VAGAS*(CARD_W+GAP)+GAP+32;
+  // ── MOBILIZAÇÃO (MOB-01 a MOB-19) / DESMOBILIZAÇÃO (DESM-01 a DESM-11) ──
+  const MOB_VAGAS=19, DESM_VAGAS=11;
+  const MOB_W=MOB_VAGAS*(CARD_W+GAP)+GAP+32;
   // Mobilização
-  svg+=`<rect x="5" y="${Y_MOB}" width="${HALF_W-5}" height="${FILA_H}" fill="rgba(78,205,196,.08)" rx="3" stroke="#5B21B6" stroke-width="1.5"/>`;
-  svg+=`<text x="10" y="${Y_MOB+11}" font-size="9" fill="#6B3F9E" font-weight="700">MOBILIZAÇÃO  A1–A20</text>`;
+  svg+=`<rect x="5" y="${Y_MOB}" width="${MOB_W-5}" height="${FILA_H}" fill="rgba(78,205,196,.08)" rx="3" stroke="#5B21B6" stroke-width="1.5"/>`;
+  svg+=`<text x="10" y="${Y_MOB+11}" font-size="9" fill="#6B3F9E" font-weight="700">MOBILIZAÇÃO  MOB-01 – MOB-19</text>`;
   (porZona['mobilizacao']||[]).slice(0,MOB_VAGAS).forEach((eq,v)=>{
     const vx=8+v*(CARD_W+GAP)+28; const vy=Y_MOB+14;
     const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
@@ -5153,28 +5154,28 @@ function renderMapa(){
   for(let v=(porZona['mobilizacao']||[]).length;v<MOB_VAGAS;v++){
     const vx=8+v*(CARD_W+GAP)+28; const vy=Y_MOB+14;
     svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5"/>`;
-    svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780">A${v+1}</text>`;
+    svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780">MOB-${String(v+1).padStart(2,'0')}</text>`;
   }
-  // Inspeção — começa após mobilização, termina no limite do PATIO_W (nunca invade boxes)
-  const INSP_X=HALF_W+8;
-  const INSP_W=Math.min(INSP_VAGAS*(CARD_W+GAP)+GAP+32, PATIO_W-INSP_X-5);
-  svg+=`<rect x="${INSP_X}" y="${Y_INSP}" width="${INSP_W}" height="${FILA_H}" fill="rgba(78,205,196,.08)" rx="3" stroke="#6BFAC7" stroke-width="1.5"/>`;
-  svg+=`<text x="${INSP_X+5}" y="${Y_INSP+11}" font-size="9" fill="#2E6DA0" font-weight="700">INSPEÇÃO  A1–A20</text>`;
-  (porZona['inspecao']||[]).slice(0,INSP_VAGAS).forEach((eq,v)=>{
-    const vx=INSP_X+3+v*(CARD_W+GAP)+28;
-    if(vx+CARD_W>INSP_X+INSP_W-2)return; // não renderizar além do limite
-    const vy=Y_INSP+14;
+  // Desmobilização
+  const DESM_X=MOB_W+8;
+  const DESM_W=Math.min(DESM_VAGAS*(CARD_W+GAP)+GAP+32, PATIO_W-DESM_X-5);
+  svg+=`<rect x="${DESM_X}" y="${Y_MOB}" width="${DESM_W}" height="${FILA_H}" fill="rgba(234,179,8,.08)" rx="3" stroke="#B45309" stroke-width="1.5"/>`;
+  svg+=`<text x="${DESM_X+5}" y="${Y_MOB+11}" font-size="9" fill="#B45309" font-weight="700">DESMOBILIZAÇÃO  DESM-01 – DESM-11</text>`;
+  (porZona['desmobilizacao']||[]).slice(0,DESM_VAGAS).forEach((eq,v)=>{
+    const vx=DESM_X+3+v*(CARD_W+GAP)+28;
+    if(vx+CARD_W>DESM_X+DESM_W-2)return;
+    const vy=Y_MOB+14;
     const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
     svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
     svg+=`<text x="${vx+2}" y="${vy+10}" font-size="6.5" fill="#fff" font-weight="700">${eq.id}</text>`;
     svg+=`<text x="${vx+2}" y="${vy+20}" font-size="6" fill="rgba(255,255,255,.85)">${eq.equipamento.substring(0,9)}</text>`;
   });
-  for(let v=(porZona['inspecao']||[]).length;v<INSP_VAGAS;v++){
-    const vx=INSP_X+3+v*(CARD_W+GAP)+28;
-    if(vx+CARD_W>INSP_X+INSP_W-2)break; // parar quando atingir o limite
-    const vy=Y_INSP+14;
+  for(let v=(porZona['desmobilizacao']||[]).length;v<DESM_VAGAS;v++){
+    const vx=DESM_X+3+v*(CARD_W+GAP)+28;
+    if(vx+CARD_W>DESM_X+DESM_W-2)break;
+    const vy=Y_MOB+14;
     svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5"/>`;
-    svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780">A${v+1}</text>`;
+    svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780">DESM-${String(v+1).padStart(2,'0')}</text>`;
   }
 
   // Função rua com paleta Mills
@@ -5184,15 +5185,16 @@ function renderMapa(){
   }
 
   ruaLabel(Y_RUA1,'RUA 01');
-  renderFileira('fila_B','B',26,Y_FILC,'patio');
-  renderFileira('fila_C','C',26,Y_FILD,'patio');
+  renderFileira('fila_A','A',30,Y_FILA,'patio');  // Fila A — pátio, 30 vagas
+  renderFileira('fila_B','B',26,Y_FILB,'patio');
   ruaLabel(Y_RUA2,'RUA 02');
-  renderFileira('fila_D','D',26,Y_FILE,'patio');
-  renderFileira('fila_E','E',26,Y_FILF,'patio');
+  renderFileira('fila_C','C',26,Y_FILC,'patio');
+  renderFileira('fila_D','D',26,Y_FILD,'patio');
   ruaLabel(Y_RUA3,'RUA 03');
-  renderFileira('fila_F','F',26,Y_FILG,'patio');
-  renderFileira('fila_G','G',26,Y_FILGG,'patio');
+  renderFileira('fila_E','E',26,Y_FILE,'patio');
+  renderFileira('fila_F','F',26,Y_FILF,'patio');
   ruaLabel(Y_RUA4,'RUA 04');
+  renderFileira('fila_G','G',26,Y_FILG,'patio');
   renderFileira('fila_H','H',12,Y_FILH,'patio');
 
   // ── IMPLANTAÇÃO ──
