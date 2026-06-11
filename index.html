@@ -4869,19 +4869,21 @@ let mapaEqAtivo=null;
 
 // ── Zonas principais (não pátio) ────────────────────────────────────
 const ZONAS_OFICINA=[
-  {id:'borracharia',  label:'Borracharia',        tipo:'servico'},
-  {id:'est_pneus',    label:'Est. Pneus',          tipo:'servico'},
-  {id:'lubrificacao', label:'Lubrificação',        tipo:'servico'},
-  {id:'cab_pintura1', label:'Cab. Prep. Pintura',  tipo:'servico'},
-  {id:'cab_pintura2', label:'Cab. Pintura',        tipo:'servico'},
-  {id:'solda1',       label:'Área de Solda',       tipo:'servico'},
-  {id:'solda2',       label:'Área de Solda 2',     tipo:'servico'},
-  {id:'usinagem',     label:'Central Usinagem',    tipo:'servico'},
+  {id:'borracharia',  label:'Box de Borracharia',     tipo:'servico'},
+  {id:'est_pneus',    label:'Pneus',                  tipo:'servico'},
+  {id:'lubrificacao', label:'Box de Lubrificação',    tipo:'servico'},
+  {id:'cab_pintura1', label:'Box Prep. e Pintura',    tipo:'servico'},
+  {id:'cab_pintura2', label:'Box Pintura',            tipo:'servico'},
+  {id:'solda1',       label:'Box Solda 1',            tipo:'servico'},
+  {id:'solda2',       label:'Box Solda 2',            tipo:'servico'},
+  {id:'usinagem',     label:'Box Usinagem',           tipo:'servico'},
+  {id:'lavagem',      label:'Lavagem',                tipo:'servico'},
+  {id:'residuos',     label:'Resíduos',               tipo:'servico'},
 ];
 
 // Fileiras do pátio: id, label, vagas
 const FILEIRAS_PATIO=[
-  {id:'fila_A', label:'A', vagas:20},  // mobilização
+  {id:'fila_A', label:'A', vagas:30},  // pátio fila A
   {id:'fila_B', label:'B', vagas:20},
   {id:'fila_C', label:'C', vagas:26},
   {id:'fila_D', label:'D', vagas:26},
@@ -4925,28 +4927,37 @@ function renderMapa(){
     // Boxes: "BOX 01" a "BOX 22"
     const boxM=v.match(/^BOX\s*(\d+)$/i);
     if(boxM)return `box${String(parseInt(boxM[1])).padStart(2,'0')}`;
-    // Fileiras do pátio: B1-B26, C1, D1...
+    // Mobilização: MOB-01 a MOB-19
+    if(v.startsWith('MOB'))return 'mobilizacao';
+    if(v.includes('MOBILIZ'))return 'mobilizacao';
+    // Desmobilização: DESM-01 a DESM-11
+    if(v.startsWith('DESM'))return 'desmobilizacao';
+    if(v.includes('DESMOBIL'))return 'desmobilizacao';
+    // Fileiras do pátio: A1-A30, B1-B26, C1, D1...
     const filaM=v.match(/^([A-H]'?)(\d+)$/);
     if(filaM){
       const letra=filaM[1];
-      const mapa={'A':'mobilizacao','B':'fila_B','C':'fila_C','D':'fila_D',
+      const mapa={'A':'fila_A','B':'fila_B','C':'fila_C','D':'fila_D',
                   'E':'fila_E','F':'fila_F','G':'fila_G',"G'":'fila_GG','H':'fila_H'};
       return mapa[letra]||'implantacao';
     }
-    // Inspeção
-    if(v.startsWith('INS'))return 'inspecao';
     if(v==='IMPL'||v.includes('IMPLANT'))return 'implantacao';
-    if(v.includes('MOBILIZ'))return 'mobilizacao';
-    if(v.includes('INSPECAO')||v.includes('INSPEÇÃO'))return 'inspecao';
-    // Oficina coberta
+    // Vendas: V01-V27
+    if(v.match(/^V\d+$/))return 'vendas';
+    if(v.includes('VENDAS'))return 'vendas';
+    // Implementos
+    if(v.includes('IMPLEMENT'))return 'implementos';
+    // Oficina coberta — novos e antigos nomes
     if(v.includes('BORRACHARIA'))return 'borracharia';
-    if(v.includes('PNEUS'))return 'est_pneus';
+    if(v.includes('PNEUS')||v==='PNEUS')return 'est_pneus';
     if(v.includes('LUBRIF'))return 'lubrificacao';
     if(v.includes('PREP'))return 'cab_pintura1';
     if(v.includes('PINTURA'))return 'cab_pintura2';
-    if(v.includes('SOLDA 2')||v.includes('SOLDA2'))return 'solda2';
+    if(v.includes('SOLDA 2')||v.includes('SOLDA2')||v==='BOX SOLDA 2')return 'solda2';
     if(v.includes('SOLDA'))return 'solda1';
     if(v.includes('USINA'))return 'usinagem';
+    if(v==='LAVAGEM'||v.includes('LAVAGEM'))return 'lavagem';
+    if(v.includes('RESID'))return 'residuos';
     return null;
   }
 
