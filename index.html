@@ -5014,10 +5014,10 @@ function renderMapa(){
   const VEND_COLS=14;  // 14 vagas por linha, 2 linhas = 28 slots para 27 vagas
   const VEND_BLK_W=VEND_COLS*(CARD_W+GAP)+GAP+32;
   const VEND_BLK_H=2*(CARD_H+GAP)+16;           // 2 linhas de vagas + label
-  const VEND_X=PATIO_W-VEND_BLK_W+5;            // alinhado à direita do pátio
+  const VEND_X=5;                                // Vendas à ESQUERDA
   const Y_VEND=Y_FILH+FILA_H+8;
-  // Implementos: mesma faixa Y, preenche o espaço à esquerda de Vendas
-  const IMPL_EQ_W=VEND_X-10;                    // até onde começa Vendas
+  // Implementos: mesma faixa Y, preenche o espaço à direita de Vendas
+  const IMPL_EQ_W=PATIO_W-(VEND_X+VEND_BLK_W)-10;  // à direita de Vendas
   const IMPL_EQ_H=VEND_BLK_H;
   const Y_IMPL_EQ=Y_VEND;
 
@@ -5228,15 +5228,16 @@ function renderMapa(){
     }
   }
 
-  // ── IMPLEMENTOS — mesmo nível Y, lado ESQUERDO (até onde começa Vendas) ──
-  svg+=`<rect x="5" y="${Y_IMPL_EQ}" width="${IMPL_EQ_W}" height="${IMPL_EQ_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5"/>`;
-  svg+=`<text x="10" y="${Y_IMPL_EQ+11}" font-size="9" fill="#3730A3" font-weight="700">IMPLEMENTOS</text>`;
+  // ── IMPLEMENTOS — mesmo nível Y, lado DIREITO (após Vendas) ──
+  const IMPL_X=VEND_X+VEND_BLK_W+10;
+  svg+=`<rect x="${IMPL_X}" y="${Y_IMPL_EQ}" width="${IMPL_EQ_W}" height="${IMPL_EQ_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5"/>`;
+  svg+=`<text x="${IMPL_X+5}" y="${Y_IMPL_EQ+11}" font-size="9" fill="#3730A3" font-weight="700">IMPLEMENTOS</text>`;
   {
     const eqsImpl=porZona['implementos']||[];
     const maxImpl=Math.max(1,Math.floor((IMPL_EQ_W-16)/(CARD_W+GAP)));
     eqsImpl.forEach((eq,i)=>{
       const linha=Math.floor(i/maxImpl), col=i%maxImpl;
-      const vx=5+8+col*(CARD_W+GAP);
+      const vx=IMPL_X+8+col*(CARD_W+GAP);
       const vy=Y_IMPL_EQ+14+linha*(CARD_H+GAP+2);
       if(vy+CARD_H>Y_IMPL_EQ+IMPL_EQ_H-4)return;
       const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
@@ -5245,7 +5246,7 @@ function renderMapa(){
       svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)">${eq.equipamento.substring(0,9)}</text>`;
     });
     if(!eqsImpl.length){
-      svg+=`<text x="${5+IMPL_EQ_W/2}" y="${Y_IMPL_EQ+IMPL_EQ_H/2+4}" text-anchor="middle" font-size="9" fill="rgba(79,70,229,.3)">área vazia</text>`;
+      svg+=`<text x="${IMPL_X+IMPL_EQ_W/2}" y="${Y_IMPL_EQ+IMPL_EQ_H/2+4}" text-anchor="middle" font-size="9" fill="rgba(79,70,229,.3)">área vazia</text>`;
     }
   }
 
