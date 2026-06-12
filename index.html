@@ -5009,13 +5009,13 @@ function renderMapa(){
   const Y_FILG=Y_FILF+FILA_H+GAP;
   const Y_RUA4=Y_FILG+FILA_H+6;
   const Y_FILH=Y_RUA4+16;
-  // Vendas e Implementos — linhas separadas, após Fila H
-  // Vendas: 2 ruas lado a lado (bloco duplo), cada rua com ~14 vagas
-  const VEND_RUAS=2, VEND_VAGAS_POR_RUA=14; // 14+13=27 total
+  // Vendas e Implementos: blocos VERTICAIS estreitos (layout físico)
+  const VEND_BLK_W=2*(CARD_W+GAP)+GAP+16;      // 2 colunas de cartas
+  const VEND_BLK_H=14*(CARD_H+GAP)+16;          // 14 linhas + label
   const Y_VEND=Y_FILH+FILA_H+12;
-  const VEND_H=FILA_H*VEND_RUAS+6;  // altura dupla
-  const Y_IMPL_EQ=Y_VEND+VEND_H+8;
-  const IMPL_EQ_H=FILA_H;
+  const IMPL_EQ_W=VEND_BLK_W;
+  const IMPL_EQ_H=18*(CARD_H+GAP)+16;
+  const Y_IMPL_EQ=Y_VEND+VEND_BLK_H+8;
 
   const TOTAL_H=Y_IMPL_EQ+IMPL_EQ_H+30;
   // Boxes precisam de altura suficiente para 22 boxes
@@ -5201,32 +5201,19 @@ function renderMapa(){
   ruaLabel(Y_RUA4,'RUA 04');
   renderFileira('fila_H','H',30,Y_FILH,'patio');  // H tem 30 vagas (H1-H2 sem uso físico)
 
-  // ── VENDAS (V01-V27) — bloco duplo: 2 ruas de ~14 vagas lado a lado ──
-  // Rua 1: V01-V14 | Rua 2: V15-V27
-  const VEND_R1=14, VEND_R2=13;                          // 14+13=27
-  // Offset interno das cartas (igual ao renderFileira): 28px para o label da fileira
-  const VEND_CARD_X0=28;  // deslocamento interno fixo
-  // Largura total do bloco: 27 cartas contínuas + margem inicial
-  const VEND_BLOCO_W=27*(CARD_W+GAP)+VEND_CARD_X0+GAP+10;
-  // xBase de cada rua para que as cartas fiquem adjacentes:
-  // Rua 1: base=5, cartas em 5+VEND_CARD_X0 + v*(CARD_W+GAP)
-  // Rua 2: base tal que carta v=0 comece logo após carta v=13 da Rua 1
-  const VEND_XBASE_R2 = 5 + VEND_R1*(CARD_W+GAP);  // carta 0 da Rua 2 = carta 14 da sequência
-  // Ponto do divisor visual (entre V14 e V15)
-  const VEND_DIV_X = 5 + VEND_CARD_X0 + VEND_R1*(CARD_W+GAP) - GAP/2;
-
-  svg+=`<rect x="5" y="${Y_VEND}" width="${VEND_BLOCO_W}" height="${VEND_H}" fill="rgba(16,185,129,.06)" rx="3" stroke="#059669" stroke-width="1.5"/>`;
-  svg+=`<text x="10" y="${Y_VEND+11}" font-size="9" fill="#065F46" font-weight="700">VENDAS  V01 – V27</text>`;
-  // divisor tracejado entre V14 e V15
-  svg+=`<line x1="${VEND_DIV_X}" y1="${Y_VEND+2}" x2="${VEND_DIV_X}" y2="${Y_VEND+VEND_H-2}" stroke="#059669" stroke-width="0.8" stroke-dasharray="3,2"/>`;
-
-  // Função para renderizar 1 rua de vendas
-  function renderRuaVendas(start, count, xBase, yBase){
+  // ── VENDAS — bloco VERTICAL: 2 colunas × 14 linhas (layout físico) ──
+  svg+=`<rect x="5" y="${Y_VEND}" width="${VEND_BLK_W}" height="${VEND_BLK_H}" fill="rgba(16,185,129,.06)" rx="3" stroke="#059669" stroke-width="1.5"/>`;
+  svg+=`<text x="10" y="${Y_VEND+11}" font-size="9" fill="#065F46" font-weight="700">VENDAS</text>`;
+  {
+    const divX=5+8+CARD_W+GAP/2;
+    svg+=`<line x1="${divX}" y1="${Y_VEND+14}" x2="${divX}" y2="${Y_VEND+VEND_BLK_H-2}" stroke="#059669" stroke-width="0.8" stroke-dasharray="3,2"/>`;
     const eqsVend=porZona['vendas']||[];
-    for(let v=0;v<count;v++){
-      const vNum=start+v;
-      const eq=eqsVend.find(e=>{ const m=e.localMap&&e.localMap.match(/^V(\d+)$/i); return m&&parseInt(m[1])===vNum; });
-      const vx=xBase+VEND_CARD_X0+v*(CARD_W+GAP); const vy=yBase+14;
+    for(let vNum=1;vNum<=27;vNum++){
+      const col=(vNum<=14)?0:1;
+      const row=(vNum<=14)?vNum-1:vNum-15;
+      const vx=5+8+col*(CARD_W+GAP);
+      const vy=Y_VEND+16+row*(CARD_H+GAP);
+      const eq=eqsVend.find(e=>{const m=e.localMap&&e.localMap.match(/^V(\d+)$/i);return m&&parseInt(m[1])===vNum;});
       if(eq){
         const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
         svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
@@ -5238,23 +5225,25 @@ function renderMapa(){
       }
     }
   }
-  renderRuaVendas(1,  VEND_R1, 5,            Y_VEND);  // Rua 1: V01-V14
-  renderRuaVendas(15, VEND_R2, VEND_XBASE_R2, Y_VEND);  // Rua 2: V15-V27 adjacente
 
-  // ── IMPLEMENTOS — linha separada abaixo de Vendas, mesma largura do bloco ──
-  const IMPL_EQ_W=VEND_BLOCO_W;  // mesma largura de Vendas para manter proporção visual
-  const IMP_MAX=Math.floor((IMPL_EQ_W-32)/(CARD_W+GAP));
+  // ── IMPLEMENTOS — bloco VERTICAL abaixo de Vendas, mesma largura ──
   svg+=`<rect x="5" y="${Y_IMPL_EQ}" width="${IMPL_EQ_W}" height="${IMPL_EQ_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5"/>`;
   svg+=`<text x="10" y="${Y_IMPL_EQ+11}" font-size="9" fill="#3730A3" font-weight="700">IMPLEMENTOS</text>`;
-  (porZona['implementos']||[]).slice(0,IMP_MAX).forEach((eq,v)=>{
-    const vx=8+v*(CARD_W+GAP)+28; const vy=Y_IMPL_EQ+14;
-    const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
-    svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
-    svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700">${eq.id}</text>`;
-    svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)">${eq.equipamento.substring(0,9)}</text>`;
-  });
-  if(!(porZona['implementos']||[]).length){
-    svg+=`<text x="${10+IMPL_EQ_W/2}" y="${Y_IMPL_EQ+IMPL_EQ_H/2+4}" text-anchor="middle" font-size="9" fill="rgba(79,70,229,.3)">área vazia</text>`;
+  {
+    const eqsImpl=porZona['implementos']||[];
+    eqsImpl.forEach((eq,i)=>{
+      const col=i%2, row=Math.floor(i/2);
+      const vx=5+8+col*(CARD_W+GAP);
+      const vy=Y_IMPL_EQ+16+row*(CARD_H+GAP);
+      if(vy+CARD_H>Y_IMPL_EQ+IMPL_EQ_H-4)return;
+      const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
+      svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
+      svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700">${eq.id}</text>`;
+      svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)">${eq.equipamento.substring(0,9)}</text>`;
+    });
+    if(!eqsImpl.length){
+      svg+=`<text x="${5+IMPL_EQ_W/2}" y="${Y_IMPL_EQ+IMPL_EQ_H/2+4}" text-anchor="middle" font-size="9" fill="rgba(79,70,229,.3)">área vazia</text>`;
+    }
   }
 
   // Implantação removida do mapa visual (área não existe mais no layout)
