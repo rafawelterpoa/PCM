@@ -5162,7 +5162,7 @@ function renderMapa(){
   // MOB cards: x = 8 + v*(CARD_W+GAP) + 28
   // DESM começa exatamente onde MOB termina (slot 19 da fila de 30)
   const DESM_CARD_X0 = 8 + MOB_VAGAS*(CARD_W+GAP) + 28;  // x do primeiro card DESM
-  const DESM_X = DESM_CARD_X0 - 5;                         // borda esquerda do rect DESM
+  const DESM_X = DESM_CARD_X0;                             // rect DESM começa exatamente onde MOB termina
   const MOB_RECT_W = DESM_X - 5;                           // rect MOB até onde DESM começa
   const DESM_RECT_W = PATIO_W - DESM_X + 5;                // rect DESM até borda direita do pátio
   // Fundo MOB
