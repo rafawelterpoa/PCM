@@ -5211,7 +5211,7 @@ function renderMapa(){
     const eqsVend=porZona['vendas']||[];
     for(let vNum=1;vNum<=27;vNum++){
       const col=(vNum<=14)?0:1;
-      const row=(vNum<=14)?vNum-1:vNum-15;
+      const row=(vNum<=14)?13-(vNum-1):12-(vNum-15);  // invertido: V14/V27 no topo, V01/V15 na base
       const vx=VEND_X+8+col*(CARD_W+GAP);
       const vy=Y_VEND+16+row*(CARD_H+GAP);
       const eq=eqsVend.find(e=>{const m=e.localMap&&e.localMap.match(/^V(\d+)$/i);return m&&parseInt(m[1])===vNum;});
