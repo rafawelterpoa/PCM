@@ -5202,7 +5202,7 @@ function renderMapa(){
   renderFileira('fila_H','H',30,Y_FILH,'patio');  // H tem 30 vagas (H1-H2 sem uso físico)
 
   // ── VENDAS — bloco VERTICAL: 2 colunas × 14 linhas, alinhado à DIREITA do pátio ──
-  const VEND_X=PATIO_W-VEND_BLK_W+5;  // lado direito (mesmo lado de A no mapa)
+  const VEND_X=5;  // alinhado com a borda esquerda da linha H
   svg+=`<rect x="${VEND_X}" y="${Y_VEND}" width="${VEND_BLK_W}" height="${VEND_BLK_H}" fill="rgba(16,185,129,.06)" rx="3" stroke="#059669" stroke-width="1.5"/>`;
   svg+=`<text x="${VEND_X+5}" y="${Y_VEND+11}" font-size="9" fill="#065F46" font-weight="700">VENDAS</text>`;
   {
