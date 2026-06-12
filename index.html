@@ -5211,8 +5211,8 @@ function renderMapa(){
   {
     const eqsVend=porZona['vendas']||[];
     for(let vNum=1;vNum<=27;vNum++){
-      const linha=(vNum<=14)?0:1;
-      const col=(vNum<=14)?vNum-1:vNum-15;
+      const linha=(vNum<=13)?0:1;          // linha 0: V01-V13 (13 pos), linha 1: V14-V27 (14 pos)
+      const col=(vNum<=13)?vNum:vNum-14;   // linha 0 começa no col 1 (V01→col1), linha 1 no col 0 (V14→col0)
       const vx=VEND_X+8+col*(CARD_W+GAP);
       const vy=Y_VEND+14+linha*(CARD_H+GAP+2);
       const eq=eqsVend.find(e=>{const m=e.localMap&&e.localMap.match(/^V(\d+)$/i);return m&&parseInt(m[1])===vNum;});
