@@ -5159,14 +5159,17 @@ function renderMapa(){
 
   // ── MOB (MOB-01/19) + DESM (DESM-01/11) na mesma linha, lado a lado ──
   const MOB_VAGAS=19, DESM_VAGAS=11;
-  const MOB_W=MOB_VAGAS*(CARD_W+GAP)+GAP+32;
-  const DESM_W=DESM_VAGAS*(CARD_W+GAP)+GAP+32;
-  const DESM_X=PATIO_W-DESM_W;  // alinhado à direita do pátio, sem ultrapassar os boxes
+  // MOB cards: x = 8 + v*(CARD_W+GAP) + 28
+  // DESM começa exatamente onde MOB termina (slot 19 da fila de 30)
+  const DESM_CARD_X0 = 8 + MOB_VAGAS*(CARD_W+GAP) + 28;  // x do primeiro card DESM
+  const DESM_X = DESM_CARD_X0 - 5;                         // borda esquerda do rect DESM
+  const MOB_RECT_W = DESM_X - 5;                           // rect MOB até onde DESM começa
+  const DESM_RECT_W = PATIO_W - DESM_X + 5;                // rect DESM até borda direita do pátio
   // Fundo MOB
-  svg+=`<rect x="5" y="${Y_MOB}" width="${MOB_W-5}" height="${FILA_H}" fill="rgba(78,205,196,.08)" rx="3" stroke="#5B21B6" stroke-width="1.5"/>`;
+  svg+=`<rect x="5" y="${Y_MOB}" width="${MOB_RECT_W}" height="${FILA_H}" fill="rgba(78,205,196,.08)" rx="3" stroke="#5B21B6" stroke-width="1.5"/>`;
   svg+=`<text x="10" y="${Y_MOB+11}" font-size="9" fill="#6B3F9E" font-weight="700">MOBILIZAÇÃO</text>`;
   // Fundo DESM
-  svg+=`<rect x="${DESM_X}" y="${Y_MOB}" width="${DESM_W}" height="${FILA_H}" fill="rgba(234,179,8,.08)" rx="3" stroke="#B45309" stroke-width="1.5"/>`;
+  svg+=`<rect x="${DESM_X}" y="${Y_MOB}" width="${DESM_RECT_W}" height="${FILA_H}" fill="rgba(234,179,8,.08)" rx="3" stroke="#B45309" stroke-width="1.5"/>`;
   svg+=`<text x="${DESM_X+5}" y="${Y_MOB+11}" font-size="9" fill="#B45309" font-weight="700">DESMOBILIZAÇÃO</text>`;
   // Cartas MOB
   (porZona['mobilizacao']||[]).slice(0,MOB_VAGAS).forEach((eq,v)=>{
@@ -5181,16 +5184,16 @@ function renderMapa(){
     svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5"/>`;
     svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780">MOB-${String(v+1).padStart(2,'0')}</text>`;
   }
-  // Cartas DESM
+  // Cartas DESM — continuam a numeração de slots a partir de MOB_VAGAS
   (porZona['desmobilizacao']||[]).slice(0,DESM_VAGAS).forEach((eq,v)=>{
-    const vx=DESM_X+3+v*(CARD_W+GAP)+28; const vy=Y_MOB+14;
+    const vx=DESM_CARD_X0+v*(CARD_W+GAP); const vy=Y_MOB+14;
     const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
     svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
     svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700">${eq.id}</text>`;
     svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)">${eq.equipamento.substring(0,9)}</text>`;
   });
   for(let v=(porZona['desmobilizacao']||[]).length;v<DESM_VAGAS;v++){
-    const vx=DESM_X+3+v*(CARD_W+GAP)+28; const vy=Y_MOB+14;
+    const vx=DESM_CARD_X0+v*(CARD_W+GAP); const vy=Y_MOB+14;
     svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5"/>`;
     svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780">DESM-${String(v+1).padStart(2,'0')}</text>`;
   }
