@@ -5160,8 +5160,8 @@ function renderMapa(){
   // ── MOB (MOB-01/19) + DESM (DESM-01/11) na mesma linha, lado a lado ──
   const MOB_VAGAS=19, DESM_VAGAS=11;
   const MOB_W=MOB_VAGAS*(CARD_W+GAP)+GAP+32;
-  const DESM_X=MOB_W+5;
   const DESM_W=DESM_VAGAS*(CARD_W+GAP)+GAP+32;
+  const DESM_X=PATIO_W-DESM_W;  // alinhado à direita do pátio, sem ultrapassar os boxes
   // Fundo MOB
   svg+=`<rect x="5" y="${Y_MOB}" width="${MOB_W-5}" height="${FILA_H}" fill="rgba(78,205,196,.08)" rx="3" stroke="#5B21B6" stroke-width="1.5"/>`;
   svg+=`<text x="10" y="${Y_MOB+11}" font-size="9" fill="#6B3F9E" font-weight="700">MOBILIZAÇÃO</text>`;
