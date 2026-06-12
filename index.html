@@ -5009,15 +5009,19 @@ function renderMapa(){
   const Y_FILG=Y_FILF+FILA_H+GAP;
   const Y_RUA4=Y_FILG+FILA_H+6;
   const Y_FILH=Y_RUA4+16;
-  // Vendas e Implementos: blocos VERTICAIS estreitos (layout físico)
-  const VEND_BLK_W=2*(CARD_W+GAP)+GAP+16;      // 2 colunas de cartas
-  const VEND_BLK_H=14*(CARD_H+GAP)+16;          // 14 linhas + label
-  const Y_VEND=Y_FILH+FILA_H+12;
-  const IMPL_EQ_W=VEND_BLK_W;
-  const IMPL_EQ_H=18*(CARD_H+GAP)+16;
-  const Y_IMPL_EQ=Y_VEND+VEND_BLK_H+8;
+  // Vendas e Implementos: blocos HORIZONTAIS lado a lado abaixo de H
+  // Vendas: 2 linhas × 14 vagas, posicionado à DIREITA (lado das posições altas)
+  const VEND_COLS=14;  // 14 vagas por linha, 2 linhas = 28 slots para 27 vagas
+  const VEND_BLK_W=VEND_COLS*(CARD_W+GAP)+GAP+32;
+  const VEND_BLK_H=2*(CARD_H+GAP)+16;           // 2 linhas de vagas + label
+  const VEND_X=PATIO_W-VEND_BLK_W+5;            // alinhado à direita do pátio
+  const Y_VEND=Y_FILH+FILA_H+8;
+  // Implementos: mesma faixa Y, preenche o espaço à esquerda de Vendas
+  const IMPL_EQ_W=VEND_X-10;                    // até onde começa Vendas
+  const IMPL_EQ_H=VEND_BLK_H;
+  const Y_IMPL_EQ=Y_VEND;
 
-  const TOTAL_H=Y_IMPL_EQ+IMPL_EQ_H+30;
+  const TOTAL_H=Y_VEND+VEND_BLK_H+30;
   // Boxes precisam de altura suficiente para 22 boxes
   const BOX_TOTAL_H=22*(BOX_H+3)+40;
   const TOTAL_H_FINAL=Math.max(TOTAL_H, Y_OFICINA-18+BOX_TOTAL_H+10);
@@ -5201,19 +5205,16 @@ function renderMapa(){
   ruaLabel(Y_RUA4,'RUA 04');
   renderFileira('fila_H','H',30,Y_FILH,'patio');  // H tem 30 vagas (H1-H2 sem uso físico)
 
-  // ── VENDAS — bloco VERTICAL: 2 colunas × 14 linhas, alinhado à DIREITA do pátio ──
-  const VEND_X=5;  // alinhado com a borda esquerda da linha H
+  // ── VENDAS — 2 linhas horizontais × 14 vagas, lado DIREITO abaixo de H ──
   svg+=`<rect x="${VEND_X}" y="${Y_VEND}" width="${VEND_BLK_W}" height="${VEND_BLK_H}" fill="rgba(16,185,129,.06)" rx="3" stroke="#059669" stroke-width="1.5"/>`;
-  svg+=`<text x="${VEND_X+5}" y="${Y_VEND+11}" font-size="9" fill="#065F46" font-weight="700">VENDAS</text>`;
+  svg+=`<text x="${VEND_X+5}" y="${Y_VEND+11}" font-size="9" fill="#065F46" font-weight="700">VENDAS  V01–V27</text>`;
   {
-    const divX=VEND_X+8+CARD_W+GAP/2;
-    svg+=`<line x1="${divX}" y1="${Y_VEND+14}" x2="${divX}" y2="${Y_VEND+VEND_BLK_H-2}" stroke="#059669" stroke-width="0.8" stroke-dasharray="3,2"/>`;
     const eqsVend=porZona['vendas']||[];
     for(let vNum=1;vNum<=27;vNum++){
-      const col=(vNum<=14)?0:1;
-      const row=(vNum<=14)?13-(vNum-1):12-(vNum-15);  // invertido: V14/V27 no topo, V01/V15 na base
+      const linha=(vNum<=14)?0:1;
+      const col=(vNum<=14)?vNum-1:vNum-15;
       const vx=VEND_X+8+col*(CARD_W+GAP);
-      const vy=Y_VEND+16+row*(CARD_H+GAP);
+      const vy=Y_VEND+14+linha*(CARD_H+GAP+2);
       const eq=eqsVend.find(e=>{const m=e.localMap&&e.localMap.match(/^V(\d+)$/i);return m&&parseInt(m[1])===vNum;});
       if(eq){
         const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
@@ -5227,15 +5228,16 @@ function renderMapa(){
     }
   }
 
-  // ── IMPLEMENTOS — bloco VERTICAL abaixo de Vendas, mesmo X direito ──
-  svg+=`<rect x="${VEND_X}" y="${Y_IMPL_EQ}" width="${IMPL_EQ_W}" height="${IMPL_EQ_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5"/>`;
-  svg+=`<text x="${VEND_X+5}" y="${Y_IMPL_EQ+11}" font-size="9" fill="#3730A3" font-weight="700">IMPLEMENTOS</text>`;
+  // ── IMPLEMENTOS — mesmo nível Y, lado ESQUERDO (até onde começa Vendas) ──
+  svg+=`<rect x="5" y="${Y_IMPL_EQ}" width="${IMPL_EQ_W}" height="${IMPL_EQ_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5"/>`;
+  svg+=`<text x="10" y="${Y_IMPL_EQ+11}" font-size="9" fill="#3730A3" font-weight="700">IMPLEMENTOS</text>`;
   {
     const eqsImpl=porZona['implementos']||[];
+    const maxImpl=Math.max(1,Math.floor((IMPL_EQ_W-16)/(CARD_W+GAP)));
     eqsImpl.forEach((eq,i)=>{
-      const col=i%2, row=Math.floor(i/2);
-      const vx=VEND_X+8+col*(CARD_W+GAP);
-      const vy=Y_IMPL_EQ+16+row*(CARD_H+GAP);
+      const linha=Math.floor(i/maxImpl), col=i%maxImpl;
+      const vx=5+8+col*(CARD_W+GAP);
+      const vy=Y_IMPL_EQ+14+linha*(CARD_H+GAP+2);
       if(vy+CARD_H>Y_IMPL_EQ+IMPL_EQ_H-4)return;
       const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
       svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
@@ -5243,7 +5245,7 @@ function renderMapa(){
       svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)">${eq.equipamento.substring(0,9)}</text>`;
     });
     if(!eqsImpl.length){
-      svg+=`<text x="${VEND_X+IMPL_EQ_W/2}" y="${Y_IMPL_EQ+IMPL_EQ_H/2+4}" text-anchor="middle" font-size="9" fill="rgba(79,70,229,.3)">área vazia</text>`;
+      svg+=`<text x="${5+IMPL_EQ_W/2}" y="${Y_IMPL_EQ+IMPL_EQ_H/2+4}" text-anchor="middle" font-size="9" fill="rgba(79,70,229,.3)">área vazia</text>`;
     }
   }
 
