@@ -5201,17 +5201,18 @@ function renderMapa(){
   ruaLabel(Y_RUA4,'RUA 04');
   renderFileira('fila_H','H',30,Y_FILH,'patio');  // H tem 30 vagas (H1-H2 sem uso físico)
 
-  // ── VENDAS — bloco VERTICAL: 2 colunas × 14 linhas (layout físico) ──
-  svg+=`<rect x="5" y="${Y_VEND}" width="${VEND_BLK_W}" height="${VEND_BLK_H}" fill="rgba(16,185,129,.06)" rx="3" stroke="#059669" stroke-width="1.5"/>`;
-  svg+=`<text x="10" y="${Y_VEND+11}" font-size="9" fill="#065F46" font-weight="700">VENDAS</text>`;
+  // ── VENDAS — bloco VERTICAL: 2 colunas × 14 linhas, alinhado à DIREITA do pátio ──
+  const VEND_X=PATIO_W-VEND_BLK_W+5;  // lado direito (mesmo lado de A no mapa)
+  svg+=`<rect x="${VEND_X}" y="${Y_VEND}" width="${VEND_BLK_W}" height="${VEND_BLK_H}" fill="rgba(16,185,129,.06)" rx="3" stroke="#059669" stroke-width="1.5"/>`;
+  svg+=`<text x="${VEND_X+5}" y="${Y_VEND+11}" font-size="9" fill="#065F46" font-weight="700">VENDAS</text>`;
   {
-    const divX=5+8+CARD_W+GAP/2;
+    const divX=VEND_X+8+CARD_W+GAP/2;
     svg+=`<line x1="${divX}" y1="${Y_VEND+14}" x2="${divX}" y2="${Y_VEND+VEND_BLK_H-2}" stroke="#059669" stroke-width="0.8" stroke-dasharray="3,2"/>`;
     const eqsVend=porZona['vendas']||[];
     for(let vNum=1;vNum<=27;vNum++){
       const col=(vNum<=14)?0:1;
       const row=(vNum<=14)?vNum-1:vNum-15;
-      const vx=5+8+col*(CARD_W+GAP);
+      const vx=VEND_X+8+col*(CARD_W+GAP);
       const vy=Y_VEND+16+row*(CARD_H+GAP);
       const eq=eqsVend.find(e=>{const m=e.localMap&&e.localMap.match(/^V(\d+)$/i);return m&&parseInt(m[1])===vNum;});
       if(eq){
@@ -5226,14 +5227,14 @@ function renderMapa(){
     }
   }
 
-  // ── IMPLEMENTOS — bloco VERTICAL abaixo de Vendas, mesma largura ──
-  svg+=`<rect x="5" y="${Y_IMPL_EQ}" width="${IMPL_EQ_W}" height="${IMPL_EQ_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5"/>`;
-  svg+=`<text x="10" y="${Y_IMPL_EQ+11}" font-size="9" fill="#3730A3" font-weight="700">IMPLEMENTOS</text>`;
+  // ── IMPLEMENTOS — bloco VERTICAL abaixo de Vendas, mesmo X direito ──
+  svg+=`<rect x="${VEND_X}" y="${Y_IMPL_EQ}" width="${IMPL_EQ_W}" height="${IMPL_EQ_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5"/>`;
+  svg+=`<text x="${VEND_X+5}" y="${Y_IMPL_EQ+11}" font-size="9" fill="#3730A3" font-weight="700">IMPLEMENTOS</text>`;
   {
     const eqsImpl=porZona['implementos']||[];
     eqsImpl.forEach((eq,i)=>{
       const col=i%2, row=Math.floor(i/2);
-      const vx=5+8+col*(CARD_W+GAP);
+      const vx=VEND_X+8+col*(CARD_W+GAP);
       const vy=Y_IMPL_EQ+16+row*(CARD_H+GAP);
       if(vy+CARD_H>Y_IMPL_EQ+IMPL_EQ_H-4)return;
       const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
@@ -5242,7 +5243,7 @@ function renderMapa(){
       svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)">${eq.equipamento.substring(0,9)}</text>`;
     });
     if(!eqsImpl.length){
-      svg+=`<text x="${5+IMPL_EQ_W/2}" y="${Y_IMPL_EQ+IMPL_EQ_H/2+4}" text-anchor="middle" font-size="9" fill="rgba(79,70,229,.3)">área vazia</text>`;
+      svg+=`<text x="${VEND_X+IMPL_EQ_W/2}" y="${Y_IMPL_EQ+IMPL_EQ_H/2+4}" text-anchor="middle" font-size="9" fill="rgba(79,70,229,.3)">área vazia</text>`;
     }
   }
 
