@@ -1113,7 +1113,24 @@ input.filter-sel{padding:5px 8px;height:34px}
       <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#64748b"><span style="width:10px;height:10px;background:#888;border-radius:2px;display:inline-block"></span>Aguardando</span>
     </div>
   </div>
-  <div id="mapa-container" style="background:#F8F7F4;border-radius:12px;border:1px solid #e2e8f0;overflow:auto;max-height:calc(100vh - 220px);box-shadow:0 1px 4px rgba(0,0,0,.04)"></div>
+  <div style="display:flex;gap:12px;align-items:flex-start">
+    <div id="mapa-container" style="flex:1;min-width:0;background:#F8F7F4;border-radius:12px;border:1px solid #e2e8f0;overflow:auto;max-height:calc(100vh - 220px);box-shadow:0 1px 4px rgba(0,0,0,.04)"></div>
+    <div id="mapa-sidebar" style="display:none;width:340px;flex-shrink:0;background:#fff;border-radius:12px;border:1px solid #e2e8f0;max-height:calc(100vh - 220px);overflow-y:auto;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+      <div style="padding:14px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div id="sidebar-area-label" style="font-size:13px;font-weight:700;color:#004042"></div>
+          <div id="sidebar-area-sub" style="font-size:11px;color:#888;margin-top:2px"></div>
+        </div>
+        <button onclick="fecharSidebarMapa()" style="background:none;border:none;cursor:pointer;font-size:18px;color:#aaa;line-height:1">✕</button>
+      </div>
+      <div style="display:flex;border-bottom:1px solid #f1f5f9">
+        <button id="sidebar-tab-hoje" onclick="switchSidebarTab('hoje')" style="flex:1;padding:9px 4px;font-size:11px;font-weight:600;border:none;cursor:pointer;border-bottom:2px solid #F37021;color:#F37021;background:#fff">Hoje</button>
+        <button id="sidebar-tab-programar" onclick="switchSidebarTab('programar')" style="flex:1;padding:9px 4px;font-size:11px;font-weight:600;border:none;cursor:pointer;border-bottom:2px solid transparent;color:#888;background:#fff">Programar</button>
+        <button id="sidebar-tab-historico" onclick="switchSidebarTab('historico')" style="flex:1;padding:9px 4px;font-size:11px;font-weight:600;border:none;cursor:pointer;border-bottom:2px solid transparent;color:#888;background:#fff">Histórico</button>
+      </div>
+      <div id="sidebar-content" style="padding:14px"></div>
+    </div>
+  </div>
   <div id="mapa-card-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
     <div style="background:#fff;border-radius:12px;padding:20px;width:320px;max-width:92vw;border-top:3px solid var(--laranja);box-shadow:0 8px 32px rgba(0,0,0,.2)">
       <div id="mapa-modal-content"></div>
@@ -5398,13 +5415,253 @@ function mapaAbrirKanban(){
   setTimeout(()=>openCardModal(mapaEqAtivo,'geral'),300);
 }
 
+// ══ MAPA SIDEBAR — PROGRAMAÇÃO POR ÁREA ══
+const AREA_LABELS={
+  borracharia:'Box de Borracharia',est_pneus:'Pneus',lubrificacao:'Box de Lubrificação',
+  cab_pintura1:'Box Prep. e Pintura',cab_pintura2:'Box Pintura',
+  solda1:'Box Solda 1',solda2:'Box Solda 2',usinagem:'Box Usinagem',
+  lavagem:'Lavagem',residuos:'Resíduos'
+};
+for(let i=1;i<=22;i++) AREA_LABELS[`box${String(i).padStart(2,'0')}`]=`Box ${String(i).padStart(2,'0')}`;
+
+let _sidebarArea=null, _sidebarTab='hoje', _progCache={};
+
 function mapaZonaClick(zonaId){
-  const equips=Object.values(state).filter(e=>!e.baixado&&e.oficina==='Sumaré (SP)'&&(e.zonaMap===zonaId||(!e.zonaMap&&ETAPA_ZONA_DEF[e.etapa]===zonaId)));
-  if(!equips.length){showToast('Zona vazia');return;}
-  const labels={borracharia:'Borracharia',est_pneus:'Est. Pneus',lubrificacao:'Lubrificação',cab_pintura1:'Cab. Prep. Pintura',cab_pintura2:'Cab. Pintura',solda1:'Área de Solda',solda2:'Área de Solda 2',usinagem:'Central Usinagem'};
-  for(let i=1;i<=22;i++) labels[`box${String(i).padStart(2,'0')}`]=`Box ${String(i).padStart(2,'0')}`;
-  const lista=equips.slice(0,15).map(e=>`• ${e.id} — ${e.equipamento.substring(0,30)}`).join('\n');
-  alert(`📍 ${labels[zonaId]||zonaId}\n${equips.length} equipamento${equips.length>1?'s':''}\n\n${lista}${equips.length>15?`\n... +${equips.length-15}`:''}`)
+  _sidebarArea=zonaId;
+  _sidebarTab='hoje';
+  document.getElementById('mapa-sidebar').style.display='flex';
+  document.getElementById('mapa-sidebar').style.flexDirection='column';
+  document.getElementById('sidebar-area-label').textContent=AREA_LABELS[zonaId]||zonaId;
+  const eqs=Object.values(state).filter(e=>!e.baixado&&e.oficina==='Sumaré (SP)'&&e.localMap&&localMapParaZonaGlobal(e.localMap)===zonaId);
+  document.getElementById('sidebar-area-sub').textContent=eqs.length+' equipamento'+(eqs.length!==1?'s':'')+' agora';
+  switchSidebarTab('hoje');
+}
+
+function fecharSidebarMapa(){
+  document.getElementById('mapa-sidebar').style.display='none';
+  _sidebarArea=null;
+}
+
+function switchSidebarTab(tab){
+  _sidebarTab=tab;
+  ['hoje','programar','historico'].forEach(t=>{
+    const btn=document.getElementById('sidebar-tab-'+t);
+    if(btn){btn.style.borderBottomColor=t===tab?'#F37021':'transparent';btn.style.color=t===tab?'#F37021':'#888';}
+  });
+  if(tab==='hoje') renderSidebarHoje();
+  else if(tab==='programar') renderSidebarProgramar();
+  else renderSidebarHistorico();
+}
+
+function progFbPath(areaId,data){
+  return `${FB_BASE}/programacao/${areaId}/${data}.json`;
+}
+
+async function progCarregar(areaId,data){
+  const key=areaId+'|'+data;
+  try{
+    const r=await fetch(progFbPath(areaId,data));
+    const d=await r.json();
+    _progCache[key]=d?Object.values(d).filter(Boolean).sort((a,b)=>(a.ordem||0)-(b.ordem||0)):[];
+  }catch(e){_progCache[key]=[];}
+  return _progCache[key];
+}
+
+async function progSalvar(areaId,data,items){
+  const obj={};
+  items.forEach((it,i)=>{obj[it.eqId]={...it,ordem:i+1};});
+  await fetch(progFbPath(areaId,data),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});
+  _progCache[areaId+'|'+data]=items;
+}
+
+function hojeStr(){return new Date().toISOString().slice(0,10);}
+
+async function renderSidebarHoje(){
+  const c=document.getElementById('sidebar-content');
+  c.innerHTML='<div style="text-align:center;padding:20px;color:#888;font-size:12px">Carregando...</div>';
+  const data=hojeStr();
+  const items=await progCarregar(_sidebarArea,data);
+  if(!items.length){
+    c.innerHTML=`<div style="text-align:center;padding:24px 12px;color:#aaa;font-size:12px">
+      <div style="font-size:28px;margin-bottom:8px">📋</div>
+      Nenhum equipamento programado para hoje.<br>
+      <button onclick="switchSidebarTab('programar')" style="margin-top:12px;background:#F37021;color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:11px">+ Programar</button>
+    </div>`;
+    return;
+  }
+  c.innerHTML=`<div style="font-size:11px;font-weight:600;color:#666;margin-bottom:10px">${data} — ${items.length} equipamento${items.length!==1?'s':''}</div>`+
+  items.map((it,i)=>{
+    const eq=state[it.eqId];
+    if(!eq)return '';
+    const cor={pendente:'#e2e8f0',em_andamento:'#FEF3C7',concluido:'#D1FAE5'}[it.status||'pendente']||'#f8f7f4';
+    const icon={pendente:'⏳',em_andamento:'🔧',concluido:'✅'}[it.status||'pendente'];
+    return `<div style="background:${cor};border-radius:8px;padding:10px 12px;margin-bottom:8px;border:1px solid rgba(0,0,0,.06)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:10px;font-weight:700;color:#F37021">${i+1}º</span>
+        <span style="font-size:14px">${icon}</span>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#004042">${eq.id}</div>
+      <div style="font-size:11px;color:#555;margin-bottom:8px">${eq.equipamento.substring(0,28)}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${it.status!=='em_andamento'&&it.status!=='concluido'?`<button onclick="progSetStatus('${it.eqId}','em_andamento')" style="flex:1;background:#F37021;color:#fff;border:none;border-radius:5px;padding:5px;cursor:pointer;font-size:10px;font-weight:600">🔧 Iniciar</button>`:''}
+        ${it.status!=='concluido'?`<button onclick="progSetStatus('${it.eqId}','concluido')" style="flex:1;background:#1D9E75;color:#fff;border:none;border-radius:5px;padding:5px;cursor:pointer;font-size:10px;font-weight:600">✅ Concluir</button>`:''}
+        <button onclick="progRemover('${it.eqId}')" style="background:#fee2e2;color:#991b1b;border:none;border-radius:5px;padding:5px 8px;cursor:pointer;font-size:10px">✕</button>
+      </div>
+    </div>`;
+  }).join('')+
+  `<button onclick="switchSidebarTab('programar')" style="width:100%;margin-top:4px;background:#f8f7f4;color:#F37021;border:1px dashed #F37021;border-radius:6px;padding:7px;cursor:pointer;font-size:11px;font-weight:600">+ Adicionar mais</button>`;
+}
+
+async function progSetStatus(eqId,status){
+  const data=hojeStr();
+  const items=_progCache[_sidebarArea+'|'+data]||[];
+  const it=items.find(x=>x.eqId===eqId);
+  if(!it)return;
+  it.status=status;
+  await progSalvar(_sidebarArea,data,items);
+  if(status==='concluido'){
+    // Atualiza etapa_interna no kanban
+    if(state[eqId]){
+      state[eqId].etapa_interna='aguardando_baia';
+      fetch(`${FB_BASE}/equipamentos/${eqId}/etapa_interna.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify('aguardando_baia')}).catch(()=>{});
+    }
+    showToast('✅ '+eqId+' concluído → aguardando baia');
+  }
+  renderSidebarHoje();
+}
+
+async function progRemover(eqId){
+  const data=_sidebarTab==='hoje'?hojeStr():document.getElementById('prog-data-sel')?.value||hojeStr();
+  const items=(_progCache[_sidebarArea+'|'+data]||[]).filter(x=>x.eqId!==eqId);
+  await progSalvar(_sidebarArea,data,items);
+  if(_sidebarTab==='hoje') renderSidebarHoje(); else renderSidebarProgramar();
+}
+
+async function renderSidebarProgramar(){
+  const c=document.getElementById('sidebar-content');
+  const dataAtual=document.getElementById('prog-data-sel')?.value||hojeStr();
+  const items=await progCarregar(_sidebarArea,dataAtual);
+  const eqsDisponiveis=Object.values(state).filter(e=>!e.baixado&&e.oficina==='Sumaré (SP)'&&!items.find(it=>it.eqId===e.id));
+  c.innerHTML=`
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Data</label>
+      <input type="date" id="prog-data-sel" value="${dataAtual}" onchange="renderSidebarProgramar()" style="width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;box-sizing:border-box">
+    </div>
+    ${items.length?`<div style="font-size:11px;font-weight:600;color:#555;margin-bottom:8px">Programados (${items.length})</div>`+''+
+    items.map((it,i)=>{
+      const eq=state[it.eqId];if(!eq)return '';
+      return `<div style="display:flex;align-items:center;gap:8px;background:#f8f7f4;border-radius:6px;padding:7px 10px;margin-bottom:6px;border:1px solid #e2e8f0">
+        <span style="font-size:11px;font-weight:700;color:#F37021;min-width:18px">${i+1}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;font-weight:700;color:#004042">${eq.id}</div>
+          <div style="font-size:10px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${eq.equipamento.substring(0,24)}</div>
+        </div>
+        <div style="display:flex;gap:4px">
+          ${i>0?`<button onclick="progMoverOrdem('${it.eqId}',-1)" style="background:#e2e8f0;border:none;border-radius:4px;padding:3px 6px;cursor:pointer;font-size:11px">▲</button>`:''}
+          ${i<items.length-1?`<button onclick="progMoverOrdem('${it.eqId}',1)" style="background:#e2e8f0;border:none;border-radius:4px;padding:3px 6px;cursor:pointer;font-size:11px">▼</button>`:''}
+          <button onclick="progRemover('${it.eqId}')" style="background:#fee2e2;color:#991b1b;border:none;border-radius:4px;padding:3px 6px;cursor:pointer;font-size:11px">✕</button>
+        </div>
+      </div>`;
+    }).join(''):`<div style="font-size:11px;color:#aaa;text-align:center;padding:12px 0;margin-bottom:8px">Nenhum equipamento programado</div>`}
+    <div style="margin-top:12px;border-top:1px solid #f1f5f9;padding-top:12px">
+      <div style="font-size:11px;font-weight:600;color:#555;margin-bottom:6px">Adicionar equipamento</div>
+      <input type="text" id="prog-busca-eq" placeholder="Buscar por ID ou modelo..." oninput="renderProgBusca()" style="width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;box-sizing:border-box;margin-bottom:8px">
+      <div id="prog-lista-eq" style="max-height:200px;overflow-y:auto"></div>
+    </div>`;
+  renderProgBusca();
+}
+
+function renderProgBusca(){
+  const busca=(document.getElementById('prog-busca-eq')?.value||'').toLowerCase();
+  const data=document.getElementById('prog-data-sel')?.value||hojeStr();
+  const jaProgr=_progCache[_sidebarArea+'|'+data]||[];
+  const lista=Object.values(state).filter(e=>!e.baixado&&e.oficina==='Sumaré (SP)'&&!jaProgr.find(it=>it.eqId===e.id)&&(!busca||(e.id+e.equipamento+e.modelo).toLowerCase().includes(busca))).slice(0,20);
+  const el=document.getElementById('prog-lista-eq');
+  if(!el)return;
+  if(!lista.length){el.innerHTML='<div style="font-size:11px;color:#aaa;text-align:center;padding:8px">Nenhum resultado</div>';return;}
+  el.innerHTML=lista.map(e=>`<div onclick="progAdicionarEq('${e.id}')" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;cursor:pointer;border:1px solid #e2e8f0;margin-bottom:4px;background:#fff" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">
+    <div style="flex:1;min-width:0">
+      <div style="font-size:11px;font-weight:700;color:#004042">${e.id}</div>
+      <div style="font-size:10px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.equipamento.substring(0,28)}</div>
+    </div>
+    <span style="color:#1D9E75;font-size:16px;flex-shrink:0">+</span>
+  </div>`).join('');
+}
+
+async function progAdicionarEq(eqId){
+  const data=document.getElementById('prog-data-sel')?.value||hojeStr();
+  const items=_progCache[_sidebarArea+'|'+data]||[];
+  if(items.find(it=>it.eqId===eqId))return;
+  items.push({eqId,ordem:items.length+1,status:'pendente'});
+  await progSalvar(_sidebarArea,data,items);
+  showToast('➕ '+eqId+' adicionado à programação');
+  renderSidebarProgramar();
+}
+
+async function progMoverOrdem(eqId,dir){
+  const data=document.getElementById('prog-data-sel')?.value||hojeStr();
+  const items=_progCache[_sidebarArea+'|'+data]||[];
+  const idx=items.findIndex(x=>x.eqId===eqId);
+  if(idx<0)return;
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=items.length)return;
+  [items[idx],items[newIdx]]=[items[newIdx],items[idx]];
+  await progSalvar(_sidebarArea,data,items);
+  renderSidebarProgramar();
+}
+
+async function renderSidebarHistorico(){
+  const c=document.getElementById('sidebar-content');
+  c.innerHTML='<div style="text-align:center;padding:20px;color:#888;font-size:12px">Carregando...</div>';
+  // Busca últimos 7 dias
+  const dias=[];
+  for(let i=1;i<=7;i++){const d=new Date();d.setDate(d.getDate()-i);dias.push(d.toISOString().slice(0,10));}
+  const resultados=[];
+  for(const dia of dias){
+    const items=await progCarregar(_sidebarArea,dia);
+    const conc=items.filter(it=>it.status==='concluido');
+    if(conc.length)resultados.push({dia,conc,total:items.length});
+  }
+  if(!resultados.length){c.innerHTML='<div style="text-align:center;padding:24px;color:#aaa;font-size:12px">Nenhum histórico nos últimos 7 dias</div>';return;}
+  c.innerHTML=resultados.map(r=>`
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:600;color:#555;margin-bottom:6px">${r.dia} — ${r.conc.length}/${r.total} concluídos</div>
+      ${r.conc.map(it=>{const eq=state[it.eqId];return eq?`<div style="font-size:11px;color:#065F46;background:#D1FAE5;border-radius:5px;padding:5px 8px;margin-bottom:4px">✅ ${eq.id} — ${eq.equipamento.substring(0,24)}</div>`:''}).join('')}
+    </div>`).join('');
+}
+
+function localMapParaZonaGlobal(localMap){
+  if(!localMap)return null;
+  const v=localMap.trim().toUpperCase();
+  const boxM=v.match(/^BOX\s*(\d+)$/i);
+  if(boxM)return`box${String(parseInt(boxM[1])).padStart(2,'0')}`;
+  if(v.startsWith('MOB'))return'mobilizacao';
+  if(v.startsWith('DESM'))return'desmobilizacao';
+  const filaM=v.match(/^([A-H])(\d+)$/);
+  if(filaM)return'fila_'+filaM[1].toLowerCase();
+  if(v.includes('BORRACHAR'))return'borracharia';
+  if(v.includes('PNEU'))return'est_pneus';
+  if(v.includes('LUBRIF'))return'lubrificacao';
+  if(v.includes('PREP'))return'cab_pintura1';
+  if(v.includes('PINTURA'))return'cab_pintura2';
+  if(v.includes('SOLDA 2'))return'solda2';
+  if(v.includes('SOLDA'))return'solda1';
+  if(v.includes('USINA'))return'usinagem';
+  if(v==='LAVAGEM'||v.includes('LAVAGEM'))return'lavagem';
+  if(v.includes('RESID'))return'residuos';
+  return null;
+}
+
+function mapaZonaClick(zonaId){
+  mapaCardClick_orig=mapaCardClick_orig||null;
+  _sidebarArea=zonaId;
+  _sidebarTab='hoje';
+  const sb=document.getElementById('mapa-sidebar');
+  sb.style.display='flex';sb.style.flexDirection='column';
+  document.getElementById('sidebar-area-label').textContent=AREA_LABELS[zonaId]||zonaId;
+  const eqs=Object.values(state).filter(e=>!e.baixado&&e.oficina==='Sumaré (SP)'&&e.localMap&&localMapParaZonaGlobal(e.localMap)===zonaId);
+  document.getElementById('sidebar-area-sub').textContent=eqs.length+' equipamento'+(eqs.length!==1?'s':'')+' agora';
+  switchSidebarTab('hoje');
 }
 
 function mapaHideTooltip(){
