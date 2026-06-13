@@ -5077,14 +5077,15 @@ function renderMapa(){
     const eqs=porZona[id]||[];
     const by=BOX_Y_START+22+(i*(BOX_H+3));
     const bg=eqs.length?'#FEE9D0':'#FFFFFF';
-    svg+=`<rect x="${BX}" y="${by}" width="${BOX_W}" height="${BOX_H}" fill="${bg}" rx="3" stroke="${COR_VERDE}" stroke-width="1" style="cursor:pointer" onclick="mapaZonaClick('${id}')"/>`;
-    svg+=`<text x="${BX+5}" y="${by+11}" font-size="9" fill="#004042" font-weight="700">Box ${String(i+1).padStart(2,'0')}</text>`;
+    const boxLoc=`Box ${String(i+1).padStart(2,'0')}`;
+    svg+=`<rect x="${BX}" y="${by}" width="${BOX_W}" height="${BOX_H}" fill="${bg}" rx="3" stroke="${COR_VERDE}" stroke-width="1" style="cursor:pointer" onclick="mapaZonaClick('${id}')" onmouseup="mapaSlotDrop(event,'${boxLoc}')"/>`;
+    svg+=`<text x="${BX+5}" y="${by+11}" font-size="9" fill="#004042" font-weight="700" style="pointer-events:none">${boxLoc}</text>`;
     if(eqs.length){
       const eq=eqs[0];
       const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
-      svg+=`<rect x="${BX+46}" y="${by+2}" width="${BOX_W-50}" height="${BOX_H-4}" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
+      svg+=`<rect x="${BX+46}" y="${by+2}" width="${BOX_W-50}" height="${BOX_H-4}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${boxLoc}')" onclick="mapaCardClick('${eq.id}')"/>`;
       const lbl=(eq.id+' '+eq.equipamento).substring(0,18);
-      svg+=`<text x="${BX+48}" y="${by+BOX_H/2+4}" font-size="7" fill="#fff" font-weight="600">${lbl}</text>`;
+      svg+=`<text x="${BX+48}" y="${by+BOX_H/2+4}" font-size="7" fill="#fff" font-weight="600" style="pointer-events:none">${lbl}</text>`;
       if(eqs.length>1) svg+=`<text x="${BX+BOX_W-2}" y="${by+BOX_H-3}" text-anchor="end" font-size="7" fill="#6BFAC7" font-weight="700">+${eqs.length-1}</text>`;
     }
   }
@@ -5134,16 +5135,17 @@ function renderMapa(){
       const vy=yx+14;
       const eq=vagaOcupada[v]||null;
 
+      const slotLoc=`${label}${v}`;
       if(eq){
         const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
-        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="#004042" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
-        svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700">${eq.id}</text>`;
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="#004042" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${slotLoc}')" onclick="mapaCardClick('${eq.id}')"/>`;
+        svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
         const desc=eq.equipamento.substring(0,9);
-        svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)">${desc}</text>`;
+        svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${desc}</text>`;
       } else {
-        // Vaga vazia — mostra endereço
-        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.5)" rx="2" stroke="rgba(0,0,0,.1)" stroke-width="0.5"/>`;
-        svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(0,0,0,.2)">${label}${v}</text>`;
+        // Vaga vazia — drop target
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.5)" rx="2" stroke="rgba(0,0,0,.1)" stroke-width="0.5" onmouseup="mapaSlotDrop(event,'${slotLoc}')"/>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(0,0,0,.2)" style="pointer-events:none">${slotLoc}</text>`;
       }
     }
 
@@ -5173,30 +5175,47 @@ function renderMapa(){
   svg+=`<rect x="${DESM_X}" y="${Y_MOB}" width="${DESM_RECT_W}" height="${FILA_H}" fill="rgba(234,179,8,.08)" rx="3" stroke="#B45309" stroke-width="1.5"/>`;
   svg+=`<text x="${DESM_X+5}" y="${Y_MOB+11}" font-size="9" fill="#B45309" font-weight="700">DESMOBILIZAÇÃO</text>`;
   // Cartas MOB
-  (porZona['mobilizacao']||[]).slice(0,MOB_VAGAS).forEach((eq,v)=>{
-    const vx=8+v*(CARD_W+GAP)+28; const vy=Y_MOB+14;
-    const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
-    svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
-    svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700">${eq.id}</text>`;
-    svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)">${eq.equipamento.substring(0,9)}</text>`;
-  });
-  for(let v=(porZona['mobilizacao']||[]).length;v<MOB_VAGAS;v++){
-    const vx=8+v*(CARD_W+GAP)+28; const vy=Y_MOB+14;
-    svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5"/>`;
-    svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780">MOB-${String(v+1).padStart(2,'0')}</text>`;
+  // MOB — slots com drag/drop
+  {
+    const eqsMob=porZona['mobilizacao']||[];
+    const vagaMob={};
+    eqsMob.forEach(eq=>{const m=eq.localMap&&eq.localMap.match(/MOB-(\d+)/i);if(m){const n=parseInt(m[1]);if(n>=1&&n<=MOB_VAGAS&&!vagaMob[n])vagaMob[n]=eq;}});
+    let livre=1;eqsMob.filter(eq=>!eq.localMap||!eq.localMap.match(/MOB-(\d+)/i)).forEach(eq=>{while(vagaMob[livre]&&livre<=MOB_VAGAS)livre++;if(livre<=MOB_VAGAS){vagaMob[livre]=eq;livre++;}});
+    for(let v=1;v<=MOB_VAGAS;v++){
+      const vx=8+(v-1)*(CARD_W+GAP)+28; const vy=Y_MOB+14;
+      const loc=`MOB-${String(v).padStart(2,'0')}`;
+      const eq=vagaMob[v]||null;
+      if(eq){
+        const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${loc}')" onclick="mapaCardClick('${eq.id}')"/>`;
+        svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
+        svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eq.equipamento.substring(0,9)}</text>`;
+      } else {
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5" onmouseup="mapaSlotDrop(event,'${loc}')"/>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780" style="pointer-events:none">${loc}</text>`;
+      }
+    }
   }
-  // Cartas DESM — continuam a numeração de slots a partir de MOB_VAGAS
-  (porZona['desmobilizacao']||[]).slice(0,DESM_VAGAS).forEach((eq,v)=>{
-    const vx=DESM_CARD_X0+v*(CARD_W+GAP); const vy=Y_MOB+14;
-    const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
-    svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
-    svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700">${eq.id}</text>`;
-    svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)">${eq.equipamento.substring(0,9)}</text>`;
-  });
-  for(let v=(porZona['desmobilizacao']||[]).length;v<DESM_VAGAS;v++){
-    const vx=DESM_CARD_X0+v*(CARD_W+GAP); const vy=Y_MOB+14;
-    svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5"/>`;
-    svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780">DESM-${String(v+1).padStart(2,'0')}</text>`;
+  // DESM — slots com drag/drop
+  {
+    const eqsDesm=porZona['desmobilizacao']||[];
+    const vagaDesm={};
+    eqsDesm.forEach(eq=>{const m=eq.localMap&&eq.localMap.match(/DESM-(\d+)/i);if(m){const n=parseInt(m[1]);if(n>=1&&n<=DESM_VAGAS&&!vagaDesm[n])vagaDesm[n]=eq;}});
+    let livre=1;eqsDesm.filter(eq=>!eq.localMap||!eq.localMap.match(/DESM-(\d+)/i)).forEach(eq=>{while(vagaDesm[livre]&&livre<=DESM_VAGAS)livre++;if(livre<=DESM_VAGAS){vagaDesm[livre]=eq;livre++;}});
+    for(let v=1;v<=DESM_VAGAS;v++){
+      const vx=DESM_CARD_X0+(v-1)*(CARD_W+GAP); const vy=Y_MOB+14;
+      const loc=`DESM-${String(v).padStart(2,'0')}`;
+      const eq=vagaDesm[v]||null;
+      if(eq){
+        const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${loc}')" onclick="mapaCardClick('${eq.id}')"/>`;
+        svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
+        svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eq.equipamento.substring(0,9)}</text>`;
+      } else {
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5" onmouseup="mapaSlotDrop(event,'${loc}')"/>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780" style="pointer-events:none">${loc}</text>`;
+      }
+    }
   }
 
   // Função rua com paleta Mills
@@ -5289,6 +5308,49 @@ function renderMapa(){
 
   const SVG_H=Math.max(TOTAL_H, Y_OFICINA-18+BOX_TOTAL_H+10);
   container.innerHTML=kpiBar+`<div style="overflow:auto"><svg width="${TOTAL_W}" height="${SVG_H}" xmlns="http://www.w3.org/2000/svg">${svg}</svg></div>`;
+}
+
+// ══ MAPA DRAG & DROP ══
+let _mapaDrag=null;
+
+function mapaCardDrag(eqId,evt){
+  if(evt.button!==0)return;
+  evt.preventDefault();evt.stopPropagation();
+  const eq=state[eqId];if(!eq)return;
+  const g=document.createElement('div');
+  g.id='mapa-ghost';
+  g.style.cssText='position:fixed;z-index:9999;pointer-events:none;background:#004042;color:#6BFAC7;padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700;white-space:nowrap;border:1px solid #6BFAC7;box-shadow:0 2px 8px rgba(0,0,0,.3);';
+  g.textContent=eq.id+' — '+eq.equipamento.substring(0,16);
+  document.body.appendChild(g);
+  _mapaDrag={eqId,ghost:g,origLoc:eq.localMap||''};
+  function move(e){g.style.left=(e.clientX+12)+'px';g.style.top=(e.clientY-16)+'px';}
+  function up(){
+    g.remove();
+    _mapaDrag=null;
+    document.removeEventListener('mousemove',move);
+    document.removeEventListener('mouseup',up);
+  }
+  document.addEventListener('mousemove',move);
+  document.addEventListener('mouseup',up);
+}
+
+function mapaSlotDrop(evt,newLoc){
+  evt.stopPropagation();
+  if(!_mapaDrag)return;
+  const {eqId,origLoc,ghost}=_mapaDrag;
+  ghost.remove();
+  _mapaDrag=null;
+  if(!newLoc||newLoc===origLoc)return;
+  // Se o slot destino tiver equip → swap
+  const occupant=Object.values(state).find(e=>!e.baixado&&e.localMap===newLoc&&e.id!==eqId&&e.oficina==='Sumaré (SP)');
+  state[eqId].localMap=newLoc;
+  fetch(`${FB_BASE}/equipamentos/${eqId}/localMap.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newLoc)}).catch(()=>{});
+  if(occupant&&origLoc){
+    state[occupant.id].localMap=origLoc;
+    fetch(`${FB_BASE}/equipamentos/${occupant.id}/localMap.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(origLoc)}).catch(()=>{});
+  }
+  showToast('📍 '+eqId+' → '+newLoc);
+  renderMapa();
 }
 
 function mapaCardClick(eqId){
