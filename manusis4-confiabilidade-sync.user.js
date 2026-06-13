@@ -9,6 +9,8 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @connect      mills-frota-default-rtdb.firebaseio.com
+// @updateURL    https://rafawelterpoa.github.io/PCM/manusis4-confiabilidade-sync.user.js
+// @downloadURL  https://rafawelterpoa.github.io/PCM/manusis4-confiabilidade-sync.user.js
 // @run-at       document-idle
 // ==/UserScript==
 
