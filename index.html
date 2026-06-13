@@ -4919,7 +4919,8 @@ function mapaCardHTML(eq){
 }
 
 function renderMapa(){
-  const equips=Object.values(state).filter(e=>!e.baixado&&e.oficina==='Sumaré (SP)');
+  // Apenas equipamentos físicamente presentes em Sumaré (exclui alugados — saíram do pátio)
+  const equips=Object.values(state).filter(e=>!e.baixado&&e.oficina==='Sumaré (SP)'&&e.etapa!=='alugado');
   const container=document.getElementById('mapa-container');
   if(!container)return;
 
