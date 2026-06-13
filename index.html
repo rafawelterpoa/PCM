@@ -5142,7 +5142,7 @@ function renderMapa(){
       const slotLoc=`${label}${v}`;
       if(eq){
         const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
-        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="#004042" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${slotLoc}')" onclick="mapaCardClick('${eq.id}')"/>`;
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${slotLoc}')" onclick="mapaCardClick('${eq.id}')"/>`;
         svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
         const desc=eq.equipamento.substring(0,9);
         svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${desc}</text>`;
