@@ -3517,32 +3517,9 @@ async function abrirManusis(osNum){
       const data=await resp.json();
       const id=data?.data?.[0]?.id;
       if(id){
-        // 2. Abre o Manusis4 e injeta o JS para abrir a OS diretamente
-        const win=window.open('https://mills.manusis4.com/?lang=pt-BR#!/Suite:view:CrudMaintOrders','manusis4');
-        showToast('✅ Abrindo OS '+osNum+'...');
-        // Aguarda o app carregar e executa a abertura da OS
-        const injectOpen=(win,id,tentativas)=>{
-          tentativas=tentativas||0;
-          if(tentativas>30)return;
-          try{
-            const app=win.Suite&&win.Suite.getApplication&&win.Suite.getApplication();
-            const ctrl=app&&app.getController('MaintOrders');
-            const Model=win.Ext&&win.Ext.ModelManager&&win.Ext.ModelManager.getModel('Suite.model.MaintOrder');
-            if(ctrl&&Model){
-              win.Ext.Ajax.request({
-                url:'/api/v1/maint_orders/'+id,
-                success:function(r){
-                  const d=win.Ext.decode(r.responseText);
-                  const rec=new Model(d.data||d);
-                  ctrl.openMaintOrderEdit(rec);
-                }
-              });
-              return;
-            }
-          }catch(e){}
-          setTimeout(()=>injectOpen(win,id,tentativas+1),500);
-        };
-        setTimeout(()=>injectOpen(win,id),1000);
+        // 2. Abre o Manusis4 passando o ID via URL — Tampermonkey script lê e abre a OS
+        window.open('https://mills.manusis4.com/?lang=pt-BR&pcm_os='+id+'#!/Suite:view:CrudMaintOrders','manusis4');
+        showToast('✅ Abrindo OS '+osNum+' no Manusis4');
         return;
       }
     }
