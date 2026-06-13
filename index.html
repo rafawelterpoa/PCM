@@ -5248,22 +5248,23 @@ function renderMapa(){
       const vx=VEND_X+8+col*(CARD_W+GAP);
       const vy=Y_VEND+14+linha*(CARD_H+GAP+2);
       const eq=eqsVend.find(e=>{const m=e.localMap&&e.localMap.match(/^V(\d+)$/i);return m&&parseInt(m[1])===vNum;});
+      const vLoc=`V${String(vNum).padStart(2,'0')}`;
       if(eq){
         const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
-        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
-        svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700">${eq.id}</text>`;
-        svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)">${eq.equipamento.substring(0,9)}</text>`;
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${vLoc}')" onclick="mapaCardClick('${eq.id}')"/>`;
+        svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
+        svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eq.equipamento.substring(0,9)}</text>`;
       } else {
-        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.04)" rx="2" stroke="rgba(5,150,105,.3)" stroke-width="0.5"/>`;
-        svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(5,150,105,.5)">V${String(vNum).padStart(2,'0')}</text>`;
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.04)" rx="2" stroke="rgba(5,150,105,.3)" stroke-width="0.5" onmouseup="mapaSlotDrop(event,'${vLoc}')"/>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(5,150,105,.5)" style="pointer-events:none">${vLoc}</text>`;
       }
     }
   }
 
   // ── IMPLEMENTOS — mesmo nível Y, lado DIREITO (após Vendas) ──
   const IMPL_X=VEND_X+VEND_BLK_W+10;
-  svg+=`<rect x="${IMPL_X}" y="${Y_IMPL_EQ}" width="${IMPL_EQ_W}" height="${IMPL_EQ_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5"/>`;
-  svg+=`<text x="${IMPL_X+5}" y="${Y_IMPL_EQ+11}" font-size="9" fill="#3730A3" font-weight="700">IMPLEMENTOS</text>`;
+  svg+=`<rect x="${IMPL_X}" y="${Y_IMPL_EQ}" width="${IMPL_EQ_W}" height="${IMPL_EQ_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5" onmouseup="mapaSlotDrop(event,'Implementos')"/>`;
+  svg+=`<text x="${IMPL_X+5}" y="${Y_IMPL_EQ+11}" font-size="9" fill="#3730A3" font-weight="700" style="pointer-events:none">IMPLEMENTOS</text>`;
   {
     const eqsImpl=porZona['implementos']||[];
     const maxImpl=Math.max(1,Math.floor((IMPL_EQ_W-16)/(CARD_W+GAP)));
@@ -5273,12 +5274,12 @@ function renderMapa(){
       const vy=Y_IMPL_EQ+14+linha*(CARD_H+GAP+2);
       if(vy+CARD_H>Y_IMPL_EQ+IMPL_EQ_H-4)return;
       const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
-      svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
-      svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700">${eq.id}</text>`;
-      svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)">${eq.equipamento.substring(0,9)}</text>`;
+      svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'Implementos')" onclick="mapaCardClick('${eq.id}')"/>`;
+      svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
+      svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eq.equipamento.substring(0,9)}</text>`;
     });
     if(!eqsImpl.length){
-      svg+=`<text x="${IMPL_X+IMPL_EQ_W/2}" y="${Y_IMPL_EQ+IMPL_EQ_H/2+4}" text-anchor="middle" font-size="9" fill="rgba(79,70,229,.3)">área vazia</text>`;
+      svg+=`<text x="${IMPL_X+IMPL_EQ_W/2}" y="${Y_IMPL_EQ+IMPL_EQ_H/2+4}" text-anchor="middle" font-size="9" fill="rgba(79,70,229,.3)" style="pointer-events:none">área vazia</text>`;
     }
   }
 
