@@ -5266,15 +5266,29 @@ function renderMapa(){
   // Implantação removida do mapa visual (área não existe mais no layout)
 
   // Aviso sem localização
-  const avisoSemLocal=semLocal.length>0
-    ?`<div style="margin-bottom:8px;padding:8px 14px;background:#FFF8E6;border:1px solid #EFD87A;border-radius:7px;font-size:11px;color:#7A5500">
-        <span>⚠ <b>${semLocal.length} equipamento${semLocal.length>1?'s':''}</b> sem localização definida — não aparecem no mapa.</span>
-        <span style="color:#888">Abra o card e defina a posição no campo <b>Localização na oficina / pátio</b>.</span>
-      </div>`
-    :'';
+  // ── KPIs do mapa ──
+  const nPronto=equips.filter(e=>e.etapa==='pronto').length;
+  const nManut=equips.filter(e=>['chegada','cl_entrada','manutencao','cl_saida'].includes(e.etapa)).length;
+  const nTotal=equips.length;
+  const kpiBar=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
+    <div style="display:flex;align-items:center;gap:6px;background:#F0FFF4;border:1px solid #1D9E75;border-radius:7px;padding:6px 14px">
+      <span style="width:10px;height:10px;border-radius:50%;background:#1D9E75;display:inline-block"></span>
+      <span style="font-size:12px;color:#065F46;font-weight:700">Pronto: ${nPronto}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;background:#FFF5F0;border:1px solid #C24003;border-radius:7px;padding:6px 14px">
+      <span style="width:10px;height:10px;border-radius:50%;background:#C24003;display:inline-block"></span>
+      <span style="font-size:12px;color:#9A3412;font-weight:700">Em manutenção: ${nManut}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;background:#F8F7F4;border:1px solid #888;border-radius:7px;padding:6px 14px">
+      <span style="font-size:12px;color:#444;font-weight:600">Total no pátio/oficina: ${nTotal}</span>
+    </div>
+    ${semLocal.length>0?`<div style="display:flex;align-items:center;gap:6px;background:#FFF8E6;border:1px solid #EFD87A;border-radius:7px;padding:6px 14px">
+      <span style="font-size:12px;color:#7A5500">⚠ ${semLocal.length} sem localização definida</span>
+    </div>`:''}
+  </div>`;
 
   const SVG_H=Math.max(TOTAL_H, Y_OFICINA-18+BOX_TOTAL_H+10);
-  container.innerHTML=avisoSemLocal+`<div style="overflow:auto"><svg width="${TOTAL_W}" height="${SVG_H}" xmlns="http://www.w3.org/2000/svg">${svg}</svg></div>`;
+  container.innerHTML=kpiBar+`<div style="overflow:auto"><svg width="${TOTAL_W}" height="${SVG_H}" xmlns="http://www.w3.org/2000/svg">${svg}</svg></div>`;
 }
 
 function mapaCardClick(eqId){
