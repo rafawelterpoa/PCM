@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mills PCM — Sync Confiabilidade
 // @namespace    https://rafawelterpoa.github.io/PCM
-// @version      4.0
+// @version      5.0
 // @description  Sincroniza dados Manusis4 → Firebase PCM automaticamente a cada 1h
 // @author       Mills PCM
 // @match        https://mills.manusis4.com/*
@@ -66,14 +66,15 @@
     return mapa;
   }
 
-  async function buscarTodos(endpoint, filtros) {
+  async function buscarTodos(endpoint, filtros, maxPag) {
     let todos = [], pagina = 1;
+    const limite = maxPag || 50;
     while (true) {
-      const d = await api(endpoint, { limit: 100, start: (pagina - 1) * 100, filter: filtros });
+      const d = await api(endpoint, { limit: 100, page: pagina, filter: filtros });
       if (!d.data || !d.data.length) break;
       todos = todos.concat(d.data);
       if (todos.length >= (d.meta?.count || 0) || d.data.length < 100) break;
-      if (++pagina > 30) break;
+      if (++pagina > limite) break;
     }
     return todos;
   }
@@ -106,6 +107,13 @@
       atualizarBotao('⏳ Tipos...', true);
       const tipos90 = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'opened_at', value: ini90, operator: '>=' }]);
 
+      atualizarBotao('⏳ OS Fechadas...', true);
+      const fechadas90 = await buscarTodos('maint_orders', [
+        { property: 'company_id', value: COMPANY_ID, operator: '=' },
+        { property: 'maint_order_status_id', value: 4, operator: '=' },
+        { property: 'closed_at', value: ini90, operator: '>=' }
+      ]);
+
       atualizarBotao('⏳ Veículos...', true);
       const veicMapa = await buscarMapaVeiculos();
 
@@ -119,6 +127,27 @@
         if (os.maint_service_nature_id) natsB[os.maint_service_nature_id] = (natsB[os.maint_service_nature_id] || 0) + 1;
       });
 
+      // Calcula MTTR e horas paradas a partir das OS fechadas com datas preenchidas
+      let horasReparo = 0, horasParadas = 0, osComReparo = 0;
+      fechadas90.forEach(os => {
+        if (os.maint_started_at && os.maint_finished_at) {
+          const ini = new Date(os.maint_started_at);
+          const fim = new Date(os.maint_finished_at);
+          const horas = (fim - ini) / 3600000;
+          if (horas > 0 && horas < 720) { // ignora valores absurdos (>30 dias)
+            horasReparo += horas;
+            osComReparo++;
+          }
+        }
+        if (os.opened_at && os.closed_at) {
+          const ini = new Date(os.opened_at);
+          const fim = new Date(os.closed_at);
+          const horas = (fim - ini) / 3600000;
+          if (horas > 0 && horas < 2160) horasParadas += horas; // ignora >90 dias
+        }
+      });
+      const mttr = osComReparo > 0 ? (horasReparo / osComReparo) : 0;
+
       const dados = {
         last_sync: agora.toISOString(),
         periodo_dias: 90,
@@ -128,7 +157,10 @@
           em_execucao: emEx.meta?.count || 0,
           pendencias_total: pend.meta?.count || 0,
           total_corretivas_90d: corr90.length,
-          horas_paradas_90d: '0.0', horas_reparo_90d: '0.0', mttr_medio_h: 0, os_fechadas_90d: 0
+          horas_paradas_90d: horasParadas.toFixed(1),
+          horas_reparo_90d: horasReparo.toFixed(1),
+          mttr_medio_h: parseFloat(mttr.toFixed(1)),
+          os_fechadas_90d: fechadas90.length
         },
         tipos_manutencao: tiposB,
         naturezas: natsB,

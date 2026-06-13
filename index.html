@@ -5735,15 +5735,16 @@ async function renderConfiabilidade(forcar){
 
     // KPI cards
     const kpiStyle='background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:16px 20px;flex:1;min-width:140px;';
+    function fmtH(h){const v=parseFloat(h)||0;if(v>=1000)return Math.round(v).toLocaleString('pt-BR')+'h';return v%1===0?v+'h':v.toFixed(1)+'h';}
     const kpis=[
       {label:'Preventivas Abertas',val:rs.preventivas_abertas,cor:'#7F77DD',icon:'🔵'},
       {label:'Corretivas Abertas',val:rs.corretivas_abertas,cor:'#C24003',icon:'🔴'},
       {label:'Em Execução',val:rs.em_execucao,cor:'#F37021',icon:'🔧'},
       {label:'Total Pendências',val:rs.pendencias_total,cor:'#888',icon:'⏳'},
-      {label:'MTTR Médio',val:(rs.mttr_medio_h||0)+'h',cor:'#004042',icon:'⏱'},
-      {label:'Horas Paradas 90d',val:Math.round(rs.horas_paradas_90d||0)+'h',cor:'#9A3412',icon:'🛑'},
-      {label:'OS Fechadas 90d',val:rs.os_fechadas_90d||0,cor:'#1D9E75',icon:'✅'},
-      {label:'Corretivas 90d',val:rs.total_corretivas_90d||0,cor:'#B45309',icon:'⚠'},
+      {label:'MTTR Médio',val:fmtH(rs.mttr_medio_h),cor:'#004042',icon:'⏱'},
+      {label:'Horas Paradas 90d',val:fmtH(rs.horas_paradas_90d),cor:'#9A3412',icon:'🛑'},
+      {label:'OS Fechadas 90d',val:(rs.os_fechadas_90d||0).toLocaleString('pt-BR'),cor:'#1D9E75',icon:'✅'},
+      {label:'Corretivas Abertas 90d',val:(rs.total_corretivas_90d||0).toLocaleString('pt-BR'),cor:'#B45309',icon:'⚠'},
     ];
 
     const kpiHtml=`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px">
