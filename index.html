@@ -5652,17 +5652,6 @@ function localMapParaZonaGlobal(localMap){
   return null;
 }
 
-function mapaZonaClick(zonaId){
-  mapaCardClick_orig=mapaCardClick_orig||null;
-  _sidebarArea=zonaId;
-  _sidebarTab='hoje';
-  const sb=document.getElementById('mapa-sidebar');
-  sb.style.display='flex';sb.style.flexDirection='column';
-  document.getElementById('sidebar-area-label').textContent=AREA_LABELS[zonaId]||zonaId;
-  const eqs=Object.values(state).filter(e=>!e.baixado&&e.oficina==='Sumaré (SP)'&&e.localMap&&localMapParaZonaGlobal(e.localMap)===zonaId);
-  document.getElementById('sidebar-area-sub').textContent=eqs.length+' equipamento'+(eqs.length!==1?'s':'')+' agora';
-  switchSidebarTab('hoje');
-}
 
 function mapaHideTooltip(){
   const t=document.getElementById('mapa-tooltip');
