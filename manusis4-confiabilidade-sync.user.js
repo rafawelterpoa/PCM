@@ -1,17 +1,21 @@
 // ==UserScript==
 // @name         Mills PCM — Sync Confiabilidade
 // @namespace    https://rafawelterpoa.github.io/PCM
-// @version      3.0
-// @description  Coleta dados do Manusis4 e baixa JSON para importar no PCM (a cada 1h)
+// @version      4.0
+// @description  Sincroniza dados Manusis4 → Firebase PCM automaticamente a cada 1h
 // @author       Mills PCM
 // @match        https://mills.manusis4.com/*
-// @grant        none
+// @grant        GM_xmlhttpRequest
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @connect      mills-frota-default-rtdb.firebaseio.com
 // @run-at       document-idle
 // ==/UserScript==
 
 (function () {
   'use strict';
 
+  const FB_URL = 'https://mills-frota-default-rtdb.firebaseio.com/pcm/confiabilidade.json';
   const COMPANY_ID = 76;
   const TIPO_CORRETIVA = [4, 399];
   const TIPO_PREVENTIVA = [1, 419];
@@ -19,12 +23,30 @@
 
   function log(msg) { console.log('[PCM Sync]', msg); }
 
+  // Requisição à API do Manusis4 (mesma origem — sem CORS)
   async function api(path, params = {}) {
     const qs = Object.entries(params).map(([k, v]) =>
       k === 'filter' ? `filter=${encodeURIComponent(JSON.stringify(v))}` : `${k}=${v}`
     ).join('&');
     const r = await fetch('/api/v1/' + path + (qs ? '?' + qs : ''), { credentials: 'include' });
     return r.json();
+  }
+
+  // Salva no Firebase via GM_xmlhttpRequest (bypassa proxy corporativo)
+  function fbSalvar(dados) {
+    return new Promise((resolve, reject) => {
+      GM_xmlhttpRequest({
+        method: 'PUT',
+        url: FB_URL,
+        headers: { 'Content-Type': 'application/json' },
+        data: JSON.stringify(dados),
+        onload: (r) => {
+          if (r.status >= 200 && r.status < 300) resolve(r);
+          else reject(new Error('Firebase status: ' + r.status));
+        },
+        onerror: (e) => reject(new Error('Firebase erro: ' + JSON.stringify(e)))
+      });
+    });
   }
 
   async function buscarTodos(endpoint, filtros) {
@@ -37,18 +59,6 @@
       if (++pagina > 30) break;
     }
     return todos;
-  }
-
-  function downloadJSON(dados) {
-    const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'pcm-confiabilidade.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   }
 
   function atualizarBotao(txt, disabled = false) {
@@ -70,13 +80,13 @@
         api('maint_orders', { limit: 1, filter: [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_order_status_id', value: [1, 2, 3], operator: 'in' }] }),
       ]);
 
-      atualizarBotao('⏳ Corretivas...');
+      atualizarBotao('⏳ Corretivas...', true);
       const corr90 = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_service_type_id', value: TIPO_CORRETIVA, operator: 'in' }, { property: 'opened_at', value: ini90, operator: '>=' }]);
 
-      atualizarBotao('⏳ Pendências...');
+      atualizarBotao('⏳ Pendências...', true);
       const pendAll = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_order_status_id', value: [1, 2, 3], operator: 'in' }]);
 
-      atualizarBotao('⏳ Tipos...');
+      atualizarBotao('⏳ Tipos...', true);
       const tipos90 = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'opened_at', value: ini90, operator: '>=' }]);
 
       const porEquip = {};
@@ -106,32 +116,50 @@
         ranking_pendencias: Object.entries(porEquip).filter(([, v]) => v.pendencias > 0).sort((a, b) => b[1].pendencias - a[1].pendencias).slice(0, 20).map(([id, v]) => ({ vehicle_id: parseInt(id), ...v }))
       };
 
-      downloadJSON(dados);
+      atualizarBotao('⏳ Salvando...', true);
+      await fbSalvar(dados);
+
       const hora = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      atualizarBotao('✅ ' + hora + ' — Importe no PCM', false);
-      setTimeout(() => atualizarBotao('⚙ PCM Sync', false), 10000);
-      log('✅ JSON baixado! Importe em Confiabilidade no PCM.');
+      GM_setValue('last_sync', agora.toISOString());
+      atualizarBotao('✅ ' + hora, false);
+      setTimeout(() => atualizarBotao('⚙ PCM Sync', false), 5000);
+      log('✅ Sincronização concluída: ' + hora);
+
     } catch (e) {
-      log('Erro: ' + e.message);
-      atualizarBotao('❌ Erro — tente novamente', false);
+      log('❌ Erro: ' + e.message);
+      atualizarBotao('❌ Erro', false);
       setTimeout(() => atualizarBotao('⚙ PCM Sync', false), 4000);
     }
   }
 
   function adicionarBotao() {
     if (document.getElementById('pcm-sync-btn')) return;
+
+    const lastSync = GM_getValue('last_sync', null);
+    const label = lastSync
+      ? '✅ ' + new Date(lastSync).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      : '⚙ PCM Sync';
+
     const btn = document.createElement('button');
     btn.id = 'pcm-sync-btn';
-    btn.textContent = '⚙ PCM Sync';
-    btn.title = `Baixa dados para importar no PCM (automático a cada ${INTERVALO_H}h)`;
+    btn.textContent = label;
+    btn.title = 'Sincroniza dados com PCM (automático a cada 1h)';
     btn.style.cssText = 'position:fixed;bottom:20px;left:20px;background:#F37021;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;z-index:99999;box-shadow:0 2px 8px rgba(0,0,0,.3)';
     btn.onclick = () => sincronizar();
     document.body.appendChild(btn);
+
+    // Sync automático a cada 1h
     setInterval(() => sincronizar(), INTERVALO_H * 60 * 60 * 1000);
-    log('✅ PCM Sync configurado — a cada ' + INTERVALO_H + 'h');
+    log('✅ Sync automático ativado — a cada ' + INTERVALO_H + 'h');
+
+    // Primeira sync ao abrir (se não sincronizou nas últimas 1h)
+    if (!lastSync || (Date.now() - new Date(lastSync).getTime()) > INTERVALO_H * 60 * 60 * 1000) {
+      setTimeout(() => sincronizar(), 3000);
+    }
   }
 
   const wait = setInterval(() => {
     if (typeof Suite !== 'undefined') { clearInterval(wait); adicionarBotao(); }
   }, 1000);
+
 })();
