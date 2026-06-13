@@ -5783,7 +5783,7 @@ async function renderConfiabilidade(forcar){
     const tiposOrdenados=Object.entries(tipos).sort((a,b)=>b[1]-a[1]);
     const tiposTotal=tiposOrdenados.reduce((s,[,v])=>s+v,0);
     const tiposHtml=`<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:16px;flex:1;min-width:280px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:12px;color:#004042">🗂 Tipos de Manutenção (90d)</div>
+      <div style="font-weight:700;font-size:13px;margin-bottom:12px;color:#004042">🗂 Tipos de Manutenção (Jul/25)</div>
       ${tiposOrdenados.slice(0,10).map(([id,cnt])=>{
         const pct=tiposTotal>0?Math.round(cnt/tiposTotal*100):0;
         const label=TIPO_LABELS[id]||'Tipo '+id;
@@ -5801,7 +5801,7 @@ async function renderConfiabilidade(forcar){
     const natsOrdenados=Object.entries(nats).sort((a,b)=>b[1]-a[1]);
     const natsTotal=natsOrdenados.reduce((s,[,v])=>s+v,0);
     const natsHtml=`<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:16px;flex:1;min-width:280px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:12px;color:#004042">🔩 Natureza dos Serviços (90d)</div>
+      <div style="font-weight:700;font-size:13px;margin-bottom:12px;color:#004042">🔩 Natureza dos Serviços (Jul/25)</div>
       ${natsOrdenados.slice(0,8).map(([id,cnt])=>{
         const pct=natsTotal>0?Math.round(cnt/natsTotal*100):0;
         return`<div style="margin-bottom:8px">
@@ -5816,7 +5816,7 @@ async function renderConfiabilidade(forcar){
 
     c.innerHTML=kpiHtml+
       `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-        ${rankHtml('Top Corretivas (90d)',rk_corr,'corretivas','🔴')}
+        ${rankHtml('Top Corretivas (Jul/25)',rk_corr,'corretivas','🔴')}
         ${rankHtml('Top Pendências',rk_pend,'pendencias','⏳')}
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap">

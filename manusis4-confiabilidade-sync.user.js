@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mills PCM — Sync Confiabilidade
 // @namespace    https://rafawelterpoa.github.io/PCM
-// @version      6.1
+// @version      6.2
 // @description  Sincroniza dados Manusis4 → Firebase PCM automaticamente a cada 1h
 // @author       Mills PCM
 // @match        https://mills.manusis4.com/*
@@ -101,20 +101,19 @@
       ]);
 
       atualizarBotao('⏳ Corretivas...', true);
-      const corr90 = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_service_type_id', value: TIPO_CORRETIVA, operator: 'in' }, { property: 'opened_at', value: ini90, operator: '>=' }]);
+      const corr90 = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_service_type_id', value: TIPO_CORRETIVA, operator: 'in' }, { property: 'opened_at', value: ini90, operator: '>=' }], 200);
 
       atualizarBotao('⏳ Pendências...', true);
-      const pendAll = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_order_status_id', value: [1, 2, 3], operator: 'in' }]);
+      const pendAll = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_order_status_id', value: [1, 2, 3], operator: 'in' }], 200);
 
       atualizarBotao('⏳ Tipos...', true);
-      const tipos90 = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'opened_at', value: ini90, operator: '>=' }]);
+      const tipos90 = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'opened_at', value: ini90, operator: '>=' }], 200);
 
       atualizarBotao('⏳ OS Fechadas...', true);
-      // Filtra por closed_at sem restringir status_id (evita depender do ID correto de "Fechada")
       const fechadas90 = await buscarTodos('maint_orders', [
         { property: 'company_id', value: COMPANY_ID, operator: '=' },
         { property: 'closed_at', value: ini90, operator: '>=' }
-      ]);
+      ], 200);
 
       atualizarBotao('⏳ Veículos...', true);
       const veicMapa = await buscarMapaVeiculos();
@@ -140,23 +139,18 @@
         if (os.maint_service_nature_id) natsB[os.maint_service_nature_id] = (natsB[os.maint_service_nature_id] || 0) + 1;
       });
 
-      // Calcula MTTR e horas paradas a partir das OS fechadas com datas preenchidas
-      let horasReparo = 0, horasParadas = 0, osComReparo = 0;
+      // Calcula MTTR e horas paradas — só OS com datas válidas e tempo razoável
+      const MAX_H_REPARO = 720;  // máx 30 dias de reparo por OS
+      const MAX_H_PARADA = 1440; // máx 60 dias parado por OS
+      let horasReparo = 0, horasParadas = 0, osComReparo = 0, osComParada = 0;
       fechadas90.forEach(os => {
         if (os.maint_started_at && os.maint_finished_at) {
-          const ini = new Date(os.maint_started_at);
-          const fim = new Date(os.maint_finished_at);
-          const horas = (fim - ini) / 3600000;
-          if (horas > 0 && horas < 720) { // ignora valores absurdos (>30 dias)
-            horasReparo += horas;
-            osComReparo++;
-          }
+          const h = (new Date(os.maint_finished_at) - new Date(os.maint_started_at)) / 3600000;
+          if (h > 0 && h < MAX_H_REPARO) { horasReparo += h; osComReparo++; }
         }
         if (os.opened_at && os.closed_at) {
-          const ini = new Date(os.opened_at);
-          const fim = new Date(os.closed_at);
-          const horas = (fim - ini) / 3600000;
-          if (horas > 0 && horas < 2160) horasParadas += horas; // ignora >90 dias
+          const h = (new Date(os.closed_at) - new Date(os.opened_at)) / 3600000;
+          if (h > 0 && h < MAX_H_PARADA) { horasParadas += h; osComParada++; }
         }
       });
       const mttr = osComReparo > 0 ? (horasReparo / osComReparo) : 0;
