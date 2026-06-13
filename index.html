@@ -5687,7 +5687,7 @@ function mapaHideTooltip(){
 // ===== CONFIABILIDADE =====
 const CONF_FB = 'https://mills-frota-default-rtdb.firebaseio.com/pcm/confiabilidade';
 const TIPO_LABELS = {1:'Preventiva',4:'Corretiva',186:'Melhoria',399:'Corretiva Prog.',416:'Preditiva',419:'Preventiva',420:'Garantia',456:'Sinistro',517:'Check List',549:'Sinistro S/Cob.',550:'Preparação',551:'Reforma/Recup.',552:'Venda Peças'};
-const NAT_LABELS = {497:'Hidráulica',498:'Elétrica',499:'Mecânica',500:'Borracharia',501:'Ar Cond.',502:'Funilaria',655:'Vale Peças',689:'CL Entrada',690:'CL Saída'};
+const NAT_LABELS = {497:'Hidráulica',498:'Elétrica',499:'Mecânica',500:'Borracharia',501:'Ar Cond.',502:'Funilaria',655:'Vale Peças',689:'CL Entrada',690:'CL Saída',692:'Inspeção/Lubrif.'};
 
 async function importarConfiabilidade(input){
   const file=input.files[0];if(!file)return;
@@ -5742,6 +5742,7 @@ async function renderConfiabilidade(forcar){
       {label:'Em Execução',val:rs.em_execucao,cor:'#F37021',icon:'🔧'},
       {label:'Total Pendências',val:rs.pendencias_total,cor:'#888',icon:'⏳'},
       {label:'MTTR Médio',val:fmtH(rs.mttr_medio_h),cor:'#004042',icon:'⏱'},
+      {label:'MTBF Médio',val:fmtH(rs.mtbf_medio_h),cor:'#1D9E75',icon:'📈'},
       {label:'Horas Paradas 90d',val:fmtH(rs.horas_paradas_90d),cor:'#9A3412',icon:'🛑'},
       {label:'OS Fechadas 90d',val:(rs.os_fechadas_90d||0).toLocaleString('pt-BR'),cor:'#1D9E75',icon:'✅'},
       {label:'Corretivas Abertas 90d',val:(rs.total_corretivas_90d||0).toLocaleString('pt-BR'),cor:'#B45309',icon:'⚠'},

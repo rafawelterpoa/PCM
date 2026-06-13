@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mills PCM — Sync Confiabilidade
 // @namespace    https://rafawelterpoa.github.io/PCM
-// @version      5.0
+// @version      6.0
 // @description  Sincroniza dados Manusis4 → Firebase PCM automaticamente a cada 1h
 // @author       Mills PCM
 // @match        https://mills.manusis4.com/*
@@ -19,6 +19,7 @@
   const COMPANY_ID = 76;
   const TIPO_CORRETIVA = [4, 399];
   const TIPO_PREVENTIVA = [1, 419];
+  const TIPO_MTBF = [4, 399, 420]; // Corretiva + Garantia
   const INTERVALO_H = 1;
 
   function log(msg) { console.log('[PCM Sync]', msg); }
@@ -108,9 +109,9 @@
       const tipos90 = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'opened_at', value: ini90, operator: '>=' }]);
 
       atualizarBotao('⏳ OS Fechadas...', true);
+      // Filtra por closed_at sem restringir status_id (evita depender do ID correto de "Fechada")
       const fechadas90 = await buscarTodos('maint_orders', [
         { property: 'company_id', value: COMPANY_ID, operator: '=' },
-        { property: 'maint_order_status_id', value: 4, operator: '=' },
         { property: 'closed_at', value: ini90, operator: '>=' }
       ]);
 
@@ -118,8 +119,19 @@
       const veicMapa = await buscarMapaVeiculos();
 
       const porEquip = {};
-      corr90.forEach(os => { const v = os.vehicle_id || os.asset_id; if (!v) return; if (!porEquip[v]) porEquip[v] = { corretivas: 0, pendencias: 0 }; porEquip[v].corretivas++; });
-      pendAll.forEach(os => { const v = os.vehicle_id || os.asset_id; if (!v) return; if (!porEquip[v]) porEquip[v] = { corretivas: 0, pendencias: 0 }; porEquip[v].pendencias++; });
+      corr90.forEach(os => { const v = os.vehicle_id || os.asset_id; if (!v) return; if (!porEquip[v]) porEquip[v] = { corretivas: 0, pendencias: 0, falhas_mtbf: 0 }; porEquip[v].corretivas++; });
+      pendAll.forEach(os => { const v = os.vehicle_id || os.asset_id; if (!v) return; if (!porEquip[v]) porEquip[v] = { corretivas: 0, pendencias: 0, falhas_mtbf: 0 }; porEquip[v].pendencias++; });
+
+      // MTBF: conta falhas (corretiva + garantia) por equipamento
+      const mtbfEquip = {};
+      tipos90.filter(os => TIPO_MTBF.includes(os.maint_service_type_id)).forEach(os => {
+        const v = os.vehicle_id || os.asset_id; if (!v) return;
+        mtbfEquip[v] = (mtbfEquip[v] || 0) + 1;
+        if (porEquip[v]) porEquip[v].falhas_mtbf = mtbfEquip[v];
+      });
+      const HORAS_PERIODO = 90 * 24; // 2160h
+      const mtbfValues = Object.values(mtbfEquip).filter(n => n > 0).map(n => HORAS_PERIODO / n);
+      const mtbf = mtbfValues.length > 0 ? mtbfValues.reduce((a, b) => a + b, 0) / mtbfValues.length : 0;
 
       const tiposB = {}, natsB = {};
       tipos90.forEach(os => {
@@ -160,6 +172,7 @@
           horas_paradas_90d: horasParadas.toFixed(1),
           horas_reparo_90d: horasReparo.toFixed(1),
           mttr_medio_h: parseFloat(mttr.toFixed(1)),
+          mtbf_medio_h: parseFloat(mtbf.toFixed(1)),
           os_fechadas_90d: fechadas90.length
         },
         tipos_manutencao: tiposB,
