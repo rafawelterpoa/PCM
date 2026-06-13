@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mills PCM — Sync Confiabilidade
 // @namespace    https://rafawelterpoa.github.io/PCM
-// @version      6.0
+// @version      6.1
 // @description  Sincroniza dados Manusis4 → Firebase PCM automaticamente a cada 1h
 // @author       Mills PCM
 // @match        https://mills.manusis4.com/*
@@ -91,8 +91,7 @@
     atualizarBotao('⏳ Coletando...', true);
     try {
       const agora = new Date();
-      const h90 = new Date(agora); h90.setDate(h90.getDate() - 90);
-      const ini90 = h90.toISOString().slice(0, 19).replace('T', ' ');
+      const ini90 = '2025-07-01 00:00:00'; // desde jul/2025
 
       const [prevAb, corrAb, emEx, pend] = await Promise.all([
         api('maint_orders', { limit: 1, filter: [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_service_type_id', value: TIPO_PREVENTIVA, operator: 'in' }, { property: 'maint_order_status_id', value: [1, 2], operator: 'in' }] }),

@@ -5743,9 +5743,9 @@ async function renderConfiabilidade(forcar){
       {label:'Total Pendências',val:rs.pendencias_total,cor:'#888',icon:'⏳'},
       {label:'MTTR Médio',val:fmtH(rs.mttr_medio_h),cor:'#004042',icon:'⏱'},
       {label:'MTBF Médio',val:fmtH(rs.mtbf_medio_h),cor:'#1D9E75',icon:'📈'},
-      {label:'Horas Paradas 90d',val:fmtH(rs.horas_paradas_90d),cor:'#9A3412',icon:'🛑'},
-      {label:'OS Fechadas 90d',val:(rs.os_fechadas_90d||0).toLocaleString('pt-BR'),cor:'#1D9E75',icon:'✅'},
-      {label:'Corretivas Abertas 90d',val:(rs.total_corretivas_90d||0).toLocaleString('pt-BR'),cor:'#B45309',icon:'⚠'},
+      {label:'Horas Paradas (Jul/25)',val:fmtH(rs.horas_paradas_90d),cor:'#9A3412',icon:'🛑'},
+      {label:'OS Fechadas (Jul/25)',val:(rs.os_fechadas_90d||0).toLocaleString('pt-BR'),cor:'#1D9E75',icon:'✅'},
+      {label:'Corretivas Abertas (Jul/25)',val:(rs.total_corretivas_90d||0).toLocaleString('pt-BR'),cor:'#B45309',icon:'⚠'},
     ];
 
     const kpiHtml=`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px">
