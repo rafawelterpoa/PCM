@@ -13860,6 +13860,20 @@ function histRenderRevisao(){
 
 // PWA Service Worker
 if ('serviceWorker' in navigator) {
+  // Recebe dados de confiabilidade do Manusis4 via postMessage
+  window.addEventListener('message', async (evt) => {
+    if(evt.origin !== 'https://mills.manusis4.com') return;
+    if(evt.data?.type !== 'pcm_confiabilidade_sync') return;
+    try {
+      const dados = evt.data.data;
+      await fetch('https://mills-frota-default-rtdb.firebaseio.com/pcm/confiabilidade.json', {
+        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(dados)
+      });
+      showToast('📊 Confiabilidade atualizada!');
+      if(document.getElementById('page-confiabilidade')?.classList.contains('active')) renderConfiabilidade();
+    } catch(e) { console.error('[PCM] Erro ao salvar confiabilidade:', e); }
+  });
+
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/PCM/sw.js')
       .then(reg => {
