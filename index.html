@@ -5045,25 +5045,29 @@ function renderMapa(){
   svg+=`<rect x="5" y="${Y_OFICINA-18}" width="${PATIO_W}" height="${OFICINA_H+20}" fill="#1E3530" rx="5" stroke="#F37021" stroke-width="2"/>`;
   svg+=`<text x="10" y="${Y_OFICINA-5}" font-size="10" fill="#F37021" font-weight="700" letter-spacing="1">OFICINA COBERTA</text>`;
 
+  // Mapeamento zona-id → valor do localMap (para drag-and-drop)
+  const ZONA_LOCALMAP={borracharia:'Box de Borracharia',est_pneus:'Pneus',lubrificacao:'Box de Lubrificação',cab_pintura1:'Box Prep. e Pintura',cab_pintura2:'Box Pintura',solda1:'Box Solda 1',solda2:'Box Solda 2',usinagem:'Box Usinagem',lavagem:'Lavagem',residuos:'Resíduos'};
+
   ZONAS_OFICINA.forEach((z,i)=>{
     const zx=8+i*(EST_W+4);
     const zy=Y_OFICINA;
     const eqs=porZona[z.id]||[];
     const bg=eqs.length?'#FEE9D0':'#FFFFFF';
-    svg+=`<rect x="${zx}" y="${zy}" width="${EST_W}" height="${OFICINA_H}" fill="${bg}" rx="3" stroke="${COR_LARANJA}" stroke-width="1" style="cursor:pointer" onclick="mapaZonaClick('${z.id}')"/>`;
-    svg+=`<text x="${zx+EST_W/2}" y="${zy+14}" text-anchor="middle" font-size="8" fill="#7B3300" font-weight="600">${z.label}</text>`;
+    const zloc=ZONA_LOCALMAP[z.id]||z.label;
+    svg+=`<rect x="${zx}" y="${zy}" width="${EST_W}" height="${OFICINA_H}" fill="${bg}" rx="3" stroke="${COR_LARANJA}" stroke-width="1" style="cursor:pointer" onclick="mapaZonaClick('${z.id}')" onmouseup="mapaSlotDrop(event,'${zloc}')"/>`;
+    svg+=`<text x="${zx+EST_W/2}" y="${zy+14}" text-anchor="middle" font-size="8" fill="#7B3300" font-weight="600" style="pointer-events:none">${z.label}</text>`;
     if(eqs.length){
-      svg+=`<rect x="${zx+EST_W-16}" y="${zy+1}" width="15" height="13" fill="${COR_LARANJA}" rx="2"/>`;
-      svg+=`<text x="${zx+EST_W-8}" y="${zy+11}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700">${eqs.length}</text>`;
+      svg+=`<rect x="${zx+EST_W-16}" y="${zy+1}" width="15" height="13" fill="${COR_LARANJA}" rx="2" style="pointer-events:none"/>`;
+      svg+=`<text x="${zx+EST_W-8}" y="${zy+11}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eqs.length}</text>`;
     }
     eqs.slice(0,4).forEach((eq,ci)=>{
       const cx=zx+3+(ci%2)*(EST_W/2-3);
       const cy=zy+20+(Math.floor(ci/2))*16;
       const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
-      svg+=`<rect x="${cx}" y="${cy}" width="${EST_W/2-5}" height="14" fill="${cor}" rx="2" style="cursor:pointer" onclick="mapaCardClick('${eq.id}')"/>`;
-      svg+=`<text x="${cx+2}" y="${cy+10}" font-size="7" fill="#fff" font-weight="600">${eq.id}</text>`;
+      svg+=`<rect x="${cx}" y="${cy}" width="${EST_W/2-5}" height="14" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${zloc}')" onclick="mapaCardClick('${eq.id}')"/>`;
+      svg+=`<text x="${cx+2}" y="${cy+10}" font-size="7" fill="#fff" font-weight="600" style="pointer-events:none">${eq.id}</text>`;
     });
-    if(eqs.length>4) svg+=`<text x="${zx+3}" y="${zy+OFICINA_H-3}" font-size="7" fill="#F37021" font-weight="700">+${eqs.length-4}</text>`;
+    if(eqs.length>4) svg+=`<text x="${zx+3}" y="${zy+OFICINA_H-3}" font-size="7" fill="#F37021" font-weight="700" style="pointer-events:none">+${eqs.length-4}</text>`;
   });
 
   // ── 22 BOXES — coluna lateral, altura independente do pátio ──
