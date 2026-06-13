@@ -1250,9 +1250,13 @@ input.filter-sel{padding:5px 8px;height:34px}
       <div class="page-hdr-title"><span style="color:#7F77DD">📊</span> Confiabilidade</div>
       <div class="page-hdr-sub">Indicadores de manutenção — dados sincronizados do Manusis4</div>
     </div>
-    <div style="display:flex;gap:10px;align-items:center">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <span id="conf-last-sync" style="font-size:11px;color:#888"></span>
-      <button onclick="renderConfiabilidade(true)" style="background:#F37021;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">↻ Atualizar</button>
+      <label style="background:#1D9E75;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
+        📂 Importar JSON
+        <input type="file" accept=".json" style="display:none" onchange="importarConfiabilidade(this)">
+      </label>
+      <button onclick="renderConfiabilidade()" style="background:#F37021;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">↻ Atualizar</button>
     </div>
   </div>
   <div id="conf-container" style="margin-top:16px"></div>
@@ -5684,6 +5688,21 @@ function mapaHideTooltip(){
 const CONF_FB = 'https://mills-frota-default-rtdb.firebaseio.com/pcm/confiabilidade';
 const TIPO_LABELS = {1:'Preventiva',4:'Corretiva',186:'Melhoria',399:'Corretiva Prog.',416:'Preditiva',419:'Preventiva',420:'Garantia',456:'Sinistro',517:'Check List',549:'Sinistro S/Cob.',550:'Preparação',551:'Reforma/Recup.',552:'Venda Peças'};
 const NAT_LABELS = {497:'Hidráulica',498:'Elétrica',499:'Mecânica',500:'Borracharia',501:'Ar Cond.',502:'Funilaria',655:'Vale Peças',689:'CL Entrada',690:'CL Saída'};
+
+async function importarConfiabilidade(input){
+  const file=input.files[0];if(!file)return;
+  try{
+    const txt=await file.text();
+    const dados=JSON.parse(txt);
+    if(!dados.resumo)throw new Error('Arquivo inválido');
+    await fetch('https://mills-frota-default-rtdb.firebaseio.com/pcm/confiabilidade.json',{
+      method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)
+    });
+    showToast('✅ Dados importados com sucesso!');
+    renderConfiabilidade();
+  }catch(e){showToast('❌ Erro ao importar: '+e.message);}
+  input.value='';
+}
 
 async function renderConfiabilidade(forcar){
   const c=document.getElementById('conf-container');
