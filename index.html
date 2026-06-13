@@ -5757,11 +5757,13 @@ async function renderConfiabilidade(forcar){
     // Rankings
     function rankHtml(title,items,campo,icon){
       if(!items.length)return`<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:16px;flex:1"><div style="font-weight:700;font-size:13px;margin-bottom:12px">${icon} ${title}</div><div style="color:#aaa;font-size:12px;text-align:center;padding:20px">Sem dados</div></div>`;
+      const veicMapa=d.veiculos_mapa||{};
       return`<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:16px;flex:1;min-width:280px">
         <div style="font-weight:700;font-size:13px;margin-bottom:12px;color:#004042">${icon} ${title}</div>
         ${items.slice(0,10).map((it,i)=>{
-          const eq=Object.values(state).find(e=>String(e.vehicle_id||'')===String(it.vehicle_id));
-          const nome=eq?`${eq.id} — ${eq.equipamento.substring(0,22)}`:`ID ${it.vehicle_id}`;
+          const code=it.code||(veicMapa[it.vehicle_id])||null;
+          const eq=code?Object.values(state).find(e=>e.id===code):null;
+          const nome=code?`${code}${eq?' — '+eq.equipamento.substring(0,18):''}`:(`ID ${it.vehicle_id}`);
           const max=items[0][campo];
           const pct=max>0?Math.round(it[campo]/max*100):0;
           return`<div style="margin-bottom:8px">

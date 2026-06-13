@@ -49,6 +49,23 @@
     });
   }
 
+  // Busca mapa completo vehicle_id → code (ex: 110719 → PCP01006)
+  async function buscarMapaVeiculos() {
+    const mapa = {};
+    const primeiro = await fetch('/api/v1/vehicles?limit=25&page=1', { credentials: 'include' }).then(r => r.json());
+    const total = primeiro.meta?.count || 0;
+    const pages = Math.ceil(total / 25);
+    primeiro.data?.forEach(v => { if (v.id && v.code) mapa[v.id] = v.code; });
+    for (let p = 2; p <= pages; p += 10) {
+      const lote = [];
+      for (let i = p; i < Math.min(p + 10, pages + 1); i++)
+        lote.push(fetch(`/api/v1/vehicles?limit=25&page=${i}`, { credentials: 'include' }).then(r => r.json()));
+      const res = await Promise.all(lote);
+      res.forEach(d => d.data?.forEach(v => { if (v.id && v.code) mapa[v.id] = v.code; }));
+    }
+    return mapa;
+  }
+
   async function buscarTodos(endpoint, filtros) {
     let todos = [], pagina = 1;
     while (true) {
@@ -89,6 +106,9 @@
       atualizarBotao('⏳ Tipos...', true);
       const tipos90 = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'opened_at', value: ini90, operator: '>=' }]);
 
+      atualizarBotao('⏳ Veículos...', true);
+      const veicMapa = await buscarMapaVeiculos();
+
       const porEquip = {};
       corr90.forEach(os => { const v = os.vehicle_id || os.asset_id; if (!v) return; if (!porEquip[v]) porEquip[v] = { corretivas: 0, pendencias: 0 }; porEquip[v].corretivas++; });
       pendAll.forEach(os => { const v = os.vehicle_id || os.asset_id; if (!v) return; if (!porEquip[v]) porEquip[v] = { corretivas: 0, pendencias: 0 }; porEquip[v].pendencias++; });
@@ -112,8 +132,9 @@
         },
         tipos_manutencao: tiposB,
         naturezas: natsB,
-        ranking_corretivas: Object.entries(porEquip).filter(([, v]) => v.corretivas > 0).sort((a, b) => b[1].corretivas - a[1].corretivas).slice(0, 20).map(([id, v]) => ({ vehicle_id: parseInt(id), ...v })),
-        ranking_pendencias: Object.entries(porEquip).filter(([, v]) => v.pendencias > 0).sort((a, b) => b[1].pendencias - a[1].pendencias).slice(0, 20).map(([id, v]) => ({ vehicle_id: parseInt(id), ...v }))
+        veiculos_mapa: veicMapa,
+        ranking_corretivas: Object.entries(porEquip).filter(([, v]) => v.corretivas > 0).sort((a, b) => b[1].corretivas - a[1].corretivas).slice(0, 20).map(([id, v]) => ({ vehicle_id: parseInt(id), code: veicMapa[id] || ('ID ' + id), ...v })),
+        ranking_pendencias: Object.entries(porEquip).filter(([, v]) => v.pendencias > 0).sort((a, b) => b[1].pendencias - a[1].pendencias).slice(0, 20).map(([id, v]) => ({ vehicle_id: parseInt(id), code: veicMapa[id] || ('ID ' + id), ...v }))
       };
 
       atualizarBotao('⏳ Salvando...', true);
