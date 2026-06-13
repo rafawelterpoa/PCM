@@ -3507,11 +3507,28 @@ function removeOrdem(idx){
   renderOrdensList();
 }
 
-function abrirManusis(osNum){
-  // Copia número da OS para clipboard e abre Manusis4 na Carteira de OM
+async function abrirManusis(osNum){
+  showToast('🔍 Buscando OS '+osNum+'...');
+  try {
+    // Busca o ID interno pelo custom_number via API do Manusis4
+    const filter=JSON.stringify([{"property":"custom_number","value":osNum,"operator":"="}]);
+    const url='https://mills.manusis4.com/api/v1/maint_orders?filter='+encodeURIComponent(filter)+'&limit=1';
+    const resp=await fetch(url,{credentials:'include',mode:'cors'});
+    if(resp.ok){
+      const data=await resp.json();
+      const id=data?.data?.[0]?.id;
+      if(id){
+        // Abre direto na OS pelo ID interno
+        window.open('https://mills.manusis4.com/?lang=pt-BR#!/Suite:view:CrudMaintOrders:'+id,'_blank');
+        showToast('✅ Abrindo OS '+osNum+' no Manusis4');
+        return;
+      }
+    }
+  } catch(e){}
+  // Fallback: copia e abre a lista
   navigator.clipboard.writeText(osNum).catch(()=>{});
   window.open('https://mills.manusis4.com/?lang=pt-BR#!/Suite:view:CrudMaintOrders','_blank');
-  showToast('📋 OS '+osNum+' copiada — cole no campo de busca do Manusis4');
+  showToast('📋 OS '+osNum+' copiada — cole no campo de busca');
 }
 
 function renderOrdensList(){
