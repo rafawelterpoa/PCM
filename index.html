@@ -794,7 +794,7 @@ input.filter-sel{padding:5px 8px;height:34px}
 
 <!-- MAIN CONTENT AREA -->
 <div class="app-main" id="app-main">
-<div class="tabs-bar" id="tabs-bar"><div class="tab active" data-tab="home" onclick="switchTab('home')">🏠 Início</div><div class="tab" data-tab="programacao" onclick="switchTab('programacao')">Programação</div><div class="tab" data-tab="graficos" onclick="switchTab('graficos')">Gráficos</div><div class="tab" data-tab="reprogramacoes" onclick="switchTab('reprogramacoes')">↻ Reprogramações <span class="tab-n" id="tab-reprog-n">0</span></div><div class="tab" data-tab="reservas" onclick="switchTab('reservas')">Reservas</div>
+<div class="tabs-bar" id="tabs-bar"><div class="tab active" data-tab="home" onclick="switchTab('home')">🏠 Início</div><div class="tab" data-tab="programacao" onclick="switchTab('programacao')">Programação</div><div class="tab" data-tab="graficos" onclick="switchTab('graficos')">Gráficos</div><div class="tab" data-tab="reprogramacoes" onclick="switchTab('reprogramacoes')">↻ Reprogramações <span class="tab-n" id="tab-reprog-n">0</span></div><div class="tab" data-tab="reservas" onclick="switchTab('reservas')">Reservas</div><div class="tab" data-tab="confiabilidade" onclick="switchTab('confiabilidade')">📊 Confiabilidade</div>
 <div class="tab" data-tab="disponiveis" onclick="switchTab('disponiveis')">Disponíveis <span class="tab-n" id="tab-disp-n">0</span></div>
 <div class="tab" data-tab="mapa" onclick="switchTab('mapa')">🗺 Mapa</div><div class="tab" data-tab="alteracoes" id="tab-alteracoes" onclick="switchTab('alteracoes')">⚡ Alterações <span class="tab-n" id="tab-alteracoes-n">0</span></div><div class="tab" data-tab="Assis_SP" onclick="switchTab('Assis_SP')">Assis (SP) <span class="tab-n">130</span></div><div class="tab" data-tab="Contagem_MG" onclick="switchTab('Contagem_MG')">Contagem (MG) <span class="tab-n">62</span></div><div class="tab" data-tab="Osasco_SP" onclick="switchTab('Osasco_SP')">Osasco (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Parauapebas_PA" onclick="switchTab('Parauapebas_PA')">Parauapebas (PA) <span class="tab-n">3</span></div><div class="tab" data-tab="Santos_SP" onclick="switchTab('Santos_SP')">Santos (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Sumaré_SP" onclick="switchTab('Sumaré_SP')">Sumaré (SP) <span class="tab-n">280</span></div><div class="tab" data-tab="São_José_dos_Pinhais_PR" onclick="switchTab('São_José_dos_Pinhais_PR')">São José dos Pinhais (PR) <span class="tab-n">78</span></div><div class="tab" data-tab="admin" onclick="switchToAdmin()">⚙ Admin</div></div>
 </div>
@@ -1239,6 +1239,22 @@ input.filter-sel{padding:5px 8px;height:34px}
 </div>
 
 <!-- RESERVAS -->
+<div class="page" id="page-confiabilidade">
+<div class="prog-wrap">
+  <div class="page-hdr" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <div class="page-hdr-title"><span style="color:#7F77DD">📊</span> Confiabilidade</div>
+      <div class="page-hdr-sub">Indicadores de manutenção — dados sincronizados do Manusis4</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span id="conf-last-sync" style="font-size:11px;color:#888"></span>
+      <button onclick="renderConfiabilidade(true)" style="background:#F37021;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">↻ Atualizar</button>
+    </div>
+  </div>
+  <div id="conf-container" style="margin-top:16px"></div>
+</div>
+</div>
+
 <div class="page" id="page-reservas">
 <div class="reservas-wrap">
   <div class="page-hdr">
@@ -2889,6 +2905,7 @@ function switchTab(tabId){
   else if(tabId==='alteracoes')renderAlteracoes();
   else if(tabId==='disponiveis')renderDisponiveis();
   else if(tabId==='reprogramacoes')renderReprogramacoes();
+  else if(tabId==='confiabilidade')renderConfiabilidade();
   else if(tabId==='mapa')renderMapa();
   else if(tabId==='admin')renderAdminPage();
   else if(tabId==='home')renderHome();
@@ -5658,6 +5675,130 @@ function mapaHideTooltip(){
   if(t)t.style.display='none';
 }
 
+
+// ===== CONFIABILIDADE =====
+const CONF_FB = 'https://mills-frota-default-rtdb.firebaseio.com/pcm/confiabilidade';
+const TIPO_LABELS = {1:'Preventiva',4:'Corretiva',186:'Melhoria',399:'Corretiva Prog.',416:'Preditiva',419:'Preventiva',420:'Garantia',456:'Sinistro',517:'Check List',549:'Sinistro S/Cob.',550:'Preparação',551:'Reforma/Recup.',552:'Venda Peças'};
+const NAT_LABELS = {497:'Hidráulica',498:'Elétrica',499:'Mecânica',500:'Borracharia',501:'Ar Cond.',502:'Funilaria',655:'Vale Peças',689:'CL Entrada',690:'CL Saída'};
+
+async function renderConfiabilidade(forcar){
+  const c=document.getElementById('conf-container');
+  if(!c)return;
+  c.innerHTML='<div style="text-align:center;padding:40px;color:#888;font-size:13px">⏳ Carregando dados...</div>';
+  try{
+    const r=await fetch(CONF_FB+'.json');
+    const d=await r.json();
+    if(!d||!d.resumo){
+      c.innerHTML=`<div style="text-align:center;padding:48px;background:#fff;border-radius:12px;border:1px solid #e2e8f0">
+        <div style="font-size:40px;margin-bottom:12px">📡</div>
+        <div style="font-size:15px;font-weight:700;color:#004042;margin-bottom:8px">Aguardando primeira sincronização</div>
+        <div style="font-size:12px;color:#888;max-width:380px;margin:0 auto">Abra o Manusis4 no Chrome com Tampermonkey instalado e clique em <b>⚙ PCM Sync</b> para carregar os dados.</div>
+      </div>`;
+      return;
+    }
+    // Atualiza timestamp
+    const sync=document.getElementById('conf-last-sync');
+    if(sync&&d.last_sync){const dt=new Date(d.last_sync);sync.textContent='Última sync: '+dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+    const rs=d.resumo;
+    const rk_corr=d.ranking_corretivas||[];
+    const rk_pend=d.ranking_pendencias||[];
+    const tipos=d.tipos_manutencao||{};
+    const nats=d.naturezas||{};
+
+    // Lookup equipamentos pelo vehicle_id no state
+    function findEqByVehicle(vid){
+      return Object.values(state).find(e=>e.vehicle_id===vid||e.id===String(vid))||null;
+    }
+
+    // KPI cards
+    const kpiStyle='background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:16px 20px;flex:1;min-width:140px;';
+    const kpis=[
+      {label:'Preventivas Abertas',val:rs.preventivas_abertas,cor:'#7F77DD',icon:'🔵'},
+      {label:'Corretivas Abertas',val:rs.corretivas_abertas,cor:'#C24003',icon:'🔴'},
+      {label:'Em Execução',val:rs.em_execucao,cor:'#F37021',icon:'🔧'},
+      {label:'Total Pendências',val:rs.pendencias_total,cor:'#888',icon:'⏳'},
+      {label:'MTTR Médio',val:(rs.mttr_medio_h||0)+'h',cor:'#004042',icon:'⏱'},
+      {label:'Horas Paradas 90d',val:Math.round(rs.horas_paradas_90d||0)+'h',cor:'#9A3412',icon:'🛑'},
+      {label:'OS Fechadas 90d',val:rs.os_fechadas_90d||0,cor:'#1D9E75',icon:'✅'},
+      {label:'Corretivas 90d',val:rs.total_corretivas_90d||0,cor:'#B45309',icon:'⚠'},
+    ];
+
+    const kpiHtml=`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px">
+      ${kpis.map(k=>`<div style="${kpiStyle}">
+        <div style="font-size:20px;margin-bottom:4px">${k.icon}</div>
+        <div style="font-size:22px;font-weight:800;color:${k.cor}">${k.val}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px">${k.label}</div>
+      </div>`).join('')}
+    </div>`;
+
+    // Rankings
+    function rankHtml(title,items,campo,icon){
+      if(!items.length)return`<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:16px;flex:1"><div style="font-weight:700;font-size:13px;margin-bottom:12px">${icon} ${title}</div><div style="color:#aaa;font-size:12px;text-align:center;padding:20px">Sem dados</div></div>`;
+      return`<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:16px;flex:1;min-width:280px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:12px;color:#004042">${icon} ${title}</div>
+        ${items.slice(0,10).map((it,i)=>{
+          const eq=Object.values(state).find(e=>String(e.vehicle_id||'')===String(it.vehicle_id));
+          const nome=eq?`${eq.id} — ${eq.equipamento.substring(0,22)}`:`ID ${it.vehicle_id}`;
+          const max=items[0][campo];
+          const pct=max>0?Math.round(it[campo]/max*100):0;
+          return`<div style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+              <span style="color:#333;font-weight:${i<3?'700':'400'}">${i+1}. ${nome}</span>
+              <span style="font-weight:700;color:#F37021">${it[campo]}</span>
+            </div>
+            <div style="background:#f1f5f9;border-radius:3px;height:4px"><div style="background:#F37021;border-radius:3px;height:4px;width:${pct}%"></div></div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+
+    // Tipos de manutenção
+    const tiposOrdenados=Object.entries(tipos).sort((a,b)=>b[1]-a[1]);
+    const tiposTotal=tiposOrdenados.reduce((s,[,v])=>s+v,0);
+    const tiposHtml=`<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:16px;flex:1;min-width:280px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:12px;color:#004042">🗂 Tipos de Manutenção (90d)</div>
+      ${tiposOrdenados.slice(0,10).map(([id,cnt])=>{
+        const pct=tiposTotal>0?Math.round(cnt/tiposTotal*100):0;
+        const label=TIPO_LABELS[id]||'Tipo '+id;
+        return`<div style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+            <span style="color:#333">${label}</span>
+            <span style="font-weight:700;color:#004042">${cnt} <span style="color:#aaa;font-weight:400">(${pct}%)</span></span>
+          </div>
+          <div style="background:#f1f5f9;border-radius:3px;height:4px"><div style="background:#7F77DD;border-radius:3px;height:4px;width:${pct}%"></div></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+    // Naturezas
+    const natsOrdenados=Object.entries(nats).sort((a,b)=>b[1]-a[1]);
+    const natsTotal=natsOrdenados.reduce((s,[,v])=>s+v,0);
+    const natsHtml=`<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:16px;flex:1;min-width:280px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:12px;color:#004042">🔩 Natureza dos Serviços (90d)</div>
+      ${natsOrdenados.slice(0,8).map(([id,cnt])=>{
+        const pct=natsTotal>0?Math.round(cnt/natsTotal*100):0;
+        return`<div style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+            <span style="color:#333">${NAT_LABELS[id]||'Nat.'+id}</span>
+            <span style="font-weight:700;color:#004042">${cnt} <span style="color:#aaa;font-weight:400">(${pct}%)</span></span>
+          </div>
+          <div style="background:#f1f5f9;border-radius:3px;height:4px"><div style="background:#1D9E75;border-radius:3px;height:4px;width:${pct}%"></div></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+    c.innerHTML=kpiHtml+
+      `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        ${rankHtml('Top Corretivas (90d)',rk_corr,'corretivas','🔴')}
+        ${rankHtml('Top Pendências',rk_pend,'pendencias','⏳')}
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        ${tiposHtml}${natsHtml}
+      </div>`;
+  }catch(e){
+    document.getElementById('conf-container').innerHTML='<div style="color:#C24003;padding:20px">Erro ao carregar: '+e.message+'</div>';
+  }
+}
 
 // ===== REPROGRAMAÇÕES =====
 function renderReprogramacoes(){
