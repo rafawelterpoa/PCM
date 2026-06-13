@@ -3511,8 +3511,9 @@ function renderOrdensList(){
   const list=document.getElementById('mc-ordens-list');if(!list)return;
   const ordens=pendingCardChanges.ordens!==undefined?pendingCardChanges.ordens:(state[currentCardId]?.ordens||[]);
   if(!ordens.length){list.innerHTML='<span style="font-size:11px;color:var(--text3);font-style:italic">Nenhuma ordem registrada</span>';return;}
+  const MANUSIS_BASE='https://mills.manusis4.com/?lang=pt-BR';
   list.innerHTML=ordens.map((o,i)=>`<div style="display:inline-flex;align-items:center;gap:4px;background:#EDE9FF;color:#5B4DB5;border:1px solid #C4BAFF;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:600">
-    📋 ${o}
+    <a href="${MANUSIS_BASE}" target="_blank" title="Abrir OS ${o} no Manusis4" style="color:#5B4DB5;text-decoration:none;display:flex;align-items:center;gap:3px">🔗 ${o}</a>
     <button onclick="removeOrdem(${i})" style="background:none;border:none;cursor:pointer;color:#8B80C8;font-size:12px;line-height:1;padding:0 0 0 3px">✕</button>
   </div>`).join('');
 }
