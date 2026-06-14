@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mills PCM — Sync Confiabilidade
 // @namespace    https://rafawelterpoa.github.io/PCM
-// @version      6.3
+// @version      6.4
 // @description  Sincroniza dados Manusis4 → Firebase PCM automaticamente a cada 1h
 // @author       Mills PCM
 // @match        https://mills.manusis4.com/*
@@ -109,6 +109,17 @@
       atualizarBotao('⏳ Tipos...', true);
       const tipos90 = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'opened_at', value: ini90, operator: '>=' }], 200);
 
+      atualizarBotao('⏳ Máquinas Paradas...', true);
+      const maqParadas = await api('maint_orders', {
+        limit: 1,
+        filter: [
+          { property: 'company_id', value: COMPANY_ID, operator: '=' },
+          { property: 'maint_service_type_id', value: [...TIPO_CORRETIVA, 420, 456, 549], operator: 'in' },
+          { property: 'maint_order_status_id', value: [1, 2, 3], operator: 'in' },
+          { property: 'need_asset_stop', value: true, operator: '=' }
+        ]
+      });
+
       atualizarBotao('⏳ OS Fechadas...', true);
       const fechadas90 = await buscarTodos('maint_orders', [
         { property: 'company_id', value: COMPANY_ID, operator: '=' },
@@ -168,7 +179,8 @@
           horas_reparo_90d: horasReparo.toFixed(1),
           mttr_medio_h: parseFloat(mttr.toFixed(1)),
           mtbf_medio_h: parseFloat(mtbf.toFixed(1)),
-          os_fechadas_90d: fechadas90.length
+          os_fechadas_90d: fechadas90.length,
+          maquinas_paradas: maqParadas.meta?.count || 0
         },
         tipos_manutencao: tiposB,
         naturezas: natsB,

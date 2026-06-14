@@ -5737,6 +5737,7 @@ async function renderConfiabilidade(forcar){
     const kpiStyle='background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:16px 20px;flex:1;min-width:140px;';
     function fmtH(h){const v=parseFloat(h)||0;if(v>=1000)return Math.round(v).toLocaleString('pt-BR')+'h';return v%1===0?v+'h':v.toFixed(1)+'h';}
     const kpis=[
+      {label:'Máquinas Paradas',val:rs.maquinas_paradas||0,cor:'#DC2626',icon:'🚨'},
       {label:'Preventivas Abertas',val:rs.preventivas_abertas,cor:'#7F77DD',icon:'🔵'},
       {label:'Corretivas Abertas',val:rs.corretivas_abertas,cor:'#C24003',icon:'🔴'},
       {label:'Em Execução',val:rs.em_execucao,cor:'#F37021',icon:'🔧'},
