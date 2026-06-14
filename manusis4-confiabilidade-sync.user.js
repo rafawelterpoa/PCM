@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mills PCM — Sync Confiabilidade
 // @namespace    https://rafawelterpoa.github.io/PCM
-// @version      6.2
+// @version      6.3
 // @description  Sincroniza dados Manusis4 → Firebase PCM automaticamente a cada 1h
 // @author       Mills PCM
 // @match        https://mills.manusis4.com/*
@@ -176,6 +176,15 @@
         ranking_corretivas: Object.entries(porEquip).filter(([, v]) => v.corretivas > 0).sort((a, b) => b[1].corretivas - a[1].corretivas).slice(0, 20).map(([id, v]) => ({ vehicle_id: parseInt(id), code: veicMapa[id] || ('ID ' + id), ...v })),
         ranking_pendencias: Object.entries(porEquip).filter(([, v]) => v.pendencias > 0).sort((a, b) => b[1].pendencias - a[1].pendencias).slice(0, 20).map(([id, v]) => ({ vehicle_id: parseInt(id), code: veicMapa[id] || ('ID ' + id), ...v }))
       };
+
+      // Proteção: não sobrescreve dados bons com sync vazia (ex: 401 antes do login)
+      const totalOS = dados.resumo.preventivas_abertas + dados.resumo.corretivas_abertas + dados.resumo.em_execucao;
+      if (totalOS === 0) {
+        log('⚠ Sync abortada: zero OS abertas — provável 401 (não logado)');
+        atualizarBotao('⚠ Não logado', false);
+        setTimeout(() => atualizarBotao('⚙ PCM Sync', false), 4000);
+        return;
+      }
 
       atualizarBotao('⏳ Salvando...', true);
       await fbSalvar(dados);
