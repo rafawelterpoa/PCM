@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mills PCM — Sync Confiabilidade
 // @namespace    https://rafawelterpoa.github.io/PCM
-// @version      6.4
+// @version      6.5
 // @description  Sincroniza dados Manusis4 → Firebase PCM automaticamente a cada 1h
 // @author       Mills PCM
 // @match        https://mills.manusis4.com/*
@@ -116,7 +116,7 @@
           { property: 'company_id', value: COMPANY_ID, operator: '=' },
           { property: 'maint_service_type_id', value: [...TIPO_CORRETIVA, 420, 456, 549], operator: 'in' },
           { property: 'maint_order_status_id', value: [1, 2, 3], operator: 'in' },
-          { property: 'need_asset_stop', value: true, operator: '=' }
+          { property: 'need_asset_stop', value: 1, operator: '=' }
         ]
       });
 
