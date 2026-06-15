@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mills PCM — Sync Confiabilidade
 // @namespace    https://rafawelterpoa.github.io/PCM
-// @version      6.7
+// @version      6.9
 // @description  Sincroniza dados Manusis4 → Firebase PCM automaticamente a cada 1h
 // @author       Mills PCM
 // @match        https://mills.manusis4.com/*
@@ -93,11 +93,12 @@
       const agora = new Date();
       const ini90 = '2025-07-01 00:00:00'; // desde jul/2025
 
-      const [prevAb, corrAb, emEx, pend] = await Promise.all([
+      const [prevAb, corrAb, emEx, pend, maqParadas] = await Promise.all([
         api('maint_orders', { limit: 1, filter: [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_service_type_id', value: TIPO_PREVENTIVA, operator: 'in' }, { property: 'maint_order_status_id', value: [1, 2], operator: 'in' }] }),
         api('maint_orders', { limit: 1, filter: [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_service_type_id', value: TIPO_CORRETIVA, operator: 'in' }, { property: 'maint_order_status_id', value: [1, 2], operator: 'in' }] }),
         api('maint_orders', { limit: 1, filter: [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_order_status_id', value: 3, operator: '=' }] }),
         api('maint_orders', { limit: 1, filter: [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_order_status_id', value: [1, 2, 3], operator: 'in' }] }),
+        api('maint_orders', { limit: 1, filter: [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_service_type_id', value: [...TIPO_CORRETIVA, 420, 456, 549], operator: 'in' }, { property: 'maint_order_status_id', value: [1, 2, 3], operator: 'in' }, { property: 'need_asset_stop', value: true, operator: '=' }, { property: 'maint_finished_at', value: null, operator: '=' }] }),
       ]);
 
       atualizarBotao('⏳ Corretivas...', true);
@@ -115,16 +116,7 @@
       atualizarBotao('⏳ Tipos...', true);
       const tipos90 = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'opened_at', value: ini90, operator: '>=' }], 200);
 
-      atualizarBotao('⏳ Máquinas Paradas...', true);
-      const maqParadas = await api('maint_orders', {
-        limit: 1,
-        filter: [
-          { property: 'company_id', value: COMPANY_ID, operator: '=' },
-          { property: 'maint_service_type_id', value: [...TIPO_CORRETIVA, 420, 456, 549], operator: 'in' },
-          { property: 'maint_order_status_id', value: [1, 2, 3], operator: 'in' },
-          { property: 'need_asset_stop', value: true, operator: '=' }
-        ]
-      });
+      log('🔍 maqParadas: ' + (maqParadas?.meta?.count ?? 'null'));
 
       atualizarBotao('⏳ OS Fechadas...', true);
       const fechadas90 = await buscarTodos('maint_orders', [
@@ -239,6 +231,14 @@
     // Sync automático a cada 1h
     setInterval(() => sincronizar(), INTERVALO_H * 60 * 60 * 1000);
     log('✅ Sync automático ativado — a cada ' + INTERVALO_H + 'h');
+
+    // Keep-alive: ping leve a cada 10min para evitar logout por inatividade
+    setInterval(async () => {
+      try {
+        await fetch('/api/v1/maint_orders?limit=1', { credentials: 'include' });
+        log('🔄 Keep-alive ok');
+      } catch (e) {}
+    }, 4 * 60 * 1000);
 
     // Primeira sync ao abrir (se não sincronizou nas últimas 1h)
     if (!lastSync || (Date.now() - new Date(lastSync).getTime()) > INTERVALO_H * 60 * 60 * 1000) {
