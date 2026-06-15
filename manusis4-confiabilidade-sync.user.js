@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mills PCM — Sync Confiabilidade
 // @namespace    https://rafawelterpoa.github.io/PCM
-// @version      6.5
+// @version      6.6
 // @description  Sincroniza dados Manusis4 → Firebase PCM automaticamente a cada 1h
 // @author       Mills PCM
 // @match        https://mills.manusis4.com/*
@@ -101,7 +101,13 @@
       ]);
 
       atualizarBotao('⏳ Corretivas...', true);
-      const corr90 = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_service_type_id', value: TIPO_CORRETIVA, operator: 'in' }, { property: 'opened_at', value: ini90, operator: '>=' }], 200);
+      // Corretivas abertas (não fechadas/canceladas) desde Jul/2025
+      const corr90 = await buscarTodos('maint_orders', [
+        { property: 'company_id', value: COMPANY_ID, operator: '=' },
+        { property: 'maint_service_type_id', value: TIPO_CORRETIVA, operator: 'in' },
+        { property: 'maint_order_status_id', value: [1, 2, 3], operator: 'in' },
+        { property: 'opened_at', value: ini90, operator: '>=' }
+      ], 200);
 
       atualizarBotao('⏳ Pendências...', true);
       const pendAll = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_order_status_id', value: [1, 2, 3], operator: 'in' }], 200);
