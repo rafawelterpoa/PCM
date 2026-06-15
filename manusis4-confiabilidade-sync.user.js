@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mills PCM — Sync Confiabilidade
 // @namespace    https://rafawelterpoa.github.io/PCM
-// @version      7.0
+// @version      7.1
 // @description  Sincroniza dados Manusis4 → Firebase PCM automaticamente a cada 1h
 // @author       Mills PCM
 // @match        https://mills.manusis4.com/*
@@ -98,8 +98,21 @@
         api('maint_orders', { limit: 1, filter: [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_service_type_id', value: TIPO_CORRETIVA, operator: 'in' }, { property: 'maint_order_status_id', value: [1, 2], operator: 'in' }] }),
         api('maint_orders', { limit: 1, filter: [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_order_status_id', value: 3, operator: '=' }] }),
         api('maint_orders', { limit: 1, filter: [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_order_status_id', value: [1, 2, 3], operator: 'in' }] }),
-        api('maint_orders', { limit: 1, filter: [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'maint_service_type_id', value: [...TIPO_CORRETIVA, 420, 456, 549], operator: 'in' }, { property: 'maint_order_status_id', value: [1, 2, 3], operator: 'in' }, { property: 'need_asset_stop', value: true, operator: '=' }, { property: 'maint_finished_at', value: null, operator: 'is null' }] }),
+        // maqParadas: busca OS não canceladas sem data fim — igual regra do BI
+        buscarTodos('maint_orders', [
+          { property: 'company_id', value: COMPANY_ID, operator: '=' },
+          { property: 'maint_order_status_id', value: 5, operator: '!=' }, // exclui Canceladas
+          { property: 'maint_finished_at', value: null, operator: 'is null' }
+        ], 200),
       ]);
+
+      // Conta veículos distintos onde: (need_asset_stop=true) OU (tem reserva)
+      const veicParados = new Set();
+      (maqParadas || []).forEach(os => {
+        if (!os.vehicle_id) return;
+        if (os.need_asset_stop === true || os.asset_reserve_id) veicParados.add(os.vehicle_id);
+      });
+      log('🔍 maqParadas veículos distintos: ' + veicParados.size);
 
       atualizarBotao('⏳ Corretivas...', true);
       // Corretivas abertas (não fechadas/canceladas) desde Jul/2025
@@ -115,8 +128,6 @@
 
       atualizarBotao('⏳ Tipos...', true);
       const tipos90 = await buscarTodos('maint_orders', [{ property: 'company_id', value: COMPANY_ID, operator: '=' }, { property: 'opened_at', value: ini90, operator: '>=' }], 200);
-
-      log('🔍 maqParadas: ' + (maqParadas?.meta?.count ?? 'null'));
 
       atualizarBotao('⏳ OS Fechadas...', true);
       const fechadas90 = await buscarTodos('maint_orders', [
@@ -178,7 +189,7 @@
           mttr_medio_h: parseFloat(mttr.toFixed(1)),
           mtbf_medio_h: parseFloat(mtbf.toFixed(1)),
           os_fechadas_90d: fechadas90.length,
-          maquinas_paradas: maqParadas.meta?.count || 0
+          maquinas_paradas: veicParados.size
         },
         tipos_manutencao: tiposB,
         naturezas: natsB,
