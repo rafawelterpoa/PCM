@@ -2814,6 +2814,7 @@ const ETAPAS_GERAL=[
 ];
 const ETAPAS_OFICINA=[
   {id:'lavagem',label:'Lavagem'},
+  {id:'lubrificacao',label:'Lubrificação'},
   {id:'catalogacao',label:'Catalogação'},
   {id:'solda',label:'Solda'},
   {id:'borracharia',label:'Borracharia'},
@@ -2822,6 +2823,13 @@ const ETAPAS_OFICINA=[
   {id:'ag_baia',label:'Aguardando Baia'},
   {id:'manut_int',label:'Manutenção'},
 ];
+// Mapeamento zona do mapa → coluna Visão Oficina
+const ZONA_PARA_KANBAN={
+  lavagem:'lavagem',lubrificacao:'lubrificacao',
+  cab_pintura1:'funilaria',cab_pintura2:'funilaria',
+  usinagem:'solda',solda1:'solda',solda2:'solda',
+  borracharia:'borracharia',
+};
 const ETAPAS_BLOQUEIO=new Set(['cl_saida','pronto','manutencao']);
 
 let alteracoesBase=[];let state={},movLog=[],dragId=null,dragOficina=null,dragVisao=null;
@@ -3121,9 +3129,12 @@ function renderBoard(sid,visao){
     let items=visao==='geral'
       ?equips.filter(e=>e.etapa===etapa.id)
       :equips.filter(e=>{
-        const ETAPAS_OF_SET=new Set(['lavagem','catalogacao','solda','borracharia','funilaria','suprimentos','ag_baia','manut_int']);
+        const ETAPAS_OF_SET=new Set(['lavagem','lubrificacao','catalogacao','solda','borracharia','funilaria','suprimentos','ag_baia','manut_int']);
         if(e.etapa==='manutencao'){
-          const ei=e.etapa_interna||'lavagem';
+          // Usa localMap para determinar coluna quando disponível
+          const zona=localMapParaZonaGlobal(e.localMap||'');
+          const colMap=zona?ZONA_PARA_KANBAN[zona]:null;
+          const ei=colMap||e.etapa_interna||'lavagem';
           return ei===etapa.id;
         }
         if(ETAPAS_OF_SET.has(e.etapa)) return e.etapa===etapa.id;
@@ -5412,6 +5423,8 @@ function mapaSlotDrop(evt,newLoc){
   ghost.remove();
   _mapaDrag=null;
   if(!newLoc||newLoc===origLoc)return;
+  // Pneus é área de estocagem — não permite equipamentos
+  if(localMapParaZonaGlobal(newLoc)==='est_pneus'){showToast('⚠ Área de Pneus é só estocagem — não permite equipamentos');renderMapa();return;}
   // Se o slot destino tiver equip → swap
   const occupant=Object.values(state).find(e=>!e.baixado&&e.localMap===newLoc&&e.id!==eqId&&e.oficina==='Sumaré (SP)');
   state[eqId].localMap=newLoc;
@@ -13166,7 +13179,7 @@ function rgAba(aba){
 function rgRenderEstoque(){
   const ETAPAS_GERAL = ['chegada','cl_entrada','manutencao','cl_saida','pronto'];
   const ETAPA_LABELS = {chegada:'Aguard. Mov.',cl_entrada:'CL Entrada',manutencao:'Manutenção',cl_saida:'CL Saída',pronto:'Pronto/Est.'};
-  const ETAPAS_OF = ['lavagem','catalogacao','solda','borracharia','funilaria','suprimentos','ag_baia','manut_int'];
+  const ETAPAS_OF = ['lavagem','lubrificacao','catalogacao','solda','borracharia','funilaria','suprimentos','ag_baia','manut_int'];
 
   const equips = Object.values(state).filter(e => {
     if(e.baixado || e.etapa === 'alugado') return false;
@@ -13355,7 +13368,7 @@ function paginaOficinas(){
 
 function renderOficinaCards(){
   const grid=document.getElementById('oficinas-cards-grid');if(!grid)return;
-  const ETAPAS_OF=new Set(['lavagem','catalogacao','solda','borracharia','funilaria','suprimentos','ag_baia','manut_int']);
+  const ETAPAS_OF=new Set(['lavagem','lubrificacao','catalogacao','solda','borracharia','funilaria','suprimentos','ag_baia','manut_int']);
   const oficinas=[...new Set(Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.etapa!=='pronto'&&e.oficina).map(e=>e.oficina))].sort();
   grid.innerHTML=oficinas.map(of=>{
     const equips=Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.etapa!=='pronto'&&e.oficina===of);
