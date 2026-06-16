@@ -12457,9 +12457,8 @@ function rcdRenderTriagem() {
   const el = document.getElementById('rcd-triagem-lista'); if(!el) return;
   // Equipamentos em 'chegada' no kanban
   const chegadas = Object.values(state).filter(e => !e.baixado && e.etapa === 'chegada');
-  // Filtra os que ainda não têm registro ativo nessa entrada (cria chave por eq+ts de chegada)
-  const ativos = Object.values(_rcdRegistros).filter(r => r.status !== 'nao_elegivel' && r.status !== 'faturado' && r.status !== 'encerrado');
-  const idsAtivos = new Set(ativos.map(r => r.equip_id + '|' + r.chegada_ts));
+  // Filtra todos que já têm algum registro (independente do status)
+  const idsAtivos = new Set(Object.values(_rcdRegistros).map(r => r.equip_id + '|' + r.chegada_ts));
 
   const pendentes = chegadas.filter(e => {
     const key = e.id + '|' + (e.etapa_desde || '');
