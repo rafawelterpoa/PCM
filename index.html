@@ -12515,17 +12515,63 @@ function rcdRenderTratamento() {
       const prox = proxima[status];
       const proxLbl = proximaLabel[status];
       const desde = r.ts_triagem ? new Date(r.ts_triagem).toLocaleDateString('pt-BR') : '—';
+      const isInsp = status === 'aguardando_inspecao';
+      const temOrdem = !!(r.ordem_inspecao);
+      const bloqueado = isInsp && !temOrdem;
+      const extraInfo = isInsp ? `
+        <div style="margin-top:6px;display:flex;flex-direction:column;gap:3px">
+          <div style="font-size:10px;color:${temOrdem?'#6366f1':'#ef4444'};font-weight:600">
+            ${temOrdem ? '📋 OM: ' + r.ordem_inspecao : '⚠ Ordem de inspeção pendente'}
+          </div>
+          ${r.rcd_cliente ? `<div style="font-size:10px;color:#64748b">👤 ${r.rcd_cliente}</div>` : ''}
+          ${r.dt_entrada_inspecao ? `<div style="font-size:10px;color:#64748b">📅 ${new Date(r.dt_entrada_inspecao+'T00:00').toLocaleDateString('pt-BR')}</div>` : ''}
+        </div>` : '';
       return `<div style="background:#fff;border:1px solid #e2e8f0;border-left:3px solid ${cor};border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
-        <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id}</div>
-        <div style="font-size:11px;color:#64748b;margin-top:2px">${r.equip_nome}</div>
-        <div style="font-size:10px;color:#94a3b8;margin-top:3px">${r.oficina} · ${desde}</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id}</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">${r.equip_nome}</div>
+            <div style="font-size:10px;color:#94a3b8;margin-top:3px">${r.oficina} · ${desde}</div>
+            ${extraInfo}
+          </div>
+          ${isInsp ? `<button onclick="rcdInspAbrir('${r.id}')" style="padding:4px 8px;background:#eff0ff;color:#6366f1;border:1px solid #c7d2fe;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;margin-left:8px">✏ Editar</button>` : ''}
+        </div>
         <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">
-          ${prox ? `<button onclick="rcdAvancar('${r.id}','${prox}')" style="flex:1;padding:5px 8px;background:${cor};color:#fff;border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer">→ ${proxLbl}</button>` : ''}
+          ${prox ? `<button onclick="rcdAvancar('${r.id}','${prox}')" ${bloqueado?'disabled title="Preencha a ordem de inspeção primeiro"':''} style="flex:1;padding:5px 8px;background:${bloqueado?'#e2e8f0':cor};color:${bloqueado?'#94a3b8':'#fff'};border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:${bloqueado?'not-allowed':'pointer'}">→ ${proxLbl}</button>` : ''}
           <button onclick="rcdConcluir('${r.id}')" style="flex:1;padding:5px 8px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer">Concluir</button>
         </div>
       </div>`;
     }).join('');
   });
+}
+
+function rcdInspAbrir(id) {
+  const reg = _rcdRegistros[id]; if(!reg) return;
+  const eq = state[reg.equip_id] || {};
+  document.getElementById('rcd-insp-id').value = id;
+  document.getElementById('rcd-insp-ordem').value = reg.ordem_inspecao || '';
+  document.getElementById('rcd-insp-cliente').value = reg.rcd_cliente || eq.cliente || '';
+  document.getElementById('rcd-insp-data').value = reg.dt_entrada_inspecao || '';
+  const modal = document.getElementById('rcd-insp-modal');
+  modal.style.display = 'flex';
+}
+
+function rcdInspFechar() {
+  document.getElementById('rcd-insp-modal').style.display = 'none';
+}
+
+async function rcdInspSalvar() {
+  const id = document.getElementById('rcd-insp-id').value;
+  const ordem = document.getElementById('rcd-insp-ordem').value.trim();
+  if(!ordem) { alert('Nº da Ordem de Inspeção é obrigatório.'); return; }
+  const reg = _rcdRegistros[id]; if(!reg) return;
+  reg.ordem_inspecao = ordem;
+  reg.rcd_cliente = document.getElementById('rcd-insp-cliente').value.trim();
+  reg.dt_entrada_inspecao = document.getElementById('rcd-insp-data').value;
+  await rcdSalvarRegistro(reg);
+  rcdInspFechar();
+  rcdRender();
+  showToast('✅ Dados da inspeção salvos');
 }
 
 async function rcdAvancar(id, novoStatus) {
@@ -14503,6 +14549,30 @@ if ('serviceWorker' in navigator) {
       <!-- HISTÓRICO -->
       <div id="rcd-panel-historico" style="display:none">
         <div id="rcd-historico-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
+
+    <!-- MODAL DETALHE INSPEÇÃO -->
+    <div id="rcd-insp-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9200;align-items:center;justify-content:center">
+      <div style="background:#fff;border-radius:14px;padding:24px 28px;width:420px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+        <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:18px">📋 Detalhes da Inspeção</div>
+        <input type="hidden" id="rcd-insp-id">
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Nº Ordem de Inspeção <span style="color:#ef4444">*</span></label>
+          <input id="rcd-insp-ordem" type="text" placeholder="Ex: OM-12345" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
+        </div>
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Cliente</label>
+          <input id="rcd-insp-cliente" type="text" placeholder="Nome do cliente" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
+        </div>
+        <div style="margin-bottom:20px">
+          <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Data de Entrada para Inspeção</label>
+          <input id="rcd-insp-data" type="date" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="rcdInspSalvar()" style="flex:1;padding:9px;background:#6366f1;color:#fff;border:none;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">Salvar</button>
+          <button onclick="rcdInspFechar()" style="flex:1;padding:9px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">Cancelar</button>
+        </div>
       </div>
     </div>
 
