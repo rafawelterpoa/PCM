@@ -1174,6 +1174,21 @@ input.filter-sel{padding:5px 8px;height:34px}
       <div id="sidebar-content" style="padding:14px"></div>
     </div>
   </div>
+  <!-- Modal seletor de vaga pátio -->
+  <div id="mapa-vaga-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:310;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+    <div style="background:#fff;border-radius:12px;padding:20px;width:440px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;border-top:3px solid var(--laranja);box-shadow:0 8px 32px rgba(0,0,0,.25)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">Atribuir equipamento</div>
+          <div style="font-size:11px;color:var(--text3)">Vaga: <b id="mvaga-loc-label"></b></div>
+        </div>
+        <button onclick="document.getElementById('mapa-vaga-modal').style.display='none'" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text3)">✕</button>
+      </div>
+      <input id="mvaga-busca" type="text" placeholder="Buscar por ID ou tipo..." oninput="mapaVagaFiltrar()" style="border:1px solid var(--borda);border-radius:6px;padding:7px 10px;font-size:12px;margin-bottom:10px;outline:none">
+      <div id="mvaga-lista" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;min-height:0"></div>
+    </div>
+  </div>
+
   <div id="mapa-card-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
     <div style="background:#fff;border-radius:12px;padding:20px;width:320px;max-width:92vw;border-top:3px solid var(--laranja);box-shadow:0 8px 32px rgba(0,0,0,.2)">
       <div id="mapa-modal-content"></div>
@@ -5383,8 +5398,8 @@ function renderMapa(){
         const desc=eq.equipamento.substring(0,9);
         svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${desc}</text>`;
       } else {
-        // Vaga vazia — drop target
-        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.5)" rx="2" stroke="rgba(0,0,0,.1)" stroke-width="0.5" onmouseup="mapaSlotDrop(event,'${slotLoc}')"/>`;
+        // Vaga vazia — drop target + click para selecionar
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.5)" rx="2" stroke="rgba(0,0,0,.1)" stroke-width="0.5" style="cursor:pointer" onmouseup="mapaSlotDrop(event,'${slotLoc}')" onclick="mapaVagaClick('${slotLoc}')"/>`;
         svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(0,0,0,.2)" style="pointer-events:none">${slotLoc}</text>`;
       }
     }
@@ -5431,7 +5446,7 @@ function renderMapa(){
         svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
         svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eq.equipamento.substring(0,9)}</text>`;
       } else {
-        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5" onmouseup="mapaSlotDrop(event,'${loc}')"/>`;
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5" style="cursor:pointer" onmouseup="mapaSlotDrop(event,'${loc}')" onclick="mapaVagaClick('${loc}')"/>`;
         svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780" style="pointer-events:none">${loc}</text>`;
       }
     }
@@ -5452,7 +5467,7 @@ function renderMapa(){
         svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
         svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eq.equipamento.substring(0,9)}</text>`;
       } else {
-        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5" onmouseup="mapaSlotDrop(event,'${loc}')"/>`;
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5" style="cursor:pointer" onmouseup="mapaSlotDrop(event,'${loc}')" onclick="mapaVagaClick('${loc}')"/>`;
         svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780" style="pointer-events:none">${loc}</text>`;
       }
     }
@@ -5601,6 +5616,55 @@ function mapaCardClick(eqId){
   mapaEqAtivo=eqId;
   // Abre o modal completo do kanban (mesmo que nas outras abas)
   openCardModal(eqId,'geral');
+}
+
+let _mapaVagaLoc=null;
+function mapaVagaClick(loc){
+  // Não abrir se foi um drag
+  if(_mapaDrag)return;
+  _mapaVagaLoc=loc;
+  document.getElementById('mvaga-loc-label').textContent=loc;
+  document.getElementById('mvaga-busca').value='';
+  mapaVagaFiltrar();
+  const modal=document.getElementById('mapa-vaga-modal');
+  modal.style.display='flex';
+  setTimeout(()=>document.getElementById('mvaga-busca').focus(),100);
+}
+function mapaVagaFiltrar(){
+  const q=(document.getElementById('mvaga-busca').value||'').toLowerCase();
+  const candidatos=Object.values(state).filter(e=>
+    !e.baixado && e.oficina==='Sumaré (SP)'
+  ).sort((a,b)=>a.id.localeCompare(b.id));
+  const ETAPA_LABEL={chegada:'Chegada',pronto:'Disponível',manutencao:'Manutenção',cl_entrada:'CL Entrada',cl_saida:'CL Saída',alugado:'Alugado',mobilizacao:'Mob.',desmobilizacao:'Desm.'};
+  const ETAPA_COR={chegada:'#6B7280',pronto:'#1D9E75',manutencao:'#F37021',cl_entrada:'#3B82F6',cl_saida:'#8B5CF6',alugado:'#EF4444',mobilizacao:'#7C3AED',desmobilizacao:'#B45309'};
+  const lista=document.getElementById('mvaga-lista');
+  const filtrado=candidatos.filter(e=>!q||e.id.toLowerCase().includes(q)||e.equipamento.toLowerCase().includes(q));
+  if(!filtrado.length){lista.innerHTML='<div style="color:var(--text3);font-size:12px;padding:8px">Nenhum equipamento encontrado.</div>';return;}
+  lista.innerHTML=filtrado.map(e=>{
+    const cor=ETAPA_COR[e.etapa]||'#888';
+    const etLbl=ETAPA_LABEL[e.etapa]||e.etapa||'—';
+    const vagaAtual=e.localMap?`<span style="color:var(--text3);font-size:10px"> · ${e.localMap}</span>`:'';
+    return `<div onclick="mapaVagaAtribuir('${e.id}')" style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;border:1px solid #e2e8f0;cursor:pointer;transition:background .12s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+      <span style="width:8px;height:8px;border-radius:50%;background:${cor};flex-shrink:0"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:var(--text)">${e.id}${vagaAtual}</div>
+        <div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.equipamento}</div>
+      </div>
+      <span style="font-size:10px;font-weight:600;color:${cor};white-space:nowrap">${etLbl}</span>
+    </div>`;
+  }).join('');
+}
+async function mapaVagaAtribuir(eqId){
+  const loc=_mapaVagaLoc;
+  if(!loc||!eqId)return;
+  // Garante que nenhum outro equip já ocupa essa vaga
+  const ocupante=Object.values(state).find(e=>!e.baixado&&e.localMap===loc&&e.id!==eqId);
+  if(ocupante){showToast('⚠ Vaga '+loc+' já está ocupada por '+ocupante.id);return;}
+  state[eqId].localMap=loc;
+  await fetch(`${FB_BASE}/equipamentos/${eqId}/localMap.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(loc)}).catch(()=>{});
+  document.getElementById('mapa-vaga-modal').style.display='none';
+  showToast('📍 '+eqId+' → '+loc);
+  renderMapa();
 }
 
 function mapaAbrirKanban(){
