@@ -948,8 +948,8 @@ input.filter-sel{padding:5px 8px;height:34px}
   <div class="areas-grid-7">
 
     <!-- OFICINA -->
-    <div class="area-card-new" onclick="navegarPara('oficinas')" style="border-top:3px solid #F37021">
-      <div class="area-card-header">
+    <div class="area-card-new" style="border-top:3px solid #F37021;cursor:default">
+      <div class="area-card-header" onclick="navegarPara('oficinas')" style="cursor:pointer">
         <div class="ac-icon">🔧</div>
         <div class="ac-title">Oficina</div>
         <div class="ac-desc">Kanban de manutenção por oficina</div>
@@ -957,11 +957,15 @@ input.filter-sel{padding:5px 8px;height:34px}
         <span class="ac-badge" style="background:#fff3e6;color:#F37021" id="home-badge-oficina">em processo</span>
       </div>
       <div class="area-card-preview">
-        <div class="mini-kanban">
+        <div class="mini-kanban" onclick="navegarPara('oficinas')" style="cursor:pointer">
           <div class="mini-kcol"><div class="mini-kcol-hd">Rec.</div><div class="mini-card orange"></div><div class="mini-card orange"></div><div class="mini-card"></div></div>
           <div class="mini-kcol"><div class="mini-kcol-hd">Diag.</div><div class="mini-card orange"></div><div class="mini-card"></div></div>
           <div class="mini-kcol"><div class="mini-kcol-hd">Exec.</div><div class="mini-card orange"></div><div class="mini-card orange"></div><div class="mini-card orange"></div></div>
           <div class="mini-kcol"><div class="mini-kcol-hd">Pront.</div><div class="mini-card green"></div><div class="mini-card green"></div></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid #f1f0ee">
+          <button onclick="event.stopPropagation();navegarPara('manuterceiros')" style="flex:1;background:#faf5ff;border:1px solid #e9d5ff;border-radius:6px;padding:5px 6px;font-size:10px;font-weight:600;color:#7c3aed;cursor:pointer;text-align:center">🏭 Manut. Terceiros</button>
+          <button onclick="event.stopPropagation();navegarPara('valepecas')" style="flex:1;background:#fff5f5;border:1px solid #fecaca;border-radius:6px;padding:5px 6px;font-size:10px;font-weight:600;color:#dc2626;cursor:pointer;text-align:center">🔩 Vale Peças</button>
         </div>
       </div>
     </div>
@@ -1061,30 +1065,37 @@ input.filter-sel{padding:5px 8px;height:34px}
       </div>
     </div>
 
-    <!-- MANUTENÇÃO DE TERCEIROS -->
-    <div class="area-card-new" onclick="navegarPara('manuterceiros')" style="border-top:3px solid #7c3aed">
+    <!-- RCD — AVARIAS -->
+    <div class="area-card-new" onclick="navegarPara('rcd')" style="border-top:3px solid #b45309">
       <div class="area-card-header">
-        <div class="ac-icon">🏭</div>
-        <div class="ac-title">Manut. Terceiros</div>
-        <div class="ac-desc">Serviços externos e M.O. de terceiros</div>
-        <div class="ac-kpi" id="home-kpi-manuterceiros" style="color:#7c3aed">—</div>
-        <span class="ac-badge" style="background:#f3e8ff;color:#7c3aed" id="home-badge-manuterceiros">registros</span>
+        <div class="ac-icon">⚠️</div>
+        <div class="ac-title">RCD — Avarias</div>
+        <div class="ac-desc">Cobranças de avarias a clientes</div>
+        <div class="ac-kpi" id="home-kpi-rcd" style="color:#b45309">—</div>
+        <span class="ac-badge" style="background:#fef3c7;color:#b45309" id="home-badge-rcd">em aberto</span>
       </div>
-      <div class="area-card-preview" style="background:#faf5ff">
-        <div style="font-size:11px;color:#7c3aed;font-weight:600;text-align:center;padding:10px">Controle de serviços de terceiros</div>
+      <div class="area-card-preview" style="background:#fffbeb">
+        <div style="display:flex;flex-direction:column;gap:5px;padding:4px 0">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#92400e">
+            <span>Desmobilização</span><span id="home-rcd-desm" style="font-weight:700">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#92400e">
+            <span>Em operação</span><span id="home-rcd-oper" style="font-weight:700">—</span>
+          </div>
+        </div>
       </div>
     </div>
-    <!-- VALE PEÇAS -->
-    <div class="area-card-new" onclick="navegarPara('valepecas')" style="border-top:3px solid #dc2626">
+    <!-- GARANTIAS -->
+    <div class="area-card-new" onclick="navegarPara('garantias')" style="border-top:3px solid #0891b2">
       <div class="area-card-header">
-        <div class="ac-icon">🔩</div>
-        <div class="ac-title">Vale Peças</div>
-        <div class="ac-desc">Controle de retirada e devolução de peças</div>
-        <div class="ac-kpi" id="home-kpi-valepecas" style="color:#dc2626">—</div>
-        <span class="ac-badge" style="background:#fef2f2;color:#dc2626" id="home-badge-valepecas">pendentes</span>
+        <div class="ac-icon">🛡️</div>
+        <div class="ac-title">Garantias</div>
+        <div class="ac-desc">Controle de garantias de equipamentos</div>
+        <div class="ac-kpi" id="home-kpi-garantias" style="color:#0891b2">—</div>
+        <span class="ac-badge" style="background:#e0f2fe;color:#0891b2" id="home-badge-garantias">ativas</span>
       </div>
-      <div class="area-card-preview" style="background:#fff5f5">
-        <div style="font-size:11px;color:#dc2626;font-weight:600;text-align:center;padding:10px">Peças retiradas aguardando devolução</div>
+      <div class="area-card-preview" style="background:#f0f9ff">
+        <div style="font-size:11px;color:#0891b2;font-weight:600;text-align:center;padding:10px">Em desenvolvimento</div>
       </div>
     </div>
 
