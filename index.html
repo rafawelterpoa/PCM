@@ -1174,21 +1174,6 @@ input.filter-sel{padding:5px 8px;height:34px}
       <div id="sidebar-content" style="padding:14px"></div>
     </div>
   </div>
-  <!-- Modal seletor de vaga pátio -->
-  <div id="mapa-vaga-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:310;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
-    <div style="background:#fff;border-radius:12px;padding:20px;width:440px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;border-top:3px solid var(--laranja);box-shadow:0 8px 32px rgba(0,0,0,.25)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div>
-          <div style="font-size:14px;font-weight:700;color:var(--text)">Atribuir equipamento</div>
-          <div style="font-size:11px;color:var(--text3)">Vaga: <b id="mvaga-loc-label"></b></div>
-        </div>
-        <button onclick="document.getElementById('mapa-vaga-modal').style.display='none'" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text3)">✕</button>
-      </div>
-      <input id="mvaga-busca" type="text" placeholder="Buscar por ID ou tipo..." oninput="mapaVagaFiltrar()" style="border:1px solid var(--borda);border-radius:6px;padding:7px 10px;font-size:12px;margin-bottom:10px;outline:none">
-      <div id="mvaga-lista" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;min-height:0"></div>
-    </div>
-  </div>
-
   <div id="mapa-card-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
     <div style="background:#fff;border-radius:12px;padding:20px;width:320px;max-width:92vw;border-top:3px solid var(--laranja);box-shadow:0 8px 32px rgba(0,0,0,.2)">
       <div id="mapa-modal-content"></div>
@@ -5399,8 +5384,8 @@ function renderMapa(){
         svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${desc}</text>`;
       } else {
         // Vaga vazia — drop target + click para selecionar
-        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.5)" rx="2" stroke="rgba(0,0,0,.1)" stroke-width="0.5" style="cursor:pointer" onmouseup="mapaSlotDrop(event,'${slotLoc}')" onclick="mapaVagaClick('${slotLoc}')"/>`;
-        svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(0,0,0,.2)" style="pointer-events:none">${slotLoc}</text>`;
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.5)" rx="2" stroke="rgba(0,0,0,.1)" stroke-width="0.5" style="cursor:pointer" data-vaga="${slotLoc}" onmouseup="mapaSlotDrop(event,'${slotLoc}')"/>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(0,0,0,.2)" style="pointer-events:none" data-vaga="${slotLoc}">${slotLoc}</text>`;
       }
     }
 
@@ -5446,8 +5431,8 @@ function renderMapa(){
         svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
         svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eq.equipamento.substring(0,9)}</text>`;
       } else {
-        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5" style="cursor:pointer" onmouseup="mapaSlotDrop(event,'${loc}')" onclick="mapaVagaClick('${loc}')"/>`;
-        svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780" style="pointer-events:none">${loc}</text>`;
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5" style="cursor:pointer" data-vaga="${loc}" onmouseup="mapaSlotDrop(event,'${loc}')"/>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780" style="pointer-events:none" data-vaga="${loc}">${loc}</text>`;
       }
     }
   }
@@ -5467,8 +5452,8 @@ function renderMapa(){
         svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
         svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eq.equipamento.substring(0,9)}</text>`;
       } else {
-        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5" style="cursor:pointer" onmouseup="mapaSlotDrop(event,'${loc}')" onclick="mapaVagaClick('${loc}')"/>`;
-        svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780" style="pointer-events:none">${loc}</text>`;
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5" style="cursor:pointer" data-vaga="${loc}" onmouseup="mapaSlotDrop(event,'${loc}')"/>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780" style="pointer-events:none" data-vaga="${loc}">${loc}</text>`;
       }
     }
   }
@@ -5564,6 +5549,17 @@ function renderMapa(){
 
   const SVG_H=Math.max(TOTAL_H, Y_OFICINA-18+BOX_TOTAL_H+10);
   container.innerHTML=kpiBar+`<div style="overflow:auto"><svg width="${TOTAL_W}" height="${SVG_H}" xmlns="http://www.w3.org/2000/svg">${svg}</svg></div>`;
+
+  // Listener delegado para vagas vazias (mais confiável que onclick em SVG via innerHTML)
+  const svgEl=container.querySelector('svg');
+  if(svgEl){
+    svgEl.addEventListener('click',function(e){
+      if(_mapaDrag)return;
+      const el=e.target;
+      const loc=el.getAttribute('data-vaga');
+      if(loc) mapaVagaClick(loc);
+    });
+  }
 }
 
 // ══ MAPA DRAG & DROP ══
@@ -14338,6 +14334,21 @@ if ('serviceWorker' in navigator) {
       <button class="gi-btn ghost" onclick="document.getElementById('vp-dev-modal').style.display='none'">Cancelar</button>
       <button class="gi-btn" onclick="vpConfirmarDevolucao()" style="background:#16a34a">✅ Confirmar Devolução</button>
     </div>
+  </div>
+</div>
+
+<!-- Modal seletor de vaga pátio — filho direto do body para position:fixed funcionar corretamente -->
+<div id="mapa-vaga-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9100;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#fff;border-radius:12px;padding:20px;width:440px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;border-top:3px solid var(--laranja);box-shadow:0 8px 32px rgba(0,0,0,.25)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--text)">Atribuir equipamento</div>
+        <div style="font-size:11px;color:var(--text3)">Vaga: <b id="mvaga-loc-label"></b></div>
+      </div>
+      <button onclick="document.getElementById('mapa-vaga-modal').style.display='none'" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text3)">✕</button>
+    </div>
+    <input id="mvaga-busca" type="text" placeholder="Buscar por ID ou tipo..." oninput="mapaVagaFiltrar()" style="border:1px solid var(--borda);border-radius:6px;padding:7px 10px;font-size:12px;margin-bottom:10px;outline:none">
+    <div id="mvaga-lista" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;min-height:0;max-height:50vh"></div>
   </div>
 </div>
 </body>
