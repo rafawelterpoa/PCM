@@ -12518,7 +12518,12 @@ function rcdRenderTratamento() {
       const isInsp = status === 'aguardando_inspecao';
       const temOrdem = !!(r.ordem_inspecao);
       const bloqueado = isInsp && !temOrdem;
-      const clienteCard = r.rcd_cliente || (state[r.equip_id]?.cliente) || '';
+      const _eqCard = state[r.equip_id] || {};
+      let clienteCard = r.rcd_cliente || _eqCard.cliente || '';
+      if (!clienteCard) {
+        const _h = (_eqCard.historico || []).slice().reverse().find(h => h.from && h.from.startsWith('Reservado:'));
+        if (_h) clienteCard = _h.from.replace('Reservado:', '').trim();
+      }
       const extraInfo = isInsp ? `
         <div style="margin-top:6px;display:flex;flex-direction:column;gap:3px">
           <div style="font-size:10px;color:${temOrdem?'#6366f1':'#ef4444'};font-weight:600">
@@ -12551,9 +12556,15 @@ function rcdInspAbrir(id) {
   const eq = state[reg.equip_id] || {};
   document.getElementById('rcd-insp-id').value = id;
   document.getElementById('rcd-insp-ordem').value = reg.ordem_inspecao || '';
-  const cliente = reg.rcd_cliente || eq.cliente || '—';
-  document.getElementById('rcd-insp-cliente').value = cliente;
-  document.getElementById('rcd-insp-cliente-display').textContent = cliente;
+  // Pega cliente: salvo no registro → campo atual → último "Reservado:" no histórico
+  let cliente = reg.rcd_cliente || eq.cliente || '';
+  if (!cliente) {
+    const hist = (eq.historico || []).slice().reverse();
+    const entrada = hist.find(h => h.from && h.from.startsWith('Reservado:'));
+    if (entrada) cliente = entrada.from.replace('Reservado:', '').trim();
+  }
+  document.getElementById('rcd-insp-cliente').value = cliente || '—';
+  document.getElementById('rcd-insp-cliente-display').textContent = cliente || '—';
   document.getElementById('rcd-insp-data').value = reg.dt_entrada_inspecao || '';
   const modal = document.getElementById('rcd-insp-modal');
   modal.style.display = 'flex';
