@@ -12361,7 +12361,7 @@ function gpRenderTabela(){
       <td style="padding:8px 12px;text-align:center;font-weight:600;color:#0f766e">${e.ordensTotais??'—'}</td>
       <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.ordensAbertas>0?'#d97706':'#16a34a'}">${e.ordensAbertas??'—'}</td>
       <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.pendAbertas>0?'#d97706':'#16a34a'}">${e.pendAbertas??'—'}</td>
-      <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.prevAtras>0?'#dc2626':'#16a34a'}">${e.prevAtras??'—'}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.prevAtras>0?'#dc2626':'#16a34a'}">${e.prevAtras??'—'}${e.prevAtras>0&&e.nEquip>0?` <span style="font-size:10px;opacity:.75">(${Math.round(e.prevAtras/e.nEquip*100)}%)</span>`:''}</td>
       <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.equipSemCom>0?'#dc2626':'#16a34a'}">${e.equipSemCom??'—'}</td>
       <td style="padding:8px 12px;font-size:11px;color:#64748b;max-width:200px">${e.obs||'—'}</td>
       <td style="padding:8px 12px;text-align:center">
