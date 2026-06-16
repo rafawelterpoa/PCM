@@ -2044,6 +2044,7 @@ async function saveToFirebase(eqIds){
           baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
           frota:eq.frota||'',ciclos_operacao:eq.ciclos_operacao||0,novo:eq.novo||false,
           dataEmbarque:eq.dataEmbarque||'',prevLiberacao:eq.prevLiberacao||'',prevLiberacaoOriginal:eq.prevLiberacaoOriginal||'',reprogramacoes:eq.reprogramacoes||[],nReprog:eq.nReprog||0,destinacao:eq.destinacao||'',localMap:eq.localMap||'',historico:eq.historico||[],
+          planta:eq.planta||'',estado:eq.estado||'',municipio:eq.municipio||'',linhaProduto:eq.linhaProduto||'',tipoContrato:eq.tipoContrato||'',
         ordens:eq.ordens||[],reqCompra:eq.reqCompra||'',tipoManut:eq.tipoManut||'',
         };
       });
@@ -2063,6 +2064,7 @@ async function saveToFirebase(eqIds){
           baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
           frota:eq.frota||'',ciclos_operacao:eq.ciclos_operacao||0,novo:eq.novo||false,
           dataEmbarque:eq.dataEmbarque||'',prevLiberacao:eq.prevLiberacao||'',prevLiberacaoOriginal:eq.prevLiberacaoOriginal||'',reprogramacoes:eq.reprogramacoes||[],nReprog:eq.nReprog||0,destinacao:eq.destinacao||'',localMap:eq.localMap||'',historico:eq.historico||[],
+          planta:eq.planta||'',estado:eq.estado||'',municipio:eq.municipio||'',linhaProduto:eq.linhaProduto||'',tipoContrato:eq.tipoContrato||'',
           ordens:eq.ordens||[],reqCompra:eq.reqCompra||'',tipoManut:eq.tipoManut||'',
         });
       }
@@ -4752,7 +4754,7 @@ async function doBaseUpdate(){
         _recentRetornos.add(n.id); // marcar como retorno recente
         eq.ciclos_operacao=(eq.ciclos_operacao||0)+1;
         if(!eq.historico)eq.historico=[];
-        eq.historico.push({from:'Operação (Alugado)',to:'Oficina — Aguardando Movimentação',ts:agora,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:'regra-sistema',ciclo:eq.ciclos_operacao});
+        eq.historico.push({from:'Operação (Alugado)',to:'Oficina — Aguardando Movimentação',ts:agora,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:'regra-sistema',ciclo:eq.ciclos_operacao,planta_obra:eq.planta||n.planta||''});
         fbLogMove({eqId:eq.id,nome:eq.equipamento,from:'Operação (Alugado)',to:`Oficina — Aguard. Movim. (Ciclo ${eq.ciclos_operacao})`,ts:agora,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:'regra-sistema',oficina:n.oficina,visao:'retorno_operacao'});
       }
       // REGRA: equipamento saiu para operação (CSV marca como Alugado)
@@ -12522,8 +12524,8 @@ function rcdRenderTratamento() {
       const _origCard = (EQUIPAMENTOS_ORIG||[]).find(e=>e.id===r.equip_id)||{};
       let clienteCard = r.rcd_cliente || _eqCard.cliente || _eqCard.planta || _origCard.planta || _origCard.cliente || '';
       if (!clienteCard) {
-        const _h = (_eqCard.historico || []).slice().reverse().find(h => h.from && h.from.startsWith('Reservado:'));
-        if (_h) clienteCard = _h.from.replace('Reservado:', '').trim();
+        const _h = (_eqCard.historico || []).slice().reverse().find(h => h.planta_obra || (h.from && h.from.startsWith('Reservado:')));
+        if (_h) clienteCard = _h.planta_obra || _h.from.replace('Reservado:', '').trim();
       }
       const extraInfo = isInsp ? `
         <div style="margin-top:6px;display:flex;flex-direction:column;gap:3px">
@@ -12560,9 +12562,8 @@ function rcdInspAbrir(id) {
   const _origInsp = (EQUIPAMENTOS_ORIG||[]).find(e=>e.id===reg.equip_id)||{};
   let cliente = reg.rcd_cliente || eq.cliente || eq.planta || _origInsp.planta || _origInsp.cliente || '';
   if (!cliente) {
-    const hist = (eq.historico || []).slice().reverse();
-    const entrada = hist.find(h => h.from && h.from.startsWith('Reservado:'));
-    if (entrada) cliente = entrada.from.replace('Reservado:', '').trim();
+    const _h = (eq.historico || []).slice().reverse().find(h => h.planta_obra || (h.from && h.from.startsWith('Reservado:')));
+    if (_h) cliente = _h.planta_obra || _h.from.replace('Reservado:', '').trim();
   }
   document.getElementById('rcd-insp-cliente').value = cliente || '—';
   document.getElementById('rcd-insp-cliente-display').textContent = cliente || '—';
