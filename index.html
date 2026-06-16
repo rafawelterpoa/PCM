@@ -10153,18 +10153,17 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
             <input class="gi-input" id="gp-periodo" placeholder="S21/2026">
           </div>
         </div>
-        <!-- Linha 2: Indicadores numéricos (4 colunas) -->
+        <!-- Linha 2: Indicadores (7 campos) -->
         <div class="gi-form-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:10px">
-          <div><label class="gi-label">Nº Operações</label><input class="gi-input" id="gp-n-op" type="number" min="0" placeholder="0"></div>
-          <div><label class="gi-label">Nº Equipamentos</label><input class="gi-input" id="gp-n-equip" type="number" min="0" placeholder="0"></div>
-          <div><label class="gi-label">Máquinas Paradas</label><input class="gi-input" id="gp-maq-paradas" type="number" min="0" placeholder="0"></div>
-          <div><label class="gi-label">Prev. Atrasadas</label><input class="gi-input" id="gp-prev-atras" type="number" min="0" placeholder="0"></div>
+          <div><label class="gi-label">Operações</label><input class="gi-input" id="gp-n-op" type="number" min="0" placeholder="0"></div>
+          <div><label class="gi-label">Máquinas</label><input class="gi-input" id="gp-n-equip" type="number" min="0" placeholder="0"></div>
+          <div><label class="gi-label">Ordens Totais</label><input class="gi-input" id="gp-ordens-totais" type="number" min="0" placeholder="0"></div>
+          <div><label class="gi-label">Ordens Abertas</label><input class="gi-input" id="gp-ordens-abertas" type="number" min="0" placeholder="0"></div>
         </div>
-        <!-- Linha 3: Restantes + Observação -->
         <div class="gi-form-row" style="grid-template-columns:1fr 1fr 1fr 2fr;margin-bottom:10px">
           <div><label class="gi-label">Pendências Abertas</label><input class="gi-input" id="gp-pend-abertas" type="number" min="0" placeholder="0"></div>
-          <div><label class="gi-label">Ordens Abertas</label><input class="gi-input" id="gp-ordens-abertas" type="number" min="0" placeholder="0"></div>
-          <div><label class="gi-label">Glosa de Contrato (R$)</label><input class="gi-input" id="gp-glosa" type="number" min="0" step="0.01" placeholder="0,00"></div>
+          <div><label class="gi-label">Preventivas Atrasadas</label><input class="gi-input" id="gp-prev-atras" type="number" min="0" placeholder="0"></div>
+          <div><label class="gi-label">Equip. Sem Comunicação</label><input class="gi-input" id="gp-equip-sem-com" type="number" min="0" placeholder="0"></div>
           <div><label class="gi-label">Observação</label><input class="gi-input" id="gp-obs" placeholder="Destaques, contexto, ações..."></div>
         </div>
         <input type="hidden" id="gp-editing-id">
@@ -12174,13 +12173,13 @@ function rsRenderAll(){rsIndRenderLista();rsRenderTabela();}
 let _gpEntradas=[];
 
 const GP_CAMPOS=[
-  {id:'nOp',      label:'Nº Operações',      short:'Op.',   menos:false},
-  {id:'nEquip',   label:'Nº Equipamentos',   short:'Equip.',menos:false},
-  {id:'maqParadas',label:'Máq. Paradas',     short:'Paradas',menos:true},
-  {id:'prevAtras', label:'Prev. Atrasadas',  short:'Prev.A', menos:true},
-  {id:'pendAbertas',label:'Pend. Abertas',   short:'Pend.',  menos:true},
-  {id:'ordensAbertas',label:'Ordens Abertas',short:'Ordens', menos:true},
-  {id:'glosa',    label:'Glosa (R$)',         short:'Glosa',  menos:true},
+  {id:'nOp',         label:'Operações',              short:'Op.',    menos:false},
+  {id:'nEquip',      label:'Máquinas',               short:'Máq.',   menos:false},
+  {id:'ordensTotais',label:'Ordens Totais',          short:'OT',     menos:false},
+  {id:'ordensAbertas',label:'Ordens Abertas',        short:'OA',     menos:true},
+  {id:'pendAbertas', label:'Pendências Abertas',     short:'Pend.',  menos:true},
+  {id:'prevAtras',   label:'Preventivas Atrasadas',  short:'Prev.A', menos:true},
+  {id:'equipSemCom', label:'Equip. Sem Comunicação', short:'SemCom', menos:true},
 ];
 
 async function gpLoadFromFirebase(){
@@ -12216,9 +12215,10 @@ function gpSalvar(){
   const gv=id=>parseFloat(document.getElementById(id)?.value||'0')||0;
   const obj={
     programador:prog,periodo,
-    nOp:gv('gp-n-op'),nEquip:gv('gp-n-equip'),maqParadas:gv('gp-maq-paradas'),
-    prevAtras:gv('gp-prev-atras'),pendAbertas:gv('gp-pend-abertas'),
-    ordensAbertas:gv('gp-ordens-abertas'),glosa:gv('gp-glosa'),
+    nOp:gv('gp-n-op'),nEquip:gv('gp-n-equip'),
+    ordensTotais:gv('gp-ordens-totais'),ordensAbertas:gv('gp-ordens-abertas'),
+    pendAbertas:gv('gp-pend-abertas'),prevAtras:gv('gp-prev-atras'),
+    equipSemCom:gv('gp-equip-sem-com'),
     obs:(document.getElementById('gp-obs')?.value||'').trim()
   };
   const editId=document.getElementById('gp-editing-id')?.value||'';
@@ -12229,7 +12229,7 @@ function gpSalvar(){
   }else{
     obj.id='gp_'+Date.now();obj.ts=Date.now();
     _gpEntradas.unshift(obj);
-    ['gp-n-op','gp-n-equip','gp-maq-paradas','gp-prev-atras','gp-pend-abertas','gp-ordens-abertas','gp-glosa','gp-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ['gp-n-op','gp-n-equip','gp-ordens-totais','gp-ordens-abertas','gp-pend-abertas','gp-prev-atras','gp-equip-sem-com','gp-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   }
   gpSalvarTudo();gpRenderAll();showToast('✅ Lançamento salvo!');
 }
@@ -12238,9 +12238,10 @@ function gpEditar(id){
   const e=_gpEntradas.find(x=>x.id===id);if(!e)return;
   const sv=(sid,v)=>{const el=document.getElementById(sid);if(el)el.value=v!=null?v:'';};
   sv('gp-programador',e.programador);sv('gp-periodo',e.periodo.replace('_','/'));
-  sv('gp-n-op',e.nOp);sv('gp-n-equip',e.nEquip);sv('gp-maq-paradas',e.maqParadas);
-  sv('gp-prev-atras',e.prevAtras);sv('gp-pend-abertas',e.pendAbertas);
-  sv('gp-ordens-abertas',e.ordensAbertas);sv('gp-glosa',e.glosa);sv('gp-obs',e.obs);
+  sv('gp-n-op',e.nOp);sv('gp-n-equip',e.nEquip);
+  sv('gp-ordens-totais',e.ordensTotais);sv('gp-ordens-abertas',e.ordensAbertas);
+  sv('gp-pend-abertas',e.pendAbertas);sv('gp-prev-atras',e.prevAtras);
+  sv('gp-equip-sem-com',e.equipSemCom);sv('gp-obs',e.obs);
   sv('gp-editing-id',id);
   const isMes=rsIsMes(e.periodo);
   const modoEl=document.querySelector(`input[name="gp-modo"][value="${isMes?'mes':'semana'}"]`);
@@ -12258,7 +12259,7 @@ function gpDeletar(id){
 }
 
 function gpCancelar(){
-  ['gp-n-op','gp-n-equip','gp-maq-paradas','gp-prev-atras','gp-pend-abertas','gp-ordens-abertas','gp-glosa','gp-obs','gp-editing-id'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['gp-n-op','gp-n-equip','gp-ordens-totais','gp-ordens-abertas','gp-pend-abertas','gp-prev-atras','gp-equip-sem-com','gp-obs','gp-editing-id'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('gp-form-label').textContent='Novo Lançamento';
   document.getElementById('gp-salvar-btn').textContent='💾 Salvar Lançamento';
   document.getElementById('gp-cancelar-btn').style.display='none';
