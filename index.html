@@ -850,6 +850,29 @@ input.filter-sel{padding:5px 8px;height:34px}
       <div class="page-hdr-sub">Selecione uma oficina para abrir o kanban de manutenção</div>
     </div>
     <div id="oficinas-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px"></div>
+    <div style="margin-top:24px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:10px">Subáreas da Oficina</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px">
+        <div onclick="navegarPara('manuterceiros')" style="background:#fff;border:0.5px solid #e9d5ff;border-radius:12px;padding:16px;cursor:pointer;border-top:3px solid #7c3aed;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow=''">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">🏭</span>
+            <div>
+              <div style="font-size:14px;font-weight:600;color:#1e293b">Manutenção de Terceiros</div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:2px">Serviços externos e M.O. de terceiros</div>
+            </div>
+          </div>
+        </div>
+        <div onclick="navegarPara('valepecas')" style="background:#fff;border:0.5px solid #fecaca;border-radius:12px;padding:16px;cursor:pointer;border-top:3px solid #dc2626;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow=''">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">🔩</span>
+            <div>
+              <div style="font-size:14px;font-weight:600;color:#1e293b">Vale Peças</div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:2px">Controle de retirada e devolução de peças</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
