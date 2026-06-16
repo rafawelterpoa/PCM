@@ -2002,6 +2002,7 @@ async function loadFromFirebase(){
             ciclos_operacao:d.ciclos_operacao||0,novo:d.novo||false,
             linhaProduto:d.linhaProduto||'',planta:d.planta||'',estado:d.estado||'',
             municipio:d.municipio||'',tipoContrato:d.tipoContrato||'',frota:d.frota||'',
+            serie:d.serie||'',placa:d.placa||'',fabricante:d.fabricante||'',grupo:d.grupo||'',
           };
         }
       });
@@ -2044,7 +2045,7 @@ async function saveToFirebase(eqIds){
           baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
           frota:eq.frota||'',ciclos_operacao:eq.ciclos_operacao||0,novo:eq.novo||false,
           dataEmbarque:eq.dataEmbarque||'',prevLiberacao:eq.prevLiberacao||'',prevLiberacaoOriginal:eq.prevLiberacaoOriginal||'',reprogramacoes:eq.reprogramacoes||[],nReprog:eq.nReprog||0,destinacao:eq.destinacao||'',localMap:eq.localMap||'',historico:eq.historico||[],
-          planta:eq.planta||'',estado:eq.estado||'',municipio:eq.municipio||'',linhaProduto:eq.linhaProduto||'',tipoContrato:eq.tipoContrato||'',
+          planta:eq.planta||'',estado:eq.estado||'',municipio:eq.municipio||'',linhaProduto:eq.linhaProduto||'',tipoContrato:eq.tipoContrato||'',serie:eq.serie||'',placa:eq.placa||'',fabricante:eq.fabricante||'',grupo:eq.grupo||'',
         ordens:eq.ordens||[],reqCompra:eq.reqCompra||'',tipoManut:eq.tipoManut||'',
         };
       });
@@ -2064,7 +2065,7 @@ async function saveToFirebase(eqIds){
           baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
           frota:eq.frota||'',ciclos_operacao:eq.ciclos_operacao||0,novo:eq.novo||false,
           dataEmbarque:eq.dataEmbarque||'',prevLiberacao:eq.prevLiberacao||'',prevLiberacaoOriginal:eq.prevLiberacaoOriginal||'',reprogramacoes:eq.reprogramacoes||[],nReprog:eq.nReprog||0,destinacao:eq.destinacao||'',localMap:eq.localMap||'',historico:eq.historico||[],
-          planta:eq.planta||'',estado:eq.estado||'',municipio:eq.municipio||'',linhaProduto:eq.linhaProduto||'',tipoContrato:eq.tipoContrato||'',
+          planta:eq.planta||'',estado:eq.estado||'',municipio:eq.municipio||'',linhaProduto:eq.linhaProduto||'',tipoContrato:eq.tipoContrato||'',serie:eq.serie||'',placa:eq.placa||'',fabricante:eq.fabricante||'',grupo:eq.grupo||'',
           ordens:eq.ordens||[],reqCompra:eq.reqCompra||'',tipoManut:eq.tipoManut||'',
         });
       }
@@ -4744,6 +4745,8 @@ async function doBaseUpdate(){
       if(n.linhaProduto)eq.linhaProduto=n.linhaProduto;if(n.planta)eq.planta=n.planta;
       if(n.estado)eq.estado=n.estado;if(n.municipio)eq.municipio=n.municipio;
       if(n.tipoContrato)eq.tipoContrato=n.tipoContrato;eq.frota=n.frota||eq.frota||'';
+      if(n.serie)eq.serie=n.serie;if(n.placa)eq.placa=n.placa;
+      if(n.fabricante)eq.fabricante=n.fabricante;if(n.grupo)eq.grupo=n.grupo;
       // Preservar campo alugaradoFilial (alugado mas na oficina fazendo manutenção)
       eq.alugaradoFilial=n.alugaradoFilial||false;
       eq.baixado=false;
@@ -4889,17 +4892,17 @@ function parseCSVToEquipamentos(csvText){
   const temGerencial=hdrL.includes('exibir gerencialmente');
   for(let i=2;i<lines.length;i++){
     const c=lines[i].split(';').map(x=>x.replace(/^"|"$/g,'').trim());
-    let frota,id,linhaProduto,familia,grupo,gerencial,fabric,modelo,clienteRes,oficina,tipoContrato,clienteNfe,planta,estado,municipio,status,alugaradoFilial='';
+    let frota,serie,id,placa,linhaProduto,familia,grupo,gerencial,fabric,modelo,clienteRes,oficina,tipoContrato,clienteNfe,planta,estado,municipio,status,alugaradoFilial='';
     if(temLinhaP&&c.length<18){continue;} // linha malformada — pular
     if(temLinhaP&&c.length>=19){
       // Formato 37 — 19 cols: nova col "Alugado na filial?" em c[17], Status em c[18]
-      frota=c[0];id=c[2];linhaProduto=c[4];familia=c[5];grupo=c[6];gerencial=c[7];fabric=c[8];modelo=c[9];clienteRes=c[10];oficina=c[11];tipoContrato=c[12];clienteNfe=c[13];planta=c[14];estado=c[15];municipio=c[16];alugaradoFilial=c[17];status=c[18];
+      frota=c[0];serie=c[1];id=c[2];placa=c[3];linhaProduto=c[4];familia=c[5];grupo=c[6];gerencial=c[7];fabric=c[8];modelo=c[9];clienteRes=c[10];oficina=c[11];tipoContrato=c[12];clienteNfe=c[13];planta=c[14];estado=c[15];municipio=c[16];alugaradoFilial=c[17];status=c[18];
     } else if(temLinhaP&&c.length>=18){
       // Formato 36 — 18 cols (padrão anterior): Frota|Série|ID|Placa|LinhaProd|Familia|Grupo|Gerencial|Fabric|Modelo|ClienteRes|Filial|TipoCtrt|ClienteNFe|Planta|Estado|Municipio|Status
-      frota=c[0];id=c[2];linhaProduto=c[4];familia=c[5];grupo=c[6];gerencial=c[7];fabric=c[8];modelo=c[9];clienteRes=c[10];oficina=c[11];tipoContrato=c[12];clienteNfe=c[13];planta=c[14];estado=c[15];municipio=c[16];status=c[17];
+      frota=c[0];serie=c[1];id=c[2];placa=c[3];linhaProduto=c[4];familia=c[5];grupo=c[6];gerencial=c[7];fabric=c[8];modelo=c[9];clienteRes=c[10];oficina=c[11];tipoContrato=c[12];clienteNfe=c[13];planta=c[14];estado=c[15];municipio=c[16];status=c[17];
     } else if(temGerencial&&c.length>=17){
       // Formato 35 (17 cols): tem Gerencial, sem Linha de produto
-      frota=c[0];id=c[2];familia=c[4];grupo=c[5];gerencial=c[6];fabric=c[7];modelo=c[8];clienteRes=c[9];oficina=c[10];tipoContrato=c[11];clienteNfe=c[12];planta=c[13];estado=c[14];municipio=c[15];status=c[16];
+      frota=c[0];serie=c[1];id=c[2];placa=c[3];familia=c[4];grupo=c[5];gerencial=c[6];fabric=c[7];modelo=c[8];clienteRes=c[9];oficina=c[10];tipoContrato=c[11];clienteNfe=c[12];planta=c[13];estado=c[14];municipio=c[15];status=c[16];
     } else {
       // Formato 34 (17 cols): sem Gerencial — usa filtro SEM_MOTOR_SET
       if(c.length<16)continue;
@@ -4921,7 +4924,7 @@ function parseCSVToEquipamentos(csvText){
     // Regra: Alugado mas fisicamente na oficina (alugaradoFilial=sim) → entra no Kanban como Manutenção
     const emFilial=alugaradoFilial.toLowerCase()==='sim';
     if(sn==='Alugado'&&emFilial)sn='Manutenção';
-    equips.push({id,equipamento:grupo||familia,modelo:`${fabric||''} ${modelo||''}`.trim(),tipo:familia,linhaProduto:linhaProduto||'',oficina:(oficina||'').trim(),status:sn,alugaradoFilial:emFilial,cliente:(clienteRes||'').trim(),reservado:!!(clienteRes||'').trim(),planta:(planta||'').trim(),estado:(estado||'').trim(),municipio:(municipio||'').trim(),tipoContrato:(tipoContrato||'').trim(),clienteNfe:(clienteNfe||'').trim(),frota:(frota||'').trim()});
+    equips.push({id,equipamento:grupo||familia,modelo:`${fabric||''} ${modelo||''}`.trim(),tipo:familia,linhaProduto:linhaProduto||'',oficina:(oficina||'').trim(),status:sn,alugaradoFilial:emFilial,cliente:(clienteRes||'').trim(),reservado:!!(clienteRes||'').trim(),planta:(planta||'').trim(),estado:(estado||'').trim(),municipio:(municipio||'').trim(),tipoContrato:(tipoContrato||'').trim(),clienteNfe:(clienteNfe||'').trim(),frota:(frota||'').trim(),serie:(serie||'').trim(),placa:(placa||'').trim(),fabricante:(fabric||'').trim(),grupo:(grupo||familia||'').trim()});
   }
   return equips;
 }
@@ -12544,6 +12547,7 @@ function rcdRenderTratamento() {
             ${extraInfo}
           </div>
           ${isInsp ? `<button onclick="rcdInspAbrir('${r.id}')" style="padding:4px 8px;background:#eff0ff;color:#6366f1;border:1px solid #c7d2fe;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;margin-left:8px">✏ Editar</button>` : ''}
+          ${status==='em_orcamento' ? `<button onclick="rcdOrcAbrir('${r.id}')" style="padding:4px 8px;background:#fffbeb;color:#f59e0b;border:1px solid #fde68a;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;margin-left:8px">📄 Orçamento</button>` : ''}
         </div>
         <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">
           ${prox ? `<button onclick="rcdAvancar('${r.id}','${prox}')" ${bloqueado?'disabled title="Preencha a ordem de inspeção primeiro"':''} style="flex:1;padding:5px 8px;background:${bloqueado?'#e2e8f0':cor};color:${bloqueado?'#94a3b8':'#fff'};border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:${bloqueado?'not-allowed':'pointer'}">→ ${proxLbl}</button>` : ''}
@@ -12552,6 +12556,49 @@ function rcdRenderTratamento() {
       </div>`;
     }).join('');
   });
+}
+
+function rcdOrcAbrir(id) {
+  const reg = _rcdRegistros[id]; if(!reg) return;
+  const eq = state[reg.equip_id] || {};
+  const orig = (EQUIPAMENTOS_ORIG||[]).find(e=>e.id===reg.equip_id)||{};
+  document.getElementById('rcd-orc-id').value = id;
+  // Auto-fill cliente
+  let cli = reg.rcd_cliente || eq.cliente || eq.planta || orig.planta || '';
+  if(!cli){const _h=(eq.historico||[]).slice().reverse().find(h=>h.planta_obra||(h.from&&h.from.startsWith('Reservado:')));if(_h)cli=_h.planta_obra||_h.from.replace('Reservado:','').trim();}
+  document.getElementById('rcd-orc-cliente').textContent = cli || '—';
+  // Auto-fill dados do equipamento
+  document.getElementById('rcd-orc-id-eq').textContent   = reg.equip_id || '—';
+  document.getElementById('rcd-orc-serie').textContent    = eq.serie || orig.serie || '—';
+  document.getElementById('rcd-orc-placa').textContent    = eq.placa || orig.placa || '—';
+  document.getElementById('rcd-orc-grupo').textContent    = eq.grupo || orig.grupo || eq.tipo || '—';
+  document.getElementById('rcd-orc-fabricante').textContent = eq.fabricante || orig.fabricante || '—';
+  document.getElementById('rcd-orc-modelo').textContent   = eq.modelo || orig.modelo || '—';
+  // Campos editáveis — preenche se já salvos
+  document.getElementById('rcd-orc-numero').value      = reg.orc_numero || '';
+  document.getElementById('rcd-orc-data').value        = reg.orc_data || '';
+  document.getElementById('rcd-orc-valor').value       = reg.orc_valor || '';
+  document.getElementById('rcd-orc-responsavel').value = reg.orc_responsavel || (currentUser?.nome || '');
+  document.getElementById('rcd-orc-descricao').value   = reg.orc_descricao || '';
+  document.getElementById('rcd-orc-modal').style.display = 'flex';
+}
+
+function rcdOrcFechar() {
+  document.getElementById('rcd-orc-modal').style.display = 'none';
+}
+
+async function rcdOrcSalvar() {
+  const id = document.getElementById('rcd-orc-id').value;
+  const reg = _rcdRegistros[id]; if(!reg) return;
+  reg.orc_numero      = document.getElementById('rcd-orc-numero').value.trim();
+  reg.orc_data        = document.getElementById('rcd-orc-data').value;
+  reg.orc_valor       = document.getElementById('rcd-orc-valor').value;
+  reg.orc_responsavel = document.getElementById('rcd-orc-responsavel').value.trim();
+  reg.orc_descricao   = document.getElementById('rcd-orc-descricao').value.trim();
+  await rcdSalvarRegistro(reg);
+  rcdOrcFechar();
+  rcdRender();
+  showToast('📄 Orçamento salvo');
 }
 
 function rcdInspAbrir(id) {
@@ -14565,6 +14612,56 @@ if ('serviceWorker' in navigator) {
       <!-- HISTÓRICO -->
       <div id="rcd-panel-historico" style="display:none">
         <div id="rcd-historico-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
+
+    <!-- MODAL ORÇAMENTO -->
+    <div id="rcd-orc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9200;align-items:center;justify-content:center">
+      <div style="background:#fff;border-radius:14px;padding:24px 28px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+        <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:6px">📄 Orçamento de Avaria</div>
+        <input type="hidden" id="rcd-orc-id">
+
+        <!-- Dados do equipamento (somente leitura) -->
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;margin-bottom:16px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#94a3b8;margin-bottom:8px">Equipamento</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:12px">
+            <div><span style="color:#94a3b8">Cliente:</span> <span id="rcd-orc-cliente" style="font-weight:600;color:#1e293b">—</span></div>
+            <div><span style="color:#94a3b8">Nº Interno:</span> <span id="rcd-orc-id-eq" style="font-weight:600;color:#1e293b">—</span></div>
+            <div><span style="color:#94a3b8">Nº Série:</span> <span id="rcd-orc-serie" style="font-weight:600;color:#1e293b">—</span></div>
+            <div><span style="color:#94a3b8">Placa:</span> <span id="rcd-orc-placa" style="font-weight:600;color:#1e293b">—</span></div>
+            <div><span style="color:#94a3b8">Grupo:</span> <span id="rcd-orc-grupo" style="font-weight:600;color:#1e293b">—</span></div>
+            <div><span style="color:#94a3b8">Fabricante:</span> <span id="rcd-orc-fabricante" style="font-weight:600;color:#1e293b">—</span></div>
+            <div style="grid-column:1/-1"><span style="color:#94a3b8">Modelo:</span> <span id="rcd-orc-modelo" style="font-weight:600;color:#1e293b">—</span></div>
+          </div>
+        </div>
+
+        <!-- Campos do orçamento -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Nº do Orçamento</label>
+            <input id="rcd-orc-numero" type="text" placeholder="Ex: ORC-2024-001" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Data do Orçamento</label>
+            <input id="rcd-orc-data" type="date" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Valor (R$)</label>
+            <input id="rcd-orc-valor" type="number" placeholder="0,00" step="0.01" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Responsável pelo Orçamento</label>
+            <input id="rcd-orc-responsavel" type="text" placeholder="Nome" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
+          </div>
+        </div>
+        <div style="margin-bottom:20px">
+          <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Descrição das Avarias</label>
+          <textarea id="rcd-orc-descricao" rows="3" placeholder="Descreva as avarias identificadas..." style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="rcdOrcSalvar()" style="flex:1;padding:9px;background:#f59e0b;color:#fff;border:none;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">Salvar Orçamento</button>
+          <button onclick="rcdOrcFechar()" style="flex:1;padding:9px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">Cancelar</button>
+        </div>
       </div>
     </div>
 
