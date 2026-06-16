@@ -12518,12 +12518,13 @@ function rcdRenderTratamento() {
       const isInsp = status === 'aguardando_inspecao';
       const temOrdem = !!(r.ordem_inspecao);
       const bloqueado = isInsp && !temOrdem;
+      const clienteCard = r.rcd_cliente || (state[r.equip_id]?.cliente) || '';
       const extraInfo = isInsp ? `
         <div style="margin-top:6px;display:flex;flex-direction:column;gap:3px">
           <div style="font-size:10px;color:${temOrdem?'#6366f1':'#ef4444'};font-weight:600">
             ${temOrdem ? '📋 OM: ' + r.ordem_inspecao : '⚠ Ordem de inspeção pendente'}
           </div>
-          ${r.rcd_cliente ? `<div style="font-size:10px;color:#64748b">👤 ${r.rcd_cliente}</div>` : ''}
+          ${clienteCard ? `<div style="font-size:10px;color:#64748b">👤 ${clienteCard}</div>` : ''}
           ${r.dt_entrada_inspecao ? `<div style="font-size:10px;color:#64748b">📅 ${new Date(r.dt_entrada_inspecao+'T00:00').toLocaleDateString('pt-BR')}</div>` : ''}
         </div>` : '';
       return `<div style="background:#fff;border:1px solid #e2e8f0;border-left:3px solid ${cor};border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
