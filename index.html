@@ -4529,14 +4529,7 @@ async function doBaseUpdate(){
   novos.forEach(n=>{const o=EQUIPAMENTOS_ORIG.find(e=>e.id===n.id);if(o){o.status=n.status;o.oficina=n.oficina||o.oficina;}});
   const user=currentUser?currentUser.nome:'sistema';
   let adicionados=0,baixados=0,atualizados=0;
-  // Marcar saídas — etapa='alugado' (oculto no board)
-  // REGRA: equipamentos em pátio (pronto) são protegidos — não saem por CSV
-  Object.values(state).forEach(eq=>{
-    if(!idsNovos.has(eq.id)&&eq.etapa!=='alugado'&&eq.etapa!=='pronto'){
-      eq.etapa='alugado';eq.etapa_desde=agora;baixados++;
-      registrarAlteracao('saida',eq.id,eq.equipamento,eq.oficina,user);
-    }
-  });
+  // Equipamentos ausentes do CSV permanecem onde estão — saída só via status Alugado
   const _recentRetornos=new Set(); // IDs que retornaram NESTE upload
   novos.forEach(n=>{
     if(state[n.id]){
@@ -4562,7 +4555,10 @@ async function doBaseUpdate(){
         fbLogMove({eqId:eq.id,nome:eq.equipamento,from:'Operação (Alugado)',to:`Oficina — Aguard. Movim. (Ciclo ${eq.ciclos_operacao})`,ts:agora,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:'regra-sistema',oficina:n.oficina,visao:'retorno_operacao'});
       }
       // REGRA: equipamento saiu para operação (CSV marca como Alugado)
-      if(n.status==='Alugado'&&eq.etapa!=='alugado'&&!n.alugaradoFilial){eq.etapa='alugado';}
+      if(n.status==='Alugado'&&eq.etapa!=='alugado'&&!n.alugaradoFilial){
+        eq.etapa='alugado';eq.etapa_desde=agora;baixados++;
+        registrarAlteracao('saida',eq.id,eq.equipamento,eq.oficina,user);
+      }
       // REGRA: equipamento em chegada sem ação + CSV Disponível → vai para pátio
       // Só aplica se o retorno aconteceu NESTE upload (evita mover equipamentos que já estavam em chegada)
       const semAcaoOficina=eq.etapa==='chegada'&&!Object.keys(eq.assinaturas||{}).length&&!eq.etapa_interna&&!Object.keys(eq.tempo_etapas||{}).filter(k=>k!=='chegada').length;
