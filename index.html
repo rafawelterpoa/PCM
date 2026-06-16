@@ -12566,6 +12566,7 @@ function rcdInspAbrir(id) {
     if (_h) cliente = _h.planta_obra || _h.from.replace('Reservado:', '').trim();
   }
   document.getElementById('rcd-insp-cliente').value = cliente || '';
+  document.getElementById('rcd-insp-cliente-display').textContent = cliente || '—';
   document.getElementById('rcd-insp-data').value = reg.dt_entrada_inspecao || '';
   const modal = document.getElementById('rcd-insp-modal');
   modal.style.display = 'flex';
@@ -14578,8 +14579,8 @@ if ('serviceWorker' in navigator) {
         </div>
         <div style="margin-bottom:14px">
           <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Cliente</label>
-          <div id="rcd-insp-cliente-display" style="padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;color:#1e293b;min-height:36px;display:none">—</div>
-          <input id="rcd-insp-cliente" type="text" placeholder="Puxado automaticamente do histórico" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
+          <div id="rcd-insp-cliente-display" style="padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;color:#1e293b;min-height:36px">—</div>
+          <input type="hidden" id="rcd-insp-cliente">
         </div>
         <div style="margin-bottom:20px">
           <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Data de Entrada para Inspeção</label>
