@@ -12358,11 +12358,11 @@ function gpRenderTabela(){
       <td style="padding:8px 12px;font-weight:700;color:#1e293b;white-space:nowrap">${e.programador}</td>
       <td style="padding:8px 12px;text-align:center;font-weight:600;color:#0f766e">${e.nOp??'—'}</td>
       <td style="padding:8px 12px;text-align:center;font-weight:600;color:#0f766e">${e.nEquip??'—'}</td>
-      <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.maqParadas>0?'#dc2626':'#16a34a'}">${e.maqParadas??'—'}</td>
-      <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.prevAtras>0?'#dc2626':'#16a34a'}">${e.prevAtras??'—'}</td>
-      <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.pendAbertas>0?'#d97706':'#16a34a'}">${e.pendAbertas??'—'}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:600;color:#0f766e">${e.ordensTotais??'—'}</td>
       <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.ordensAbertas>0?'#d97706':'#16a34a'}">${e.ordensAbertas??'—'}</td>
-      <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.glosa>0?'#dc2626':'#16a34a'}">${e.glosa>0?'R$ '+e.glosa.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.pendAbertas>0?'#d97706':'#16a34a'}">${e.pendAbertas??'—'}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.prevAtras>0?'#dc2626':'#16a34a'}">${e.prevAtras??'—'}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:600;color:${e.equipSemCom>0?'#dc2626':'#16a34a'}">${e.equipSemCom??'—'}</td>
       <td style="padding:8px 12px;font-size:11px;color:#64748b;max-width:200px">${e.obs||'—'}</td>
       <td style="padding:8px 12px;text-align:center">
         <button onclick="gpEditar('${e.id}')" style="background:none;border:none;cursor:pointer;color:#F37021;font-size:13px" title="Editar">✏</button>
@@ -12375,13 +12375,13 @@ function gpRenderTabela(){
   <table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="background:#f8fafc">
       <th style="${colStyle};text-align:left">Programador</th>
-      <th style="${colStyle}">Nº Op.</th>
-      <th style="${colStyle}">Nº Equip.</th>
-      <th style="${colStyle}">Máq. Paradas</th>
-      <th style="${colStyle}">Prev. Atras.</th>
-      <th style="${colStyle}">Pend. Abertas</th>
+      <th style="${colStyle}">Operações</th>
+      <th style="${colStyle}">Máquinas</th>
+      <th style="${colStyle}">Ordens Totais</th>
       <th style="${colStyle}">Ordens Abertas</th>
-      <th style="${colStyle}">Glosa</th>
+      <th style="${colStyle}">Pend. Abertas</th>
+      <th style="${colStyle}">Prev. Atrasadas</th>
+      <th style="${colStyle}">Sem Comunicação</th>
       <th style="${colStyle}">Observação</th>
       <th style="${colStyle}">Ações</th>
     </tr></thead>
