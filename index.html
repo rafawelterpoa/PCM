@@ -13777,6 +13777,7 @@ function snavSetActive(id){
   // Oculta painéis fixos ao navegar para outra área
   if(id!=='snav-valepecas'){const vp=document.getElementById('page-valepecas');if(vp)vp.style.display='none';}
   if(id!=='snav-manuterceiros'){const mt=document.getElementById('page-manuterceiros');if(mt)mt.style.display='none';}
+  if(id!=='snav-rcd'){const rcd=document.getElementById('page-rcd');if(rcd)rcd.style.display='none';}
 }
 
 function navegarPara(destino){
@@ -13795,12 +13796,8 @@ function navegarPara(destino){
 // ── RCD ───────────────────────────────────────────────────────────────────────
 function paginaRcd(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  // Fecha páginas fixas
-  ['page-valepecas','page-manuterceiros','page-oficinas','page-patio','page-operacoes','page-rcd'].forEach(id=>{
-    const el=document.getElementById(id);if(el)el.style.display='none';
-  });
   const pg=document.getElementById('page-rcd');
-  if(pg){pg.style.display='block';}
+  if(pg) pg.style.display='block';
   rcdDesmobSub('triagem');
   rcdCarregar();
 }
