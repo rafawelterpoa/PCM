@@ -12209,7 +12209,7 @@ async function gpLoadFromFirebase(){
   try{
     const r=await fetch(FB_BASE+'/gi_gestprog/shared.json');
     const d=await r.json();
-    _gpEntradas=d&&typeof d==='object'?Object.values(d).sort((a,b)=>rsParseWeek(b.periodo)-rsParseWeek(a.periodo)):[];
+    _gpEntradas=d&&typeof d==='object'?Object.values(d).sort((a,b)=>rsParseWeek(a.periodo)-rsParseWeek(b.periodo)):[];
   }catch(e){_gpEntradas=[];}
   gpRenderAll();
 }
@@ -12291,7 +12291,7 @@ function gpCancelar(){
 
 function gpGetTodosPeriodos(){
   const set=new Set(_gpEntradas.map(e=>e.periodo));
-  return[...set].sort((a,b)=>rsParseWeek(b)-rsParseWeek(a));
+  return[...set].sort((a,b)=>rsParseWeek(a)-rsParseWeek(b));
 }
 
 function gpGetPeriodosSelecionados(){
