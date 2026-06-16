@@ -802,6 +802,10 @@ input.filter-sel{padding:5px 8px;height:34px}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     <span class="snav-label">Prog.Of.</span>
   </div>
+  <div class="snav-item" id="snav-rcd" onclick="navegarPara('rcd')" title="RCD — Avarias">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span class="snav-label">RCD</span>
+  </div>
   <div class="snav-item" id="snav-manuterceiros" onclick="navegarPara('manuterceiros')" title="Manut. Terceiros">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
     <span class="snav-label">M. Terc.</span>
@@ -12398,6 +12402,181 @@ function gpLimparFiltros(){
 
 function gpRenderAll(){gpRenderPeriodoChecks();gpRenderTabela();}
 
+// ── RCD — AVARIAS ─────────────────────────────────────────────────────────────
+const RCD_FB = `${FB_BASE}/rcd_desmob`;
+let _rcdRegistros = {};
+let _rcdSubAtual = 'triagem';
+
+async function rcdCarregar() {
+  try {
+    const r = await fetch(RCD_FB + '.json');
+    const d = await r.json();
+    _rcdRegistros = (d && typeof d === 'object') ? d : {};
+  } catch(e) { _rcdRegistros = {}; }
+  rcdRender();
+}
+
+async function rcdSalvarRegistro(reg) {
+  await fetch(`${RCD_FB}/${reg.id}.json`, {
+    method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(reg)
+  });
+  _rcdRegistros[reg.id] = reg;
+}
+
+async function rcdDeletarRegistro(id) {
+  await fetch(`${RCD_FB}/${id}.json`, { method: 'DELETE' });
+  delete _rcdRegistros[id];
+}
+
+function rcdAba(aba) {
+  ['desmob','operacao'].forEach(a => {
+    document.getElementById('rcd-aba-'+a).style.display = a===aba ? '' : 'none';
+    const btn = document.getElementById('rcd-tab-'+a);
+    if(btn) { btn.style.color = a===aba ? '#b45309' : '#94a3b8'; btn.style.borderBottomColor = a===aba ? '#b45309' : 'transparent'; }
+  });
+}
+
+function rcdDesmobSub(sub) {
+  _rcdSubAtual = sub;
+  ['triagem','tratamento','historico'].forEach(s => {
+    const panel = document.getElementById('rcd-panel-'+s);
+    if(panel) panel.style.display = s===sub ? '' : 'none';
+    const btn = document.getElementById('rcd-dsub-'+s);
+    if(btn) { btn.style.background = s===sub ? '#b45309' : '#f1f5f9'; btn.style.color = s===sub ? '#fff' : '#64748b'; }
+  });
+  rcdRender();
+}
+
+function rcdRender() {
+  if(_rcdSubAtual === 'triagem') rcdRenderTriagem();
+  else if(_rcdSubAtual === 'tratamento') rcdRenderTratamento();
+  else rcdRenderHistorico();
+}
+
+function rcdRenderTriagem() {
+  const el = document.getElementById('rcd-triagem-lista'); if(!el) return;
+  // Equipamentos em 'chegada' no kanban
+  const chegadas = Object.values(state).filter(e => !e.baixado && e.etapa === 'chegada');
+  // Filtra os que ainda não têm registro ativo nessa entrada (cria chave por eq+ts de chegada)
+  const ativos = Object.values(_rcdRegistros).filter(r => r.status !== 'nao_elegivel' && r.status !== 'faturado' && r.status !== 'encerrado');
+  const idsAtivos = new Set(ativos.map(r => r.equip_id + '|' + r.chegada_ts));
+
+  const pendentes = chegadas.filter(e => {
+    const key = e.id + '|' + (e.etapa_desde || '');
+    return !idsAtivos.has(key);
+  });
+
+  if(!pendentes.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px">Nenhum equipamento aguardando triagem.</div>'; return; }
+
+  el.innerHTML = pendentes.map(e => {
+    const desde = e.etapa_desde ? new Date(e.etapa_desde).toLocaleDateString('pt-BR') : '—';
+    return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:#1e293b">${e.id}</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px">${e.equipamento||'—'}</div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:3px">Oficina: ${e.oficina||'—'} &nbsp;·&nbsp; Chegada: ${desde}</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="rcdTriagem('${e.id}','${e.etapa_desde||''}',true)" style="padding:7px 16px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">✔ Elegível</button>
+        <button onclick="rcdTriagem('${e.id}','${e.etapa_desde||''}',false)" style="padding:7px 16px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">✘ Não elegível</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function rcdTriagem(equipId, chegadaTs, elegivel) {
+  const eq = state[equipId]; if(!eq) return;
+  if(!elegivel) {
+    // Registra como não elegível e some da triagem
+    const reg = { id: 'rcd_' + Date.now(), equip_id: equipId, equip_nome: eq.equipamento||'', oficina: eq.oficina||'', chegada_ts: chegadaTs, status: 'nao_elegivel', ts_triagem: Date.now() };
+    await rcdSalvarRegistro(reg);
+  } else {
+    // Elegível → vai para Aguardando Inspeção
+    const reg = { id: 'rcd_' + Date.now(), equip_id: equipId, equip_nome: eq.equipamento||'', oficina: eq.oficina||'', chegada_ts: chegadaTs, status: 'aguardando_inspecao', ts_triagem: Date.now() };
+    await rcdSalvarRegistro(reg);
+    rcdDesmobSub('tratamento');
+  }
+  rcdRender();
+  showToast(elegivel ? '✅ Encaminhado para tratamento' : '✘ Marcado como não elegível');
+}
+
+function rcdRenderTratamento() {
+  const fases = { aguardando_inspecao: 'rcd-col-inspecao', em_orcamento: 'rcd-col-orcamento', aguardando_cliente: 'rcd-col-cliente' };
+  const proxima = { aguardando_inspecao: 'em_orcamento', em_orcamento: 'aguardando_cliente', aguardando_cliente: null };
+  const proximaLabel = { aguardando_inspecao: 'Em Orçamento', em_orcamento: 'Aguardando Cliente', aguardando_cliente: null };
+  const STATUS_COR = { aguardando_inspecao:'#6366f1', em_orcamento:'#f59e0b', aguardando_cliente:'#10b981' };
+  const STATUS_LABEL = { aguardando_inspecao:'Ag. Inspeção', em_orcamento:'Em Orçamento', aguardando_cliente:'Ag. Cliente' };
+
+  Object.entries(fases).forEach(([status, colId]) => {
+    const col = document.getElementById(colId); if(!col) return;
+    const regs = Object.values(_rcdRegistros).filter(r => r.status === status);
+    if(!regs.length) { col.innerHTML = '<div style="padding:16px;text-align:center;color:#cbd5e1;font-size:11px">Nenhum registro</div>'; return; }
+    col.innerHTML = regs.map(r => {
+      const cor = STATUS_COR[status];
+      const prox = proxima[status];
+      const proxLbl = proximaLabel[status];
+      const desde = r.ts_triagem ? new Date(r.ts_triagem).toLocaleDateString('pt-BR') : '—';
+      return `<div style="background:#fff;border:1px solid #e2e8f0;border-left:3px solid ${cor};border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+        <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id}</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px">${r.equip_nome}</div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:3px">${r.oficina} · ${desde}</div>
+        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">
+          ${prox ? `<button onclick="rcdAvancar('${r.id}','${prox}')" style="flex:1;padding:5px 8px;background:${cor};color:#fff;border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer">→ ${proxLbl}</button>` : ''}
+          <button onclick="rcdConcluir('${r.id}')" style="flex:1;padding:5px 8px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer">Concluir</button>
+        </div>
+      </div>`;
+    }).join('');
+  });
+}
+
+async function rcdAvancar(id, novoStatus) {
+  const reg = _rcdRegistros[id]; if(!reg) return;
+  reg.status = novoStatus;
+  reg['ts_'+novoStatus] = Date.now();
+  await rcdSalvarRegistro(reg);
+  rcdRender();
+  const labels = { em_orcamento:'Em Orçamento', aguardando_cliente:'Aguardando Cliente' };
+  showToast('→ ' + (labels[novoStatus]||novoStatus));
+}
+
+async function rcdConcluir(id) {
+  const reg = _rcdRegistros[id]; if(!reg) return;
+  const opcao = confirm('Faturado?\n\nOK = Faturado\nCancelar = Encerrado sem faturamento');
+  reg.status = opcao ? 'faturado' : 'encerrado';
+  reg.ts_conclusao = Date.now();
+  await rcdSalvarRegistro(reg);
+  rcdRender();
+  showToast(opcao ? '💰 Faturado' : '🔒 Encerrado sem faturamento');
+}
+
+function rcdRenderHistorico() {
+  const el = document.getElementById('rcd-historico-lista'); if(!el) return;
+  const regs = Object.values(_rcdRegistros).filter(r => r.status === 'faturado' || r.status === 'encerrado')
+    .sort((a,b) => (b.ts_conclusao||0) - (a.ts_conclusao||0));
+  if(!regs.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px">Nenhum registro concluído.</div>'; return; }
+  const STATUS_COR = { faturado:'#16a34a', encerrado:'#64748b' };
+  const STATUS_LABEL = { faturado:'Faturado', encerrado:'Encerrado s/ fat.' };
+  el.innerHTML = regs.map(r => {
+    const cor = STATUS_COR[r.status]||'#888';
+    const dt = r.ts_conclusao ? new Date(r.ts_conclusao).toLocaleDateString('pt-BR') : '—';
+    return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id} <span style="font-weight:400;color:#64748b">— ${r.equip_nome}</span></div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:3px">${r.oficina} · Concluído: ${dt}</div>
+      </div>
+      <span style="font-size:11px;font-weight:700;color:${cor};background:${cor}18;padding:4px 10px;border-radius:20px">${STATUS_LABEL[r.status]}</span>
+    </div>`;
+  }).join('');
+}
+
+function navegarParaRcd() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('[id^="page-"]').forEach(p => { if(p.style.display !== undefined) p.style.display = 'none'; });
+  const pg = document.getElementById('page-rcd');
+  if(pg) { pg.style.display = 'block'; }
+  rcdCarregar();
+}
+
 // ── VALE PEÇAS ────────────────────────────────────────────────────────────────
 let _vpRegistros=[];
 let _vpItens=[]; // itens do formulário atual [{pn,qtd,desc}]
@@ -13610,6 +13789,20 @@ function navegarPara(destino){
   if(destino==='valepecas'){paginaValePecas();snavSetActive('snav-valepecas');return;}
   if(destino==='manuterceiros'){paginaManutTerceiros();snavSetActive('snav-manuterceiros');return;}
   if(destino==='confiabilidade'){switchTab('confiabilidade');snavSetActive('snav-confiabilidade');return;}
+  if(destino==='rcd'){paginaRcd();snavSetActive('snav-rcd');return;}
+}
+
+// ── RCD ───────────────────────────────────────────────────────────────────────
+function paginaRcd(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  // Fecha páginas fixas
+  ['page-valepecas','page-manuterceiros','page-oficinas','page-patio','page-operacoes','page-rcd'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+  const pg=document.getElementById('page-rcd');
+  if(pg){pg.style.display='block';}
+  rcdDesmobSub('triagem');
+  rcdCarregar();
 }
 
 // ── OFICINAS ─────────────────────────────────────────────────────────────────
@@ -14260,6 +14453,67 @@ if ('serviceWorker' in navigator) {
 
     <!-- Tabela -->
     <div id="mt-tabela" style="overflow-x:auto"></div>
+  </div>
+</div>
+
+<!-- RCD — AVARIAS -->
+<div id="page-rcd" style="display:none;position:fixed;left:60px;top:56px;right:0;bottom:0;overflow-y:auto;background:#eef1f6;z-index:100">
+  <div style="padding:24px 28px;max-width:1400px">
+    <div class="page-hdr">
+      <div class="page-hdr-title"><span style="color:#b45309">⚠️</span> RCD — Avarias</div>
+      <div class="page-hdr-sub">Controle de cobranças de avarias a clientes</div>
+    </div>
+
+    <!-- Sub-abas -->
+    <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:20px">
+      <button id="rcd-tab-desmob" onclick="rcdAba('desmob')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#b45309;border-bottom:2px solid #b45309;margin-bottom:-2px">Desmobilização</button>
+      <button id="rcd-tab-operacao" onclick="rcdAba('operacao')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px">Em Operação</button>
+    </div>
+
+    <!-- ABA DESMOBILIZAÇÃO -->
+    <div id="rcd-aba-desmob">
+      <!-- Sub-navegação Desmob -->
+      <div style="display:flex;gap:8px;margin-bottom:18px">
+        <button id="rcd-dsub-triagem" onclick="rcdDesmobSub('triagem')" style="padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:#b45309;color:#fff">Triagem</button>
+        <button id="rcd-dsub-tratamento" onclick="rcdDesmobSub('tratamento')" style="padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:#f1f5f9;color:#64748b">Em Tratamento</button>
+        <button id="rcd-dsub-historico" onclick="rcdDesmobSub('historico')" style="padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:#f1f5f9;color:#64748b">Histórico</button>
+        <button onclick="rcdCarregar()" style="margin-left:auto;padding:7px 14px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid #e2e8f0;cursor:pointer;background:#fff;color:#64748b">↻ Atualizar</button>
+      </div>
+
+      <!-- TRIAGEM -->
+      <div id="rcd-panel-triagem">
+        <div style="font-size:11px;color:#64748b;margin-bottom:12px">Equipamentos em <b>Aguardando Movimentação</b> aguardando triagem de avarias.</div>
+        <div id="rcd-triagem-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <!-- EM TRATAMENTO -->
+      <div id="rcd-panel-tratamento" style="display:none">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #6366f1">Aguardando Inspeção</div>
+            <div id="rcd-col-inspecao" style="display:flex;flex-direction:column;gap:8px"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #f59e0b">Em Orçamento</div>
+            <div id="rcd-col-orcamento" style="display:flex;flex-direction:column;gap:8px"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #10b981">Aguardando Cliente</div>
+            <div id="rcd-col-cliente" style="display:flex;flex-direction:column;gap:8px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTÓRICO -->
+      <div id="rcd-panel-historico" style="display:none">
+        <div id="rcd-historico-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
+
+    <!-- ABA EM OPERAÇÃO -->
+    <div id="rcd-aba-operacao" style="display:none">
+      <div style="padding:40px;text-align:center;color:#94a3b8;font-size:13px">Em desenvolvimento</div>
+    </div>
   </div>
 </div>
 
