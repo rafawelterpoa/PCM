@@ -704,7 +704,43 @@ input.filter-sel{padding:5px 8px;height:34px}
     </div>
     <button class="login-btn" onclick="doLogin()">Entrar</button>
     <div class="login-error" id="login-error">Usuário ou senha incorretos.</div>
+    <div style="margin-top:14px;text-align:center">
+      <button onclick="abrirPrimeiroAcesso()" style="background:none;border:none;color:rgba(255,255,255,.55);font-size:11px;cursor:pointer;text-decoration:underline;padding:0">Primeiro acesso? Solicite aqui</button>
+    </div>
     <div class="login-footer">Mills Estruturas e Serviços</div>
+  </div>
+</div>
+
+<!-- PRIMEIRO ACESSO -->
+<div class="login-overlay" id="primeiro-acesso-overlay" style="display:none">
+  <div class="login-box">
+    <img class="login-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVoAAACSCAYAAAAEnQIbAAABCGlDQ1BJQ0MgUHJvZmlsZQAAeJxjYGA8wQAELAYMDLl5JUVB7k4KEZFRCuwPGBiBEAwSk4sLGHADoKpv1yBqL+viUYcLcKakFicD6Q9ArFIEtBxopAiQLZIOYWuA2EkQtg2IXV5SUAJkB4DYRSFBzkB2CpCtkY7ETkJiJxcUgdT3ANk2uTmlyQh3M/Ck5oUGA2kOIJZhKGYIYnBncAL5H6IkfxEDg8VXBgbmCQixpJkMDNtbGRgkbiHEVBYwMPC3MDBsO48QQ4RJQWJRIliIBYiZ0tIYGD4tZ2DgjWRgEL7AwMAVDQsIHG5TALvNnSEfCNMZchhSgSKeDHkMyQx6QJYRgwGDIYMZAKbWPz9HbOBQAABc3ElEQVR4nO39ebAt2XXeif3W2jszz3CnN9aEmlAAqgpAAQUQIECABEmQBAeR7KYoiaKoltSODkVLdrclRzsstcMRtiy7m+6QFWG12m0rbEtqDVbTbIotkc2ZADgCIkigMANVhSpUFarqze/ee4bM3Hsv/7Ezz733DTW8d9+rKb+I8/Kd4Z6Tw861117rW98SBgw4RPzpEvvP//JJ3vOOB5htX2BcVgAkCgCcxe6TggmAkSQRNAFKGfLnkkaSgPqCU6fP88ef+iL/9W/Br4Pc9IMaMOA6MQzaAYeKz/2dH7S17UfZmowhtAgJALvE0CY0/4EkTBKhe+pjgRiYRKJC00aKasJy1vA/feE5/uNfvTCM2QGvOegrvQMDXj/44K3YqHLccuwIOxfOUDrDk/AYKik/MBwRT8RJ3noSjoQjf95JQsXwRNQCmgJHNqZ86Nvf90of4oAB1wT/Su/AgNcPttbHPP3k4xw/ARvrE7DQebB787nDAEgkxEAxoiSc5dCB5rcRjCiwNhlR1zXLumWycfzmH9SAAYeAwdAOODTMdhYc39qkcjvENqEWcVhnVLOxFUsoCUExAaEzsmJgCdd9zkhgidREPIrzjkVvhQcMeI1hMLQDDg2TkZBCS+EdO7s7nDiySQoNiqySAa6zlQo52WWQRDA1QPDd+0kAARFAHJqgruubfkwDBhwGBkM74NDQLA0LkYvnzjMZlcQYCW0LKD3XIFno/qedoU0kMULKoQPp3k4SiAKjyZS6ScQ20cTm5h/UgAGHgMHQDjg0hARlWbIx2WC2fZ66rqmKkoQg+M6wamdctYvcJiQHa8EExaNAFEUksVg2mAllMWFSTV7R4xsw4FoxGNoBh4Zy5GiTsagbfFnhgWgRQ0gIBojl/ydzQE6GJYxkQP85gyiCIYgvsGgkhGXTvoJHN2DAtWMwtAMOFYZiopCUpCCWg64muUAhs2oVQ8gpL933Ol2abO+7MMEks3FtYCMOeI1iGLkDDhFCEumM515dQRLF0Pz6gSEnYPufKzl2231eyNVjpgy1NQNeyxgM7YBDhVo2qZdBrvDaFV/fe75ic13tbwcMeI1gMLQDDg1qXTTWUhcy6AIF3fPMn+2NpgGGGvS5MO0DBLb3OcEQy68PBnfAaxVDjHbAoUFIaFd8kAMI2UD2hQl0jAPoeLL935CwFb+2j9ImhJw8W71uQ8HCgNcmBkM74NDQe7RqaeXFCpFkipJIvcFlLyyglkgYIplH66wXoUmZiSDSGdyslTBgwGsRg6EdcGiI0lG2LOGIKEojBSaKS6y82Wxke8+XfR5tQi0HFSIlJlntSwzQtKf4NWDAawzDyB1waKipKMsRGhpcqokxUrtNFm4TE4fHEHGICAWJ0joVLwyP5IdEUKNxYxqd0rYRLyBFSS2DXzDgtYnB0A44NCybmqaeoxYoHHgV2" style="height:52px;width:auto;display:block;margin:0 auto 20px">
+    <div class="login-title" style="text-align:center">Primeiro Acesso</div>
+    <div class="login-sub" style="text-align:center;margin-bottom:20px">Solicite seu acesso ao sistema PCM</div>
+    <div class="login-field">
+      <label>Nome Completo</label>
+      <input class="login-input" type="text" id="pa-nome" placeholder="Seu nome completo">
+    </div>
+    <div class="login-field">
+      <label>E-mail Mills</label>
+      <input class="login-input" type="text" id="pa-email" placeholder="nome@mills.com.br">
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input class="login-input" type="password" id="pa-senha" placeholder="Crie uma senha">
+    </div>
+    <div class="login-field">
+      <label>Confirmar Senha</label>
+      <input class="login-input" type="password" id="pa-senha2" placeholder="Repita a senha" onkeydown="if(event.key==='Enter')enviarPrimeiroAcesso()">
+    </div>
+    <div class="login-error" id="pa-error" style="display:none"></div>
+    <div id="pa-sucesso" style="display:none;font-size:12px;color:#1D9E75;margin-top:8px;text-align:center;line-height:1.5"></div>
+    <button class="login-btn" id="pa-btn" onclick="enviarPrimeiroAcesso()">Solicitar Acesso</button>
+    <div style="margin-top:12px;text-align:center">
+      <button onclick="fecharPrimeiroAcesso()" style="background:none;border:none;color:rgba(255,255,255,.55);font-size:11px;cursor:pointer;text-decoration:underline;padding:0">← Voltar ao login</button>
+    </div>
+    <div class="login-footer">Mills Estruturas e Serviços</div>
+  </div>
   </div>
 </div>
 
@@ -1490,6 +1526,15 @@ input.filter-sel{padding:5px 8px;height:34px}
     <div class="page-hdr-title"><span style="color:#F37021">⚙️</span> Administração</div>
     <div class="page-hdr-sub">Gerenciamento de usuários e configurações do sistema</div>
   </div>
+  <div class="admin-section" id="admin-pendentes-section">
+    <div class="admin-section-hd">
+      <span>Solicitações de Acesso Pendentes</span>
+      <button class="btn btn-outline btn-sm" onclick="carregarPendentes()">↻ Atualizar</button>
+    </div>
+    <div class="admin-body" id="admin-pendentes-body">
+      <div style="color:var(--text3);font-size:12px;padding:8px 0">Carregando...</div>
+    </div>
+  </div>
   <div class="admin-section">
     <div class="admin-section-hd">
       <span>Usuários do sistema</span>
@@ -1766,6 +1811,9 @@ async function fbGetAll(){const r=await fetch(`${FB_BASE}/equipamentos.json`);if
 async function fbLogMove(e){await fetch(`${FB_BASE}/logs.json`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(e)}).catch(()=>{});}
 async function fbGetUsers(){const r=await fetch(`${FB_BASE}/usuarios.json`);if(!r.ok)return null;return r.json();}
 async function fbSetUsers(u){await fbSet('usuarios',u);}
+async function fbGetPendentes(){const r=await fetch(`${FB_BASE}/usuarios_pendentes.json`);if(!r.ok)return[];const d=await r.json();if(!d)return[];return Array.isArray(d)?d:Object.values(d);}
+async function fbSalvarPendente(p){await fetch(`${FB_BASE}/usuarios_pendentes.json`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});}
+async function fbSetPendentes(arr){await fbSet('usuarios_pendentes',arr.length?arr:null);}
 
 function fbListen(){
   const es=new EventSource(`${FB_BASE}/equipamentos.json?accept=text/event-stream`);
@@ -2008,13 +2056,69 @@ async function initUsuarios(){
   if(typeof giPopularSelects==='function')giPopularSelects();
 }
 
+function abrirPrimeiroAcesso(){
+  document.getElementById('login-overlay').style.display='none';
+  document.getElementById('primeiro-acesso-overlay').style.display='flex';
+  document.getElementById('pa-nome').value='';
+  document.getElementById('pa-email').value='';
+  document.getElementById('pa-senha').value='';
+  document.getElementById('pa-senha2').value='';
+  document.getElementById('pa-error').style.display='none';
+  document.getElementById('pa-sucesso').style.display='none';
+  document.getElementById('pa-btn').disabled=false;
+}
+function fecharPrimeiroAcesso(){
+  document.getElementById('primeiro-acesso-overlay').style.display='none';
+  document.getElementById('login-overlay').style.display='flex';
+}
+async function enviarPrimeiroAcesso(){
+  const nome=document.getElementById('pa-nome').value.trim();
+  const email=document.getElementById('pa-email').value.trim().toLowerCase();
+  const senha=document.getElementById('pa-senha').value.trim();
+  const senha2=document.getElementById('pa-senha2').value.trim();
+  const errEl=document.getElementById('pa-error');
+  const sucEl=document.getElementById('pa-sucesso');
+  const btn=document.getElementById('pa-btn');
+  errEl.style.display='none';
+  if(!nome||!email||!senha||!senha2){errEl.textContent='Preencha todos os campos.';errEl.style.display='block';return;}
+  if(!email.endsWith('@mills.com.br')){errEl.textContent='Use seu e-mail Mills (@mills.com.br).';errEl.style.display='block';return;}
+  if(senha.length<4){errEl.textContent='A senha deve ter ao menos 4 caracteres.';errEl.style.display='block';return;}
+  if(senha!==senha2){errEl.textContent='As senhas não coincidem.';errEl.style.display='block';return;}
+  // Verifica se e-mail já está cadastrado ou pendente
+  const usersExist=usuariosCache.find(u=>(u.login||u.email||'').toLowerCase()===email);
+  if(usersExist){errEl.textContent='Este e-mail já possui acesso cadastrado.';errEl.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Enviando...';
+  try{
+    const pendentes=await fbGetPendentes();
+    const jaPendente=pendentes.find(p=>p.email===email&&p.status==='pendente');
+    if(jaPendente){errEl.textContent='Já existe uma solicitação pendente para este e-mail.';errEl.style.display='block';btn.disabled=false;btn.textContent='Solicitar Acesso';return;}
+    await fbSalvarPendente({nome,email,senha,status:'pendente',ts:new Date().toISOString()});
+    sucEl.innerHTML='✅ Solicitação enviada!<br>Aguarde a aprovação do administrador.<br>Você receberá acesso em breve.';
+    sucEl.style.display='block';
+    btn.textContent='Solicitação Enviada';
+  }catch(e){
+    errEl.textContent='Erro ao enviar solicitação. Tente novamente.';errEl.style.display='block';
+    btn.disabled=false;btn.textContent='Solicitar Acesso';
+  }
+}
+
 function doLogin(){
   const login=document.getElementById('login-user').value.trim().toLowerCase();
   const senha=document.getElementById('login-pass').value.trim();
+  // Verifica usuários pendentes
+  const errEl=document.getElementById('login-error');
   // Primeiro tenta cache (Firebase); se não achar, fallback para USUARIOS_PADRAO (garante acesso master)
   const user=usuariosCache.find(u=>u.login.toLowerCase()===login&&u.senha===senha)
     ||USUARIOS_PADRAO.find(u=>u.login.toLowerCase()===login&&u.senha===senha);
-  if(!user){document.getElementById('login-error').style.display='block';document.getElementById('login-pass').value='';return;}
+  if(!user){
+    // Verifica se está com aprovação pendente
+    fbGetPendentes().then(pend=>{
+      const pen=pend.find(p=>(p.email===login||p.email===login+'@mills.com.br')&&p.status==='pendente');
+      if(pen){errEl.textContent='Seu acesso está aguardando aprovação do administrador.';errEl.style.display='block';}
+      else{errEl.textContent='Usuário ou senha incorretos.';errEl.style.display='block';}
+    }).catch(()=>{errEl.textContent='Usuário ou senha incorretos.';errEl.style.display='block';});
+    document.getElementById('login-pass').value='';return;
+  }
   currentUser=user;
   document.getElementById('login-overlay').style.display='none';
   document.getElementById('header-user').textContent=user.nome+(user.setor?' · '+user.setor:'');
@@ -4395,8 +4499,64 @@ function renderReservas(){
   }).join('');
 }
 
-// ADMIN
-function renderAdminPage(){renderAdminUsers();loadLogJson();}
+// ADMIN — Solicitações pendentes
+async function carregarPendentes(){
+  const el=document.getElementById('admin-pendentes-body');if(!el)return;
+  el.innerHTML='<div style="color:var(--text3);font-size:12px;padding:8px 0">Carregando...</div>';
+  try{
+    const pend=await fbGetPendentes();
+    const ativos=pend.filter(p=>p.status==='pendente');
+    if(!ativos.length){el.innerHTML='<div style="color:var(--text3);font-size:12px;padding:8px 0">Nenhuma solicitação pendente.</div>';return;}
+    el.innerHTML=`<table class="user-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Senha</th><th>Data</th><th>Ações</th></tr></thead><tbody>${
+      ativos.map((p,i)=>`<tr>
+        <td>${p.nome}</td>
+        <td style="font-size:11px">${p.email}</td>
+        <td><code style="font-size:11px;color:var(--text3)">${p.senha}</code></td>
+        <td style="font-size:11px;color:var(--text3)">${p.ts?new Date(p.ts).toLocaleString('pt-BR'):'—'}</td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          <select id="perfil-pend-${i}" style="font-size:11px;padding:2px 4px;border-radius:4px;border:1px solid var(--borda)">
+            <option value="usuario">Usuário</option>
+            <option value="gestor">Gestor</option>
+            <option value="sistemas">Sistemas</option>
+            <option value="master">Master</option>
+          </select>
+          <button class="btn btn-sm" style="background:var(--verde);color:#fff;border:none" onclick="aprovarPendente(${i})">✅ Aprovar</button>
+          <button class="del-btn btn-sm" onclick="rejeitarPendente(${i})">❌ Rejeitar</button>
+        </td>
+      </tr>`).join('')
+    }</tbody></table>`;
+    el._pendentes=ativos;
+  }catch(e){el.innerHTML='<div style="color:var(--terra);font-size:12px">Erro ao carregar solicitações.</div>';}
+}
+async function aprovarPendente(idx){
+  const el=document.getElementById('admin-pendentes-body');
+  const pend=el._pendentes;if(!pend||!pend[idx])return;
+  const p=pend[idx];
+  const perfil=document.getElementById('perfil-pend-'+idx)?.value||'usuario';
+  const login=p.email.split('@')[0].replace(/[^a-z0-9.]/gi,'').toLowerCase();
+  if(usuariosCache.find(u=>u.login===login)){showToast('Login '+login+' já existe. Edite manualmente.');return;}
+  usuariosCache.push({nome:p.nome,login,senha:p.senha,email:p.email,perfil,setor:'',oficina:''});
+  await fbSetUsers(usuariosCache);
+  // Remove da lista de pendentes
+  const todos=await fbGetPendentes();
+  const novos=todos.filter(x=>!(x.email===p.email&&x.status==='pendente'));
+  await fbSetPendentes(novos);
+  showToast('✅ '+p.nome+' aprovado como '+perfil);
+  renderAdminUsers();carregarPendentes();
+}
+async function rejeitarPendente(idx){
+  const el=document.getElementById('admin-pendentes-body');
+  const pend=el._pendentes;if(!pend||!pend[idx])return;
+  const p=pend[idx];
+  if(!confirm('Rejeitar solicitação de '+p.nome+'?'))return;
+  const todos=await fbGetPendentes();
+  const novos=todos.filter(x=>!(x.email===p.email&&x.status==='pendente'));
+  await fbSetPendentes(novos);
+  showToast('Solicitação de '+p.nome+' rejeitada.');
+  carregarPendentes();
+}
+
+function renderAdminPage(){renderAdminUsers();loadLogJson();carregarPendentes();}
 function renderAdminUsers(){
   const tbody=document.getElementById('users-tbody');if(!tbody)return;
   tbody.innerHTML=usuariosCache.map((u,i)=>`<tr>
