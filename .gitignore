@@ -1,0 +1,23 @@
+# Ignora tudo
+*
+
+# Exceto os arquivos do projeto PCM
+!.gitignore
+!index.html
+!pcm-powerbi-sync.user.js
+!manusis4-pcm-deeplink.user.js
+!icon-192.png
+!icon-512.png
+!manifest.json
+!sw.js
+
+# Subpastas do projeto (se houver)
+!ferramentaria/
+ferramentaria/*
+!ferramentaria/index.html
+
+!mediconnect/
+mediconnect/*
+!mediconnect/dra-natalia-welter/
+mediconnect/dra-natalia-welter/*
+!mediconnect/dra-natalia-welter/**
