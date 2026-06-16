@@ -12519,7 +12519,8 @@ function rcdRenderTratamento() {
       const temOrdem = !!(r.ordem_inspecao);
       const bloqueado = isInsp && !temOrdem;
       const _eqCard = state[r.equip_id] || {};
-      let clienteCard = r.rcd_cliente || _eqCard.cliente || '';
+      const _origCard = (EQUIPAMENTOS_ORIG||[]).find(e=>e.id===r.equip_id)||{};
+      let clienteCard = r.rcd_cliente || _eqCard.cliente || _eqCard.planta || _origCard.planta || _origCard.cliente || '';
       if (!clienteCard) {
         const _h = (_eqCard.historico || []).slice().reverse().find(h => h.from && h.from.startsWith('Reservado:'));
         if (_h) clienteCard = _h.from.replace('Reservado:', '').trim();
@@ -12556,8 +12557,8 @@ function rcdInspAbrir(id) {
   const eq = state[reg.equip_id] || {};
   document.getElementById('rcd-insp-id').value = id;
   document.getElementById('rcd-insp-ordem').value = reg.ordem_inspecao || '';
-  // Pega cliente: salvo no registro → campo atual → último "Reservado:" no histórico
-  let cliente = reg.rcd_cliente || eq.cliente || '';
+  const _origInsp = (EQUIPAMENTOS_ORIG||[]).find(e=>e.id===reg.equip_id)||{};
+  let cliente = reg.rcd_cliente || eq.cliente || eq.planta || _origInsp.planta || _origInsp.cliente || '';
   if (!cliente) {
     const hist = (eq.historico || []).slice().reverse();
     const entrada = hist.find(h => h.from && h.from.startsWith('Reservado:'));
