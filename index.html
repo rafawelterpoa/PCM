@@ -12585,8 +12585,45 @@ function rcdOrcAbrir(id) {
   document.getElementById('rcd-orc-grupo').textContent    = eq.grupo || orig.grupo || eq.tipo || '—';
   document.getElementById('rcd-orc-fabricante').textContent = eq.fabricante || orig.fabricante || '—';
   document.getElementById('rcd-orc-modelo').textContent   = eq.modelo || orig.modelo || '—';
-  // Campos editáveis — preenche se já salvos
-  document.getElementById('rcd-orc-numero').value      = reg.orc_numero || '';
+  // Número do orçamento — gerado automaticamente uma única vez
+  const _numInput = document.getElementById('rcd-orc-numero');
+  const _revBtn   = document.getElementById('rcd-orc-rev-btn');
+  if (!reg.orc_numero) {
+    // Gera AAAADDMM-NN sequencial para o dia
+    const _now = new Date();
+    const _yyyy = _now.getFullYear();
+    const _dd   = String(_now.getDate()).padStart(2,'0');
+    const _mm   = String(_now.getMonth()+1).padStart(2,'0');
+    const _pref = `${_yyyy}${_dd}${_mm}`;
+    const _usados = Object.values(_rcdRegistros)
+      .map(r => r.orc_numero || '')
+      .filter(n => { const base = n.replace(/-rev\d+$/i,''); return base.startsWith(_pref + '-'); })
+      .map(n => parseInt((n.replace(/-rev\d+$/i,'')).split('-')[1]) || 0);
+    const _next = _usados.length > 0 ? Math.max(..._usados) + 1 : 1;
+    reg.orc_numero = `${_pref}-${String(_next).padStart(2,'0')}`;
+  }
+  _numInput.value    = reg.orc_numero;
+  _numInput.readOnly = true;
+  _numInput.style.background = '#f1f5f9';
+  _numInput.style.color      = '#475569';
+  _numInput.style.cursor     = 'default';
+  // Botão de revisão — só aparece em re-edição (número já existia)
+  if (_revBtn) {
+    const _baseNum = reg.orc_numero.replace(/-rev(\d+)$/i,'');
+    const _revMatch = reg.orc_numero.match(/-rev(\d+)$/i);
+    const _revAtual = _revMatch ? parseInt(_revMatch[1]) : 0;
+    _revBtn.style.display = '';
+    _revBtn.onclick = function() {
+      const _proxRev = _revAtual + 1;
+      _numInput.value = _baseNum + '-rev' + _proxRev;
+      reg.orc_numero = _numInput.value;
+      _revBtn.textContent = 'rev' + _proxRev + ' ✓';
+      _revBtn.disabled = true;
+    };
+    _revBtn.disabled    = false;
+    _revBtn.textContent = _revAtual > 0 ? 'rev' + (_revAtual+1) : 'rev1';
+  }
+  // (orc_numero já foi preenchido acima)
   document.getElementById('rcd-orc-data').value        = reg.orc_data || '';
   document.getElementById('rcd-orc-valor').value       = reg.orc_valor || '';
   document.getElementById('rcd-orc-responsavel').value = reg.orc_responsavel || (currentUser?.nome || '');
@@ -14651,7 +14688,10 @@ if ('serviceWorker' in navigator) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
           <div>
             <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Nº do Orçamento</label>
-            <input id="rcd-orc-numero" type="text" placeholder="Ex: ORC-2024-001" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
+            <div style="display:flex;gap:6px;align-items:center">
+              <input id="rcd-orc-numero" type="text" placeholder="Gerado automaticamente" style="flex:1;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
+              <button id="rcd-orc-rev-btn" style="display:none;padding:7px 10px;background:#f59e0b;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">rev1</button>
+            </div>
           </div>
           <div>
             <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Data do Orçamento</label>
