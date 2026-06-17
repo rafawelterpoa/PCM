@@ -12464,9 +12464,95 @@ function rcdDesmobSub(sub) {
 }
 
 function rcdRender() {
+  rcdRenderIndicadores();
   if(_rcdSubAtual === 'triagem') rcdRenderTriagem();
   else if(_rcdSubAtual === 'tratamento') rcdRenderTratamento();
   else rcdRenderHistorico();
+}
+
+function rcdRenderIndicadores() {
+  const kpiEl = document.getElementById('rcd-kpi-cards'); if(!kpiEl) return;
+  const regs  = Object.values(_rcdRegistros || {});
+  const fmt   = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  // Contagens por status
+  const ativos    = regs.filter(r => ['aguardando_inspecao','em_orcamento','aguardando_cliente'].includes(r.status));
+  const nAguInsp  = regs.filter(r => r.status === 'aguardando_inspecao').length;
+  const nEmOrc    = regs.filter(r => r.status === 'em_orcamento').length;
+  const nAguCli   = regs.filter(r => r.status === 'aguardando_cliente').length;
+  const nConclui  = regs.filter(r => r.status === 'concluido').length;
+  const comOrc    = regs.filter(r => r.orc_valor > 0);
+  const valorTotal= comOrc.reduce((s, r) => s + (parseFloat(r.orc_valor) || 0), 0);
+  const ticketMed = comOrc.length > 0 ? valorTotal / comOrc.length : 0;
+
+  function kpi(label, valor, cor, sub, clique) {
+    return `<div onclick="${clique||''}" style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:14px 16px;cursor:${clique?'pointer':'default'};transition:box-shadow .15s" onmouseenter="this.style.boxShadow='0 2px 12px rgba(0,0,0,.1)'" onmouseleave="this.style.boxShadow='none'">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;margin-bottom:6px">${label}</div>
+      <div style="font-size:22px;font-weight:800;color:${cor}">${valor}</div>
+      ${sub ? `<div style="font-size:11px;color:#94a3b8;margin-top:3px">${sub}</div>` : ''}
+    </div>`;
+  }
+
+  kpiEl.innerHTML =
+    kpi('Casos Ativos',       ativos.length,      '#b45309', `${regs.length} total`) +
+    kpi('Valor em Orçamento', fmt(valorTotal),     '#0ea5e9', `${comOrc.length} orçamentos`) +
+    kpi('Ticket Médio',       fmt(ticketMed),      '#8b5cf6', '') +
+    kpi('Aguard. Inspeção',   nAguInsp,            '#6366f1', '', "rcdDesmobSub('tratamento')") +
+    kpi('Em Orçamento',       nEmOrc,              '#f59e0b', '', "rcdDesmobSub('tratamento')") +
+    kpi('Aguard. Cliente',    nAguCli,             '#10b981', `${nConclui} concluídos`, "rcdDesmobSub('tratamento')");
+
+  // Painel detalhe — barras de status + top clientes
+  const detEl = document.getElementById('rcd-ind-detalhe'); if(!detEl) return;
+  const mostrarDetalhe = detEl.style.display !== 'none';
+
+  // Toggle ao clicar nos cards de valor
+  kpiEl.querySelectorAll('div[onclick=""]').forEach(c => {
+    c.style.cursor = 'pointer';
+    c.addEventListener('click', () => {
+      detEl.style.display = detEl.style.display === 'none' ? '' : 'none';
+    });
+  });
+
+  // Barras de status
+  const statusMap = {aguardando_inspecao:'Aguard. Inspeção',em_orcamento:'Em Orçamento',aguardando_cliente:'Aguard. Cliente',concluido:'Concluído',nao_elegivel:'Não Elegível'};
+  const statusCor = {aguardando_inspecao:'#6366f1',em_orcamento:'#f59e0b',aguardando_cliente:'#10b981',concluido:'#0ea5e9',nao_elegivel:'#94a3b8'};
+  const total = regs.length || 1;
+  const orcEl = document.getElementById('rcd-ind-orc-status'); if(orcEl) {
+    orcEl.innerHTML = Object.entries(statusMap).map(([k,label]) => {
+      const n   = regs.filter(r => r.status === k).length;
+      const pct = Math.round(n / total * 100);
+      return `<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="color:#1e293b">${label}</span>
+          <span style="font-weight:700;color:${statusCor[k]}">${n} <span style="font-weight:400;color:#94a3b8">(${pct}%)</span></span>
+        </div>
+        <div style="background:#f1f5f9;border-radius:99px;height:7px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${statusCor[k]};border-radius:99px;transition:width .4s"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Top clientes por valor
+  const cliMap = {};
+  regs.filter(r => r.orc_valor > 0).forEach(r => {
+    const cli = r.rcd_cliente || (state[r.equip_id]?.cliente) || r.equip_id || '—';
+    if (!cliMap[cli]) cliMap[cli] = {n:0, val:0};
+    cliMap[cli].n++;
+    cliMap[cli].val += parseFloat(r.orc_valor) || 0;
+  });
+  const top5 = Object.entries(cliMap).sort((a,b) => b[1].val - a[1].val).slice(0,5);
+  const cliEl = document.getElementById('rcd-ind-top-clientes'); if(cliEl) {
+    cliEl.innerHTML = top5.length > 0 ? top5.map(([cli,d]) =>
+      `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:7px;background:#f8fafc;margin-bottom:6px;font-size:12px">
+        <span style="color:#1e293b;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%">${cli}</span>
+        <span style="font-weight:700;color:#0ea5e9;white-space:nowrap">${fmt(d.val)}</span>
+      </div>`).join('')
+    : '<div style="color:#94a3b8;font-size:12px;padding:10px 0">Nenhum orçamento com valor</div>';
+  }
+
+  // Garante que o painel não muda de estado a cada render
+  if (!mostrarDetalhe) detEl.style.display = 'none';
 }
 
 function rcdRenderTriagem() {
@@ -12658,9 +12744,9 @@ function rcdOrcAddLinha(it) {
   function mkInput(field, type, val, ph, extraStyle) {
     const el = document.createElement('input');
     el.type = type;
-    el.dataset.f = field;          // identificador inequívoco
+    el.dataset.f = field;
     el.placeholder = ph || '';
-    el.style.cssText = 'padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:12px;box-sizing:border-box;' + (extraStyle || 'width:100%');
+    el.style.cssText = 'padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:12px;box-sizing:border-box;position:relative;z-index:1;pointer-events:auto;' + (extraStyle || 'width:100%');
     if (val !== '' && val != null) el.value = String(val);
     el.addEventListener('input',  rcdOrcCalcTotal);
     el.addEventListener('change', rcdOrcCalcTotal);
@@ -14866,6 +14952,25 @@ if ('serviceWorker' in navigator) {
     <div class="page-hdr">
       <div class="page-hdr-title"><span style="color:#b45309">⚠️</span> RCD — Avarias</div>
       <div class="page-hdr-sub">Controle de cobranças de avarias a clientes</div>
+    </div>
+
+    <!-- INDICADORES RCD -->
+    <div id="rcd-indicadores" style="margin-bottom:20px">
+      <!-- KPIs linha 1 -->
+      <div id="rcd-kpi-cards" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:12px"></div>
+      <!-- Painel expansível: orçamentos e top clientes -->
+      <div id="rcd-ind-detalhe" style="display:none;background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:18px 20px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:10px">Orçamentos por Status</div>
+            <div id="rcd-ind-orc-status"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:10px">Top Clientes (por valor)</div>
+            <div id="rcd-ind-top-clientes"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Sub-abas -->
