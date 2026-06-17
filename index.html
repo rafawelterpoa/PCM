@@ -12653,48 +12653,48 @@ function rcdOrcAddLinha(it) {
   it = it || {};
   const tbody = document.getElementById('rcd-orc-itens-body');
   const tr = document.createElement('tr');
-  tr.style.borderBottom = '1px solid #f1f5f9';
+  tr.style.cssText = 'border-bottom:1px solid #f1f5f9';
 
-  function mkTd(content, style) {
-    const td = document.createElement('td');
-    td.style.cssText = 'padding:5px 4px;' + (style || '');
-    td.appendChild(content);
-    return td;
-  }
-  function mkInput(type, val, ph, style) {
+  function mkInput(field, type, val, ph, extraStyle) {
     const el = document.createElement('input');
     el.type = type;
+    el.dataset.f = field;          // identificador inequívoco
     el.placeholder = ph || '';
-    el.style.cssText = 'width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:12px;box-sizing:border-box;' + (style || '');
-    if (val !== '' && val != null) el.value = val;
+    el.style.cssText = 'padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:12px;box-sizing:border-box;' + (extraStyle || 'width:100%');
+    if (val !== '' && val != null) el.value = String(val);
     el.addEventListener('input',  rcdOrcCalcTotal);
     el.addEventListener('change', rcdOrcCalcTotal);
     return el;
   }
+  function cell(el, style) {
+    const td = document.createElement('td');
+    td.style.cssText = 'padding:4px 5px;' + (style || '');
+    td.appendChild(el);
+    return td;
+  }
 
-  const inpQtd   = mkInput('number', it.qtd   != null ? it.qtd   : '', '1',     'width:54px;text-align:center');
-  const inpPn    = mkInput('text',   it.pn    != null ? it.pn    : '', 'PN');
-  const inpDesc  = mkInput('text',   it.desc  != null ? it.desc  : '', 'Descrição do item / serviço');
-  const inpVunit = mkInput('number', it.vunit != null ? it.vunit : '', '0,00',  'text-align:right');
-  inpVunit.step = '0.01';
+  const iQtd   = mkInput('qtd',   'number', it.qtd   != null ? it.qtd   : 1,   '1',    'width:56px;text-align:center');
+  const iPn    = mkInput('pn',    'text',   it.pn    || '',                     'PN',   'width:100%');
+  const iDesc  = mkInput('desc',  'text',   it.desc  || '',   'Descrição do item / serviço', 'width:100%');
+  const iVunit = mkInput('vunit', 'text',   it.vunit != null ? it.vunit : '',   '0,00', 'width:100%;text-align:right');
 
   const tdTot = document.createElement('td');
-  tdTot.style.cssText = 'padding:5px 4px;text-align:right;font-weight:600;color:#1e293b;min-width:90px';
-  tdTot.className = 'rcd-orc-linha-total';
+  tdTot.dataset.f = 'total';
+  tdTot.style.cssText = 'padding:4px 5px;text-align:right;font-weight:600;color:#1e293b;min-width:90px;white-space:nowrap';
   tdTot.textContent = 'R$ 0,00';
 
   const btnDel = document.createElement('button');
+  btnDel.type = 'button';
   btnDel.textContent = '✕';
   btnDel.style.cssText = 'background:none;border:none;color:#ef4444;cursor:pointer;font-size:15px;padding:2px 6px';
-  btnDel.type = 'button';
   btnDel.addEventListener('click', () => { tr.remove(); rcdOrcCalcTotal(); });
 
-  tr.appendChild(mkTd(inpQtd));
-  tr.appendChild(mkTd(inpPn));
-  tr.appendChild(mkTd(inpDesc));
-  tr.appendChild(mkTd(inpVunit));
+  tr.appendChild(cell(iQtd));
+  tr.appendChild(cell(iPn));
+  tr.appendChild(cell(iDesc));
+  tr.appendChild(cell(iVunit));
   tr.appendChild(tdTot);
-  tr.appendChild(mkTd(btnDel, 'text-align:center'));
+  tr.appendChild(cell(btnDel, 'text-align:center'));
   tbody.appendChild(tr);
 
   const hint = document.getElementById('rcd-orc-empty-hint');
@@ -12702,23 +12702,39 @@ function rcdOrcAddLinha(it) {
   rcdOrcCalcTotal();
 }
 
+function _rcdOrcLerLinhas() {
+  const tbody = document.getElementById('rcd-orc-itens-body');
+  if (!tbody) return [];
+  return Array.from(tbody.querySelectorAll('tr')).map(tr => {
+    const get = f => tr.querySelector('[data-f="' + f + '"]');
+    const qtd   = parseFloat(get('qtd')?.value)   || 0;
+    const pn    = get('pn')?.value.trim()    || '';
+    const desc  = get('desc')?.value.trim()  || '';
+    // Aceita vírgula como decimal (padrão pt-BR)
+    const rawV  = (get('vunit')?.value || '').replace(',','.');
+    const vunit = parseFloat(rawV) || 0;
+    return {qtd, pn, desc, vunit, total: qtd * vunit};
+  });
+}
+
 function rcdOrcCalcTotal() {
   const tbody = document.getElementById('rcd-orc-itens-body');
   if (!tbody) return;
+  const fmt = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   let subtotal = 0;
   tbody.querySelectorAll('tr').forEach(tr => {
-    const tds = tr.querySelectorAll('td');
-    if (tds.length < 5) return;
-    const qtd   = parseFloat(tds[0].querySelector('input')?.value) || 0;
-    const vunit = parseFloat(tds[3].querySelector('input')?.value) || 0;
+    const get   = f => tr.querySelector('[data-f="' + f + '"]');
+    const rawV  = (get('vunit')?.value || '').replace(',','.');
+    const qtd   = parseFloat(get('qtd')?.value) || 0;
+    const vunit = parseFloat(rawV) || 0;
     const tot   = qtd * vunit;
     subtotal += tot;
-    tds[4].textContent = 'R$ ' + tot.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+    const tdTot = get('total');
+    if (tdTot) tdTot.textContent = fmt(tot);
   });
   const bdi    = parseFloat(document.getElementById('rcd-orc-bdi')?.value) || 0;
   const bdival = subtotal * (bdi / 100);
   const total  = subtotal + bdival;
-  const fmt = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const _sub = document.getElementById('rcd-orc-subtotal'); if (_sub) _sub.textContent = fmt(subtotal);
   const _bv  = document.getElementById('rcd-orc-bdi-val'); if (_bv)  _bv.textContent  = fmt(bdival);
   const _tv  = document.getElementById('rcd-orc-total-val'); if (_tv) _tv.textContent = fmt(total);
@@ -12733,17 +12749,7 @@ async function rcdOrcSalvar() {
   const om = document.getElementById('rcd-orc-om').value.trim();
   if (!om) { showToast('⚠️ Informe o Nº da O.M. RCD (Manusis)'); document.getElementById('rcd-orc-om').focus(); return; }
   // Coleta itens da tabela
-  const tbody = document.getElementById('rcd-orc-itens-body');
-  const itens = [];
-  tbody.querySelectorAll('tr').forEach(tr => {
-    const cells = tr.querySelectorAll('input');
-    if (cells.length < 4) return;
-    const qtd  = parseFloat(cells[0].value) || 0;
-    const pn   = cells[1].value.trim();
-    const desc = cells[2].value.trim();
-    const vunit= parseFloat(cells[3].value) || 0;
-    if (qtd || pn || desc || vunit) itens.push({qtd, pn, desc, vunit, total: qtd*vunit});
-  });
+  const itens = _rcdOrcLerLinhas().filter(i => i.qtd || i.pn || i.desc || i.vunit);
   reg.orc_numero      = document.getElementById('rcd-orc-numero').value.trim();
   reg.orc_om          = om;
   reg.orc_data        = document.getElementById('rcd-orc-data').value;
@@ -12766,17 +12772,7 @@ async function rcdOrcGerar() {
   if (!om) { showToast('⚠️ Informe o Nº da O.M. RCD (Manusis)'); document.getElementById('rcd-orc-om').focus(); return; }
 
   // Coleta dados atuais da tela
-  const tbody = document.getElementById('rcd-orc-itens-body');
-  const itens = [];
-  tbody.querySelectorAll('tr').forEach(tr => {
-    const tds = tr.querySelectorAll('td');
-    if (tds.length < 5) return;
-    const qtd  = parseFloat(tds[0].querySelector('input')?.value) || 0;
-    const pn   = tds[1].querySelector('input')?.value.trim() || '';
-    const desc = tds[2].querySelector('input')?.value.trim() || '';
-    const vunit= parseFloat(tds[3].querySelector('input')?.value) || 0;
-    if (qtd || pn || desc || vunit) itens.push({qtd, pn, desc, vunit, total: qtd*vunit});
-  });
+  const itens = _rcdOrcLerLinhas().filter(i => i.qtd || i.pn || i.desc || i.vunit);
   const bdi      = parseFloat(document.getElementById('rcd-orc-bdi').value) || 0;
   const subtotal = itens.reduce((s,i) => s + i.total, 0);
   const bdival   = subtotal * (bdi / 100);
