@@ -12501,13 +12501,20 @@ function rcdRenderTriagem() {
 
 async function rcdTriagem(equipId, chegadaTs, elegivel) {
   const eq = state[equipId]; if(!eq) return;
+  const _orig = (EQUIPAMENTOS_ORIG||[]).find(e=>e.id===equipId)||{};
+  const _snapEq = {
+    equip_nome:        eq.equipamento || '',
+    equip_serie:       eq.serie       || _orig.serie       || '',
+    equip_fabricante:  eq.fabricante  || _orig.fabricante  || '',
+    equip_modelo:      eq.modelo      || _orig.modelo      || '',
+    equip_placa:       eq.placa       || _orig.placa       || '',
+    equip_grupo:       eq.grupo       || _orig.grupo       || eq.tipo || '',
+  };
   if(!elegivel) {
-    // Registra como não elegível e some da triagem
-    const reg = { id: 'rcd_' + Date.now(), equip_id: equipId, equip_nome: eq.equipamento||'', oficina: eq.oficina||'', chegada_ts: chegadaTs, status: 'nao_elegivel', ts_triagem: Date.now() };
+    const reg = { id: 'rcd_' + Date.now(), equip_id: equipId, ..._snapEq, oficina: eq.oficina||'', chegada_ts: chegadaTs, status: 'nao_elegivel', ts_triagem: Date.now() };
     await rcdSalvarRegistro(reg);
   } else {
-    // Elegível → vai para Aguardando Inspeção
-    const reg = { id: 'rcd_' + Date.now(), equip_id: equipId, equip_nome: eq.equipamento||'', oficina: eq.oficina||'', chegada_ts: chegadaTs, status: 'aguardando_inspecao', ts_triagem: Date.now() };
+    const reg = { id: 'rcd_' + Date.now(), equip_id: equipId, ..._snapEq, oficina: eq.oficina||'', chegada_ts: chegadaTs, status: 'aguardando_inspecao', ts_triagem: Date.now() };
     await rcdSalvarRegistro(reg);
     rcdDesmobSub('tratamento');
   }
@@ -12578,13 +12585,13 @@ function rcdOrcAbrir(id) {
   let cli = reg.rcd_cliente || eq.cliente || eq.planta || orig.planta || '';
   if(!cli){const _h=(eq.historico||[]).slice().reverse().find(h=>h.planta_obra||(h.from&&h.from.startsWith('Reservado:')));if(_h)cli=_h.planta_obra||_h.from.replace('Reservado:','').trim();}
   document.getElementById('rcd-orc-cliente').textContent = cli || '—';
-  // Auto-fill dados do equipamento
-  document.getElementById('rcd-orc-id-eq').textContent   = reg.equip_id || '—';
-  document.getElementById('rcd-orc-serie').textContent    = eq.serie || orig.serie || '—';
-  document.getElementById('rcd-orc-placa').textContent    = eq.placa || orig.placa || '—';
-  document.getElementById('rcd-orc-grupo').textContent    = eq.grupo || orig.grupo || eq.tipo || '—';
-  document.getElementById('rcd-orc-fabricante').textContent = eq.fabricante || orig.fabricante || '—';
-  document.getElementById('rcd-orc-modelo').textContent   = eq.modelo || orig.modelo || '—';
+  // Auto-fill dados do equipamento (prioriza snapshot gravado no registro)
+  document.getElementById('rcd-orc-id-eq').textContent     = reg.equip_id || '—';
+  document.getElementById('rcd-orc-serie').textContent     = reg.equip_serie     || eq.serie      || orig.serie      || '—';
+  document.getElementById('rcd-orc-placa').textContent     = reg.equip_placa     || eq.placa      || orig.placa      || '—';
+  document.getElementById('rcd-orc-grupo').textContent     = reg.equip_grupo     || eq.grupo      || orig.grupo      || eq.tipo || '—';
+  document.getElementById('rcd-orc-fabricante').textContent= reg.equip_fabricante|| eq.fabricante || orig.fabricante || '—';
+  document.getElementById('rcd-orc-modelo').textContent    = reg.equip_modelo    || eq.modelo     || orig.modelo     || '—';
   // Número do orçamento — gerado automaticamente uma única vez
   const _numInput = document.getElementById('rcd-orc-numero');
   const _revBtn   = document.getElementById('rcd-orc-rev-btn');
@@ -12749,6 +12756,151 @@ async function rcdOrcSalvar() {
   rcdOrcFechar();
   rcdRender();
   showToast('📄 Orçamento salvo');
+}
+
+async function rcdOrcGerar() {
+  // Salva antes de gerar
+  const id = document.getElementById('rcd-orc-id').value;
+  const reg = _rcdRegistros[id]; if(!reg) return;
+  const om = document.getElementById('rcd-orc-om').value.trim();
+  if (!om) { showToast('⚠️ Informe o Nº da O.M. RCD (Manusis)'); document.getElementById('rcd-orc-om').focus(); return; }
+
+  // Coleta dados atuais da tela
+  const tbody = document.getElementById('rcd-orc-itens-body');
+  const itens = [];
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const tds = tr.querySelectorAll('td');
+    if (tds.length < 5) return;
+    const qtd  = parseFloat(tds[0].querySelector('input')?.value) || 0;
+    const pn   = tds[1].querySelector('input')?.value.trim() || '';
+    const desc = tds[2].querySelector('input')?.value.trim() || '';
+    const vunit= parseFloat(tds[3].querySelector('input')?.value) || 0;
+    if (qtd || pn || desc || vunit) itens.push({qtd, pn, desc, vunit, total: qtd*vunit});
+  });
+  const bdi      = parseFloat(document.getElementById('rcd-orc-bdi').value) || 0;
+  const subtotal = itens.reduce((s,i) => s + i.total, 0);
+  const bdival   = subtotal * (bdi / 100);
+  const total    = subtotal + bdival;
+  const fmt      = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  const numero      = document.getElementById('rcd-orc-numero').value;
+  const data        = document.getElementById('rcd-orc-data').value;
+  const responsavel = document.getElementById('rcd-orc-responsavel').value;
+  const descricao   = document.getElementById('rcd-orc-descricao').value;
+  const dataFmt     = data ? new Date(data + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+
+  const cliente    = document.getElementById('rcd-orc-cliente').textContent;
+  const idEq       = document.getElementById('rcd-orc-id-eq').textContent;
+  const serie      = document.getElementById('rcd-orc-serie').textContent;
+  const placa      = document.getElementById('rcd-orc-placa').textContent;
+  const grupo      = document.getElementById('rcd-orc-grupo').textContent;
+  const fabricante = document.getElementById('rcd-orc-fabricante').textContent;
+  const modelo     = document.getElementById('rcd-orc-modelo').textContent;
+
+  const linhasHTML = itens.length > 0 ? itens.map((it,i) => `
+    <tr style="background:${i%2===0?'#fff':'#f8fafc'}">
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:center">${it.qtd}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0">${it.pn||'—'}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0">${it.desc||'—'}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right">${fmt(it.vunit)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600">${fmt(it.total)}</td>
+    </tr>`).join('') : `<tr><td colspan="5" style="padding:16px;text-align:center;color:#94a3b8">Nenhum item</td></tr>`;
+
+  const bdiLinha = bdi > 0 ? `
+    <tr><td colspan="4" style="padding:6px 10px;text-align:right;color:#64748b;font-size:12px">BDI (${bdi}%)</td><td style="padding:6px 10px;text-align:right;color:#0ea5e9;font-size:12px">${fmt(bdival)}</td></tr>` : '';
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Orçamento ${numero}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 13px; color: #1e293b; background: #fff; padding: 32px; }
+    @media print { body { padding: 16px; } .no-print { display: none; } }
+    .logo-mills { display:flex; align-items:center; gap:14px; }
+    .logo-box { background:#F37021; color:#fff; font-size:22px; font-weight:900; padding:8px 16px; border-radius:4px; letter-spacing:1px; }
+    .logo-sub { font-size:11px; color:#64748b; line-height:1.5; }
+    .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; padding-bottom:16px; border-bottom:3px solid #F37021; }
+    .orc-numero { text-align:right; }
+    .orc-numero .num { font-size:18px; font-weight:800; color:#F37021; }
+    .orc-numero .label { font-size:10px; text-transform:uppercase; color:#94a3b8; letter-spacing:.05em; }
+    .section-title { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#94a3b8; margin-bottom:8px; }
+    .info-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 16px; margin-bottom:16px; }
+    .info-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px 16px; font-size:12px; }
+    .info-grid .label { color:#94a3b8; font-size:10px; }
+    .info-grid .val { font-weight:600; margin-top:2px; }
+    table { width:100%; border-collapse:collapse; margin-bottom:0; }
+    thead tr { background:#1e293b; color:#fff; }
+    thead th { padding:10px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+    .totals-row td { padding:6px 10px; font-size:12px; }
+    .total-final td { padding:10px; font-size:14px; font-weight:800; background:#f8fafc; border-top:2px solid #1e293b; }
+    .footer { margin-top:32px; display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+    .assinatura { border-top:1px solid #1e293b; padding-top:6px; font-size:11px; color:#64748b; text-align:center; margin-top:48px; }
+    .btn-print { position:fixed; bottom:24px; right:24px; background:#F37021; color:#fff; border:none; padding:12px 24px; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,.2); }
+  </style></head><body>
+
+  <div class="header">
+    <div class="logo-mills">
+      <div class="logo-box">MILLS</div>
+      <div class="logo-sub"><strong>Mills Locação, Serviços e Logística S.A.</strong><br>CNPJ 08.467.115/0001-00<br>Dept. PCM — Gerência de Manutenção</div>
+    </div>
+    <div class="orc-numero">
+      <div class="label">Orçamento de Avaria / RCD</div>
+      <div class="num">${numero}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:4px">Data: ${dataFmt}</div>
+      <div style="font-size:11px;color:#64748b">O.M. Manusis: <strong>${om}</strong></div>
+    </div>
+  </div>
+
+  <div class="section-title">Dados do Equipamento</div>
+  <div class="info-box">
+    <div class="info-grid">
+      <div><div class="label">Cliente</div><div class="val">${cliente}</div></div>
+      <div><div class="label">Nº Interno</div><div class="val">${idEq}</div></div>
+      <div><div class="label">Nº Série</div><div class="val">${serie}</div></div>
+      <div><div class="label">Placa</div><div class="val">${placa}</div></div>
+      <div><div class="label">Grupo</div><div class="val">${grupo}</div></div>
+      <div><div class="label">Fabricante</div><div class="val">${fabricante}</div></div>
+      <div style="grid-column:3/-1"><div class="label">Modelo</div><div class="val">${modelo}</div></div>
+    </div>
+  </div>
+
+  ${descricao ? `<div class="section-title">Descrição das Avarias</div>
+  <div class="info-box" style="margin-bottom:16px;font-size:13px;line-height:1.6">${descricao}</div>` : ''}
+
+  <div class="section-title">Itens do Orçamento</div>
+  <table>
+    <thead><tr>
+      <th style="text-align:center;width:60px">Qtd</th>
+      <th style="text-align:left;width:130px">PN</th>
+      <th style="text-align:left">Descrição</th>
+      <th style="text-align:right;width:130px">Vlr Unit.</th>
+      <th style="text-align:right;width:130px">Total</th>
+    </tr></thead>
+    <tbody>${linhasHTML}</tbody>
+    <tfoot>
+      <tr><td colspan="4" style="padding:8px 10px;text-align:right;color:#64748b;font-size:12px;border-top:1px solid #e2e8f0">Subtotal</td><td style="padding:8px 10px;text-align:right;font-size:12px;border-top:1px solid #e2e8f0">${fmt(subtotal)}</td></tr>
+      ${bdiLinha}
+      <tr class="total-final"><td colspan="4" style="padding:10px;text-align:right">TOTAL GERAL</td><td style="padding:10px;text-align:right;color:#F37021">${fmt(total)}</td></tr>
+    </tfoot>
+  </table>
+
+  <div class="footer">
+    <div>
+      <div class="section-title" style="margin-top:24px">Responsável pelo Orçamento</div>
+      <div class="assinatura">${responsavel || '___________________________'}</div>
+    </div>
+    <div>
+      <div class="section-title" style="margin-top:24px">Aprovação do Cliente</div>
+      <div class="assinatura">___________________________</div>
+    </div>
+  </div>
+
+  <button class="btn-print no-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+  <script>setTimeout(()=>window.print(),800);<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  if (w) { w.document.write(html); w.document.close(); }
+  else showToast('⚠️ Permita pop-ups para gerar o orçamento');
 }
 
 function rcdInspAbrir(id) {
@@ -14852,8 +15004,9 @@ if ('serviceWorker' in navigator) {
 
         <input type="hidden" id="rcd-orc-valor">
         <div style="display:flex;gap:8px">
-          <button onclick="rcdOrcSalvar()" style="flex:1;padding:10px;background:#f59e0b;color:#fff;border:none;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">💾 Salvar Orçamento</button>
-          <button onclick="rcdOrcFechar()" style="flex:1;padding:10px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">Cancelar</button>
+          <button onclick="rcdOrcSalvar()" style="flex:1;padding:10px;background:#f59e0b;color:#fff;border:none;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">💾 Salvar</button>
+          <button onclick="rcdOrcGerar()" style="flex:1;padding:10px;background:#0ea5e9;color:#fff;border:none;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">🖨️ Gerar Orçamento</button>
+          <button onclick="rcdOrcFechar()" style="padding:10px 18px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">Cancelar</button>
         </div>
       </div>
     </div>
