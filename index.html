@@ -12422,6 +12422,7 @@ function gpRenderAll(){gpRenderPeriodoChecks();gpRenderTabela();}
 const RCD_FB = `${FB_BASE}/rcd_desmob`;
 let _rcdRegistros = {};
 let _rcdSubAtual = 'triagem';
+let _rcdEs = null;          // EventSource ativo
 
 async function rcdCarregar() {
   try {
@@ -12430,13 +12431,76 @@ async function rcdCarregar() {
     _rcdRegistros = (d && typeof d === 'object') ? d : {};
   } catch(e) { _rcdRegistros = {}; }
   rcdRender();
+  rcdListen();   // inicia/reinicia listener SSE após carga inicial
+}
+
+function rcdListen() {
+  if (typeof EventSource === 'undefined') return;
+  if (_rcdEs) { _rcdEs.close(); _rcdEs = null; }
+
+  const es = new EventSource(`${RCD_FB}.json?accept=text/event-stream`);
+  _rcdEs = es;
+
+  es.addEventListener('put', e => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.path === '/') {
+        // Snapshot completo
+        _rcdRegistros = (msg.data && typeof msg.data === 'object') ? msg.data : {};
+        rcdRenderSilent();
+      } else {
+        // Alteração em registro específico  (/rcd_XXXX)
+        const parts = msg.path.replace(/^\//, '').split('/');
+        const regId = parts[0];
+        if (!regId) return;
+        if (msg.data === null) {
+          delete _rcdRegistros[regId];
+        } else if (parts.length === 1) {
+          // Registro inteiro substituído
+          _rcdRegistros[regId] = msg.data;
+        } else {
+          // Campo interno alterado
+          if (!_rcdRegistros[regId]) _rcdRegistros[regId] = {};
+          _rcdRegistros[regId][parts[1]] = msg.data;
+        }
+        rcdRenderSilent();
+      }
+    } catch(err) { /* parse error — ignora */ }
+  });
+
+  es.addEventListener('patch', e => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.data && typeof msg.data === 'object') {
+        Object.entries(msg.data).forEach(([k, v]) => {
+          if (v === null) delete _rcdRegistros[k];
+          else _rcdRegistros[k] = v;
+        });
+        rcdRenderSilent();
+      }
+    } catch(err) { /* ignora */ }
+  });
+
+  es.onerror = () => {
+    // Reconecta após 8 s se fechar
+    es.close();
+    _rcdEs = null;
+    setTimeout(() => { if (document.getElementById('page-rcd')?.style.display !== 'none') rcdListen(); }, 8000);
+  };
+}
+
+// Renderiza apenas se a página RCD estiver visível, sem piscar
+function rcdRenderSilent() {
+  const pg = document.getElementById('page-rcd');
+  if (!pg || pg.style.display === 'none') return;
+  rcdRender();
 }
 
 async function rcdSalvarRegistro(reg) {
   await fetch(`${RCD_FB}/${reg.id}.json`, {
     method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(reg)
   });
-  _rcdRegistros[reg.id] = reg;
+  _rcdRegistros[reg.id] = reg;   // atualiza local imediatamente; SSE confirma logo em seguida
 }
 
 async function rcdDeletarRegistro(id) {
