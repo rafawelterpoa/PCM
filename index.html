@@ -12647,17 +12647,51 @@ function rcdOrcAddLinha(it) {
   const tbody = document.getElementById('rcd-orc-itens-body');
   const tr = document.createElement('tr');
   tr.style.borderBottom = '1px solid #f1f5f9';
-  const inp = (type, val, ph, w, align) =>
-    `<input type="${type}" value="${val!=null?val:''}" placeholder="${ph||''}" oninput="rcdOrcCalcTotal()" style="width:${w||'100%'};padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:12px;box-sizing:border-box;${align?'text-align:'+align:''}">`;
-  tr.innerHTML = `
-    <td style="padding:5px 4px">${inp('number', it.qtd||'', '1', '54px', 'center')}</td>
-    <td style="padding:5px 4px">${inp('text',   it.pn||'',  'PN', '100%')}</td>
-    <td style="padding:5px 4px">${inp('text',   it.desc||'','Descrição do item / serviço', '100%')}</td>
-    <td style="padding:5px 4px">${inp('number', it.vunit!=null?it.vunit:'', '0,00', '100%', 'right')}</td>
-    <td style="padding:5px 4px;text-align:right;font-weight:600;color:#1e293b;min-width:90px" class="rcd-orc-linha-total">R$ 0,00</td>
-    <td style="padding:5px 4px;text-align:center"><button onclick="this.closest('tr').remove();rcdOrcCalcTotal()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:15px;padding:2px 4px">✕</button></td>`;
+
+  function mkTd(content, style) {
+    const td = document.createElement('td');
+    td.style.cssText = 'padding:5px 4px;' + (style || '');
+    td.appendChild(content);
+    return td;
+  }
+  function mkInput(type, val, ph, style) {
+    const el = document.createElement('input');
+    el.type = type;
+    el.placeholder = ph || '';
+    el.style.cssText = 'width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:12px;box-sizing:border-box;' + (style || '');
+    if (val !== '' && val != null) el.value = val;
+    el.addEventListener('input',  rcdOrcCalcTotal);
+    el.addEventListener('change', rcdOrcCalcTotal);
+    return el;
+  }
+
+  const inpQtd   = mkInput('number', it.qtd   != null ? it.qtd   : '', '1',     'width:54px;text-align:center');
+  const inpPn    = mkInput('text',   it.pn    != null ? it.pn    : '', 'PN');
+  const inpDesc  = mkInput('text',   it.desc  != null ? it.desc  : '', 'Descrição do item / serviço');
+  const inpVunit = mkInput('number', it.vunit != null ? it.vunit : '', '0,00',  'text-align:right');
+  inpVunit.step = '0.01';
+
+  const tdTot = document.createElement('td');
+  tdTot.style.cssText = 'padding:5px 4px;text-align:right;font-weight:600;color:#1e293b;min-width:90px';
+  tdTot.className = 'rcd-orc-linha-total';
+  tdTot.textContent = 'R$ 0,00';
+
+  const btnDel = document.createElement('button');
+  btnDel.textContent = '✕';
+  btnDel.style.cssText = 'background:none;border:none;color:#ef4444;cursor:pointer;font-size:15px;padding:2px 6px';
+  btnDel.type = 'button';
+  btnDel.addEventListener('click', () => { tr.remove(); rcdOrcCalcTotal(); });
+
+  tr.appendChild(mkTd(inpQtd));
+  tr.appendChild(mkTd(inpPn));
+  tr.appendChild(mkTd(inpDesc));
+  tr.appendChild(mkTd(inpVunit));
+  tr.appendChild(tdTot);
+  tr.appendChild(mkTd(btnDel, 'text-align:center'));
   tbody.appendChild(tr);
-  document.getElementById('rcd-orc-empty-hint').style.display = 'none';
+
+  const hint = document.getElementById('rcd-orc-empty-hint');
+  if (hint) hint.style.display = 'none';
   rcdOrcCalcTotal();
 }
 
@@ -12666,14 +12700,13 @@ function rcdOrcCalcTotal() {
   if (!tbody) return;
   let subtotal = 0;
   tbody.querySelectorAll('tr').forEach(tr => {
-    const cells = tr.querySelectorAll('input');
-    if (cells.length < 4) return;
-    const qtd   = parseFloat(cells[0].value) || 0;
-    const vunit = parseFloat(cells[3].value) || 0;
+    const tds = tr.querySelectorAll('td');
+    if (tds.length < 5) return;
+    const qtd   = parseFloat(tds[0].querySelector('input')?.value) || 0;
+    const vunit = parseFloat(tds[3].querySelector('input')?.value) || 0;
     const tot   = qtd * vunit;
     subtotal += tot;
-    const totCell = tr.querySelector('.rcd-orc-linha-total');
-    if (totCell) totCell.textContent = 'R$ ' + tot.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+    tds[4].textContent = 'R$ ' + tot.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   });
   const bdi    = parseFloat(document.getElementById('rcd-orc-bdi')?.value) || 0;
   const bdival = subtotal * (bdi / 100);
