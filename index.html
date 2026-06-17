@@ -14260,9 +14260,9 @@ function rgRenderVisaoGeral(ativos,emOperacao){
   const pctT=n=>totalFrota>0?Math.round(n/totalFrota*100):0;
 
   // ── CARD 2: Frota de Locação ──────────────────────────────────────────────────
-  const paraLocacao=_cs.paraLocacao||0;
-  const locados=_cs.locados||0;
-  const tuPct=_cs.tu||0;
+  const paraLocacao=totalFrota;
+  const locados=allActive.filter(e=>e.etapa==='alugado').length;
+  const tuPct=paraLocacao>0?Math.round(locados/paraLocacao*100):0;
 
   // ── CARDS 3 & 4: Manutenção e Pátio — todos os tipos (espelha Oficina e Pátio) ─
   const getFr=e=>(e.frota||'').toLowerCase();
