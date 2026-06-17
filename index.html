@@ -14274,15 +14274,17 @@ function rgRenderVisaoGeral(ativos,emOperacao){
   const manutencao=ativos.filter(e=>ETAPAS_MANUT.has(e.etapa));
 
   // Cards 1 e 2 usam snapshot do último CSV (fonte de verdade) — evita inflação do state
-  const _cs=window._csvStats||{};
-  const allActive=Object.values(state).filter(e=>!e.baixado); // usado apenas para Cards 3 & 4 (board)
+  const allActive=Object.values(state).filter(e=>!e.baixado);
   const classif=e=>frotaClassificar(e.tipo);
+  // Se csv_stats tiver total inconsistente (ex: 1) usa fallback do state
+  const _csRaw=window._csvStats||{};
+  const _cs=((_csRaw.totalFrota||0) > allActive.length*0.1)?_csRaw:{};
 
   // ── CARD 1: Total Frota ───────────────────────────────────────────────────────
   const totalFrota=_cs.totalFrota||allActive.length;
-  const nEq=_cs.nEq!==undefined?_cs.nEq:allActive.filter(e=>classif(e)==='equipamento').length;
-  const nImp=_cs.nImp!==undefined?_cs.nImp:allActive.filter(e=>classif(e)==='implemento').length;
-  const nAc=_cs.nAc!==undefined?_cs.nAc:allActive.filter(e=>classif(e)==='acessorio').length;
+  const nEq=_cs.nEq!==undefined&&_cs.nEq>0?_cs.nEq:allActive.filter(e=>classif(e)==='equipamento').length;
+  const nImp=_cs.nImp!==undefined&&_cs.nImp>0?_cs.nImp:allActive.filter(e=>classif(e)==='implemento').length;
+  const nAc=_cs.nAc!==undefined&&_cs.nAc>0?_cs.nAc:allActive.filter(e=>classif(e)==='acessorio').length;
   const nOut=_cs.nOut!==undefined?_cs.nOut:Math.max(0,totalFrota-nEq-nImp-nAc);
   const pctT=n=>totalFrota>0?Math.round(n/totalFrota*100):0;
 
