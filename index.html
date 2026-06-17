@@ -12624,10 +12624,17 @@ function rcdOrcAbrir(id) {
     _revBtn.textContent = _revAtual > 0 ? 'rev' + (_revAtual+1) : 'rev1';
   }
   // (orc_numero já foi preenchido acima)
+  document.getElementById('rcd-orc-om').value          = reg.orc_om || '';
   document.getElementById('rcd-orc-data').value        = reg.orc_data || '';
-  document.getElementById('rcd-orc-valor').value       = reg.orc_valor || '';
   document.getElementById('rcd-orc-responsavel').value = reg.orc_responsavel || (currentUser?.nome || '');
   document.getElementById('rcd-orc-descricao').value   = reg.orc_descricao || '';
+  document.getElementById('rcd-orc-bdi').value         = reg.orc_bdi != null ? reg.orc_bdi : '';
+  // Popula tabela de itens
+  const _tbody = document.getElementById('rcd-orc-itens-body');
+  _tbody.innerHTML = '';
+  const _itens = reg.orc_itens || [];
+  if (_itens.length === 0) { rcdOrcAddLinha(); } else { _itens.forEach(it => rcdOrcAddLinha(it)); }
+  rcdOrcCalcTotal();
   document.getElementById('rcd-orc-modal').style.display = 'flex';
 }
 
@@ -12635,12 +12642,74 @@ function rcdOrcFechar() {
   document.getElementById('rcd-orc-modal').style.display = 'none';
 }
 
+function rcdOrcAddLinha(it) {
+  it = it || {};
+  const tbody = document.getElementById('rcd-orc-itens-body');
+  const tr = document.createElement('tr');
+  tr.style.borderBottom = '1px solid #f1f5f9';
+  const inp = (type, val, ph, w, align) =>
+    `<input type="${type}" value="${val!=null?val:''}" placeholder="${ph||''}" oninput="rcdOrcCalcTotal()" style="width:${w||'100%'};padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:12px;box-sizing:border-box;${align?'text-align:'+align:''}">`;
+  tr.innerHTML = `
+    <td style="padding:5px 4px">${inp('number', it.qtd||'', '1', '54px', 'center')}</td>
+    <td style="padding:5px 4px">${inp('text',   it.pn||'',  'PN', '100%')}</td>
+    <td style="padding:5px 4px">${inp('text',   it.desc||'','Descrição do item / serviço', '100%')}</td>
+    <td style="padding:5px 4px">${inp('number', it.vunit!=null?it.vunit:'', '0,00', '100%', 'right')}</td>
+    <td style="padding:5px 4px;text-align:right;font-weight:600;color:#1e293b;min-width:90px" class="rcd-orc-linha-total">R$ 0,00</td>
+    <td style="padding:5px 4px;text-align:center"><button onclick="this.closest('tr').remove();rcdOrcCalcTotal()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:15px;padding:2px 4px">✕</button></td>`;
+  tbody.appendChild(tr);
+  document.getElementById('rcd-orc-empty-hint').style.display = 'none';
+  rcdOrcCalcTotal();
+}
+
+function rcdOrcCalcTotal() {
+  const tbody = document.getElementById('rcd-orc-itens-body');
+  if (!tbody) return;
+  let subtotal = 0;
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const cells = tr.querySelectorAll('input');
+    if (cells.length < 4) return;
+    const qtd   = parseFloat(cells[0].value) || 0;
+    const vunit = parseFloat(cells[3].value) || 0;
+    const tot   = qtd * vunit;
+    subtotal += tot;
+    const totCell = tr.querySelector('.rcd-orc-linha-total');
+    if (totCell) totCell.textContent = 'R$ ' + tot.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  });
+  const bdi    = parseFloat(document.getElementById('rcd-orc-bdi')?.value) || 0;
+  const bdival = subtotal * (bdi / 100);
+  const total  = subtotal + bdival;
+  const fmt = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const _sub = document.getElementById('rcd-orc-subtotal'); if (_sub) _sub.textContent = fmt(subtotal);
+  const _bv  = document.getElementById('rcd-orc-bdi-val'); if (_bv)  _bv.textContent  = fmt(bdival);
+  const _tv  = document.getElementById('rcd-orc-total-val'); if (_tv) _tv.textContent = fmt(total);
+  const _hid = document.getElementById('rcd-orc-valor'); if (_hid) _hid.value = total.toFixed(2);
+  const hint = document.getElementById('rcd-orc-empty-hint');
+  if (hint) hint.style.display = tbody.querySelectorAll('tr').length === 0 ? '' : 'none';
+}
+
 async function rcdOrcSalvar() {
   const id = document.getElementById('rcd-orc-id').value;
   const reg = _rcdRegistros[id]; if(!reg) return;
+  const om = document.getElementById('rcd-orc-om').value.trim();
+  if (!om) { showToast('⚠️ Informe o Nº da O.M. RCD (Manusis)'); document.getElementById('rcd-orc-om').focus(); return; }
+  // Coleta itens da tabela
+  const tbody = document.getElementById('rcd-orc-itens-body');
+  const itens = [];
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const cells = tr.querySelectorAll('input');
+    if (cells.length < 4) return;
+    const qtd  = parseFloat(cells[0].value) || 0;
+    const pn   = cells[1].value.trim();
+    const desc = cells[2].value.trim();
+    const vunit= parseFloat(cells[3].value) || 0;
+    if (qtd || pn || desc || vunit) itens.push({qtd, pn, desc, vunit, total: qtd*vunit});
+  });
   reg.orc_numero      = document.getElementById('rcd-orc-numero').value.trim();
+  reg.orc_om          = om;
   reg.orc_data        = document.getElementById('rcd-orc-data').value;
-  reg.orc_valor       = document.getElementById('rcd-orc-valor').value;
+  reg.orc_bdi         = parseFloat(document.getElementById('rcd-orc-bdi').value) || 0;
+  reg.orc_valor       = parseFloat(document.getElementById('rcd-orc-valor').value) || 0;
+  reg.orc_itens       = itens;
   reg.orc_responsavel = document.getElementById('rcd-orc-responsavel').value.trim();
   reg.orc_descricao   = document.getElementById('rcd-orc-descricao').value.trim();
   await rcdSalvarRegistro(reg);
@@ -14666,53 +14735,92 @@ if ('serviceWorker' in navigator) {
 
     <!-- MODAL ORÇAMENTO -->
     <div id="rcd-orc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9200;align-items:center;justify-content:center">
-      <div style="background:#fff;border-radius:14px;padding:24px 28px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)">
-        <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:6px">📄 Orçamento de Avaria</div>
+      <div style="background:#fff;border-radius:14px;padding:24px 28px;width:820px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+        <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:14px">📄 Orçamento de Avaria</div>
         <input type="hidden" id="rcd-orc-id">
 
         <!-- Dados do equipamento (somente leitura) -->
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;margin-bottom:16px">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#94a3b8;margin-bottom:8px">Equipamento</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:12px">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px 16px;font-size:12px">
             <div><span style="color:#94a3b8">Cliente:</span> <span id="rcd-orc-cliente" style="font-weight:600;color:#1e293b">—</span></div>
             <div><span style="color:#94a3b8">Nº Interno:</span> <span id="rcd-orc-id-eq" style="font-weight:600;color:#1e293b">—</span></div>
             <div><span style="color:#94a3b8">Nº Série:</span> <span id="rcd-orc-serie" style="font-weight:600;color:#1e293b">—</span></div>
             <div><span style="color:#94a3b8">Placa:</span> <span id="rcd-orc-placa" style="font-weight:600;color:#1e293b">—</span></div>
             <div><span style="color:#94a3b8">Grupo:</span> <span id="rcd-orc-grupo" style="font-weight:600;color:#1e293b">—</span></div>
             <div><span style="color:#94a3b8">Fabricante:</span> <span id="rcd-orc-fabricante" style="font-weight:600;color:#1e293b">—</span></div>
-            <div style="grid-column:1/-1"><span style="color:#94a3b8">Modelo:</span> <span id="rcd-orc-modelo" style="font-weight:600;color:#1e293b">—</span></div>
+            <div style="grid-column:3/-1"><span style="color:#94a3b8">Modelo:</span> <span id="rcd-orc-modelo" style="font-weight:600;color:#1e293b">—</span></div>
           </div>
         </div>
 
-        <!-- Campos do orçamento -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <!-- Cabeçalho do orçamento -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
           <div>
             <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Nº do Orçamento</label>
             <div style="display:flex;gap:6px;align-items:center">
-              <input id="rcd-orc-numero" type="text" placeholder="Gerado automaticamente" style="flex:1;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
+              <input id="rcd-orc-numero" type="text" placeholder="Gerado automaticamente" style="flex:1;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
               <button id="rcd-orc-rev-btn" style="display:none;padding:7px 10px;background:#f59e0b;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">rev1</button>
             </div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Nº O.M. RCD (Manusis) <span style="color:#ef4444">*</span></label>
+            <input id="rcd-orc-om" type="text" placeholder="Ex: 2842603" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
           </div>
           <div>
             <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Data do Orçamento</label>
             <input id="rcd-orc-data" type="date" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
           </div>
           <div>
-            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Valor (R$)</label>
-            <input id="rcd-orc-valor" type="number" placeholder="0,00" step="0.01" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
-          </div>
-          <div>
             <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Responsável pelo Orçamento</label>
             <input id="rcd-orc-responsavel" type="text" placeholder="Nome" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
           </div>
+          <div style="grid-column:2/-1">
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Descrição das Avarias</label>
+            <textarea id="rcd-orc-descricao" rows="2" placeholder="Descreva as avarias identificadas..." style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+          </div>
         </div>
-        <div style="margin-bottom:20px">
-          <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Descrição das Avarias</label>
-          <textarea id="rcd-orc-descricao" rows="3" placeholder="Descreva as avarias identificadas..." style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+
+        <!-- Itens do orçamento -->
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b">Itens do Orçamento</span>
+            <button onclick="rcdOrcAddLinha()" style="padding:6px 14px;background:#0ea5e9;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">+ Adicionar Item</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead>
+                <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                  <th style="padding:8px 6px;text-align:left;color:#64748b;font-weight:600;width:60px">Qtd</th>
+                  <th style="padding:8px 6px;text-align:left;color:#64748b;font-weight:600;width:120px">PN</th>
+                  <th style="padding:8px 6px;text-align:left;color:#64748b;font-weight:600">Descrição</th>
+                  <th style="padding:8px 6px;text-align:right;color:#64748b;font-weight:600;width:120px">Vlr Unit. (R$)</th>
+                  <th style="padding:8px 6px;text-align:right;color:#64748b;font-weight:600;width:120px">Total (R$)</th>
+                  <th style="width:36px"></th>
+                </tr>
+              </thead>
+              <tbody id="rcd-orc-itens-body"></tbody>
+            </table>
+          </div>
+          <div id="rcd-orc-empty-hint" style="text-align:center;padding:18px;color:#94a3b8;font-size:12px;display:none">Nenhum item adicionado. Clique em + Adicionar Item.</div>
         </div>
+
+        <!-- BDI e totais -->
+        <div style="display:flex;justify-content:flex-end;gap:20px;align-items:flex-end;padding:14px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:18px">
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">BDI (%)</label>
+            <input id="rcd-orc-bdi" type="number" min="0" max="999" step="0.01" placeholder="0" oninput="rcdOrcCalcTotal()" style="width:90px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;text-align:center;box-sizing:border-box">
+          </div>
+          <div style="text-align:right;min-width:200px">
+            <div style="font-size:12px;color:#64748b;margin-bottom:4px">Subtotal: <span id="rcd-orc-subtotal" style="font-weight:600;color:#1e293b">R$ 0,00</span></div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:6px">BDI: <span id="rcd-orc-bdi-val" style="font-weight:600;color:#0ea5e9">R$ 0,00</span></div>
+            <div style="font-size:15px;font-weight:700;color:#1e293b;border-top:2px solid #e2e8f0;padding-top:6px">Total: <span id="rcd-orc-total-val">R$ 0,00</span></div>
+          </div>
+        </div>
+
+        <input type="hidden" id="rcd-orc-valor">
         <div style="display:flex;gap:8px">
-          <button onclick="rcdOrcSalvar()" style="flex:1;padding:9px;background:#f59e0b;color:#fff;border:none;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">Salvar Orçamento</button>
-          <button onclick="rcdOrcFechar()" style="flex:1;padding:9px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">Cancelar</button>
+          <button onclick="rcdOrcSalvar()" style="flex:1;padding:10px;background:#f59e0b;color:#fff;border:none;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">💾 Salvar Orçamento</button>
+          <button onclick="rcdOrcFechar()" style="flex:1;padding:10px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">Cancelar</button>
         </div>
       </div>
     </div>
