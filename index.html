@@ -2099,7 +2099,17 @@ let usuariosCache=[];
 let currentUser=null;
 
 async function initUsuarios(){
-  try{const fb=await fbGetUsers();if(fb&&Array.isArray(fb)&&fb.length>0)usuariosCache=fb;else{usuariosCache=[...USUARIOS_PADRAO];await fbSetUsers(usuariosCache);}
+  try{
+    const fb=await fbGetUsers();
+    let lista=null;
+    if(fb&&Array.isArray(fb)&&fb.length>0) lista=fb;
+    else if(fb&&typeof fb==='object'&&!Array.isArray(fb)){
+      // Firebase pode devolver objeto {0:{...},1:{...}} em vez de array
+      const vals=Object.values(fb).filter(v=>v&&v.login);
+      if(vals.length>0) lista=vals;
+    }
+    if(lista){usuariosCache=lista;}
+    else{usuariosCache=[...USUARIOS_PADRAO];await fbSetUsers(usuariosCache);}
   }catch(e){usuariosCache=[...USUARIOS_PADRAO];}
   if(typeof giPopularSelects==='function')giPopularSelects();
 }
