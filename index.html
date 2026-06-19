@@ -4888,11 +4888,19 @@ function parseCSVToEquipamentos(csvText){
     }
     return equips;
   }
-  // Formatos com 2 linhas de cabeçalho — detectar variante pelo header (case-insensitive)
+  // Formatos com 2 linhas de cabeçalho — mapear colunas pelo NOME do cabeçalho (robusto a variações)
   const hdr=(lines[1]||'');
-  const hdrL=hdr.toLowerCase();
+  const hdrCols=hdr.split(';').map(x=>x.replace(/^"|"$/g,'').trim().toLowerCase());
+  const hdrL=hdrCols.join(';');
   const temLinhaP=hdrL.includes('linha de produto');
   const temGerencial=hdrL.includes('exibir gerencialmente');
+
+  // Detecta posição da coluna "Alugado na filial?" pelo cabeçalho (não por posição fixa)
+  const iFilialCol=hdrCols.findIndex(h=>h.includes('filial')&&(h.includes('alugad')||h.includes('na filial')));
+  // Detecta posição do Status pelo cabeçalho
+  const iStatusCol=hdrCols.findIndex(h=>h==='status');
+  console.log('[CSV] colunas no header:',hdrCols.length,'| iFilial:',iFilialCol,'| iStatus:',iStatusCol,'| temLinhaP:',temLinhaP);
+
   for(let i=2;i<lines.length;i++){
     const c=lines[i].split(';').map(x=>x.replace(/^"|"$/g,'').trim());
     let frota,serie,id,placa,linhaProduto,familia,grupo,gerencial,fabric,modelo,clienteRes,oficina,tipoContrato,clienteNfe,planta,estado,municipio,status,alugaradoFilial='';
@@ -4901,13 +4909,13 @@ function parseCSVToEquipamentos(csvText){
       // Formato 37 — 19 cols: nova col "Alugado na filial?" em c[17], Status em c[18]
       frota=c[0];serie=c[1];id=c[2];placa=c[3];linhaProduto=c[4];familia=c[5];grupo=c[6];gerencial=c[7];fabric=c[8];modelo=c[9];clienteRes=c[10];oficina=c[11];tipoContrato=c[12];clienteNfe=c[13];planta=c[14];estado=c[15];municipio=c[16];alugaradoFilial=c[17];status=c[18];
     } else if(temLinhaP&&c.length>=18){
-      // Formato 36 — 18 cols (padrão anterior): Frota|Série|ID|Placa|LinhaProd|Familia|Grupo|Gerencial|Fabric|Modelo|ClienteRes|Filial|TipoCtrt|ClienteNFe|Planta|Estado|Municipio|Status
+      // Formato 36 — 18 cols (padrão anterior)
       frota=c[0];serie=c[1];id=c[2];placa=c[3];linhaProduto=c[4];familia=c[5];grupo=c[6];gerencial=c[7];fabric=c[8];modelo=c[9];clienteRes=c[10];oficina=c[11];tipoContrato=c[12];clienteNfe=c[13];planta=c[14];estado=c[15];municipio=c[16];status=c[17];
     } else if(temGerencial&&c.length>=17){
       // Formato 35 (17 cols): tem Gerencial, sem Linha de produto
       frota=c[0];serie=c[1];id=c[2];placa=c[3];familia=c[4];grupo=c[5];gerencial=c[6];fabric=c[7];modelo=c[8];clienteRes=c[9];oficina=c[10];tipoContrato=c[11];clienteNfe=c[12];planta=c[13];estado=c[14];municipio=c[15];status=c[16];
     } else {
-      // Formato 34 (17 cols): sem Gerencial — usa filtro SEM_MOTOR_SET
+      // Formato 34 (17 cols): sem Gerencial
       if(c.length<16)continue;
       frota=c[0];id=c[2];familia=c[5];grupo=c[6];fabric=c[7];modelo=c[8];clienteRes=c[9];oficina=c[10];tipoContrato=c[11];clienteNfe=c[12];planta=c[13];estado=c[14];municipio=c[15];status=c[16];
       if(!id)continue;
@@ -4917,6 +4925,9 @@ function parseCSVToEquipamentos(csvText){
       equips.push({id,equipamento:grupo||familia,modelo:`${fabric||''} ${modelo||''}`.trim(),tipo:familia,oficina:(oficina||'').trim(),status:sn,cliente:(clienteRes||'').trim(),reservado:!!(clienteRes||'').trim(),planta:(planta||'').trim(),estado:(estado||'').trim(),municipio:(municipio||'').trim()});
       continue;
     }
+    // Sobrescreve alugaradoFilial pelo cabeçalho se detectado em posição diferente de c[17]
+    if(iFilialCol>=0&&iFilialCol!==17&&c[iFilialCol]!==undefined){alugaradoFilial=c[iFilialCol];}
+    if(iStatusCol>=0&&iStatusCol!==18&&iStatusCol!==17&&c[iStatusCol]!==undefined){status=c[iStatusCol];}
     if(!id)continue;
     if(gerencial&&gerencial.toLowerCase()!=='sim')continue;   // Filtro: apenas gerencial=sim
     if(!status||EXCLUIR_STATUS_SET.has(status.trim().toLowerCase()))continue; // Excluir Vendido/Sinistrado
