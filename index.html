@@ -4931,10 +4931,13 @@ function parseCSVToEquipamentos(csvText){
     if(!id)continue;
     if(gerencial&&gerencial.toLowerCase()!=='sim')continue;   // Filtro: apenas gerencial=sim
     if(!status||EXCLUIR_STATUS_SET.has(status.trim().toLowerCase()))continue; // Excluir Vendido/Sinistrado
-    // Contar TODOS os válidos (inclui venda) para Card 1 — Total Frota
+    if(frota&&frota.toLowerCase()==='leve')continue;           // Excluir Frota Leve (veículos de apoio)
+    // Contar TODOS os válidos (inclui venda e comodato) para Card 1 — Total Frota
     {const _t=frotaClassificar(familia);_csvParseStats.totalAll++;if(_t==='equipamento')_csvParseStats.nEq++;else if(_t==='implemento')_csvParseStats.nImp++;else if(_t==='acessorio')_csvParseStats.nAc++;}
     if(frota&&frota.toLowerCase()==='venda')continue;          // Excluir venda do board (mas já contado acima)
-    const sl=status.toLowerCase();let sn=sl.includes('manutenç')||sl.includes('manutenc')?'Manutenção':sl==='alugado'||sl==='comodato'?'Alugado':'Disponível';
+    const sl=status.toLowerCase();
+    if(sl==='comodato')continue;                               // Comodato = Frota Venda: conta no total, fora do board
+    let sn=sl.includes('manutenç')||sl.includes('manutenc')?'Manutenção':sl==='alugado'?'Alugado':'Disponível';
     // Regra: Alugado mas fisicamente na oficina (alugaradoFilial=sim) → entra no Kanban como Manutenção
     const emFilial=alugaradoFilial.toLowerCase()==='sim';
     if(sn==='Alugado'&&emFilial)sn='Manutenção';
