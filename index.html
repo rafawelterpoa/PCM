@@ -14741,7 +14741,9 @@ function rgRenderVisaoGeral(ativos,emOperacao){
   const nVendaStandby=(_cs.nVenda||0)+(_cs.nStandby||0);
   const paraLocacao=nLocacao||totalFrota;
   const locados=_cs.locados!=null?_cs.locados:allActive.filter(e=>e.etapa==='alugado'&&(e.frota||'').toLowerCase().includes('loca')).length;
-  const tuPct=paraLocacao>0?Math.round(locados/paraLocacao*100):0;
+  const locadosTotal=allActive.filter(e=>e.etapa==='alugado').length;
+  const tuLocPct=paraLocacao>0?Math.round(locados/paraLocacao*100):0;
+  const tuTotPct=totalFrota>0?Math.round(locadosTotal/totalFrota*100):0;
 
   // ── CARDS 3 & 4: Manutenção e Pátio — todos os tipos (espelha Oficina e Pátio) ─
   const getFr=e=>(e.frota||'').toLowerCase();
@@ -14801,12 +14803,12 @@ function rgRenderVisaoGeral(ativos,emOperacao){
 
   <div class="vg-card alugada">
     <div class="vg-label">Frota de Locação</div>
-    <div style="margin-top:12px">
+    <div style="margin-top:10px">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f5f9">
         <span style="font-size:12px;color:#64748b;font-weight:500">Para locação</span>
         <span style="font-size:20px;font-weight:800;color:#0f172a">${fmt(paraLocacao)}</span>
       </div>
-      ${nVendaStandby>0?`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f5f9">
+      ${nVendaStandby>0?`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f1f5f9">
         <span style="font-size:11px;color:#94a3b8;font-weight:500">Venda + Standby</span>
         <span style="font-size:13px;font-weight:700;color:#94a3b8">${fmt(nVendaStandby)}</span>
       </div>`:''}
@@ -14814,14 +14816,23 @@ function rgRenderVisaoGeral(ativos,emOperacao){
         <span style="font-size:12px;color:#64748b;font-weight:500">Locados</span>
         <span style="font-size:20px;font-weight:800;color:#2563eb">${fmt(locados)}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0 4px">
-        <div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b">T.U.</div>
-          <div style="margin-top:5px;height:5px;width:90px;background:#eff6ff;border-radius:3px;overflow:hidden">
-            <div style="height:100%;width:${tuPct}%;background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:3px;transition:width .8s ease"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0 2px">
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#2563eb">T.U. Locação</span>
+            <span style="font-size:22px;font-weight:900;color:#2563eb">${tuLocPct}%</span>
+          </div>
+          <div style="height:4px;background:#eff6ff;border-radius:3px;overflow:hidden;margin-bottom:6px">
+            <div style="height:100%;width:${tuLocPct}%;background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:3px;transition:width .8s ease"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b">T.U. Total (2.640)</span>
+            <span style="font-size:16px;font-weight:700;color:#64748b">${tuTotPct}%</span>
+          </div>
+          <div style="height:4px;background:#f1f5f9;border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${tuTotPct}%;background:linear-gradient(90deg,#94a3b8,#cbd5e1);border-radius:3px;transition:width .8s ease"></div>
           </div>
         </div>
-        <span style="font-size:26px;font-weight:900;color:#2563eb">${tuPct}%</span>
       </div>
     </div>
   </div>
