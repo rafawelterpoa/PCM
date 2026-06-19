@@ -1843,23 +1843,24 @@ function fbListen(){
           if(state[id]){
             // Preservar ordens locais se Firebase vier com array vazio
             const ordensAntes=state[id].ordens||[];
-            // Antes do assign, verificar se Firebase tem etapa errada vs ORIG
             const _o=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
-            // origNaoAlugado=true se ORIG diz que não é Alugado, OU se está alugado mas na filial (emFilial)
-            const origNaoAlugado=_o&&(_o.status!=='Alugado'||_o.alugaradoFilial);
-            // Se ORIG diz que não é Alugado mas Firebase veio com alugado → não aplicar etapa do Firebase
+            // alugaradoFilial: fonte de verdade é Firebase state (d), ORIG é fallback
+            const _isFilial=d.alugaradoFilial||(_o&&_o.alugaradoFilial)||false;
+            // origNaoAlugado: não é Alugado puro, OU está na filial
+            const origNaoAlugado=_isFilial||(_o&&_o.status!=='Alugado');
             if(origNaoAlugado&&d.etapa==='alugado'){
-              const etapaCorreta=etapaInicial(_o.status);
+              // alugaradoFilial → volta para Aguardando Movimentação; demais → etapa inicial
+              const etapaCorreta=_isFilial?'chegada':(_o?etapaInicial(_o.status):'chegada');
               d={...d,etapa:etapaCorreta};
-              // Persistir correção no Firebase
               fetch(`${FB_BASE}/equipamentos/${id}/etapa.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(etapaCorreta)}).catch(()=>{});
             }
             Object.assign(state[id],d);
             if(_o){
-              const deveSerAlugado=_o.status==='Alugado'&&!_o.alugaradoFilial;
+              const deveSerAlugado=_o.status==='Alugado'&&!_o.alugaradoFilial&&!d.alugaradoFilial;
               if(deveSerAlugado){state[id].etapa='alugado';}
               else if(!deveSerAlugado&&state[id].etapa==='alugado'){
-                const ne=etapaInicial(_o.status);state[id].etapa=ne;
+                const ne=_isFilial?'chegada':etapaInicial(_o.status);
+                state[id].etapa=ne;
                 fetch(`${FB_BASE}/equipamentos/${id}/etapa.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ne)}).catch(()=>{});
               }
             }
@@ -1935,7 +1936,23 @@ async function loadFromFirebase(){
             modelo:d.modelo||state[id].modelo,
             tipo:d.tipo||state[id].tipo,
             oficina:d.oficina||state[id].oficina,
-            etapa:(()=>{if(!_orig)return d.etapa||state[id].etapa;const deveAlug=_orig.status==='Alugado'&&!_orig.alugaradoFilial;if(deveAlug)return'alugado';if(d.etapa==='alugado'){const ne=etapaInicial(_orig.status);fetch(`${FB_BASE}/equipamentos/${id}/etapa.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ne)}).catch(()=>{});return ne;}return d.etapa||state[id].etapa;})(),
+            etapa:(()=>{
+              // alugaradoFilial: alugado mas fisicamente na oficina — usa Firebase state como fonte de verdade
+              const _isFilial=d.alugaradoFilial||(_orig&&_orig.alugaradoFilial)||false;
+              if(!_orig){
+                // Sem EQUIPAMENTOS_ORIG: se alugaradoFilial=true e etapa=alugado → chegada
+                if(_isFilial&&d.etapa==='alugado'){fetch(`${FB_BASE}/equipamentos/${id}/etapa.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify('chegada')}).catch(()=>{});return'chegada';}
+                return d.etapa||state[id].etapa;
+              }
+              const deveAlug=_orig.status==='Alugado'&&!_orig.alugaradoFilial&&!d.alugaradoFilial;
+              if(deveAlug)return'alugado';
+              if(d.etapa==='alugado'){
+                const ne=_isFilial?'chegada':etapaInicial(_orig.status);
+                fetch(`${FB_BASE}/equipamentos/${id}/etapa.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ne)}).catch(()=>{});
+                return ne;
+              }
+              return d.etapa||state[id].etapa;
+            })(),
             etapa_desde:d.etapa_desde||state[id].etapa_desde,
             etapa_interna:d.etapa_interna!==undefined?d.etapa_interna:null,
             etapa_interna_desde:d.etapa_interna_desde||null,
@@ -4716,7 +4733,7 @@ async function doBaseUpdate(){
   const agora=Date.now();
   // ── CRÍTICO: atualizar EQUIPAMENTOS_ORIG em memória para evitar que o
   // EventSource do Firebase reverta estados recém-alterados pelo upload ──
-  novos.forEach(n=>{const o=EQUIPAMENTOS_ORIG.find(e=>e.id===n.id);if(o){o.status=n.status;o.oficina=n.oficina||o.oficina;}});
+  novos.forEach(n=>{const o=EQUIPAMENTOS_ORIG.find(e=>e.id===n.id);if(o){o.status=n.status;o.oficina=n.oficina||o.oficina;o.alugaradoFilial=n.alugaradoFilial||false;}});
   const user=currentUser?currentUser.nome:'sistema';
   let adicionados=0,baixados=0,atualizados=0;
   // Equipamentos ausentes do CSV permanecem onde estão — saída só via status Alugado
