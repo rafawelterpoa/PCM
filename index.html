@@ -4814,9 +4814,10 @@ async function doBaseUpdate(){
     const _isL=n=>(n.frota||'').toLowerCase().includes('loca')&&frotaClassificar(n.tipo)==='equipamento';
     const _pL=novos.filter(_isL).length;
     const _lo=novos.filter(n=>_isL(n)&&n.status==='Alugado').length;
-    const _nLoc=_csvParseStats.nLocacao,_nVen=_csvParseStats.nVenda,_nSby=_csvParseStats.nStandby;
+    const _nLoc=_csvParseStats.nLocacao,_nVen=_csvParseStats.nVenda,_nSby=_csvParseStats.nStandby,_nVenAlug=_csvParseStats.nVendaAlugado||0;
     const _loLoc=novos.filter(n=>(n.frota||'').toLowerCase().includes('loca')&&n.status==='Alugado').length;
-    window._csvStats={totalFrota:_tot,nEq:_nEq,nImp:_nImp,nAc:_nAc,nOut:_nOut,paraLocacao:_pL,nLocacao:_nLoc,nVenda:_nVen,nStandby:_nSby,locados:_loLoc,tu:_nLoc>0?Math.round(_loLoc/_nLoc*100):0,ts:agora};
+    console.log(`[CSV] Frota Venda com status Alugado: ${_nVenAlug}`);
+    window._csvStats={totalFrota:_tot,nEq:_nEq,nImp:_nImp,nAc:_nAc,nOut:_nOut,paraLocacao:_pL,nLocacao:_nLoc,nVenda:_nVen,nStandby:_nSby,nVendaAlugado:_nVenAlug,locados:_loLoc,tu:_nLoc>0?Math.round(_loLoc/_nLoc*100):0,ts:agora};
     console.log('[CSV Stats]',window._csvStats);
     try{await fetch(FB_BASE+'/csv_stats.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._csvStats)});}catch(e){console.warn('csv_stats save:',e);}
   }catch(e){console.error('[CSV Stats ERRO]',e);}
@@ -4942,7 +4943,7 @@ function parseCSVToEquipamentos(csvText){
     // Contar TODOS os válidos (inclui venda e comodato) para Card 1 — Total Frota
     {const _t=frotaClassificar(familia);_csvParseStats.totalAll++;if(_t==='equipamento')_csvParseStats.nEq++;else if(_t==='implemento')_csvParseStats.nImp++;else if(_t==='acessorio')_csvParseStats.nAc++;
      const _fL=(frota||'').toLowerCase();if(_fL.includes('loca'))_csvParseStats.nLocacao++;else if(_fL.includes('venda'))_csvParseStats.nVenda++;else if(_fL.includes('standby'))_csvParseStats.nStandby++;}
-    if(frota&&frota.toLowerCase()==='venda')continue;          // Excluir venda do board (mas já contado acima)
+    if(frota&&frota.toLowerCase()==='venda'){if((status||'').toLowerCase()==='alugado')_csvParseStats.nVendaAlugado=(_csvParseStats.nVendaAlugado||0)+1;continue;} // Excluir venda do board
     const sl=status.toLowerCase();
     if(sl==='comodato')continue;                               // Comodato = Frota Venda: conta no total, fora do board
     let sn=sl.includes('manutenç')||sl.includes('manutenc')?'Manutenção':sl==='alugado'?'Alugado':'Disponível';
