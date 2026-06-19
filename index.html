@@ -4931,7 +4931,7 @@ function parseCSVToEquipamentos(csvText){
     if(iStatusCol>=0&&iStatusCol!==18&&iStatusCol!==17&&c[iStatusCol]!==undefined){status=c[iStatusCol];}
     if(!id)continue;
     if(gerencial&&gerencial.toLowerCase()!=='sim')continue;   // Filtro: apenas gerencial=sim
-    if(!status||EXCLUIR_STATUS_SET.has(status.trim().toLowerCase()))continue; // Excluir Vendido/Sinistrado
+    if(status&&EXCLUIR_STATUS_SET.has(status.trim().toLowerCase()))continue;  // Excluir Vendido/Sinistrado (status vazio = manter)
     if(!frota||!frota.trim())continue;                         // Excluir ativos de apoio (coluna Frota em branco)
     if(frota.toLowerCase()==='leve')continue;                  // Excluir Frota Leve explícita
     // Diagnóstico — contagem por frota e status antes de qualquer exclusão
