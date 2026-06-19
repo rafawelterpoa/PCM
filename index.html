@@ -4814,7 +4814,9 @@ async function doBaseUpdate(){
     const _isL=n=>(n.frota||'').toLowerCase().includes('loca')&&frotaClassificar(n.tipo)==='equipamento';
     const _pL=novos.filter(_isL).length;
     const _lo=novos.filter(n=>_isL(n)&&n.status==='Alugado').length;
-    window._csvStats={totalFrota:_tot,nEq:_nEq,nImp:_nImp,nAc:_nAc,nOut:_nOut,paraLocacao:_pL,locados:_lo,tu:_pL>0?Math.round(_lo/_pL*100):0,ts:agora};
+    const _nLoc=_csvParseStats.nLocacao,_nVen=_csvParseStats.nVenda,_nSby=_csvParseStats.nStandby;
+    const _loLoc=novos.filter(n=>(n.frota||'').toLowerCase().includes('loca')&&n.status==='Alugado').length;
+    window._csvStats={totalFrota:_tot,nEq:_nEq,nImp:_nImp,nAc:_nAc,nOut:_nOut,paraLocacao:_pL,nLocacao:_nLoc,nVenda:_nVen,nStandby:_nSby,locados:_loLoc,tu:_nLoc>0?Math.round(_loLoc/_nLoc*100):0,ts:agora};
     console.log('[CSV Stats]',window._csvStats);
     try{await fetch(FB_BASE+'/csv_stats.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._csvStats)});}catch(e){console.warn('csv_stats save:',e);}
   }catch(e){console.error('[CSV Stats ERRO]',e);}
@@ -4871,7 +4873,7 @@ const SEM_MOTOR_ARR=Array.from(SEM_MOTOR_SET);
 const EXCLUIR_STATUS_SET=new Set(['vendido','sinistrado']);
 let _csvParseStats={totalAll:0,nEq:0,nImp:0,nAc:0}; // populado em parseCSVToEquipamentos
 function parseCSVToEquipamentos(csvText){
-  _csvParseStats={totalAll:0,nEq:0,nImp:0,nAc:0}; // reset a cada parse
+  _csvParseStats={totalAll:0,nEq:0,nImp:0,nAc:0,nLocacao:0,nVenda:0,nStandby:0}; // reset a cada parse
   const _dbgFrotaMap={},_dbgStatusMap={};  // diagnóstico — valores distintos de frota e status
   const lines=csvText.split(/\r?\n/).filter(l=>l.trim());const equips=[];
   const isNovoFormato=lines[0]&&lines[0].toLowerCase().includes('equipamento;equipamento');
@@ -4938,7 +4940,8 @@ function parseCSVToEquipamentos(csvText){
     {const _fk=(frota||'(vazio)').trim();_dbgFrotaMap[_fk]=(_dbgFrotaMap[_fk]||0)+1;}
     {const _sk=(status||'(vazio)').trim();_dbgStatusMap[_sk]=(_dbgStatusMap[_sk]||0)+1;}
     // Contar TODOS os válidos (inclui venda e comodato) para Card 1 — Total Frota
-    {const _t=frotaClassificar(familia);_csvParseStats.totalAll++;if(_t==='equipamento')_csvParseStats.nEq++;else if(_t==='implemento')_csvParseStats.nImp++;else if(_t==='acessorio')_csvParseStats.nAc++;}
+    {const _t=frotaClassificar(familia);_csvParseStats.totalAll++;if(_t==='equipamento')_csvParseStats.nEq++;else if(_t==='implemento')_csvParseStats.nImp++;else if(_t==='acessorio')_csvParseStats.nAc++;
+     const _fL=(frota||'').toLowerCase();if(_fL.includes('loca'))_csvParseStats.nLocacao++;else if(_fL.includes('venda'))_csvParseStats.nVenda++;else if(_fL.includes('standby'))_csvParseStats.nStandby++;}
     if(frota&&frota.toLowerCase()==='venda')continue;          // Excluir venda do board (mas já contado acima)
     const sl=status.toLowerCase();
     if(sl==='comodato')continue;                               // Comodato = Frota Venda: conta no total, fora do board
@@ -14734,8 +14737,10 @@ function rgRenderVisaoGeral(ativos,emOperacao){
   const pctT=n=>totalFrota>0?Math.round(n/totalFrota*100):0;
 
   // ── CARD 2: Frota de Locação ──────────────────────────────────────────────────
-  const paraLocacao=totalFrota;
-  const locados=allActive.filter(e=>e.etapa==='alugado').length;
+  const nLocacao=_cs.nLocacao||0;
+  const nVendaStandby=(_cs.nVenda||0)+(_cs.nStandby||0);
+  const paraLocacao=nLocacao||totalFrota;
+  const locados=_cs.locados!=null?_cs.locados:allActive.filter(e=>e.etapa==='alugado'&&(e.frota||'').toLowerCase().includes('loca')).length;
   const tuPct=paraLocacao>0?Math.round(locados/paraLocacao*100):0;
 
   // ── CARDS 3 & 4: Manutenção e Pátio — todos os tipos (espelha Oficina e Pátio) ─
@@ -14797,11 +14802,15 @@ function rgRenderVisaoGeral(ativos,emOperacao){
   <div class="vg-card alugada">
     <div class="vg-label">Frota de Locação</div>
     <div style="margin-top:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f1f5f9">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f5f9">
         <span style="font-size:12px;color:#64748b;font-weight:500">Para locação</span>
         <span style="font-size:20px;font-weight:800;color:#0f172a">${fmt(paraLocacao)}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f1f5f9">
+      ${nVendaStandby>0?`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f5f9">
+        <span style="font-size:11px;color:#94a3b8;font-weight:500">Venda + Standby</span>
+        <span style="font-size:13px;font-weight:700;color:#94a3b8">${fmt(nVendaStandby)}</span>
+      </div>`:''}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f5f9">
         <span style="font-size:12px;color:#64748b;font-weight:500">Locados</span>
         <span style="font-size:20px;font-weight:800;color:#2563eb">${fmt(locados)}</span>
       </div>
