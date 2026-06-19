@@ -14741,9 +14741,9 @@ function rgRenderVisaoGeral(ativos,emOperacao){
   const nLocacao=_cs.nLocacao||0;
   const nVendaStandby=(_cs.nVenda||0)+(_cs.nStandby||0);
   const paraLocacao=nLocacao||totalFrota;
-  const locados=_cs.locados!=null?_cs.locados:allActive.filter(e=>e.etapa==='alugado'&&(e.frota||'').toLowerCase().includes('loca')).length;
   const locadosTotal=allActive.filter(e=>e.etapa==='alugado').length;
-  const tuLocPct=paraLocacao>0?Math.round(locados/paraLocacao*100):0;
+  const locadosLoc=_cs.locados!=null?_cs.locados:allActive.filter(e=>e.etapa==='alugado'&&(e.frota||'').toLowerCase().includes('loca')).length;
+  const tuLocPct=nLocacao>0?Math.round(locadosLoc/nLocacao*100):0;
   const tuTotPct=totalFrota>0?Math.round(locadosTotal/totalFrota*100):0;
 
   // ── CARDS 3 & 4: Manutenção e Pátio — todos os tipos (espelha Oficina e Pátio) ─
@@ -14815,7 +14815,7 @@ function rgRenderVisaoGeral(ativos,emOperacao){
       </div>`:''}
       <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f5f9">
         <span style="font-size:12px;color:#64748b;font-weight:500">Locados</span>
-        <span style="font-size:20px;font-weight:800;color:#2563eb">${fmt(locados)}</span>
+        <span style="font-size:20px;font-weight:800;color:#2563eb">${fmt(locadosTotal)}</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0 2px">
         <div style="flex:1">
