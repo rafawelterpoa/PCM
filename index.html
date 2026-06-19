@@ -4872,6 +4872,7 @@ const EXCLUIR_STATUS_SET=new Set(['vendido','sinistrado']);
 let _csvParseStats={totalAll:0,nEq:0,nImp:0,nAc:0}; // populado em parseCSVToEquipamentos
 function parseCSVToEquipamentos(csvText){
   _csvParseStats={totalAll:0,nEq:0,nImp:0,nAc:0}; // reset a cada parse
+  const _dbgFrotaMap={},_dbgStatusMap={};  // diagnóstico — valores distintos de frota e status
   const lines=csvText.split(/\r?\n/).filter(l=>l.trim());const equips=[];
   const isNovoFormato=lines[0]&&lines[0].toLowerCase().includes('equipamento;equipamento');
   if(!isNovoFormato){
@@ -4932,6 +4933,9 @@ function parseCSVToEquipamentos(csvText){
     if(gerencial&&gerencial.toLowerCase()!=='sim')continue;   // Filtro: apenas gerencial=sim
     if(!status||EXCLUIR_STATUS_SET.has(status.trim().toLowerCase()))continue; // Excluir Vendido/Sinistrado
     if(frota&&frota.toLowerCase()==='leve')continue;           // Excluir Frota Leve (veículos de apoio)
+    // Diagnóstico — contagem por frota e status antes de qualquer exclusão
+    {const _fk=(frota||'(vazio)').trim();_dbgFrotaMap[_fk]=(_dbgFrotaMap[_fk]||0)+1;}
+    {const _sk=(status||'(vazio)').trim();_dbgStatusMap[_sk]=(_dbgStatusMap[_sk]||0)+1;}
     // Contar TODOS os válidos (inclui venda e comodato) para Card 1 — Total Frota
     {const _t=frotaClassificar(familia);_csvParseStats.totalAll++;if(_t==='equipamento')_csvParseStats.nEq++;else if(_t==='implemento')_csvParseStats.nImp++;else if(_t==='acessorio')_csvParseStats.nAc++;}
     if(frota&&frota.toLowerCase()==='venda')continue;          // Excluir venda do board (mas já contado acima)
@@ -4943,6 +4947,7 @@ function parseCSVToEquipamentos(csvText){
     if(sn==='Alugado'&&emFilial)sn='Manutenção';
     equips.push({id,equipamento:grupo||familia,modelo:`${fabric||''} ${modelo||''}`.trim(),tipo:familia,linhaProduto:linhaProduto||'',oficina:(oficina||'').trim(),status:sn,alugaradoFilial:emFilial,cliente:(clienteRes||'').trim(),reservado:!!(clienteRes||'').trim(),planta:(planta||'').trim(),estado:(estado||'').trim(),municipio:(municipio||'').trim(),tipoContrato:(tipoContrato||'').trim(),clienteNfe:(clienteNfe||'').trim(),frota:(frota||'').trim(),serie:(serie||'').trim(),placa:(placa||'').trim(),fabricante:(fabric||'').trim(),grupo:(grupo||familia||'').trim()});
   }
+  console.log('[CSV-DIAG] totalAll='+_csvParseStats.totalAll+' | frota values:',_dbgFrotaMap,'| status values:',_dbgStatusMap);
   return equips;
 }
 function handleBaseDrop(e){e.preventDefault();document.getElementById('base-dropzone').classList.remove('over');const f=e.dataTransfer.files[0];if(f)handleBaseFile(f);}
