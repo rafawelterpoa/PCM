@@ -14656,7 +14656,7 @@ async function solRcdSalvarReg(reg){
 }
 
 function solRcdDiasNaFase(reg, fase){
-  const tsEntrada = reg['ts_'+fase];
+  const tsEntrada = reg['ts_'+fase] || reg.ts_criacao;
   if(!tsEntrada) return 0;
   const tsSaida = reg['ts_saida_'+fase];
   const fim = tsSaida || Date.now();
@@ -15036,6 +15036,7 @@ function solRcdNovaAbrir(){
   document.getElementById('sol-data').value=new Date().toISOString().slice(0,10);
   document.getElementById('sol-responsavel').value=currentUser?.nome||'';
   document.getElementById('sol-descricao').value='';
+  const _trEl=document.getElementById('sol-tipo-rcd');if(_trEl)_trEl.value='';
   document.getElementById('sol-bdi').value='';
   document.getElementById('sol-valor').value='';
   ['sol-eq-nome','sol-eq-fab','sol-eq-modelo','sol-eq-serie'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='—';});
@@ -15075,6 +15076,7 @@ function solRcdEditarAbrir(id){
   inp('sol-contato-nome',  reg.contato_nome);
   inp('sol-contato-tel',   reg.contato_tel);
   inp('sol-contato-email', reg.contato_email);
+  const _trEl2=document.getElementById('sol-tipo-rcd');if(_trEl2)_trEl2.value=reg.tipo_rcd||'';
   orcFotosCarregar('sol', reg.orc_fotos||[]);
   const tbody=document.getElementById('sol-itens-body');if(tbody)tbody.innerHTML='';
   (reg.orc_itens||[]).forEach(it=>solRcdAddLinha(it));
@@ -15190,6 +15192,8 @@ async function solRcdSalvar(){
   reg.data=document.getElementById('sol-data')?.value||'';
   reg.responsavel=document.getElementById('sol-responsavel')?.value.trim()||'';
   reg.descricao=document.getElementById('sol-descricao')?.value.trim()||'';
+  reg.tipo_rcd=document.getElementById('sol-tipo-rcd')?.value||'';
+  if(!reg.tipo_rcd){showToast('⚠️ Selecione o Tipo RCD');document.getElementById('sol-tipo-rcd')?.focus();return;}
   reg.orc_itens=solRcdLerLinhas().filter(i=>i.qtd||i.pn||i.desc||i.vunit);
   reg.orc_bdi=parseFloat(document.getElementById('sol-bdi')?.value)||0;
   reg.orc_valor=parseFloat(document.getElementById('sol-valor')?.value)||0;
@@ -16379,6 +16383,15 @@ if ('serviceWorker' in navigator) {
         <div>
           <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Solicitante</label>
           <input id="sol-responsavel" type="text" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Tipo RCD <span style="color:#ef4444">*</span></label>
+          <select id="sol-tipo-rcd" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;background:#fff">
+            <option value="">Selecione...</option>
+            <option value="Contrato">Contrato</option>
+            <option value="Frete">Frete</option>
+            <option value="Venda de Peças">Venda de Peças</option>
+          </select>
         </div>
         <div style="grid-column:1/-1">
           <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Descrição da ocorrência</label>
