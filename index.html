@@ -12868,10 +12868,12 @@ function rcdOrcAbrir(id) {
   const _itens = reg.orc_itens || [];
   if (_itens.length === 0) { rcdOrcAddLinha(); } else { _itens.forEach(it => rcdOrcAddLinha(it)); }
   rcdOrcCalcTotal();
+  orcFotosCarregar('rcd-orc', reg.orc_fotos||[]);
   document.getElementById('rcd-orc-modal').style.display = 'flex';
 }
 
 function rcdOrcFechar() {
+  orcFotosInit('rcd-orc');
   document.getElementById('rcd-orc-modal').style.display = 'none';
 }
 
@@ -12984,6 +12986,7 @@ async function rcdOrcSalvar() {
   reg.orc_itens       = itens;
   reg.orc_responsavel  = document.getElementById('rcd-orc-responsavel').value.trim();
   reg.orc_descricao    = document.getElementById('rcd-orc-descricao').value.trim();
+  reg.orc_fotos        = (_orcFotos['rcd-orc']||[]).map(f=>({base64:f.base64,desc:f.desc||'',nome:f.nome||''}));
   const _h=document.getElementById('rcd-orc-horimetro');if(_h)reg.equip_horimetro=_h.value.trim();
   const _c=document.getElementById('rcd-orc-cnpj');if(_c)reg.equip_cnpj=_c.value.trim();
   if(reg.status==='aguardando_inspecao')reg.status='em_orcamento';
@@ -14457,6 +14460,91 @@ function navegarPara(destino){
   if(destino==='solrcd'){paginaSolRcd();snavSetActive('snav-solrcd');return;}
 }
 
+// ── FOTOS DE ORÇAMENTO (compartilhado entre RCD Desmob e Sol. RCD) ───────────
+const _orcFotos = {}; // chave = prefixo ('rcd-orc' | 'sol')
+
+function orcFotosInit(pfx) {
+  _orcFotos[pfx] = [];
+  orcFotosRender(pfx);
+}
+
+function orcFotosCarregar(pfx, fotos) {
+  _orcFotos[pfx] = fotos ? JSON.parse(JSON.stringify(fotos)) : [];
+  orcFotosRender(pfx);
+}
+
+function orcFotosRender(pfx) {
+  const container = document.getElementById(pfx+'-fotos-lista');
+  if(!container) return;
+  const fotos = _orcFotos[pfx] || [];
+  if(!fotos.length) {
+    container.innerHTML = '<div style="color:#cbd5e1;font-size:11px;padding:8px 0">Nenhuma foto adicionada.</div>';
+    return;
+  }
+  container.innerHTML = fotos.map((f,i) => `
+    <div style="display:flex;gap:10px;align-items:flex-start;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px">
+      <img src="${f.base64}" style="width:80px;height:60px;object-fit:cover;border-radius:5px;flex-shrink:0;cursor:pointer" onclick="orcFotoZoom('${pfx}',${i})">
+      <div style="flex:1;min-width:0">
+        <textarea rows="2" placeholder="Descrição desta foto..."
+          style="width:100%;padding:5px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:11px;resize:vertical;box-sizing:border-box"
+          oninput="_orcFotos['${pfx}'][${i}].desc=this.value">${f.desc||''}</textarea>
+        <div style="font-size:10px;color:#94a3b8;margin-top:2px">${f.nome||''}</div>
+      </div>
+      <button onclick="orcFotosRemover('${pfx}',${i})" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer;line-height:1;flex-shrink:0">×</button>
+    </div>`).join('');
+}
+
+function orcFotosRemover(pfx, idx) {
+  if(_orcFotos[pfx]) { _orcFotos[pfx].splice(idx,1); orcFotosRender(pfx); }
+}
+
+function orcFotoZoom(pfx, idx) {
+  const f = (_orcFotos[pfx]||[])[idx]; if(!f) return;
+  const ov = document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
+  ov.innerHTML=`<img src="${f.base64}" style="max-width:90vw;max-height:88vh;border-radius:8px;box-shadow:0 4px 32px rgba(0,0,0,.5)">`;
+  ov.onclick=()=>ov.remove();
+  document.body.appendChild(ov);
+}
+
+function orcFotosSelecionarArquivo(pfx) {
+  const inp = document.getElementById(pfx+'-foto-input');
+  if(inp) { inp.value=''; inp.click(); }
+}
+
+async function orcFotosOnChange(pfx) {
+  const inp = document.getElementById(pfx+'-foto-input');
+  const file = inp?.files?.[0]; if(!file) return;
+  try {
+    const base64 = await orcComprimirImagem(file, 1200, 0.75);
+    if(!_orcFotos[pfx]) _orcFotos[pfx]=[];
+    _orcFotos[pfx].push({base64, desc:'', nome:file.name});
+    orcFotosRender(pfx);
+  } catch(e) { showToast('⚠️ Erro ao processar imagem'); }
+}
+
+function orcComprimirImagem(file, maxW, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = Math.min(1, maxW / img.width);
+        const w = Math.round(img.width * ratio);
+        const h = Math.round(img.height * ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 // ── RCD ───────────────────────────────────────────────────────────────────────
 function paginaRcd(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -14708,6 +14796,7 @@ function solRcdNovaAbrir(){
   ['sol-eq-placa','sol-eq-hor','sol-eq-cnpj'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   const tbody=document.getElementById('sol-itens-body');if(tbody)tbody.innerHTML='';
   solRcdAddLinha();solRcdCalcTotal();
+  orcFotosInit('sol');
   el.style.display='flex';
 }
 
@@ -14737,6 +14826,7 @@ function solRcdEditarAbrir(id){
   inp('sol-eq-placa',    reg.equip_placa);
   inp('sol-eq-hor',      reg.equip_horimetro);
   inp('sol-eq-cnpj',     reg.equip_cnpj);
+  orcFotosCarregar('sol', reg.orc_fotos||[]);
   const tbody=document.getElementById('sol-itens-body');if(tbody)tbody.innerHTML='';
   (reg.orc_itens||[]).forEach(it=>solRcdAddLinha(it));
   if(!(reg.orc_itens||[]).length)solRcdAddLinha();
@@ -14850,6 +14940,7 @@ async function solRcdSalvar(){
   reg.orc_itens=solRcdLerLinhas().filter(i=>i.qtd||i.pn||i.desc||i.vunit);
   reg.orc_bdi=parseFloat(document.getElementById('sol-bdi')?.value)||0;
   reg.orc_valor=parseFloat(document.getElementById('sol-valor')?.value)||0;
+  reg.orc_fotos=(_orcFotos['sol']||[]).map(f=>({base64:f.base64,desc:f.desc||'',nome:f.nome||''}));
   await solRcdSalvarReg(reg);
   solRcdFechar();solRcdRenderTodos();
   showToast('💾 Solicitação salva');
@@ -15653,6 +15744,16 @@ if ('serviceWorker' in navigator) {
           </div>
         </div>
 
+        <!-- Fotos das Avarias -->
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b">Fotos das Avarias</span>
+            <button onclick="orcFotosSelecionarArquivo('rcd-orc')" style="padding:6px 14px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">📷 Adicionar Foto</button>
+          </div>
+          <input type="file" id="rcd-orc-foto-input" accept="image/*" style="display:none" onchange="orcFotosOnChange('rcd-orc')">
+          <div id="rcd-orc-fotos-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+
         <!-- Itens do orçamento -->
         <div style="margin-bottom:14px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -15855,6 +15956,16 @@ if ('serviceWorker' in navigator) {
           <textarea id="sol-descricao" rows="2" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;resize:vertical"></textarea>
         </div>
       </div>
+      <!-- Fotos -->
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Fotos da Ocorrência</div>
+          <button onclick="orcFotosSelecionarArquivo('sol')" style="padding:5px 12px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">📷 Adicionar Foto</button>
+        </div>
+        <input type="file" id="sol-foto-input" accept="image/*" style="display:none" onchange="orcFotosOnChange('sol')">
+        <div id="sol-fotos-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
       <!-- Itens do orçamento -->
       <div style="margin-bottom:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
