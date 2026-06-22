@@ -15208,13 +15208,25 @@ async function solRcdEnviarAprovacao(){
 
 function solRcdGerarOrcamento(id){
   const reg=_solRegistros[id];if(!reg){showToast('⚠️ Registro não encontrado');return;}
+  // Gera orc_numero no padrão AAAADDMM-NN (igual ao Desmob) se ainda não existe
+  if(!reg.orc_numero){
+    const _now=new Date();
+    const _pref=`${_now.getFullYear()}${String(_now.getDate()).padStart(2,'0')}${String(_now.getMonth()+1).padStart(2,'0')}`;
+    const _usados=Object.values(_solRegistros)
+      .map(r=>r.orc_numero||'')
+      .filter(n=>n.startsWith(_pref+'-'))
+      .map(n=>parseInt(n.split('-')[1])||0);
+    const _next=_usados.length>0?Math.max(..._usados)+1:1;
+    reg.orc_numero=`${_pref}-${String(_next).padStart(2,'0')}`;
+    solRcdSalvarReg(reg);
+  }
   const itens=(reg.orc_itens||[]).filter(i=>i.qtd||i.pn||i.desc||i.vunit);
   const bdi=parseFloat(reg.orc_bdi)||0;
   const subtotal=itens.reduce((s,i)=>s+(parseFloat(i.total)||0),0);
   const bdival=subtotal*(bdi/100);
   const total=subtotal+bdival;
   const fmt=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const numero=reg.numero||reg.id||'—';
+  const numero=reg.orc_numero||reg.numero||reg.id||'—';
   const om=reg.om||'—';
   const data=reg.data||'';
   const dataFmt=data?new Date(data+'T12:00:00').toLocaleDateString('pt-BR'):'—';
