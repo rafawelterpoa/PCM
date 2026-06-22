@@ -368,6 +368,9 @@ input.filter-sel{padding:5px 8px;height:34px}
 .perfil-operador{background:#eef1f6;color:#4a5568}
 .perfil-consultor{background:rgba(50,130,200,.1);color:#5aabf0;border:1px solid rgba(50,130,200,.2)}
 .perfil-implantacao{background:rgba(127,119,221,.1);color:#9d97e8;border:1px solid rgba(127,119,221,.2)}
+.perfil-pcm{background:rgba(99,102,241,.1);color:#6366f1;border:1px solid rgba(99,102,241,.2)}
+.perfil-programador{background:rgba(245,158,11,.1);color:#d97706;border:1px solid rgba(245,158,11,.2)}
+.perfil-planejador{background:rgba(16,185,129,.1);color:#059669;border:1px solid rgba(16,185,129,.2)}
 .del-btn{background:none;border:1px solid var(--borda);border-radius:5px;cursor:pointer;color:var(--terra);font-size:11px;padding:3px 7px}
 .del-btn:hover{background:rgba(224,80,32,.14)}
 
@@ -2932,7 +2935,7 @@ function doLogout(){
 }
 
 function perfilLabel(p){return{master:'Master',sistemas:'Sistemas',gestor:'Gestor',usuario:'Usuário',
-  // legado
+  pcm:'PCM',programador:'Programador',planejador:'Planejador',
   engenharia:'Engenharia',gestao_ativos:'Gestão de Ativos',oficina:'Oficina',operador:'Operador',consultor:'Consultor',implantacao:'Implantação'}[p]||p;}
 
 // SENHAS
@@ -4907,10 +4910,13 @@ function parseCSVToEquipamentos(csvText){
 
   for(let i=2;i<lines.length;i++){
     const c=lines[i].split(';').map(x=>x.replace(/^"|"$/g,'').trim());
-    let frota,serie,id,placa,linhaProduto,familia,grupo,gerencial,fabric,modelo,clienteRes,oficina,tipoContrato,clienteNfe,planta,estado,municipio,status,alugaradoFilial='';
+    let frota,serie,id,horimetro,placa,linhaProduto,familia,grupo,gerencial,fabric,modelo,clienteRes,oficina,tipoContrato,clienteNfe,planta,estado,municipio,status,alugaradoFilial='';
     if(temLinhaP&&c.length<18){continue;} // linha malformada — pular
-    if(temLinhaP&&c.length>=19){
-      // Formato 37 — 19 cols: nova col "Alugado na filial?" em c[17], Status em c[18]
+    if(temLinhaP&&c.length>=20){
+      // Formato 38 — 20 cols: col "Horímetro" em c[3], demais deslocados +1
+      frota=c[0];serie=c[1];id=c[2];horimetro=c[3];placa=c[4];linhaProduto=c[5];familia=c[6];grupo=c[7];gerencial=c[8];fabric=c[9];modelo=c[10];clienteRes=c[11];oficina=c[12];tipoContrato=c[13];clienteNfe=c[14];planta=c[15];estado=c[16];municipio=c[17];alugaradoFilial=c[18];status=c[19];
+    } else if(temLinhaP&&c.length>=19){
+      // Formato 37 — 19 cols: "Alugado na filial?" em c[17], Status em c[18]
       frota=c[0];serie=c[1];id=c[2];placa=c[3];linhaProduto=c[4];familia=c[5];grupo=c[6];gerencial=c[7];fabric=c[8];modelo=c[9];clienteRes=c[10];oficina=c[11];tipoContrato=c[12];clienteNfe=c[13];planta=c[14];estado=c[15];municipio=c[16];alugaradoFilial=c[17];status=c[18];
     } else if(temLinhaP&&c.length>=18){
       // Formato 36 — 18 cols (padrão anterior)
@@ -4950,7 +4956,7 @@ function parseCSVToEquipamentos(csvText){
     // Regra: Alugado mas fisicamente na oficina (alugaradoFilial=sim) → entra no Kanban como Manutenção
     const emFilial=alugaradoFilial.toLowerCase()==='sim';
     if(sn==='Alugado'&&emFilial)sn='Manutenção';
-    equips.push({id,equipamento:grupo||familia,modelo:`${fabric||''} ${modelo||''}`.trim(),tipo:familia,linhaProduto:linhaProduto||'',oficina:(oficina||'').trim(),status:sn,alugaradoFilial:emFilial,cliente:(clienteRes||'').trim(),reservado:!!(clienteRes||'').trim(),planta:(planta||'').trim(),estado:(estado||'').trim(),municipio:(municipio||'').trim(),tipoContrato:(tipoContrato||'').trim(),clienteNfe:(clienteNfe||'').trim(),frota:(frota||'').trim(),serie:(serie||'').trim(),placa:(placa||'').trim(),fabricante:(fabric||'').trim(),grupo:(grupo||familia||'').trim()});
+    equips.push({id,equipamento:grupo||familia,modelo:`${fabric||''} ${modelo||''}`.trim(),tipo:familia,linhaProduto:linhaProduto||'',oficina:(oficina||'').trim(),status:sn,alugaradoFilial:emFilial,cliente:(clienteRes||'').trim(),reservado:!!(clienteRes||'').trim(),planta:(planta||'').trim(),estado:(estado||'').trim(),municipio:(municipio||'').trim(),tipoContrato:(tipoContrato||'').trim(),clienteNfe:(clienteNfe||'').trim(),frota:(frota||'').trim(),serie:(serie||'').trim(),placa:(placa||'').trim(),fabricante:(fabric||'').trim(),grupo:(grupo||familia||'').trim(),horimetro:(horimetro||'').trim()});
   }
   console.log('[CSV-DIAG] totalAll='+_csvParseStats.totalAll+' | frota values:',_dbgFrotaMap,'| status values:',_dbgStatusMap);
   return equips;
@@ -12700,6 +12706,7 @@ async function rcdTriagem(equipId, chegadaTs, elegivel) {
     equip_modelo:      eq.modelo      || _orig.modelo      || '',
     equip_placa:       eq.placa       || _orig.placa       || '',
     equip_grupo:       eq.grupo       || _orig.grupo       || eq.tipo || '',
+    equip_horimetro:   eq.horimetro   || _orig.horimetro   || '',
   };
   if(!elegivel) {
     const reg = { id: 'rcd_' + Date.now(), equip_id: equipId, ..._snapEq, oficina: eq.oficina||'', chegada_ts: chegadaTs, status: 'nao_elegivel', ts_triagem: Date.now() };
@@ -12760,7 +12767,9 @@ function rcdRenderTratamento() {
         </div>
         <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">
           ${prox ? `<button onclick="rcdAvancar('${r.id}','${prox}')" ${bloqueado?'disabled title="Preencha a ordem de inspeção primeiro"':''} style="flex:1;padding:5px 8px;background:${bloqueado?'#e2e8f0':cor};color:${bloqueado?'#94a3b8':'#fff'};border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:${bloqueado?'not-allowed':'pointer'}">→ ${proxLbl}</button>` : ''}
-          <button onclick="rcdConcluir('${r.id}')" style="flex:1;padding:5px 8px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer">Concluir</button>
+          ${status==='aguardando_cliente' ? `<button onclick="rcdOrcAbrir('${r.id}')" style="flex:1;padding:5px 8px;background:#fffbeb;color:#f59e0b;border:1px solid #fde68a;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer">✏ Editar Orç.</button>` : ''}
+          ${status==='em_orcamento' ? `<button onclick="rcdConcluirSemAvaria('${r.id}')" style="flex:1;padding:5px 8px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer">✓ Sem Avaria</button>` : ''}
+          ${status!=='aguardando_inspecao' ? `<button onclick="rcdConcluir('${r.id}')" style="flex:1;padding:5px 8px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer">Concluir</button>` : ''}
         </div>
       </div>`;
     }).join('');
@@ -12783,6 +12792,8 @@ function rcdOrcAbrir(id) {
   document.getElementById('rcd-orc-grupo').textContent     = reg.equip_grupo     || eq.grupo      || orig.grupo      || eq.tipo || '—';
   document.getElementById('rcd-orc-fabricante').textContent= reg.equip_fabricante|| eq.fabricante || orig.fabricante || '—';
   document.getElementById('rcd-orc-modelo').textContent    = reg.equip_modelo    || eq.modelo     || orig.modelo     || '—';
+  const _horEl=document.getElementById('rcd-orc-horimetro');if(_horEl)_horEl.value=reg.equip_horimetro||eq.horimetro||orig.horimetro||'';
+  const _cnpjEl=document.getElementById('rcd-orc-cnpj');if(_cnpjEl)_cnpjEl.value=reg.equip_cnpj||'';
   // Número do orçamento — gerado automaticamente uma única vez
   const _numInput = document.getElementById('rcd-orc-numero');
   const _revBtn   = document.getElementById('rcd-orc-rev-btn');
@@ -12947,8 +12958,11 @@ async function rcdOrcSalvar() {
   reg.orc_bdi         = parseFloat(document.getElementById('rcd-orc-bdi').value) || 0;
   reg.orc_valor       = parseFloat(document.getElementById('rcd-orc-valor').value) || 0;
   reg.orc_itens       = itens;
-  reg.orc_responsavel = document.getElementById('rcd-orc-responsavel').value.trim();
-  reg.orc_descricao   = document.getElementById('rcd-orc-descricao').value.trim();
+  reg.orc_responsavel  = document.getElementById('rcd-orc-responsavel').value.trim();
+  reg.orc_descricao    = document.getElementById('rcd-orc-descricao').value.trim();
+  const _h=document.getElementById('rcd-orc-horimetro');if(_h)reg.equip_horimetro=_h.value.trim();
+  const _c=document.getElementById('rcd-orc-cnpj');if(_c)reg.equip_cnpj=_c.value.trim();
+  if(reg.status==='aguardando_inspecao')reg.status='em_orcamento';
   await rcdSalvarRegistro(reg);
   rcdOrcFechar();
   rcdRender();
@@ -12993,8 +13007,7 @@ async function rcdOrcGerar() {
       <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600">${fmt(it.total)}</td>
     </tr>`).join('') : `<tr><td colspan="5" style="padding:16px;text-align:center;color:#94a3b8">Nenhum item</td></tr>`;
 
-  const bdiLinha = bdi > 0 ? `
-    <tr><td colspan="4" style="padding:6px 10px;text-align:right;color:#64748b;font-size:12px">BDI (${bdi}%)</td><td style="padding:6px 10px;text-align:right;color:#0ea5e9;font-size:12px">${fmt(bdival)}</td></tr>` : '';
+  const bdiLinha = ''; // BDI não exibido no documento do cliente — apenas no total final
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
   <title>Orçamento ${numero}</title>
@@ -13138,30 +13151,51 @@ async function rcdAvancar(id, novoStatus) {
 
 async function rcdConcluir(id) {
   const reg = _rcdRegistros[id]; if(!reg) return;
-  const opcao = confirm('Faturado?\n\nOK = Faturado\nCancelar = Encerrado sem faturamento');
-  reg.status = opcao ? 'faturado' : 'encerrado';
-  reg.ts_conclusao = Date.now();
-  await rcdSalvarRegistro(reg);
-  rcdRender();
-  showToast(opcao ? '💰 Faturado' : '🔒 Encerrado sem faturamento');
+  if(reg.status==='aguardando_cliente'){
+    const fatura=prompt('Informe o número da fatura para concluir:');
+    if(fatura===null)return;
+    if(!fatura.trim()){showToast('⚠️ Número da fatura é obrigatório');return;}
+    reg.status='faturado';reg.fatura=fatura.trim();reg.ts_conclusao=Date.now();
+    await rcdSalvarRegistro(reg);rcdRender();showToast('💰 Faturado — Fatura: '+fatura.trim());
+  } else {
+    const opcao=confirm('Faturado?\n\nOK = Faturado\nCancelar = Encerrado sem faturamento');
+    reg.status=opcao?'faturado':'encerrado';reg.ts_conclusao=Date.now();
+    await rcdSalvarRegistro(reg);rcdRender();showToast(opcao?'💰 Faturado':'🔒 Encerrado sem faturamento');
+  }
+}
+async function rcdConcluirSemAvaria(id){
+  const reg=_rcdRegistros[id];if(!reg)return;
+  if(!confirm('Confirmar conclusão sem avaria? O registro será encerrado sem cobrança.'))return;
+  reg.status='concluido_sem_avaria';reg.ts_conclusao=Date.now();
+  await rcdSalvarRegistro(reg);rcdRender();showToast('✓ Concluído sem avaria');
+}
+async function rcdReverter(id){
+  const reg=_rcdRegistros[id];if(!reg)return;
+  const senha=prompt('Senha master para reverter:');
+  if(!senha)return;
+  const ok=resolverPerfil(senha);
+  if(!ok||ok.nivel!=='master'){showToast('⛔ Senha master incorreta');return;}
+  reg.status='aguardando_cliente';delete reg.ts_conclusao;delete reg.fatura;
+  await rcdSalvarRegistro(reg);rcdRender();showToast('↩ Registro revertido para Aguardando Cliente');
 }
 
 function rcdRenderHistorico() {
   const el = document.getElementById('rcd-historico-lista'); if(!el) return;
-  const regs = Object.values(_rcdRegistros).filter(r => r.status === 'faturado' || r.status === 'encerrado')
+  const regs = Object.values(_rcdRegistros).filter(r => ['faturado','encerrado','concluido_sem_avaria'].includes(r.status))
     .sort((a,b) => (b.ts_conclusao||0) - (a.ts_conclusao||0));
   if(!regs.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px">Nenhum registro concluído.</div>'; return; }
-  const STATUS_COR = { faturado:'#16a34a', encerrado:'#64748b' };
-  const STATUS_LABEL = { faturado:'Faturado', encerrado:'Encerrado s/ fat.' };
+  const STATUS_COR   = { faturado:'#16a34a', encerrado:'#64748b', concluido_sem_avaria:'#6366f1' };
+  const STATUS_LABEL = { faturado:'Faturado', encerrado:'Encerrado s/ fat.', concluido_sem_avaria:'Sem Avaria' };
   el.innerHTML = regs.map(r => {
     const cor = STATUS_COR[r.status]||'#888';
     const dt = r.ts_conclusao ? new Date(r.ts_conclusao).toLocaleDateString('pt-BR') : '—';
     return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px">
       <div style="flex:1">
         <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id} <span style="font-weight:400;color:#64748b">— ${r.equip_nome}</span></div>
-        <div style="font-size:10px;color:#94a3b8;margin-top:3px">${r.oficina} · Concluído: ${dt}</div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:3px">${r.oficina} · Concluído: ${dt}${r.fatura?' · Fatura: '+r.fatura:''}</div>
       </div>
-      <span style="font-size:11px;font-weight:700;color:${cor};background:${cor}18;padding:4px 10px;border-radius:20px">${STATUS_LABEL[r.status]}</span>
+      <span style="font-size:11px;font-weight:700;color:${cor};background:${cor}18;padding:4px 10px;border-radius:20px">${STATUS_LABEL[r.status]||r.status}</span>
+      <button onclick="rcdReverter('${r.id}')" title="Reverter (requer senha master)" style="padding:4px 8px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer">↩ Reverter</button>
     </div>`;
   }).join('');
 }
@@ -15158,6 +15192,8 @@ if ('serviceWorker' in navigator) {
             <div><span style="color:#94a3b8">Grupo:</span> <span id="rcd-orc-grupo" style="font-weight:600;color:#1e293b">—</span></div>
             <div><span style="color:#94a3b8">Fabricante:</span> <span id="rcd-orc-fabricante" style="font-weight:600;color:#1e293b">—</span></div>
             <div style="grid-column:3/-1"><span style="color:#94a3b8">Modelo:</span> <span id="rcd-orc-modelo" style="font-weight:600;color:#1e293b">—</span></div>
+            <div><span style="color:#94a3b8">Horímetro:</span> <input id="rcd-orc-horimetro" type="text" placeholder="—" style="width:100%;padding:3px 6px;border:1px solid #e2e8f0;border-radius:5px;font-size:12px;font-weight:600;color:#1e293b;background:#fff"></div>
+            <div style="grid-column:2/-1"><span style="color:#94a3b8">CNPJ do Cliente:</span> <input id="rcd-orc-cnpj" type="text" placeholder="00.000.000/0000-00" style="width:100%;padding:3px 6px;border:1px solid #e2e8f0;border-radius:5px;font-size:12px;font-weight:600;color:#1e293b;background:#fff"></div>
           </div>
         </div>
 
