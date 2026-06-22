@@ -14613,6 +14613,18 @@ async function solRcdCarregar(){
   solRcdListen();
 }
 
+function solRcdAba(aba, sfx) {
+  const isKanban = aba === 'kanban';
+  const kw = document.getElementById('sol-kanban'+sfx+'-wrap');
+  const hw = document.getElementById('sol-hist'+sfx+'-wrap');
+  if (kw) kw.style.display = isKanban ? '' : 'none';
+  if (hw) hw.style.display = isKanban ? 'none' : '';
+  const tk = document.getElementById('sol-tab-kanban'+sfx);
+  const th = document.getElementById('sol-tab-historico'+sfx);
+  if (tk) { tk.style.color = isKanban?'#F37021':'#94a3b8'; tk.style.borderBottom = isKanban?'2px solid #F37021':'2px solid transparent'; }
+  if (th) { th.style.color = isKanban?'#94a3b8':'#F37021'; th.style.borderBottom = isKanban?'2px solid transparent':'2px solid #F37021'; }
+}
+
 function solRcdRenderTodos(){
   // Renderiza nos dois contextos que estiverem visíveis
   const pg=document.getElementById('page-solrcd');
@@ -16185,7 +16197,13 @@ if ('serviceWorker' in navigator) {
       <div id="sol-filtros-inline" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;align-items:center"></div>
       <!-- Gráficos analíticos -->
       <div id="sol-graficos-inline" style="display:grid;grid-template-columns:1fr 2fr 2fr 1fr;gap:14px;margin-bottom:24px;align-items:start"></div>
+      <!-- Sub-abas Kanban / Histórico -->
+      <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:20px">
+        <button id="sol-tab-kanban-inline" onclick="solRcdAba('kanban','-inline')" style="padding:9px 18px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:none;color:#F37021;border-bottom:2px solid #F37021;margin-bottom:-2px">Kanban</button>
+        <button id="sol-tab-historico-inline" onclick="solRcdAba('historico','-inline')" style="padding:9px 18px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:none;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px">Histórico / Concluídos</button>
+      </div>
       <!-- Kanban -->
+      <div id="sol-kanban-inline-wrap">
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px">
         <div>
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #6366f1">Em Aprovação</div>
@@ -16208,12 +16226,11 @@ if ('serviceWorker' in navigator) {
           <div id="sol-col-faturamento-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
         </div>
       </div>
-      <!-- Botão Nova + Histórico -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b">Histórico</div>
-        <button onclick="solRcdNovaAbrir()" style="padding:8px 18px;background:#b45309;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">+ Nova Solicitação</button>
       </div>
-      <div id="sol-historico-inline" style="display:flex;flex-direction:column;gap:8px"></div>
+      <!-- Histórico -->
+      <div id="sol-hist-inline-wrap" style="display:none">
+        <div id="sol-historico-inline" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -16236,7 +16253,13 @@ if ('serviceWorker' in navigator) {
     </div>
     <!-- Gráficos analíticos -->
     <div id="sol-graficos" style="display:grid;grid-template-columns:1fr 2fr 2fr 1fr;gap:14px;margin-bottom:24px;align-items:start"></div>
+    <!-- Sub-abas Kanban / Histórico -->
+    <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:20px">
+      <button id="sol-tab-kanban" onclick="solRcdAba('kanban','')" style="padding:9px 18px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:none;color:#F37021;border-bottom:2px solid #F37021;margin-bottom:-2px">Kanban</button>
+      <button id="sol-tab-historico" onclick="solRcdAba('historico','')" style="padding:9px 18px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:none;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px">Histórico / Concluídos</button>
+    </div>
     <!-- Kanban -->
+    <div id="sol-kanban-wrap">
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px">
       <div>
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6366f1;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#6366f1;display:inline-block"></span>Em Aprovação</div>
@@ -16259,9 +16282,9 @@ if ('serviceWorker' in navigator) {
         <div id="sol-col-faturamento" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
       </div>
     </div>
+    </div>
     <!-- Histórico / Relatório -->
-    <div style="margin-top:24px">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:12px">Concluídos</div>
+    <div id="sol-hist-wrap" style="display:none">
       <div id="sol-historico" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
   </div>
