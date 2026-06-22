@@ -14736,6 +14736,7 @@ function solRcdRender(sfx=''){
   });
 
   // Gráficos
+  solRcdFiltrosRender(sfx, regs);
   solRcdGraficos(sfx, regs);
 
   // Histórico
@@ -14760,6 +14761,47 @@ function solRcdRender(sfx=''){
 }
 
 const _solCharts = {};
+const _solFiltros = { equip:'', cliente:'', responsavel:'', de:'', ate:'' };
+
+function solRcdFiltrarRegs(regs) {
+  return regs.filter(r => {
+    const f = _solFiltros;
+    if (f.equip && !(r.equip_id||'').toLowerCase().includes(f.equip.toLowerCase())) return false;
+    if (f.cliente && !(r.equip_cliente||'').toLowerCase().includes(f.cliente.toLowerCase())) return false;
+    if (f.responsavel && !(r.responsavel||'').toLowerCase().includes(f.responsavel.toLowerCase())) return false;
+    if (f.de) { const ts = r.ts_criacao||0; if (ts < new Date(f.de+'T00:00:00').getTime()) return false; }
+    if (f.ate) { const ts = r.ts_criacao||0; if (ts > new Date(f.ate+'T23:59:59').getTime()) return false; }
+    return true;
+  });
+}
+
+function solRcdFiltrosRender(sfx, regs) {
+  const el = document.getElementById('sol-filtros'+sfx);
+  if (!el) return;
+  const f = _solFiltros;
+  const inp = (id,ph,key,w) => `<input id="${id}" type="text" placeholder="${ph}" value="${f[key]}"
+    oninput="_solFiltros['${key}']=this.value;solRcdRenderTodos()"
+    style="width:${w};padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b">`;
+  const dat = (id,key,ph) => `<input id="${id}" type="date" value="${f[key]}" title="${ph}"
+    onchange="_solFiltros['${key}']=this.value;solRcdRenderTodos()"
+    style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b">`;
+  const temFiltro = Object.values(f).some(v=>v);
+  const limpar = temFiltro ? `<button onclick="Object.keys(_solFiltros).forEach(k=>_solFiltros[k]='');solRcdRenderTodos()"
+    style="padding:5px 10px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">✕ Limpar</button>` : '';
+  const total = regs.length;
+  const filt = solRcdFiltrarRegs(regs).length;
+  const badge = filt < total
+    ? `<span style="font-size:10px;color:#f59e0b;font-weight:700">${filt} de ${total}</span>`
+    : `<span style="font-size:10px;color:#94a3b8">${total} registros</span>`;
+  el.innerHTML = `<span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Filtros:</span>
+    ${inp('sf-equip'+sfx,'Equipamento','equip','120px')}
+    ${inp('sf-cli'+sfx,'Cliente','cliente','150px')}
+    ${inp('sf-resp'+sfx,'Responsável','responsavel','120px')}
+    <span style="font-size:10px;color:#94a3b8;white-space:nowrap">De:</span>${dat('sf-de'+sfx,'de','Data início')}
+    <span style="font-size:10px;color:#94a3b8;white-space:nowrap">Até:</span>${dat('sf-ate'+sfx,'ate','Data fim')}
+    ${limpar}${badge}`;
+}
+
 function solRcdGraficos(sfx, regs) {
   const el = document.getElementById('sol-graficos'+sfx);
   if (!el || typeof Chart === 'undefined') return;
@@ -14769,12 +14811,10 @@ function solRcdGraficos(sfx, regs) {
   const fechados = concluidos.length + cancelados.length;
   const taxaConv = fechados ? Math.round((concluidos.length / fechados) * 100) : 0;
 
-  // Lead time médio (dias do início ao fim)
   const leadTimes = concluidos.filter(r => r.ts_criacao && r.ts_concluido)
     .map(r => Math.round((r.ts_concluido - r.ts_criacao) / 86400000));
   const leadMedio = leadTimes.length ? Math.round(leadTimes.reduce((a,b)=>a+b,0)/leadTimes.length) : 0;
 
-  // Enviados por mês (últimos 12 meses) — usa ts_criacao
   const agora = new Date();
   const meses = Array.from({length:12},(_,i)=>{
     const d = new Date(agora.getFullYear(), agora.getMonth()-11+i, 1);
@@ -14787,20 +14827,30 @@ function solRcdGraficos(sfx, regs) {
     if (slot) slot.count++;
   });
 
-  // Tempo médio por fase (dias acumulados nos registros com dias preenchido)
   const fases = ['em_aprovacao','aguardando_orcamento','aguardando_cliente','aguardando_execucao','aguardando_faturamento'];
-  const faseLbl = ['Aprovação','Ag. Orçamento','Ag. Cliente','Ag. Execução','Ag. Faturamento'];
+  const faseLbl = ['Aprovação','Ag. Orç.','Ag. Cliente','Ag. Exec.','Ag. Fat.'];
   const faseCores = ['#6366f1','#f59e0b','#10b981','#0ea5e9','#8b5cf6'];
-  const faseMedios = fases.map(f => {
-    const vals = regs.map(r=>(r.dias||{})[f]||0).filter(v=>v>0);
+  const faseMedios = fases.map((f, fi) => {
+    const vals = [];
+    regs.forEach(r => {
+      const d = (r.dias||{})[f];
+      if (d > 0) { vals.push(d); return; }
+      const tsIn = r['ts_'+f];
+      if (!tsIn) return;
+      const proximaFase = fases[fi+1];
+      const tsOut = proximaFase ? r['ts_'+proximaFase] : r.ts_concluido;
+      if (tsOut && tsOut > tsIn) vals.push(Math.round((tsOut-tsIn)/86400000));
+    });
     return vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
   });
 
-  // Monta HTML com 4 cards + canvas
   el.innerHTML = `
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:8px">Taxa de Conversão</div>
-      <canvas id="sol-chart-conv${sfx}" width="140" height="140"></canvas>
+      <div style="position:relative;width:140px;height:140px">
+        <canvas id="sol-chart-conv${sfx}" width="140" height="140"></canvas>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:24px;font-weight:900;color:#0f172a;pointer-events:none">${taxaConv}%</div>
+      </div>
       <div style="font-size:11px;color:#64748b;margin-top:8px;text-align:center">${concluidos.length} faturados de ${fechados} fechados</div>
     </div>
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px">
@@ -14815,43 +14865,61 @@ function solRcdGraficos(sfx, regs) {
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:8px">Lead Time Médio</div>
       <div style="font-size:48px;font-weight:900;color:#F37021;line-height:1">${leadMedio}</div>
       <div style="font-size:13px;color:#64748b;margin-top:4px">dias</div>
-      <div style="font-size:10px;color:#94a3b8;margin-top:8px;text-align:center">Criação → Faturamento<br>${concluidos.length} registros concluídos</div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:8px;text-align:center">Criação → Faturamento<br>${concluidos.length} concluídos</div>
     </div>`;
 
-  // Destrói instâncias anteriores
   ['conv','mes','fases'].forEach(k => {
     const key = k+sfx;
-    if (_solCharts[key]) { _solCharts[key].destroy(); delete _solCharts[key]; }
+    if (_solCharts[key]) { try{_solCharts[key].destroy();}catch(e){} delete _solCharts[key]; }
   });
 
-  // Donut — Taxa de Conversão
   _solCharts['conv'+sfx] = new Chart(document.getElementById('sol-chart-conv'+sfx), {
     type: 'doughnut',
     data: { datasets:[{ data:[taxaConv, 100-taxaConv], backgroundColor:['#10b981','#e2e8f0'], borderWidth:0 }] },
-    options: { cutout:'75%', plugins:{ legend:{display:false}, tooltip:{enabled:false},
-      beforeDraw(chart){ const {ctx,chartArea:{top,left,width,height}}=chart; ctx.save();
-        ctx.font='bold 22px Arial'; ctx.fillStyle='#0f172a'; ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText(taxaConv+'%',left+width/2,top+height/2); ctx.restore(); }
-    }}
+    options: { cutout:'72%', animation:{duration:600}, plugins:{ legend:{display:false}, tooltip:{enabled:false} } }
   });
 
-  // Bar — por mês
+  const barLabels = { id:'barLabels',
+    afterDatasetsDraw(chart) {
+      const {ctx} = chart;
+      chart.data.datasets.forEach((ds,i) => {
+        chart.getDatasetMeta(i).data.forEach((bar,j) => {
+          const v = ds.data[j]; if (!v) return;
+          ctx.save(); ctx.font='bold 9px Arial'; ctx.fillStyle='#475569'; ctx.textAlign='center';
+          ctx.fillText(v, bar.x, bar.y - 4); ctx.restore();
+        });
+      });
+    }
+  };
+
   _solCharts['mes'+sfx] = new Chart(document.getElementById('sol-chart-mes'+sfx), {
     type: 'bar',
-    data: { labels: meses.map(m=>m.label), datasets:[{ data: meses.map(m=>m.count),
-      backgroundColor:'#F37021', borderRadius:4 }] },
+    data: { labels: meses.map(m=>m.label), datasets:[{ data: meses.map(m=>m.count), backgroundColor:'#F37021', borderRadius:4 }] },
+    plugins: [barLabels],
     options: { plugins:{legend:{display:false}}, scales:{
       x:{grid:{display:false}, ticks:{font:{size:9}}},
-      y:{grid:{color:'#f1f5f9'}, ticks:{font:{size:9}, stepSize:1}} }}
+      y:{grid:{color:'#f1f5f9'}, ticks:{font:{size:9}}, beginAtZero:true} }}
   });
 
-  // Horizontal bar — tempo por fase
+  const barLabelsH = { id:'barLabelsH',
+    afterDatasetsDraw(chart) {
+      const {ctx} = chart;
+      chart.data.datasets.forEach((ds,i) => {
+        chart.getDatasetMeta(i).data.forEach((bar,j) => {
+          const v = ds.data[j]; if (!v) return;
+          ctx.save(); ctx.font='bold 9px Arial'; ctx.fillStyle='#475569'; ctx.textAlign='left';
+          ctx.fillText(v+'d', bar.x + 4, bar.y + 3); ctx.restore();
+        });
+      });
+    }
+  };
+
   _solCharts['fases'+sfx] = new Chart(document.getElementById('sol-chart-fases'+sfx), {
     type: 'bar',
-    data: { labels: faseLbl, datasets:[{ data: faseMedios,
-      backgroundColor: faseCores, borderRadius:4 }] },
+    data: { labels: faseLbl, datasets:[{ data: faseMedios, backgroundColor: faseCores, borderRadius:4 }] },
+    plugins: [barLabelsH],
     options: { indexAxis:'y', plugins:{legend:{display:false}},
-      scales:{ x:{grid:{color:'#f1f5f9'}, ticks:{font:{size:9}}},
+      scales:{ x:{grid:{color:'#f1f5f9'}, ticks:{font:{size:9}}, beginAtZero:true},
                y:{grid:{display:false}, ticks:{font:{size:9}}} }}
   });
 }
@@ -16109,8 +16177,13 @@ if ('serviceWorker' in navigator) {
 
     <!-- ABA EM OPERAÇÃO -->
     <div id="rcd-aba-operacao" style="display:none">
-      <!-- KPIs -->
-      <div id="sol-kpis-inline" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px"></div>
+      <!-- KPIs + botão -->
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:20px">
+        <div id="sol-kpis-inline" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;flex:1"></div>
+        <button onclick="solRcdNovaAbrir()" style="padding:10px 16px;background:#F37021;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;margin-top:0">+ Nova Solicitação</button>
+      </div>
+      <!-- Filtros -->
+      <div id="sol-filtros-inline" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;align-items:center"></div>
       <!-- Gráficos analíticos -->
       <div id="sol-graficos-inline" style="display:grid;grid-template-columns:1fr 2fr 2fr 1fr;gap:14px;margin-bottom:24px;align-items:start"></div>
       <!-- Kanban -->
@@ -16149,15 +16222,19 @@ if ('serviceWorker' in navigator) {
 <!-- SOLICITAÇÕES RCD -->
 <div id="page-solrcd" style="display:none;position:fixed;left:60px;top:56px;right:0;bottom:0;overflow-y:auto;background:#eef1f6;z-index:100">
   <div style="padding:24px 28px;max-width:1600px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
-      <div>
-        <div style="font-size:24px;font-weight:900;color:#0f172a;margin-bottom:4px">📋 Solicitações RCD</div>
-        <div style="font-size:13px;color:#94a3b8">Gestão de solicitações de reparo e cobrança de danos</div>
+    <div style="margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+        <div>
+          <div style="font-size:24px;font-weight:900;color:#0f172a;margin-bottom:4px">📋 Solicitações RCD</div>
+          <div style="font-size:13px;color:#94a3b8">Gestão de solicitações de reparo e cobrança de danos</div>
+        </div>
+        <button onclick="solRcdNovaAbrir()" style="padding:10px 20px;background:#F37021;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer">+ Nova Solicitação</button>
       </div>
-      <button onclick="solRcdNovaAbrir()" style="padding:10px 20px;background:#F37021;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px">+ Nova Solicitação</button>
+      <!-- KPIs -->
+      <div id="sol-kpis" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:14px"></div>
+      <!-- Filtros -->
+      <div id="sol-filtros" style="display:flex;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;align-items:center;margin-bottom:0"></div>
     </div>
-    <!-- KPIs -->
-    <div id="sol-kpis" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px"></div>
     <!-- Gráficos analíticos -->
     <div id="sol-graficos" style="display:grid;grid-template-columns:1fr 2fr 2fr 1fr;gap:14px;margin-bottom:24px;align-items:start"></div>
     <!-- Kanban -->
