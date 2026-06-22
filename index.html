@@ -14745,6 +14745,7 @@ function solRcdRender(sfx=''){
           ${isExec?`<button onclick="solRcdAvancar('${r.id}','aguardando_faturamento')" style="padding:3px 7px;background:#f0f9ff;color:#0284c7;border:1px solid #7dd3fc;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">→ Ag. Faturamento</button>`:''}
           ${isExec?`<button onclick="solRcdVoltarCliente('${r.id}')" style="padding:3px 7px;background:#fffbeb;color:#b45309;border:1px solid #fde68a;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">↩ Ag. PC</button>`:''}
           ${status==='aguardando_faturamento'?`<button onclick="solRcdConcluir('${r.id}')" style="padding:3px 7px;background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✓ Faturar</button>`:''}
+          <button onclick="solRcdCancelar('${r.id}')" style="padding:3px 7px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✖ Cancelar</button>
         </div>
       </div>`;
     }).join('');
@@ -15007,6 +15008,14 @@ async function solRcdReverterConcluido(id){
   showToast('↩ Revertido para Ag. Faturamento');
 }
 
+async function solRcdCancelar(id){
+  if(!confirm('Cancelar esta solicitação? Esta ação não pode ser desfeita.'))return;
+  const reg=_solRegistros[id];if(!reg)return;
+  reg.status='cancelado';reg.ts_cancelado=Date.now();
+  await solRcdSalvarReg(reg);solRcdRenderTodos();
+  showToast('✖ Solicitação cancelada');
+}
+
 function solRcdNovaAbrir(){
   const el=document.getElementById('sol-modal');if(!el)return;
   document.getElementById('sol-id').value='';
@@ -15018,7 +15027,7 @@ function solRcdNovaAbrir(){
   document.getElementById('sol-bdi').value='';
   document.getElementById('sol-valor').value='';
   ['sol-eq-nome','sol-eq-fab','sol-eq-modelo','sol-eq-serie'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='—';});
-  ['sol-eq-placa','sol-eq-hor','sol-eq-cnpj'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['sol-eq-placa','sol-eq-hor','sol-eq-cnpj','sol-contato-nome','sol-contato-tel','sol-contato-email'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   const tbody=document.getElementById('sol-itens-body');if(tbody)tbody.innerHTML='';
   solRcdAddLinha();solRcdCalcTotal();
   orcFotosInit('sol');
@@ -15051,6 +15060,9 @@ function solRcdEditarAbrir(id){
   inp('sol-eq-placa',    reg.equip_placa);
   inp('sol-eq-hor',      reg.equip_horimetro);
   inp('sol-eq-cnpj',     reg.equip_cnpj);
+  inp('sol-contato-nome',  reg.contato_nome);
+  inp('sol-contato-tel',   reg.contato_tel);
+  inp('sol-contato-email', reg.contato_email);
   orcFotosCarregar('sol', reg.orc_fotos||[]);
   const tbody=document.getElementById('sol-itens-body');if(tbody)tbody.innerHTML='';
   (reg.orc_itens||[]).forEach(it=>solRcdAddLinha(it));
@@ -15084,7 +15096,8 @@ function solRcdBuscarEquip(force){
   const planta=[e.planta||orig.planta,e.municipio||orig.municipio,e.estado||orig.estado].filter(Boolean).join(' — ')||'—';
   txt('sol-eq-planta', planta);
   inp('sol-eq-placa',  g(e.placa,        orig.placa));
-  inp('sol-eq-hor',    g(e.horimetro,    orig.horimetro));
+  const _hor = e.horimetro || orig.horimetro || (EQUIPAMENTOS_ORIG||[]).find(x=>x.frota===e.frota||x.frota===orig.frota)?.horimetro || '';
+  inp('sol-eq-hor', _hor||'');
   inp('sol-eq-cnpj',   e.cnpj||orig.cnpj||'');
   if(s('sol-equip-busca'))s('sol-equip-busca').value=e.id||val;
 }
@@ -15158,6 +15171,9 @@ async function solRcdSalvar(){
   reg.equip_placa=gv('sol-eq-placa');
   reg.equip_horimetro=gv('sol-eq-hor');
   reg.equip_cnpj=gv('sol-eq-cnpj');
+  reg.contato_nome=gv('sol-contato-nome');
+  reg.contato_tel=gv('sol-contato-tel');
+  reg.contato_email=gv('sol-contato-email');
   reg.om=om;
   reg.data=document.getElementById('sol-data')?.value||'';
   reg.responsavel=document.getElementById('sol-responsavel')?.value.trim()||'';
@@ -15166,8 +15182,9 @@ async function solRcdSalvar(){
   reg.orc_bdi=parseFloat(document.getElementById('sol-bdi')?.value)||0;
   reg.orc_valor=parseFloat(document.getElementById('sol-valor')?.value)||0;
   reg.orc_fotos=(_orcFotos['sol']||[]).map(f=>({base64:f.base64,desc:f.desc||'',nome:f.nome||''}));
-  await solRcdSalvarReg(reg);
-  solRcdFechar();solRcdRenderTodos();
+  solRcdFechar();
+  try{await solRcdSalvarReg(reg);}catch(e){showToast('⚠️ Erro ao salvar — verifique conexão');return;}
+  solRcdRenderTodos();
   showToast('💾 Solicitação salva');
 }
 
@@ -16320,6 +16337,9 @@ if ('serviceWorker' in navigator) {
           <div><span style="color:#94a3b8">Placa:</span> <input id="sol-eq-placa" type="text" style="width:100%;padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-weight:600"></div>
           <div><span style="color:#94a3b8">Horímetro:</span> <input id="sol-eq-hor" type="text" style="width:100%;padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-weight:600"></div>
           <div style="grid-column:3/-1"><span style="color:#94a3b8">CNPJ do Cliente:</span> <input id="sol-eq-cnpj" type="text" placeholder="00.000.000/0000-00" style="width:100%;padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-weight:600"></div>
+          <div><span style="color:#94a3b8">Nome do Contato:</span> <input id="sol-contato-nome" type="text" placeholder="Nome" style="width:100%;padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-weight:600"></div>
+          <div><span style="color:#94a3b8">Telefone:</span> <input id="sol-contato-tel" type="text" placeholder="(00) 00000-0000" style="width:100%;padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-weight:600"></div>
+          <div style="grid-column:3/-1"><span style="color:#94a3b8">E-mail:</span> <input id="sol-contato-email" type="email" placeholder="email@cliente.com.br" style="width:100%;padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-weight:600"></div>
         </div>
       </div>
       <!-- Cabeçalho -->
