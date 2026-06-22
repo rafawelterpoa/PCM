@@ -14909,21 +14909,48 @@ function solRcdGraficos(sfx, regs) {
     if (slot) slot.count++;
   });
 
+  // Faturamento por mês (usa ts_concluido + orc_valor)
+  const mesesFat = Array.from({length:12},(_,i)=>{
+    const d = new Date(agora.getFullYear(), agora.getMonth()-11+i, 1);
+    return { label: d.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}), y:d.getFullYear(), m:d.getMonth(), valor:0 };
+  });
+  concluidos.forEach(r => {
+    if (!r.ts_concluido) return;
+    const d = new Date(r.ts_concluido);
+    const slot = mesesFat.find(m => m.y===d.getFullYear() && m.m===d.getMonth());
+    if (slot) slot.valor += parseFloat(r.orc_valor)||0;
+  });
+
+  // Tempo médio por fase — para injetar nos cabeçalhos das colunas
   const fases = ['em_aprovacao','aguardando_orcamento','aguardando_cliente','aguardando_execucao','aguardando_faturamento'];
-  const faseLbl = ['Aprovação','Ag. Orç.','Ag. Cliente','Ag. Exec.','Ag. Fat.'];
-  const faseCores = ['#6366f1','#f59e0b','#10b981','#0ea5e9','#8b5cf6'];
-  const faseMedios = fases.map((f, fi) => {
+  const faseCores = {'em_aprovacao':'#6366f1','aguardando_orcamento':'#f59e0b','aguardando_cliente':'#10b981','aguardando_execucao':'#0ea5e9','aguardando_faturamento':'#8b5cf6'};
+  const faseMedios = {};
+  fases.forEach((f, fi) => {
     const vals = [];
     regs.forEach(r => {
       const d = (r.dias||{})[f];
       if (d > 0) { vals.push(d); return; }
       const tsIn = r['ts_'+f];
       if (!tsIn) return;
-      const proximaFase = fases[fi+1];
-      const tsOut = proximaFase ? r['ts_'+proximaFase] : r.ts_concluido;
+      const tsOut = fases[fi+1] ? r['ts_'+fases[fi+1]] : r.ts_concluido;
       if (tsOut && tsOut > tsIn) vals.push(Math.round((tsOut-tsIn)/86400000));
     });
-    return vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
+    faseMedios[f] = vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
+  });
+
+  // Injeta médias nos cabeçalhos das colunas
+  fases.forEach(f => {
+    const hdr = document.getElementById('sol-col-hdr-'+f+(sfx||''));
+    if (!hdr) return;
+    const existing = hdr.querySelector('[data-media-badge]');
+    if (existing) existing.remove();
+    if (faseMedios[f]) {
+      const badge = document.createElement('span');
+      badge.setAttribute('data-media-badge','');
+      badge.style.cssText = `margin-left:auto;font-size:9px;font-weight:600;color:${faseCores[f]};background:${faseCores[f]}18;padding:1px 6px;border-radius:10px;text-transform:none;letter-spacing:0`;
+      badge.textContent = 'média ' + faseMedios[f] + 'd';
+      hdr.appendChild(badge);
+    }
   });
 
   el.innerHTML = `
@@ -14940,17 +14967,17 @@ function solRcdGraficos(sfx, regs) {
       <canvas id="sol-chart-mes${sfx}" height="120"></canvas>
     </div>
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:12px">Tempo médio por fase (dias)</div>
-      <canvas id="sol-chart-fases${sfx}" height="120"></canvas>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:12px">Faturamento por mês (R$)</div>
+      <canvas id="sol-chart-fat${sfx}" height="120"></canvas>
     </div>
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:8px">Lead Time Médio</div>
       <div style="font-size:48px;font-weight:900;color:${leadTimes.length?'#F37021':'#cbd5e1'};line-height:1">${leadTimes.length?leadMedio:'—'}</div>
       <div style="font-size:13px;color:#64748b;margin-top:4px">${leadTimes.length?'dias':'sem dados'}</div>
-      <div style="font-size:10px;color:#94a3b8;margin-top:8px;text-align:center">Criação → Faturamento<br>${leadTimes.length} com timestamps</div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:8px;text-align:center">Envio → Faturamento<br>${leadTimes.length} com timestamps</div>
     </div>`;
 
-  ['conv','mes','fases'].forEach(k => {
+  ['conv','mes','fat'].forEach(k => {
     const key = k+sfx;
     if (_solCharts[key]) { try{_solCharts[key].destroy();}catch(e){} delete _solCharts[key]; }
   });
@@ -14983,26 +15010,30 @@ function solRcdGraficos(sfx, regs) {
       y:{grid:{color:'#f1f5f9'}, ticks:{font:{size:9}}, beginAtZero:true} }}
   });
 
-  const barLabelsH = { id:'barLabelsH',
+  const fmtK = v => v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'k' : v.toFixed(0);
+  const barLabelsFat = { id:'barLabelsFat',
     afterDatasetsDraw(chart) {
       const {ctx} = chart;
       chart.data.datasets.forEach((ds,i) => {
         chart.getDatasetMeta(i).data.forEach((bar,j) => {
           const v = ds.data[j]; if (!v) return;
-          ctx.save(); ctx.font='bold 9px Arial'; ctx.fillStyle='#475569'; ctx.textAlign='left';
-          ctx.fillText(v+'d', bar.x + 4, bar.y + 3); ctx.restore();
+          ctx.save(); ctx.font='bold 9px Arial'; ctx.fillStyle='#475569'; ctx.textAlign='center';
+          ctx.fillText(fmtK(v), bar.x, bar.y - 4); ctx.restore();
         });
       });
     }
   };
 
-  _solCharts['fases'+sfx] = new Chart(document.getElementById('sol-chart-fases'+sfx), {
+  _solCharts['fat'+sfx] = new Chart(document.getElementById('sol-chart-fat'+sfx), {
     type: 'bar',
-    data: { labels: faseLbl, datasets:[{ data: faseMedios, backgroundColor: faseCores, borderRadius:4 }] },
-    plugins: [barLabelsH],
-    options: { indexAxis:'y', plugins:{legend:{display:false}},
-      scales:{ x:{grid:{color:'#f1f5f9'}, ticks:{font:{size:9}}, beginAtZero:true},
-               y:{grid:{display:false}, ticks:{font:{size:9}}} }}
+    data: { labels: mesesFat.map(m=>m.label), datasets:[{ data: mesesFat.map(m=>m.valor), backgroundColor:'#10b981', borderRadius:4 }] },
+    plugins: [barLabelsFat],
+    options: { plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false}, ticks:{font:{size:9}}},
+        y:{grid:{color:'#f1f5f9'}, ticks:{font:{size:9}, callback: v=>fmtK(v)}, beginAtZero:true}
+      }
+    }
   });
 }
 
@@ -16311,23 +16342,23 @@ if ('serviceWorker' in navigator) {
       <div id="sol-kanban-inline-wrap">
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px">
         <div>
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #6366f1">Em Aprovação</div>
+          <div id="sol-col-hdr-em_aprovacao-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #6366f1">Em Aprovação</div>
           <div id="sol-col-aprovacao-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
         </div>
         <div>
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #f59e0b">Ag. Orçamento</div>
+          <div id="sol-col-hdr-aguardando_orcamento-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #f59e0b">Ag. Orçamento</div>
           <div id="sol-col-orcamento-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
         </div>
         <div>
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #10b981">Ag. Cliente</div>
+          <div id="sol-col-hdr-aguardando_cliente-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #10b981">Ag. Cliente</div>
           <div id="sol-col-cliente-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
         </div>
         <div>
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #3b82f6">Ag. Execução</div>
+          <div id="sol-col-hdr-aguardando_execucao-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #3b82f6">Ag. Execução</div>
           <div id="sol-col-execucao-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
         </div>
         <div>
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #8b5cf6">Ag. Faturamento</div>
+          <div id="sol-col-hdr-aguardando_faturamento-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #8b5cf6">Ag. Faturamento</div>
           <div id="sol-col-faturamento-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
         </div>
       </div>
@@ -16367,23 +16398,23 @@ if ('serviceWorker' in navigator) {
     <div id="sol-kanban-wrap">
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px">
       <div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6366f1;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#6366f1;display:inline-block"></span>Em Aprovação</div>
+        <div id="sol-col-hdr-em_aprovacao" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6366f1;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#6366f1;display:inline-block"></span>Em Aprovação</div>
         <div id="sol-col-aprovacao" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
       </div>
       <div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#f59e0b;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Ag. Orçamento</div>
+        <div id="sol-col-hdr-aguardando_orcamento" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#f59e0b;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Ag. Orçamento</div>
         <div id="sol-col-orcamento" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
       </div>
       <div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#10b981;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block"></span>Ag. Cliente</div>
+        <div id="sol-col-hdr-aguardando_cliente" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#10b981;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block"></span>Ag. Cliente</div>
         <div id="sol-col-cliente" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
       </div>
       <div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#0ea5e9;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#0ea5e9;display:inline-block"></span>Ag. Execução</div>
+        <div id="sol-col-hdr-aguardando_execucao" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#0ea5e9;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#0ea5e9;display:inline-block"></span>Ag. Execução</div>
         <div id="sol-col-execucao" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
       </div>
       <div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8b5cf6;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#8b5cf6;display:inline-block"></span>Ag. Faturamento</div>
+        <div id="sol-col-hdr-aguardando_faturamento" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8b5cf6;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#8b5cf6;display:inline-block"></span>Ag. Faturamento</div>
         <div id="sol-col-faturamento" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
       </div>
     </div>
