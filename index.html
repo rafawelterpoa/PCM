@@ -12745,11 +12745,11 @@ async function rcdTriagem(equipId, chegadaTs, elegivel) {
 }
 
 function rcdRenderTratamento() {
-  const fases = { aguardando_inspecao: 'rcd-col-inspecao', em_orcamento: 'rcd-col-orcamento', aguardando_cliente: 'rcd-col-cliente' };
-  const proxima = { aguardando_inspecao: 'em_orcamento', em_orcamento: 'aguardando_cliente', aguardando_cliente: null };
-  const proximaLabel = { aguardando_inspecao: 'Em Orçamento', em_orcamento: 'Aguardando Cliente', aguardando_cliente: null };
-  const STATUS_COR = { aguardando_inspecao:'#6366f1', em_orcamento:'#f59e0b', aguardando_cliente:'#10b981' };
-  const STATUS_LABEL = { aguardando_inspecao:'Ag. Inspeção', em_orcamento:'Em Orçamento', aguardando_cliente:'Ag. Cliente' };
+  const fases = { aguardando_inspecao: 'rcd-col-inspecao', em_orcamento: 'rcd-col-orcamento', aguardando_cliente: 'rcd-col-cliente', aguardando_faturamento: 'rcd-col-faturamento' };
+  const proxima = { aguardando_inspecao: 'em_orcamento', em_orcamento: 'aguardando_cliente', aguardando_cliente: 'aguardando_faturamento', aguardando_faturamento: null };
+  const proximaLabel = { aguardando_inspecao: 'Em Orçamento', em_orcamento: 'Aguardando Cliente', aguardando_cliente: 'Ag. Faturamento', aguardando_faturamento: null };
+  const STATUS_COR = { aguardando_inspecao:'#6366f1', em_orcamento:'#f59e0b', aguardando_cliente:'#10b981', aguardando_faturamento:'#8b5cf6' };
+  const STATUS_LABEL = { aguardando_inspecao:'Ag. Inspeção', em_orcamento:'Em Orçamento', aguardando_cliente:'Ag. Cliente', aguardando_faturamento:'Ag. Faturamento' };
 
   Object.entries(fases).forEach(([status, colId]) => {
     const col = document.getElementById(colId); if(!col) return;
@@ -12978,6 +12978,8 @@ async function rcdOrcSalvar() {
   if (!om) { showToast('⚠️ Informe o Nº da O.M. RCD (Manusis)'); document.getElementById('rcd-orc-om').focus(); return; }
   // Coleta itens da tabela
   const itens = _rcdOrcLerLinhas().filter(i => i.qtd || i.pn || i.desc || i.vunit);
+  const itensSemVunit = itens.filter(i => !i.vunit);
+  if(itensSemVunit.length){showToast('⚠️ Todos os itens precisam ter Valor Unitário');return;}
   reg.orc_numero      = document.getElementById('rcd-orc-numero').value.trim();
   reg.orc_om          = om;
   reg.orc_data        = document.getElementById('rcd-orc-data').value;
@@ -13207,13 +13209,13 @@ async function rcdAvancar(id, novoStatus) {
   reg['ts_'+novoStatus] = Date.now();
   await rcdSalvarRegistro(reg);
   rcdRender();
-  const labels = { em_orcamento:'Em Orçamento', aguardando_cliente:'Aguardando Cliente' };
+  const labels = { em_orcamento:'Em Orçamento', aguardando_cliente:'Aguardando Cliente', aguardando_faturamento:'Aguardando Faturamento' };
   showToast('→ ' + (labels[novoStatus]||novoStatus));
 }
 
 async function rcdConcluir(id) {
   const reg = _rcdRegistros[id]; if(!reg) return;
-  if(reg.status==='aguardando_cliente'){
+  if(reg.status==='aguardando_faturamento'||reg.status==='aguardando_cliente'){
     const fatura=prompt('Informe o número da fatura para concluir:');
     if(fatura===null)return;
     if(!fatura.trim()){showToast('⚠️ Número da fatura é obrigatório');return;}
@@ -15243,7 +15245,9 @@ async function solRcdSalvar(){
   reg.descricao=document.getElementById('sol-descricao')?.value.trim()||'';
   reg.tipo_rcd=document.getElementById('sol-tipo-rcd')?.value||'';
   if(!reg.tipo_rcd){showToast('⚠️ Selecione o Tipo RCD');document.getElementById('sol-tipo-rcd')?.focus();return;}
-  reg.orc_itens=solRcdLerLinhas().filter(i=>i.qtd||i.pn||i.desc||i.vunit);
+  const _solItens=solRcdLerLinhas().filter(i=>i.qtd||i.pn||i.desc||i.vunit);
+  if(_solItens.length&&_solItens.some(i=>!i.vunit)){showToast('⚠️ Todos os itens precisam ter Valor Unitário');return;}
+  reg.orc_itens=_solItens;
   reg.orc_bdi=parseFloat(document.getElementById('sol-bdi')?.value)||0;
   reg.orc_valor=parseFloat(document.getElementById('sol-valor')?.value)||0;
   reg.orc_fotos=(_orcFotos['sol']||[]).map(f=>({base64:f.base64,desc:f.desc||'',nome:f.nome||''}));
@@ -16128,7 +16132,7 @@ if ('serviceWorker' in navigator) {
 
       <!-- EM TRATAMENTO -->
       <div id="rcd-panel-tratamento" style="display:none">
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
           <div>
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #6366f1">Aguardando Inspeção</div>
             <div id="rcd-col-inspecao" style="display:flex;flex-direction:column;gap:8px"></div>
@@ -16140,6 +16144,10 @@ if ('serviceWorker' in navigator) {
           <div>
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #10b981">Aguardando Cliente</div>
             <div id="rcd-col-cliente" style="display:flex;flex-direction:column;gap:8px"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #8b5cf6">Aguardando Faturamento</div>
+            <div id="rcd-col-faturamento" style="display:flex;flex-direction:column;gap:8px"></div>
           </div>
         </div>
       </div>
