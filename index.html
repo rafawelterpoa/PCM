@@ -14758,19 +14758,68 @@ function solRcdRender(sfx=''){
   // Histórico
   const histEl=document.getElementById('sol-historico'+sfx);
   if(histEl){
-    const concl=regs.filter(r=>r.status==='concluido').sort((a,b)=>(b.ts_concluido||0)-(a.ts_concluido||0));
-    if(!concl.length){histEl.innerHTML='<div style="padding:12px;text-align:center;color:#cbd5e1;font-size:11px">Nenhuma solicitação concluída</div>';return;}
-    histEl.innerHTML=concl.map(r=>{
-      const dt=r.ts_concluido?new Date(r.ts_concluido).toLocaleDateString('pt-BR'):'—';
-      const diasTotais=Object.values(r.dias||{}).reduce((s,v)=>s+v,0);
-      return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:14px">
-        <div style="flex:1">
-          <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id||'—'} <span style="font-weight:400;color:#64748b">— ${r.equip_nome||''}</span></div>
-          <div style="font-size:10px;color:#94a3b8;margin-top:2px">Concluído: ${dt} · Total: ${diasTotais}d · Fatura: ${r.fatura||'—'}</div>
-          <div style="font-size:10px;color:#64748b;margin-top:3px">${solRcdRelFases(r)}</div>
+    const concl=filtRegs.filter(r=>r.status==='concluido').sort((a,b)=>(b.ts_concluido||0)-(a.ts_concluido||0));
+    if(!concl.length){histEl.innerHTML='<div style="padding:24px;text-align:center;color:#cbd5e1;font-size:11px">Nenhuma solicitação concluída</div>';return;}
+    const fmtR=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const fmtDt=ts=>ts?new Date(ts).toLocaleDateString('pt-BR'):'—';
+    // Ranking de clientes
+    const rankCliente={};
+    concl.forEach(r=>{
+      const cli=r.equip_cliente||'(sem cliente)';
+      if(!rankCliente[cli])rankCliente[cli]={qtd:0,valor:0};
+      rankCliente[cli].qtd++;
+      rankCliente[cli].valor+=(parseFloat(r.orc_valor)||0);
+    });
+    const topClientes=Object.entries(rankCliente).sort((a,b)=>b[1].valor-a[1].valor).slice(0,8);
+    const maxVal=topClientes[0]?topClientes[0][1].valor:1;
+    const rankHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Faturamento por Cliente</div>
+      ${topClientes.map(([cli,d])=>`
+        <div style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+            <span style="font-weight:600;color:#1e293b;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${cli}">${cli}</span>
+            <span style="color:#16a34a;font-weight:700">${fmtR(d.valor)} <span style="color:#94a3b8;font-weight:400">(${d.qtd})</span></span>
+          </div>
+          <div style="background:#f1f5f9;border-radius:4px;height:6px">
+            <div style="background:#10b981;height:6px;border-radius:4px;width:${Math.round(d.valor/maxVal*100)}%"></div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+    histEl.innerHTML=rankHTML+concl.map(r=>{
+      const dtConcl=fmtDt(r.ts_concluido);
+      const dtCriacao=fmtDt(r.ts_criacao);
+      const diasTotais=Math.max(0,r.ts_concluido&&r.ts_criacao?Math.round((r.ts_concluido-r.ts_criacao)/86400000):0);
+      const val=parseFloat(r.orc_valor)||0;
+      const tipoTag=r.tipo_rcd?`<span style="font-size:9px;background:#ede9fe;color:#6d28d9;padding:1px 6px;border-radius:3px;font-weight:600">${r.tipo_rcd}</span>`:'';
+      return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px">
+        <div style="display:flex;align-items:flex-start;gap:14px">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+              <span style="font-size:13px;font-weight:700;color:#1e293b">${r.equip_id||'—'}</span>
+              ${r.numero?`<span style="font-size:10px;color:#94a3b8">#${r.numero}</span>`:''}
+              ${r.orc_numero?`<span style="font-size:10px;color:#64748b;font-weight:600">Orç: ${r.orc_numero}</span>`:''}
+              ${tipoTag}
+            </div>
+            <div style="font-size:11px;color:#475569;margin-bottom:6px">${r.equip_fabricante||''} ${r.equip_modelo||''} ${r.equip_nome?'· '+r.equip_nome:''}</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px 16px;font-size:10px">
+              <div><span style="color:#94a3b8">Cliente:</span> <span style="font-weight:600;color:#1e293b">${r.equip_cliente||'—'}</span></div>
+              <div><span style="color:#94a3b8">Filial/Operação:</span> <span style="font-weight:600">${r.equip_filial||'—'}</span></div>
+              <div><span style="color:#94a3b8">Planta/Obra:</span> <span style="font-weight:600">${r.equip_planta||'—'}</span></div>
+              <div><span style="color:#94a3b8">O.M.:</span> <span style="font-weight:600;color:#6366f1">${r.om||'—'}</span></div>
+              <div><span style="color:#94a3b8">Abertura:</span> <span style="font-weight:600">${dtCriacao}</span></div>
+              <div><span style="color:#94a3b8">Faturado em:</span> <span style="font-weight:600">${dtConcl}</span></div>
+              <div><span style="color:#94a3b8">Duração:</span> <span style="font-weight:600">${diasTotais}d</span></div>
+              <div><span style="color:#94a3b8">Fatura:</span> <span style="font-weight:600">${r.fatura||'—'}</span></div>
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            ${val>0?`<div style="font-size:16px;font-weight:800;color:#16a34a">${fmtR(val)}</div>`:''}
+            <div style="margin-top:6px;display:flex;gap:4px;justify-content:flex-end">
+              <span style="font-size:10px;font-weight:700;color:#16a34a;background:#f0fdf4;padding:3px 8px;border-radius:20px">Concluído</span>
+              <button onclick="solRcdReverterConcluido('${r.id}')" style="padding:3px 8px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">↩</button>
+            </div>
+          </div>
         </div>
-        <span style="font-size:11px;font-weight:700;color:#16a34a;background:#f0fdf4;padding:3px 10px;border-radius:20px">Concluído</span>
-        <button onclick="solRcdReverterConcluido('${r.id}')" style="padding:3px 8px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">↩</button>
       </div>`;
     }).join('');
   }
