@@ -14887,11 +14887,12 @@ function solRcdGraficos(sfx, regs) {
 
   const concluidos = regs.filter(r => r.status === 'concluido');
   const cancelados = regs.filter(r => r.status === 'cancelado');
+  // Taxa de conversão: faturados / (faturados + cancelados) — apenas orçamentos fechados
   const fechados = concluidos.length + cancelados.length;
   const taxaConv = fechados ? Math.round((concluidos.length / fechados) * 100) : 0;
 
-  const leadTimes = concluidos.filter(r => r.ts_criacao && r.ts_concluido && r.ts_concluido > r.ts_criacao)
-    .map(r => Math.round((r.ts_concluido - r.ts_criacao) / 86400000));
+  const leadTimes = concluidos.filter(r => r.ts_envio_orcamento && r.ts_concluido && r.ts_concluido > r.ts_envio_orcamento)
+    .map(r => Math.round((r.ts_concluido - r.ts_envio_orcamento) / 86400000));
   const leadMedio = leadTimes.length ? Math.round(leadTimes.reduce((a,b)=>a+b,0)/leadTimes.length) : 0;
 
   const agora = new Date();
@@ -14899,9 +14900,11 @@ function solRcdGraficos(sfx, regs) {
     const d = new Date(agora.getFullYear(), agora.getMonth()-11+i, 1);
     return { label: d.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}), y:d.getFullYear(), m:d.getMonth(), count:0 };
   });
+  // Enviados por mês usa ts_envio_orcamento (data envio proposta ao cliente)
   regs.forEach(r => {
-    if (!r.ts_criacao) return;
-    const d = new Date(r.ts_criacao);
+    const ts = r.ts_envio_orcamento || r.ts_criacao;
+    if (!ts) return;
+    const d = new Date(ts);
     const slot = meses.find(m => m.y===d.getFullYear() && m.m===d.getMonth());
     if (slot) slot.count++;
   });
