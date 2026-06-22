@@ -3078,6 +3078,7 @@ function init(){
 
 // TABS
 function switchTab(tabId){
+  fecharPaginasFixed();
   // Fecha qualquer overlay aberto antes de navegar
   fecharTodosOverlays();
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -11141,6 +11142,7 @@ function todoMudarAba(aba){
 }
 
 function abrirTodo(){
+  fecharPaginasFixed();
   document.getElementById('todo-overlay').style.display='block';
   giPopularSelects();
   snavSetActive('snav-gi');
@@ -13946,6 +13948,7 @@ function abrirMedicao(){
 }
 
 function abrirHistoricoAtivos(){
+  fecharPaginasFixed();
   document.getElementById('historico-overlay').style.display='block';
   snavSetActive('snav-historico');
   histPopularOficinas();
