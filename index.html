@@ -13036,31 +13036,41 @@ async function rcdOrcGerar() {
 
   const bdiLinha = ''; // BDI não exibido no documento do cliente — apenas no total final
 
-  // Segunda página: fotos
+  // Segunda página(s): fotos — 8 por página (2 col × 4 lin)
   const fotos = (_orcFotos['rcd-orc']||reg.orc_fotos||[]);
-  const cabecalhoResumo = `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:2px solid #F37021;margin-bottom:16px">
+  const _cabResumo = (pg,total) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:2px solid #F37021;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:10px">
-        <div style="background:#F37021;color:#fff;font-size:16px;font-weight:900;padding:5px 12px;border-radius:4px">MILLS</div>
-        <div style="font-size:11px;color:#64748b"><strong>Orçamento de Avaria / RCD</strong><br>${numero} — O.M. ${om} — ${dataFmt}</div>
+        <div style="background:#F37021;color:#fff;font-size:15px;font-weight:900;padding:4px 11px;border-radius:4px">MILLS</div>
+        <div style="font-size:11px;color:#64748b"><strong>Registro Fotográfico — Orçamento ${numero}</strong><br>O.M. ${om} · ${dataFmt}</div>
       </div>
-      <div style="font-size:11px;color:#64748b;text-align:right">${idEq} | ${fabricante} ${modelo}<br>${cliente}</div>
+      <div style="font-size:11px;color:#64748b;text-align:right">${idEq} | ${fabricante} ${modelo}<br>${cliente} · Página ${pg}/${total}</div>
     </div>`;
-  const fotosHTML = fotos.length ? `
-    <div style="page-break-before:always;padding:32px;font-family:Arial,sans-serif;color:#1e293b">
-      ${cabecalhoResumo}
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:14px">Registro Fotográfico das Avarias</div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:18px">
-        ${fotos.map((f,i)=>`
-          <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;break-inside:avoid">
-            <img src="${f.base64}" style="width:100%;height:200px;object-fit:cover;display:block">
-            <div style="padding:8px 12px;background:#f8fafc;border-top:1px solid #e2e8f0">
-              <div style="font-size:10px;color:#94a3b8;margin-bottom:3px">Foto ${i+1}</div>
-              <div style="font-size:12px;color:#1e293b;line-height:1.5">${f.desc||'<span style="color:#cbd5e1">Sem descrição</span>'}</div>
-            </div>
-          </div>`).join('')}
+  const FOTOS_PG = 8;
+  const _fotoCard = (f,i) => `
+    <div style="border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;display:flex;flex-direction:column">
+      <div style="width:100%;height:170px;overflow:hidden;flex-shrink:0">
+        <img src="${f.base64}" style="width:100%;height:170px;object-fit:cover;display:block">
       </div>
-    </div>` : '';
+      <div style="padding:6px 10px;background:#f8fafc;border-top:1px solid #e2e8f0;flex:1">
+        <div style="font-size:9px;color:#94a3b8;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em">Foto ${i+1}</div>
+        <div style="font-size:11px;color:#1e293b;line-height:1.4">${f.desc||'<span style="color:#cbd5e1;font-style:italic">Sem descrição</span>'}</div>
+      </div>
+    </div>`;
+  const totalPgs = Math.ceil(fotos.length/FOTOS_PG);
+  const fotosHTML = fotos.length ? Array.from({length:totalPgs},(_,pi)=>{
+    const slice = fotos.slice(pi*FOTOS_PG,(pi+1)*FOTOS_PG);
+    // preenche até 8 com placeholders para manter grade uniforme
+    const cards = [...slice, ...Array(FOTOS_PG-slice.length).fill(null)];
+    return `<div style="page-break-before:always;padding:28px 32px;font-family:Arial,sans-serif;color:#1e293b">
+      ${_cabResumo(pi+1,totalPgs)}
+      <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);gap:12px;height:calc(100vh - 110px)">
+        ${cards.map((f,i)=> f ? _fotoCard(f, pi*FOTOS_PG+i) :
+          `<div style="border:1px dashed #e2e8f0;border-radius:6px;background:#fafafa"></div>`
+        ).join('')}
+      </div>
+    </div>`;
+  }).join('') : '';
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
   <title>Orçamento ${numero}</title>
