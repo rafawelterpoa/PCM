@@ -14664,25 +14664,29 @@ function solRcdRender(sfx=''){
   const ativos = regs.filter(r=>!['concluido','cancelado'].includes(r.status));
   const fmt = v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 
+  // Registros filtrados — usados em KPIs e gráficos
+  const filtRegs = solRcdFiltrarRegs(regs);
+  const filtAtivos = filtRegs.filter(r=>!['concluido','cancelado'].includes(r.status));
+
   // KPIs
   const kpiEl=document.getElementById('sol-kpis'+sfx);
   if(kpiEl){
     const STATUS_MAP={em_aprovacao:'Em Aprovação',aguardando_orcamento:'Ag. Orçamento',aguardando_cliente:'Ag. Cliente',aguardando_execucao:'Ag. Execução',aguardando_faturamento:'Ag. Faturamento'};
     const CORES={em_aprovacao:'#6366f1',aguardando_orcamento:'#f59e0b',aguardando_cliente:'#10b981',aguardando_execucao:'#0ea5e9',aguardando_faturamento:'#8b5cf6'};
-    const valPorStatus = s => ativos.filter(r=>r.status===s).reduce((t,r)=>t+(parseFloat(r.orc_valor)||0),0);
-    const concluidos = regs.filter(r=>r.status==='concluido');
+    const valPorStatus = s => filtAtivos.filter(r=>r.status===s).reduce((t,r)=>t+(parseFloat(r.orc_valor)||0),0);
+    const concluidos = filtRegs.filter(r=>r.status==='concluido');
     const valFaturado = concluidos.reduce((t,r)=>t+(parseFloat(r.orc_valor)||0),0);
     const valAgCliente = valPorStatus('aguardando_cliente');
     const valAgExec    = valPorStatus('aguardando_execucao');
     const valAgFat     = valPorStatus('aguardando_faturamento');
     const kpiCard=(label,val,cor,sub='')=>`<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:12px 14px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;margin-bottom:4px">${label}</div><div style="font-size:18px;font-weight:800;color:${cor}">${val}</div>${sub?`<div style="font-size:10px;color:#94a3b8;margin-top:2px">${sub}</div>`:''}</div>`;
     kpiEl.innerHTML=
-      kpiCard('Ativos',ativos.length,'#0f172a',regs.length+' total')+
+      kpiCard('Ativos',filtAtivos.length,'#0f172a',filtRegs.length+' total')+
       kpiCard('Valor Faturado',fmt(valFaturado),'#15803d',concluidos.length+' registros')+
-      kpiCard('Ag. Cliente',fmt(valAgCliente),'#10b981',ativos.filter(r=>r.status==='aguardando_cliente').length+' casos')+
-      kpiCard('Ag. Execução',fmt(valAgExec),'#0ea5e9',ativos.filter(r=>r.status==='aguardando_execucao').length+' casos')+
-      kpiCard('Ag. Faturamento',fmt(valAgFat),'#8b5cf6',ativos.filter(r=>r.status==='aguardando_faturamento').length+' casos')+
-      kpiCard('Ag. Orçamento',ativos.filter(r=>r.status==='aguardando_orcamento').length,'#f59e0b',ativos.filter(r=>r.status==='em_aprovacao').length+' em aprovação');
+      kpiCard('Ag. Cliente',fmt(valAgCliente),'#10b981',filtAtivos.filter(r=>r.status==='aguardando_cliente').length+' casos')+
+      kpiCard('Ag. Execução',fmt(valAgExec),'#0ea5e9',filtAtivos.filter(r=>r.status==='aguardando_execucao').length+' casos')+
+      kpiCard('Ag. Faturamento',fmt(valAgFat),'#8b5cf6',filtAtivos.filter(r=>r.status==='aguardando_faturamento').length+' casos')+
+      kpiCard('Ag. Orçamento',filtAtivos.filter(r=>r.status==='aguardando_orcamento').length,'#f59e0b',filtAtivos.filter(r=>r.status==='em_aprovacao').length+' em aprovação');
   }
 
   // Kanban
@@ -14735,9 +14739,9 @@ function solRcdRender(sfx=''){
     }).join('');
   });
 
-  // Gráficos
+  // Gráficos (usa registros filtrados)
   solRcdFiltrosRender(sfx, regs);
-  solRcdGraficos(sfx, regs);
+  solRcdGraficos(sfx, filtRegs);
 
   // Histórico
   const histEl=document.getElementById('sol-historico'+sfx);
