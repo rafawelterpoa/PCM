@@ -14801,8 +14801,8 @@ function solRcdFiltrosRender(sfx, regs) {
     ${inp('sf-equip'+sfx,'Equipamento','equip','120px')}
     ${inp('sf-cli'+sfx,'Cliente','cliente','150px')}
     ${inp('sf-resp'+sfx,'Responsável','responsavel','120px')}
-    <span style="font-size:10px;color:#94a3b8;white-space:nowrap">De:</span>${dat('sf-de'+sfx,'de','Data início')}
-    <span style="font-size:10px;color:#94a3b8;white-space:nowrap">Até:</span>${dat('sf-ate'+sfx,'ate','Data fim')}
+    <span style="display:flex;align-items:center;gap:4px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">De:</span>${dat('sf-de'+sfx,'de','Data início')}</span>
+    <span style="display:flex;align-items:center;gap:4px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">Até:</span>${dat('sf-ate'+sfx,'ate','Data fim')}</span>
     ${limpar}${badge}`;
 }
 
