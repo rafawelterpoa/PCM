@@ -15980,25 +15980,6 @@ if ('serviceWorker' in navigator) {
       <div class="page-hdr-sub">Controle de cobranças de avarias a clientes</div>
     </div>
 
-    <!-- INDICADORES RCD -->
-    <div id="rcd-indicadores" style="margin-bottom:20px">
-      <!-- KPIs linha 1 -->
-      <div id="rcd-kpi-cards" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:12px"></div>
-      <!-- Painel expansível: orçamentos e top clientes -->
-      <div id="rcd-ind-detalhe" style="display:none;background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:18px 20px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
-          <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:10px">Orçamentos por Status</div>
-            <div id="rcd-ind-orc-status"></div>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:10px">Top Clientes (por valor)</div>
-            <div id="rcd-ind-top-clientes"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Sub-abas -->
     <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:20px">
       <button id="rcd-tab-desmob" onclick="rcdAba('desmob')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#b45309;border-bottom:2px solid #b45309;margin-bottom:-2px">Desmobilização</button>
@@ -16007,6 +15988,22 @@ if ('serviceWorker' in navigator) {
 
     <!-- ABA DESMOBILIZAÇÃO -->
     <div id="rcd-aba-desmob">
+      <!-- INDICADORES RCD — apenas na aba Desmobilização -->
+      <div id="rcd-indicadores" style="margin-bottom:20px">
+        <div id="rcd-kpi-cards" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:12px"></div>
+        <div id="rcd-ind-detalhe" style="display:none;background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:18px 20px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+            <div>
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:10px">Orçamentos por Status</div>
+              <div id="rcd-ind-orc-status"></div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:10px">Top Clientes (por valor)</div>
+              <div id="rcd-ind-top-clientes"></div>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- Sub-navegação Desmob -->
       <div style="display:flex;gap:8px;margin-bottom:18px">
         <button id="rcd-dsub-triagem" onclick="rcdDesmobSub('triagem')" style="padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:#b45309;color:#fff">Triagem</button>
