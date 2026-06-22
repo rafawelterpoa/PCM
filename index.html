@@ -4758,7 +4758,7 @@ async function doBaseUpdate(){
   const agora=Date.now();
   // ── CRÍTICO: atualizar EQUIPAMENTOS_ORIG em memória para evitar que o
   // EventSource do Firebase reverta estados recém-alterados pelo upload ──
-  novos.forEach(n=>{const o=EQUIPAMENTOS_ORIG.find(e=>e.id===n.id);if(o){o.status=n.status;o.oficina=n.oficina||o.oficina;o.alugaradoFilial=n.alugaradoFilial||false;}});
+  novos.forEach(n=>{const o=EQUIPAMENTOS_ORIG.find(e=>e.id===n.id);if(o){o.status=n.status;o.oficina=n.oficina||o.oficina;o.alugaradoFilial=n.alugaradoFilial||false;if(n.horimetro)o.horimetro=n.horimetro;if(n.placa)o.placa=n.placa;}});
   const user=currentUser?currentUser.nome:'sistema';
   let adicionados=0,baixados=0,atualizados=0;
   // Equipamentos ausentes do CSV permanecem onde estão — saída só via status Alugado
@@ -4773,7 +4773,7 @@ async function doBaseUpdate(){
       if(n.linhaProduto)eq.linhaProduto=n.linhaProduto;if(n.planta)eq.planta=n.planta;
       if(n.estado)eq.estado=n.estado;if(n.municipio)eq.municipio=n.municipio;
       if(n.tipoContrato)eq.tipoContrato=n.tipoContrato;eq.frota=n.frota||eq.frota||'';
-      if(n.serie)eq.serie=n.serie;if(n.placa)eq.placa=n.placa;
+      if(n.serie)eq.serie=n.serie;if(n.placa)eq.placa=n.placa;if(n.horimetro)eq.horimetro=n.horimetro;
       if(n.fabricante)eq.fabricante=n.fabricante;if(n.grupo)eq.grupo=n.grupo;
       // Preservar campo alugaradoFilial (alugado mas na oficina fazendo manutenção)
       eq.alugaradoFilial=n.alugaradoFilial||false;
