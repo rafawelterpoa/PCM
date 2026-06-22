@@ -14714,7 +14714,7 @@ function solRcdRender(sfx=''){
       return `<div style="background:#fff;border:1px solid #e2e8f0;border-left:3px solid ${cor};border-radius:8px;padding:10px 12px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
           <div>
-            <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id||'—'}</div>
+            <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id||'—'}${r.numero?` <span style="font-size:10px;font-weight:400;color:#94a3b8">#${r.numero}</span>`:''}</div>
             <div style="font-size:10px;color:#64748b;margin-top:1px">${r.equip_nome||''}</div>
           </div>
           <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px">
