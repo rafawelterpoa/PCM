@@ -14867,9 +14867,9 @@ function solRcdGraficos(sfx, regs) {
     </div>
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:8px">Lead Time Médio</div>
-      <div style="font-size:48px;font-weight:900;color:#F37021;line-height:1">${leadMedio}</div>
-      <div style="font-size:13px;color:#64748b;margin-top:4px">dias</div>
-      <div style="font-size:10px;color:#94a3b8;margin-top:8px;text-align:center">Criação → Faturamento<br>${concluidos.length} concluídos</div>
+      <div style="font-size:48px;font-weight:900;color:${leadTimes.length?'#F37021':'#cbd5e1'};line-height:1">${leadTimes.length?leadMedio:'—'}</div>
+      <div style="font-size:13px;color:#64748b;margin-top:4px">${leadTimes.length?'dias':'sem dados'}</div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:8px;text-align:center">Criação → Faturamento<br>${leadTimes.length} com timestamps</div>
     </div>`;
 
   ['conv','mes','fases'].forEach(k => {
