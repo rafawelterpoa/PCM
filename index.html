@@ -14815,7 +14815,7 @@ function solRcdGraficos(sfx, regs) {
   const fechados = concluidos.length + cancelados.length;
   const taxaConv = fechados ? Math.round((concluidos.length / fechados) * 100) : 0;
 
-  const leadTimes = concluidos.filter(r => r.ts_criacao && r.ts_concluido)
+  const leadTimes = concluidos.filter(r => r.ts_criacao && r.ts_concluido && r.ts_concluido > r.ts_criacao)
     .map(r => Math.round((r.ts_concluido - r.ts_criacao) / 86400000));
   const leadMedio = leadTimes.length ? Math.round(leadTimes.reduce((a,b)=>a+b,0)/leadTimes.length) : 0;
 
