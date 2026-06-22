@@ -13025,16 +13025,17 @@ async function rcdOrcGerar() {
   const fabricante = document.getElementById('rcd-orc-fabricante').textContent;
   const modelo     = document.getElementById('rcd-orc-modelo').textContent;
 
+  const _bdiMult = 1 + bdi / 100;
   const linhasHTML = itens.length > 0 ? itens.map((it,i) => `
     <tr style="background:${i%2===0?'#fff':'#f8fafc'}">
       <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:center">${it.qtd}</td>
       <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0">${it.pn||'—'}</td>
       <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0">${it.desc||'—'}</td>
-      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right">${fmt(it.vunit)}</td>
-      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600">${fmt(it.total)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right">${fmt(it.vunit * _bdiMult)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600">${fmt(it.total * _bdiMult)}</td>
     </tr>`).join('') : `<tr><td colspan="5" style="padding:16px;text-align:center;color:#94a3b8">Nenhum item</td></tr>`;
 
-  const bdiLinha = ''; // BDI não exibido no documento do cliente — apenas no total final
+  const bdiLinha = '';
 
   // Segunda página(s): fotos — 8 por página (2 col × 4 lin)
   const fotos = (_orcFotos['rcd-orc']||reg.orc_fotos||[]);
@@ -13139,8 +13140,6 @@ async function rcdOrcGerar() {
     </tr></thead>
     <tbody>${linhasHTML}</tbody>
     <tfoot>
-      <tr><td colspan="4" style="padding:8px 10px;text-align:right;color:#64748b;font-size:12px;border-top:1px solid #e2e8f0">Subtotal</td><td style="padding:8px 10px;text-align:right;font-size:12px;border-top:1px solid #e2e8f0">${fmt(subtotal)}</td></tr>
-      ${bdiLinha}
       <tr class="total-final"><td colspan="4" style="padding:10px;text-align:right">TOTAL GERAL</td><td style="padding:10px;text-align:right;color:#F37021">${fmt(total)}</td></tr>
     </tfoot>
   </table>
@@ -15188,13 +15187,14 @@ function solRcdGerarOrcamento(id){
   const fabricante=reg.equip_fabricante||'—';
   const modelo=reg.equip_modelo||'—';
   const horimetro=reg.equip_horimetro||'—';
+  const _bdiMult=1+bdi/100;
   const linhasHTML=itens.length>0?itens.map((it,i)=>`
     <tr style="background:${i%2===0?'#fff':'#f8fafc'}">
       <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:center">${it.qtd}</td>
       <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0">${it.pn||'—'}</td>
       <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0">${it.desc||'—'}</td>
-      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right">${fmt(parseFloat(it.vunit)||0)}</td>
-      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600">${fmt(parseFloat(it.total)||0)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right">${fmt((parseFloat(it.vunit)||0)*_bdiMult)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600">${fmt((parseFloat(it.total)||0)*_bdiMult)}</td>
     </tr>`).join(''):`<tr><td colspan="5" style="padding:16px;text-align:center;color:#94a3b8">Nenhum item</td></tr>`;
   // Fotos
   const fotos=reg.orc_fotos||[];
@@ -15288,8 +15288,6 @@ function solRcdGerarOrcamento(id){
     </tr></thead>
     <tbody>${linhasHTML}</tbody>
     <tfoot>
-      <tr class="totals-row"><td colspan="4" style="padding:6px 10px;text-align:right;font-size:12px">Subtotal</td><td style="padding:6px 10px;text-align:right;font-size:12px;font-weight:600">${fmt(subtotal)}</td></tr>
-      ${bdi>0?`<tr class="totals-row"><td colspan="4" style="padding:6px 10px;text-align:right;font-size:12px">BDI (${bdi}%)</td><td style="padding:6px 10px;text-align:right;font-size:12px">${fmt(bdival)}</td></tr>`:''}
       <tr class="total-final"><td colspan="4" style="padding:10px;text-align:right">TOTAL GERAL</td><td style="padding:10px;text-align:right">${fmt(total)}</td></tr>
     </tfoot>
   </table>
