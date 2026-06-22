@@ -14921,15 +14921,18 @@ function solRcdGraficos(sfx, regs) {
     if (slot) slot.valor += parseFloat(r.orc_valor)||0;
   });
 
-  // Tempo médio por fase — para injetar nos cabeçalhos das colunas
+  // Tempo médio por fase — usa TODOS os registros (não filtrados) para ter amostra maior
+  const todosRegs = Object.values(_solRegistros||{});
   const fases = ['em_aprovacao','aguardando_orcamento','aguardando_cliente','aguardando_execucao','aguardando_faturamento'];
   const faseCores = {'em_aprovacao':'#6366f1','aguardando_orcamento':'#f59e0b','aguardando_cliente':'#10b981','aguardando_execucao':'#0ea5e9','aguardando_faturamento':'#8b5cf6'};
   const faseMedios = {};
   fases.forEach((f, fi) => {
     const vals = [];
-    regs.forEach(r => {
-      const d = (r.dias||{})[f];
-      if (d > 0) { vals.push(d); return; }
+    todosRegs.forEach(r => {
+      // Prioridade 1: dias acumulados gravados no registro
+      const diasGravado = (r.dias||{})[f];
+      if (diasGravado > 0) { vals.push(diasGravado); return; }
+      // Prioridade 2: timestamps de entrada/saída da fase
       const tsIn = r['ts_'+f];
       if (!tsIn) return;
       const tsOut = fases[fi+1] ? r['ts_'+fases[fi+1]] : r.ts_concluido;
