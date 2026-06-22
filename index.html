@@ -12783,7 +12783,7 @@ function rcdRenderTratamento() {
           <div>
             <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id}</div>
             <div style="font-size:11px;color:#64748b;margin-top:2px">${r.equip_nome}</div>
-            <div style="font-size:10px;color:#94a3b8;margin-top:3px">${r.oficina} · ${desde}</div>
+            <div style="font-size:10px;color:#94a3b8;margin-top:3px">${clienteCard||r.oficina} · ${desde}</div>
             ${extraInfo}
           </div>
           ${isInsp ? `<button onclick="rcdInspAbrir('${r.id}')" style="padding:4px 8px;background:#eff0ff;color:#6366f1;border:1px solid #c7d2fe;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;margin-left:8px">✏ Editar</button>` : ''}
