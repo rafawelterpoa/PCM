@@ -371,6 +371,7 @@ input.filter-sel{padding:5px 8px;height:34px}
 .perfil-pcm{background:rgba(99,102,241,.1);color:#6366f1;border:1px solid rgba(99,102,241,.2)}
 .perfil-programador{background:rgba(245,158,11,.1);color:#d97706;border:1px solid rgba(245,158,11,.2)}
 .perfil-planejador{background:rgba(16,185,129,.1);color:#059669;border:1px solid rgba(16,185,129,.2)}
+.perfil-rcd{background:rgba(239,68,68,.1);color:#dc2626;border:1px solid rgba(239,68,68,.2)}
 .del-btn{background:none;border:1px solid var(--borda);border-radius:5px;cursor:pointer;color:var(--terra);font-size:11px;padding:3px 7px}
 .del-btn:hover{background:rgba(224,80,32,.14)}
 
@@ -797,13 +798,17 @@ input.filter-sel{padding:5px 8px;height:34px}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
     <span class="snav-label">Pátios</span>
   </div>
-  <div class="snav-item" onclick="navegarPara('operacoes')" title="Operações" id="snav-operacoes">
+  <div class="snav-item" onclick="navegarPara('operacoes')" title="Em contrato" id="snav-operacoes">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-    <span class="snav-label">Oper.</span>
+    <span class="snav-label">Contrato</span>
   </div>
   <div class="snav-item" onclick="switchTab('programacao')" title="Programação" id="snav-programacao">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     <span class="snav-label">Prog.Of.</span>
+  </div>
+  <div class="snav-item" id="snav-solrcd" onclick="navegarPara('solrcd')" title="Solicitações RCD">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    <span class="snav-label">Sol. RCD</span>
   </div>
   <div class="snav-item" id="snav-rcd" onclick="navegarPara('rcd')" title="RCD — Avarias">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -920,7 +925,7 @@ input.filter-sel{padding:5px 8px;height:34px}
 
     <!-- Header -->
     <div style="margin-bottom:22px">
-      <div style="font-size:24px;font-weight:900;color:#0f172a;margin-bottom:4px;display:flex;align-items:center;gap:10px"><span style="color:#F37021">⚡</span> Operações</div>
+      <div style="font-size:24px;font-weight:900;color:#0f172a;margin-bottom:4px;display:flex;align-items:center;gap:10px"><span style="color:#F37021">⚡</span> Em contrato</div>
       <div style="font-size:13px;color:#94a3b8">Equipamentos em campo — plantas e obras ativas</div>
     </div>
 
@@ -1576,6 +1581,10 @@ input.filter-sel{padding:5px 8px;height:34px}
           <select id="new-perfil" onchange="toggleSetorField('new-setor','new-perfil')">
             <option value="usuario">Usuário</option>
             <option value="gestor">Gestor</option>
+            <option value="pcm">PCM</option>
+            <option value="programador">Programador</option>
+            <option value="planejador">Planejador</option>
+            <option value="rcd">RCD</option>
             <option value="sistemas">Sistemas</option>
             <option value="master">Master</option>
           </select>
@@ -1583,6 +1592,8 @@ input.filter-sel{padding:5px 8px;height:34px}
         <div class="admin-field" id="new-setor-wrap"><div class="admin-label">Setor</div>
           <select id="new-setor">
             <option value="Oficinas">Oficinas</option>
+            <option value="Planejamento">Planejamento</option>
+            <option value="Programação">Programação</option>
             <option value="Gestão de Ativos">Gestão de Ativos</option>
             <option value="Implantação">Implantação</option>
             <option value="Externos">Externos</option>
@@ -1858,7 +1869,15 @@ function fbListen(){
               fetch(`${FB_BASE}/equipamentos/${id}/etapa.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(etapaCorreta)}).catch(()=>{});
             }
             Object.assign(state[id],d);
+            // ORIG é fonte de verdade para campos do CSV — prevalece sobre Firebase antigo.
             if(_o){
+              if(_o.oficina)state[id].oficina=_o.oficina;
+              if(_o.status)state[id].status=_o.status;
+              state[id].alugaradoFilial=_o.alugaradoFilial||false;
+              if(_o.equipamento)state[id].equipamento=_o.equipamento;
+              if(_o.modelo)state[id].modelo=_o.modelo;
+              if(_o.tipo)state[id].tipo=_o.tipo;
+              if(_o.frota)state[id].frota=_o.frota;
               const deveSerAlugado=_o.status==='Alugado'&&!_o.alugaradoFilial&&!d.alugaradoFilial;
               if(deveSerAlugado){state[id].etapa='alugado';}
               else if(!deveSerAlugado&&state[id].etapa==='alugado'){
@@ -2935,7 +2954,7 @@ function doLogout(){
 }
 
 function perfilLabel(p){return{master:'Master',sistemas:'Sistemas',gestor:'Gestor',usuario:'Usuário',
-  pcm:'PCM',programador:'Programador',planejador:'Planejador',
+  pcm:'PCM',programador:'Programador',planejador:'Planejador',rcd:'RCD',
   engenharia:'Engenharia',gestao_ativos:'Gestão de Ativos',oficina:'Oficina',operador:'Operador',consultor:'Consultor',implantacao:'Implantação'}[p]||p;}
 
 // SENHAS
@@ -2943,6 +2962,9 @@ function resolverPerfil(senha){
   if(senha==='1526'||senha==='2006')return{perfil:'Gerencial',nivel:'master'};
   if(senha==='1959')return{perfil:'Engenharia',nivel:'engenharia'};
   for(const[of,s]of Object.entries(SENHAS_OFICINA))if(senha===s)return{perfil:of,nivel:'oficina'};
+  // Buscar na lista de usuários (inclui pcm, rcd, programador, planejador)
+  const u=usuariosCache.find(u=>u.senha===senha);
+  if(u)return{perfil:u.nome,nivel:u.perfil};
   if(currentUser&&senha===currentUser.senha)return{perfil:currentUser.nome,nivel:currentUser.perfil};
   return null;
 }
@@ -4628,7 +4650,7 @@ async function addUser(){
   const senha=document.getElementById('new-senha').value;
   const perfil=document.getElementById('new-perfil').value;
   const oficina=document.getElementById('new-oficina').value;
-  const needsSetor=['usuario','gestor'].includes(perfil);
+  const needsSetor=['usuario','gestor','pcm','programador','planejador','rcd'].includes(perfil);
   const setor=needsSetor?document.getElementById('new-setor').value:'';
   const email=document.getElementById('new-email').value.trim().toLowerCase();
   if(!nome||!login||!senha){showToast('Preencha nome, login e senha');return;}
@@ -4642,17 +4664,17 @@ async function addUser(){
 function toggleSetorField(setorId,perfilId){
   const perfil=document.getElementById(perfilId).value;
   const wrap=document.getElementById(setorId+'-wrap');
-  if(wrap)wrap.style.display=['usuario','gestor'].includes(perfil)?'':'none';
+  if(wrap)wrap.style.display=['usuario','gestor','pcm','programador','planejador','rcd'].includes(perfil)?'':'none';
 }
 function openEditUser(idx){
   const u=usuariosCache[idx];if(!u)return;
   const existing=document.getElementById('edit-user-modal');
   if(existing)existing.remove();
-  const setorOpts=['Oficinas','Gestão de Ativos','Implantação','Externos'].map(s=>`<option value="${s}"${u.setor===s?' selected':''}>${s}</option>`).join('');
-  const perfilOpts=[['usuario','Usuário'],['gestor','Gestor'],['sistemas','Sistemas'],['master','Master']].map(([v,l])=>`<option value="${v}"${u.perfil===v?' selected':''}>${l}</option>`).join('');
+  const setorOpts=['Oficinas','Planejamento','Programação','Gestão de Ativos','Implantação','Externos'].map(s=>`<option value="${s}"${u.setor===s?' selected':''}>${s}</option>`).join('');
+  const perfilOpts=[['usuario','Usuário'],['gestor','Gestor'],['pcm','PCM'],['programador','Programador'],['planejador','Planejador'],['rcd','RCD'],['sistemas','Sistemas'],['master','Master']].map(([v,l])=>`<option value="${v}"${u.perfil===v?' selected':''}>${l}</option>`).join('');
   const oficinas=['','Assis (SP)','Contagem (MG)','Osasco (SP)','Parauapebas (PA)','Santos (SP)','Sumaré (SP)','São José dos Pinhais (PR)'];
   const oficOpts=oficinas.map(o=>`<option value="${o}"${u.oficina===o?' selected':''}>${o||'— Todas —'}</option>`).join('');
-  const needsSetor=['usuario','gestor'].includes(u.perfil);
+  const needsSetor=['usuario','gestor','pcm','programador','planejador','rcd'].includes(u.perfil);
   const modal=document.createElement('div');
   modal.id='edit-user-modal';
   modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:center;justify-content:center';
@@ -4682,7 +4704,7 @@ async function saveEditUser(idx){
   const nome=document.getElementById('edit-nome').value.trim();
   const senha=document.getElementById('edit-senha').value;
   const perfil=document.getElementById('edit-perfil').value;
-  const needsSetor=['usuario','gestor'].includes(perfil);
+  const needsSetor=['usuario','gestor','pcm','programador','planejador','rcd'].includes(perfil);
   const setor=needsSetor?document.getElementById('edit-setor').value:'';
   const oficina=document.getElementById('edit-oficina').value;
   const email=document.getElementById('edit-email').value.trim().toLowerCase();
@@ -12561,6 +12583,9 @@ function rcdAba(aba) {
     const btn = document.getElementById('rcd-tab-'+a);
     if(btn) { btn.style.color = a===aba ? '#b45309' : '#94a3b8'; btn.style.borderBottomColor = a===aba ? '#b45309' : 'transparent'; }
   });
+  if(aba==='operacao'){
+    if(!_solCarregado) solRcdCarregar(); else solRcdRender('-inline');
+  }
 }
 
 function rcdDesmobSub(sub) {
@@ -14421,6 +14446,7 @@ function navegarPara(destino){
   if(destino==='valepecas'){paginaValePecas();snavSetActive('snav-valepecas');return;}
   if(destino==='manuterceiros'){paginaManutTerceiros();snavSetActive('snav-manuterceiros');return;}
   if(destino==='rcd'){paginaRcd();snavSetActive('snav-rcd');return;}
+  if(destino==='solrcd'){paginaSolRcd();snavSetActive('snav-solrcd');return;}
 }
 
 // ── RCD ───────────────────────────────────────────────────────────────────────
@@ -14430,6 +14456,401 @@ function paginaRcd(){
   if(pg) pg.style.display='block';
   rcdDesmobSub('triagem');
   rcdCarregar();
+}
+
+// ── SOLICITAÇÕES RCD ─────────────────────────────────────────────────────────
+const SOL_FB = `${FB_BASE}/sol_rcd`;
+let _solRegistros = {};
+let _solEs = null;
+let _solCarregado = false;
+
+function paginaSolRcd(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg=document.getElementById('page-solrcd');
+  if(pg){pg.style.display='block';}
+  solRcdCarregar();
+}
+
+async function solRcdCarregar(){
+  try{
+    const r=await fetch(SOL_FB+'.json');
+    const d=await r.json();
+    _solRegistros=(d&&typeof d==='object')?d:{};
+  }catch(e){_solRegistros={};}
+  _solCarregado=true;
+  solRcdRenderTodos();
+  solRcdListen();
+}
+
+function solRcdRenderTodos(){
+  // Renderiza nos dois contextos que estiverem visíveis
+  const pg=document.getElementById('page-solrcd');
+  if(pg&&pg.style.display!=='none')solRcdRender('');
+  const aba=document.getElementById('rcd-aba-operacao');
+  if(aba&&aba.style.display!=='none')solRcdRender('-inline');
+  // Se nenhum visível, renderiza ambos para pré-preencher
+  if((!pg||pg.style.display==='none')&&(!aba||aba.style.display==='none')){
+    solRcdRender('');solRcdRender('-inline');
+  }
+}
+
+function solRcdListen(){
+  if(_solEs){_solEs.close();_solEs=null;}
+  const es=new EventSource(`${SOL_FB}.json?accept=text/event-stream`);
+  _solEs=es;
+  es.addEventListener('put',e=>{
+    const msg=JSON.parse(e.data);
+    if(msg.path==='/'){_solRegistros=(msg.data&&typeof msg.data==='object')?msg.data:{};}
+    else{const parts=msg.path.replace(/^\//,'').split('/');const rid=parts[0];if(msg.data===null)delete _solRegistros[rid];else if(parts.length===1)_solRegistros[rid]=msg.data;else{if(!_solRegistros[rid])_solRegistros[rid]={};_solRegistros[rid][parts[1]]=msg.data;}}
+    solRcdRenderTodos();
+  });
+  es.onerror=()=>{es.close();_solEs=null;setTimeout(()=>solRcdListen(),8000);};
+}
+
+async function solRcdSalvarReg(reg){
+  await fetch(`${SOL_FB}/${reg.id}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(reg)});
+  _solRegistros[reg.id]=reg;
+}
+
+function solRcdDiasNaFase(reg, fase){
+  const tsEntrada = reg['ts_'+fase];
+  if(!tsEntrada) return 0;
+  const tsSaida = reg['ts_saida_'+fase];
+  const fim = tsSaida || Date.now();
+  return Math.max(0, Math.round((fim - tsEntrada) / 86400000));
+}
+
+function solRcdDiasAcum(reg, fase){
+  return (reg.dias||{})[fase] || 0;
+}
+
+function solRcdFmtDias(n){ return n===1?'1 dia':n+'d'; }
+
+function solRcdRender(sfx=''){
+  // sfx='' → página standalone; sfx='-inline' → aba Em Operação do RCD
+  const regs = Object.values(_solRegistros);
+  const ativos = regs.filter(r=>!['concluido','cancelado'].includes(r.status));
+  const fmt = v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  // KPIs
+  const kpiEl=document.getElementById('sol-kpis'+sfx);
+  if(kpiEl){
+    const STATUS_MAP={em_aprovacao:'Em Aprovação',aguardando_orcamento:'Ag. Orçamento',aguardando_cliente:'Ag. Cliente',aguardando_execucao:'Ag. Execução',aguardando_faturamento:'Ag. Faturamento'};
+    const CORES={em_aprovacao:'#6366f1',aguardando_orcamento:'#f59e0b',aguardando_cliente:'#10b981',aguardando_execucao:'#0ea5e9',aguardando_faturamento:'#8b5cf6'};
+    const valorTotal=ativos.reduce((s,r)=>s+(parseFloat(r.orc_valor)||0),0);
+    const kpiCard=(label,val,cor,sub='')=>`<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:12px 14px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;margin-bottom:4px">${label}</div><div style="font-size:20px;font-weight:800;color:${cor}">${val}</div>${sub?`<div style="font-size:10px;color:#94a3b8;margin-top:2px">${sub}</div>`:''}</div>`;
+    kpiEl.innerHTML=
+      kpiCard('Ativos',ativos.length,'#0f172a')+
+      kpiCard('Em Aprovação',ativos.filter(r=>r.status==='em_aprovacao').length,'#6366f1')+
+      kpiCard('Ag. Orçamento',ativos.filter(r=>r.status==='aguardando_orcamento').length,'#f59e0b')+
+      kpiCard('Ag. Cliente',ativos.filter(r=>r.status==='aguardando_cliente').length,'#10b981')+
+      kpiCard('Ag. Execução',ativos.filter(r=>r.status==='aguardando_execucao').length,'#0ea5e9')+
+      kpiCard('Valor Total',fmt(valorTotal),'#8b5cf6',ativos.filter(r=>r.orc_valor>0).length+' orçamentos');
+  }
+
+  // Kanban
+  const COLS={em_aprovacao:'sol-col-aprovacao'+sfx,aguardando_orcamento:'sol-col-orcamento'+sfx,aguardando_cliente:'sol-col-cliente'+sfx,aguardando_execucao:'sol-col-execucao'+sfx,aguardando_faturamento:'sol-col-faturamento'+sfx};
+  const CORES={em_aprovacao:'#6366f1',aguardando_orcamento:'#f59e0b',aguardando_cliente:'#10b981',aguardando_execucao:'#0ea5e9',aguardando_faturamento:'#8b5cf6'};
+  const PROX={em_aprovacao:'aguardando_orcamento',aguardando_orcamento:'aguardando_cliente',aguardando_cliente:'aguardando_execucao',aguardando_execucao:'aguardando_faturamento',aguardando_faturamento:null};
+  const PROX_LBL={em_aprovacao:'Aprovar',aguardando_orcamento:'→ Ag. Cliente',aguardando_cliente:'→ Ag. Execução',aguardando_execucao:'→ Ag. Faturamento',aguardando_faturamento:null};
+
+  Object.entries(COLS).forEach(([status,colId])=>{
+    const col=document.getElementById(colId);if(!col)return;
+    const rList=ativos.filter(r=>r.status===status);
+    if(!rList.length){col.innerHTML='<div style="padding:12px;text-align:center;color:#cbd5e1;font-size:11px">Nenhuma</div>';return;}
+    const cor=CORES[status];
+    col.innerHTML=rList.map(r=>{
+      const dias=solRcdDiasNaFase(r,status);
+      const prox=PROX[status];
+      const proxLbl=PROX_LBL[status];
+      const isAprov=status==='em_aprovacao';
+      const isExec=status==='aguardando_execucao';
+      const isCliente=status==='aguardando_cliente';
+      const isOrc=status==='aguardando_orcamento';
+      const isAprovador=currentUser&&(currentUser.perfil==='master'||currentUser.perfil==='rcd');
+      const temOrc=(r.orc_valor||0)>0;
+      const pcTag=r.aguardando_pc?`<span style="font-size:9px;background:#fef3c7;color:#b45309;border-radius:3px;padding:1px 5px;font-weight:700">PC pendente</span>`:'';
+      return `<div style="background:#fff;border:1px solid #e2e8f0;border-left:3px solid ${cor};border-radius:8px;padding:10px 12px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id||'—'}</div>
+            <div style="font-size:10px;color:#64748b;margin-top:1px">${r.equip_nome||''}</div>
+          </div>
+          <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+            <span style="font-size:10px;color:#94a3b8">${solRcdFmtDias(dias)}</span>
+            ${pcTag}
+          </div>
+        </div>
+        ${r.om?`<div style="font-size:10px;color:#6366f1;margin-bottom:4px">O.M.: ${r.om}</div>`:''}
+        ${temOrc?`<div style="font-size:10px;color:#10b981;margin-bottom:6px;font-weight:600">Orç: R$ ${(r.orc_valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>`:''}
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
+          <button onclick="solRcdEditarAbrir('${r.id}')" style="padding:3px 7px;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✏ Editar</button>
+          ${isAprov&&isAprovador?`<button onclick="solRcdAvancar('${r.id}','aguardando_orcamento')" style="padding:3px 7px;background:#ede9fe;color:#6366f1;border:1px solid #c4b5fd;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✓ Aprovar</button>`:''}
+          ${isAprov&&!isAprovador?`<span style="padding:3px 7px;font-size:9px;color:#94a3b8;font-style:italic">Aguardando aprovação</span>`:''}
+          ${isOrc?`<button onclick="solRcdAvancar('${r.id}','aguardando_cliente')" ${temOrc?'':'disabled title="Preencha o orçamento primeiro"'} style="padding:3px 7px;background:${temOrc?'#fffbeb':'#f1f5f9'};color:${temOrc?'#d97706':'#94a3b8'};border:1px solid ${temOrc?'#fde68a':'#e2e8f0'};border-radius:4px;font-size:9px;font-weight:600;cursor:${temOrc?'pointer':'not-allowed'}">→ Ag. Cliente</button>`:''}
+          ${isCliente?`<button onclick="solRcdAvancar('${r.id}','aguardando_execucao')" style="padding:3px 7px;background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">→ Ag. Execução</button>`:''}
+          ${isExec?`<button onclick="solRcdAvancar('${r.id}','aguardando_faturamento')" style="padding:3px 7px;background:#f0f9ff;color:#0284c7;border:1px solid #7dd3fc;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">→ Ag. Faturamento</button>`:''}
+          ${isExec?`<button onclick="solRcdVoltarCliente('${r.id}')" style="padding:3px 7px;background:#fffbeb;color:#b45309;border:1px solid #fde68a;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">↩ Ag. PC</button>`:''}
+          ${status==='aguardando_faturamento'?`<button onclick="solRcdConcluir('${r.id}')" style="padding:3px 7px;background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✓ Faturar</button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  });
+
+  // Histórico
+  const histEl=document.getElementById('sol-historico'+sfx);
+  if(histEl){
+    const concl=regs.filter(r=>r.status==='concluido').sort((a,b)=>(b.ts_concluido||0)-(a.ts_concluido||0));
+    if(!concl.length){histEl.innerHTML='<div style="padding:12px;text-align:center;color:#cbd5e1;font-size:11px">Nenhuma solicitação concluída</div>';return;}
+    histEl.innerHTML=concl.map(r=>{
+      const dt=r.ts_concluido?new Date(r.ts_concluido).toLocaleDateString('pt-BR'):'—';
+      const diasTotais=Object.values(r.dias||{}).reduce((s,v)=>s+v,0);
+      return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:14px">
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id||'—'} <span style="font-weight:400;color:#64748b">— ${r.equip_nome||''}</span></div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:2px">Concluído: ${dt} · Total: ${diasTotais}d · Fatura: ${r.fatura||'—'}</div>
+          <div style="font-size:10px;color:#64748b;margin-top:3px">${solRcdRelFases(r)}</div>
+        </div>
+        <span style="font-size:11px;font-weight:700;color:#16a34a;background:#f0fdf4;padding:3px 10px;border-radius:20px">Concluído</span>
+        <button onclick="solRcdReverterConcluido('${r.id}')" style="padding:3px 8px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">↩</button>
+      </div>`;
+    }).join('');
+  }
+}
+
+function solRcdRelFases(r){
+  const LABELS={em_aprovacao:'Aprovação',aguardando_orcamento:'Orçamento',aguardando_cliente:'Cliente',aguardando_execucao:'Execução',aguardando_faturamento:'Faturamento',aguardando_pc:'PC'};
+  return Object.entries(r.dias||{}).filter(([,v])=>v>0).map(([k,v])=>`${LABELS[k]||k}: ${v}d`).join(' · ');
+}
+
+async function solRcdAvancar(id, novoStatus){
+  const reg=_solRegistros[id];if(!reg)return;
+  const agora=Date.now();
+  const antigo=reg.status;
+  // Acumula dias na fase anterior
+  if(!reg.dias)reg.dias={};
+  const tsEntrada=reg['ts_'+antigo]||agora;
+  const diasNaFase=Math.max(0,Math.round((agora-tsEntrada)/86400000));
+  reg.dias[antigo]=(reg.dias[antigo]||0)+diasNaFase;
+  reg['ts_saida_'+antigo]=agora;
+  // Nova fase
+  reg.status=novoStatus;
+  reg['ts_'+novoStatus]=agora;
+  reg.aguardando_pc=false;
+  await solRcdSalvarReg(reg);
+  solRcdRenderTodos();
+  showToast('→ '+novoStatus.replace(/_/g,' '));
+}
+
+async function solRcdVoltarCliente(id){
+  const reg=_solRegistros[id];if(!reg)return;
+  if(!confirm('Retornar para Aguardando Cliente com status "Aguardando Pedido de Compras"?'))return;
+  const agora=Date.now();
+  if(!reg.dias)reg.dias={};
+  const tsExec=reg.ts_aguardando_execucao||agora;
+  const diasExec=Math.max(0,Math.round((agora-tsExec)/86400000));
+  reg.dias.aguardando_execucao=(reg.dias.aguardando_execucao||0)+diasExec;
+  reg['ts_saida_aguardando_execucao']=agora;
+  reg.status='aguardando_cliente';
+  reg.aguardando_pc=true;
+  reg.ts_aguardando_pc=agora;
+  reg['ts_aguardando_cliente']=agora;
+  await solRcdSalvarReg(reg);
+  solRcdRenderTodos();
+  showToast('↩ Retornou para Ag. Cliente — Aguardando PC');
+}
+
+async function solRcdConcluir(id){
+  const reg=_solRegistros[id];if(!reg)return;
+  const fatura=prompt('Nº da fatura para concluir:');
+  if(fatura===null)return;
+  if(!fatura.trim()){showToast('⚠️ Número da fatura obrigatório');return;}
+  const agora=Date.now();
+  if(!reg.dias)reg.dias={};
+  const tsEnt=reg.ts_aguardando_faturamento||agora;
+  reg.dias.aguardando_faturamento=(reg.dias.aguardando_faturamento||0)+Math.max(0,Math.round((agora-tsEnt)/86400000));
+  reg.status='concluido';reg.fatura=fatura.trim();reg.ts_concluido=agora;
+  await solRcdSalvarReg(reg);
+  solRcdRenderTodos();
+  showToast('💰 Faturado — Fatura: '+fatura.trim());
+}
+
+async function solRcdReverterConcluido(id){
+  const reg=_solRegistros[id];if(!reg)return;
+  const senha=prompt('Senha master para reverter:');if(!senha)return;
+  const ok=resolverPerfil(senha);
+  if(!ok||ok.nivel!=='master'){showToast('⛔ Senha master incorreta');return;}
+  reg.status='aguardando_faturamento';delete reg.ts_concluido;delete reg.fatura;
+  reg.ts_aguardando_faturamento=Date.now();
+  await solRcdSalvarReg(reg);solRcdRenderTodos();
+  showToast('↩ Revertido para Ag. Faturamento');
+}
+
+function solRcdNovaAbrir(){
+  const el=document.getElementById('sol-modal');if(!el)return;
+  document.getElementById('sol-id').value='';
+  document.getElementById('sol-equip-busca').value='';
+  document.getElementById('sol-om').value='';
+  document.getElementById('sol-data').value=new Date().toISOString().slice(0,10);
+  document.getElementById('sol-responsavel').value=currentUser?.nome||'';
+  document.getElementById('sol-descricao').value='';
+  document.getElementById('sol-bdi').value='';
+  document.getElementById('sol-valor').value='';
+  ['sol-eq-nome','sol-eq-fab','sol-eq-modelo','sol-eq-serie'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='—';});
+  ['sol-eq-placa','sol-eq-hor','sol-eq-cnpj'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const tbody=document.getElementById('sol-itens-body');if(tbody)tbody.innerHTML='';
+  solRcdAddLinha();solRcdCalcTotal();
+  el.style.display='flex';
+}
+
+function solRcdEditarAbrir(id){
+  const reg=_solRegistros[id];if(!reg)return;
+  solRcdNovaAbrir();
+  document.getElementById('sol-id').value=id;
+  document.getElementById('sol-equip-busca').value=reg.equip_id||'';
+  document.getElementById('sol-om').value=reg.om||'';
+  document.getElementById('sol-data').value=reg.data||'';
+  document.getElementById('sol-responsavel').value=reg.responsavel||'';
+  document.getElementById('sol-descricao').value=reg.descricao||'';
+  document.getElementById('sol-bdi').value=reg.orc_bdi||'';
+  const s=el=>document.getElementById(el);
+  const txt=(id,v)=>{const el=s(id);if(el)el.textContent=v||'—';};
+  const inp=(id,v)=>{const el=s(id);if(el)el.value=v||'';};
+  txt('sol-eq-nome',     reg.equip_nome);
+  txt('sol-eq-fab',      reg.equip_fabricante);
+  txt('sol-eq-modelo',   reg.equip_modelo);
+  txt('sol-eq-serie',    reg.equip_serie);
+  txt('sol-eq-familia',  reg.equip_familia);
+  txt('sol-eq-linha',    reg.equip_linha);
+  txt('sol-eq-filial',   reg.equip_filial);
+  txt('sol-eq-contrato', reg.equip_contrato);
+  txt('sol-eq-cliente',  reg.equip_cliente);
+  txt('sol-eq-planta',   reg.equip_planta);
+  inp('sol-eq-placa',    reg.equip_placa);
+  inp('sol-eq-hor',      reg.equip_horimetro);
+  inp('sol-eq-cnpj',     reg.equip_cnpj);
+  const tbody=document.getElementById('sol-itens-body');if(tbody)tbody.innerHTML='';
+  (reg.orc_itens||[]).forEach(it=>solRcdAddLinha(it));
+  if(!(reg.orc_itens||[]).length)solRcdAddLinha();
+  solRcdCalcTotal();
+}
+
+function solRcdFechar(){const el=document.getElementById('sol-modal');if(el)el.style.display='none';}
+
+function solRcdBuscarEquip(force){
+  const val=(document.getElementById('sol-equip-busca')?.value||'').trim().toUpperCase();
+  if(!val)return;
+  const eq=state[val]||(Object.values(state).find(e=>(e.id||'').toUpperCase()===val));
+  const orig=(EQUIPAMENTOS_ORIG||[]).find(e=>(e.id||'').toUpperCase()===val)||{};
+  if(!eq&&!orig.id){if(force)showToast('⚠️ Equipamento não encontrado: '+val);return;}
+  const e=eq||orig;
+  const g=(a,b)=>a||b||'—';
+  const s=id=>document.getElementById(id);
+  const txt=(id,v)=>{const el=s(id);if(el)el.textContent=v;};
+  const inp=(id,v)=>{const el=s(id);if(el)el.value=v==='—'?'':v;};
+  txt('sol-eq-nome',   g(e.equipamento,  orig.equipamento));
+  txt('sol-eq-fab',    g(e.fabricante,   orig.fabricante));
+  txt('sol-eq-modelo', g(e.modelo,       orig.modelo));
+  txt('sol-eq-serie',  g(e.serie,        orig.serie));
+  txt('sol-eq-familia',g(e.tipo||e.grupo,orig.tipo||orig.grupo));
+  txt('sol-eq-linha',  g(e.linhaProduto, orig.linhaProduto));
+  txt('sol-eq-filial', g(e.oficina,      orig.oficina));
+  txt('sol-eq-contrato',g(e.tipoContrato,orig.tipoContrato));
+  const cliente=e.cliente||orig.clienteRes||orig.clienteNfe||e.clienteRes||e.clienteNfe||'—';
+  txt('sol-eq-cliente',cliente);
+  const planta=[e.planta||orig.planta,e.municipio||orig.municipio,e.estado||orig.estado].filter(Boolean).join(' — ')||'—';
+  txt('sol-eq-planta', planta);
+  inp('sol-eq-placa',  g(e.placa,        orig.placa));
+  inp('sol-eq-hor',    g(e.horimetro,    orig.horimetro));
+  inp('sol-eq-cnpj',   e.cnpj||orig.cnpj||'');
+  if(s('sol-equip-busca'))s('sol-equip-busca').value=e.id||val;
+}
+
+function solRcdAddLinha(it={}){
+  const tbody=document.getElementById('sol-itens-body');if(!tbody)return;
+  const tr=document.createElement('tr');
+  const mk=(f,type,val,ph,extra)=>{const i=document.createElement('input');i.type=type;i.dataset.f=f;i.style.cssText='width:100%;padding:4px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:11px;box-sizing:border-box;'+(extra||'');if(val!==''&&val!=null)i.value=String(val);i.placeholder=ph||'';i.addEventListener('input',solRcdCalcTotal);return i;};
+  const tdDel=document.createElement('td');tdDel.style.cssText='padding:4px;text-align:center';tdDel.innerHTML=`<button onclick="this.closest('tr').remove();solRcdCalcTotal()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px">×</button>`;
+  const tdQ=document.createElement('td');tdQ.style.cssText='padding:3px';tdQ.appendChild(mk('qtd','number',it.qtd??1,'1','width:56px;text-align:center'));
+  const tdP=document.createElement('td');tdP.style.cssText='padding:3px';tdP.appendChild(mk('pn','text',it.pn||'','PN'));
+  const tdD=document.createElement('td');tdD.style.cssText='padding:3px';tdD.appendChild(mk('desc','text',it.desc||'','Descrição'));
+  const tdV=document.createElement('td');tdV.style.cssText='padding:3px';tdV.appendChild(mk('vunit','text',it.vunit??'','0,00','text-align:right'));
+  const tdT=document.createElement('td');tdT.style.cssText='padding:3px;text-align:right;font-weight:600;font-size:11px;color:#1e293b';tdT.dataset.f='total';tdT.textContent='R$ 0,00';
+  tr.append(tdQ,tdP,tdD,tdV,tdT,tdDel);tbody.appendChild(tr);
+}
+
+function solRcdCalcTotal(){
+  const tbody=document.getElementById('sol-itens-body');if(!tbody)return;
+  const fmt=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  let sub=0;
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const g=f=>tr.querySelector(`[data-f="${f}"]`);
+    const qtd=parseFloat(g('qtd')?.value)||0;
+    const vunit=parseFloat((g('vunit')?.value||'').replace(',','.'))||0;
+    const tot=qtd*vunit;sub+=tot;
+    const td=g('total');if(td)td.textContent=fmt(tot);
+  });
+  const bdi=parseFloat(document.getElementById('sol-bdi')?.value)||0;
+  const bdival=sub*(bdi/100);const total=sub+bdival;
+  const s=id=>document.getElementById(id);
+  if(s('sol-subtotal'))s('sol-subtotal').textContent=fmt(sub);
+  if(s('sol-bdi-val'))s('sol-bdi-val').textContent=fmt(bdival);
+  if(s('sol-total-val'))s('sol-total-val').textContent=fmt(total);
+  if(s('sol-valor'))s('sol-valor').value=total.toFixed(2);
+}
+
+function solRcdLerLinhas(){
+  const tbody=document.getElementById('sol-itens-body');if(!tbody)return[];
+  return Array.from(tbody.querySelectorAll('tr')).map(tr=>{
+    const g=f=>tr.querySelector(`[data-f="${f}"]`);
+    const qtd=parseFloat(g('qtd')?.value)||0;
+    const pn=g('pn')?.value.trim()||'';
+    const desc=g('desc')?.value.trim()||'';
+    const vunit=parseFloat((g('vunit')?.value||'').replace(',','.'))||0;
+    return{qtd,pn,desc,vunit,total:qtd*vunit};
+  });
+}
+
+async function solRcdSalvar(){
+  const om=document.getElementById('sol-om')?.value.trim();
+  if(!om){showToast('⚠️ Informe o Nº da O.M.');document.getElementById('sol-om')?.focus();return;}
+  const equipId=(document.getElementById('sol-equip-busca')?.value||'').trim().toUpperCase();
+  if(!equipId){showToast('⚠️ Informe o Nº Interno do equipamento');return;}
+  const idExist=document.getElementById('sol-id')?.value;
+  const reg=idExist?(_solRegistros[idExist]||{id:idExist}):{id:'sol_'+Date.now(),status:'em_aprovacao',ts_em_aprovacao:Date.now(),dias:{},ts_criacao:Date.now(),criado_por:currentUser?.nome||''};
+  reg.equip_id=equipId;
+  const eq=state[equipId]||{};const orig=(EQUIPAMENTOS_ORIG||[]).find(e=>e.id===equipId)||{};
+  const gt=id=>(document.getElementById(id)?.textContent||'').replace('—','').trim();
+  const gv=id=>document.getElementById(id)?.value||'';
+  reg.equip_nome=gt('sol-eq-nome')||eq.equipamento||'';
+  reg.equip_fabricante=gt('sol-eq-fab')||eq.fabricante||'';
+  reg.equip_modelo=gt('sol-eq-modelo')||eq.modelo||'';
+  reg.equip_serie=gt('sol-eq-serie')||eq.serie||orig.serie||'';
+  reg.equip_familia=gt('sol-eq-familia')||eq.tipo||orig.tipo||'';
+  reg.equip_linha=gt('sol-eq-linha')||eq.linhaProduto||orig.linhaProduto||'';
+  reg.equip_filial=gt('sol-eq-filial')||eq.oficina||orig.oficina||'';
+  reg.equip_contrato=gt('sol-eq-contrato')||eq.tipoContrato||orig.tipoContrato||'';
+  reg.equip_cliente=gt('sol-eq-cliente')||eq.cliente||orig.clienteRes||'';
+  reg.equip_planta=gt('sol-eq-planta')||eq.planta||orig.planta||'';
+  reg.equip_placa=gv('sol-eq-placa');
+  reg.equip_horimetro=gv('sol-eq-hor');
+  reg.equip_cnpj=gv('sol-eq-cnpj');
+  reg.om=om;
+  reg.data=document.getElementById('sol-data')?.value||'';
+  reg.responsavel=document.getElementById('sol-responsavel')?.value.trim()||'';
+  reg.descricao=document.getElementById('sol-descricao')?.value.trim()||'';
+  reg.orc_itens=solRcdLerLinhas().filter(i=>i.qtd||i.pn||i.desc||i.vunit);
+  reg.orc_bdi=parseFloat(document.getElementById('sol-bdi')?.value)||0;
+  reg.orc_valor=parseFloat(document.getElementById('sol-valor')?.value)||0;
+  await solRcdSalvarReg(reg);
+  solRcdFechar();solRcdRenderTodos();
+  showToast('💾 Solicitação salva');
+}
+
+async function solRcdEnviarAprovacao(){
+  await solRcdSalvar();
+  // já salvo em em_aprovacao — apenas toast
+  showToast('📨 Enviado para aprovação');
 }
 
 // ── OFICINAS ─────────────────────────────────────────────────────────────────
@@ -15297,7 +15718,165 @@ if ('serviceWorker' in navigator) {
 
     <!-- ABA EM OPERAÇÃO -->
     <div id="rcd-aba-operacao" style="display:none">
-      <div style="padding:40px;text-align:center;color:#94a3b8;font-size:13px">Em desenvolvimento</div>
+      <!-- KPIs -->
+      <div id="sol-kpis-inline" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px"></div>
+      <!-- Kanban -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px">
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #6366f1">Em Aprovação</div>
+          <div id="sol-col-aprovacao-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #f59e0b">Ag. Orçamento</div>
+          <div id="sol-col-orcamento-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #10b981">Ag. Cliente</div>
+          <div id="sol-col-cliente-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #3b82f6">Ag. Execução</div>
+          <div id="sol-col-execucao-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #8b5cf6">Ag. Faturamento</div>
+          <div id="sol-col-faturamento-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
+        </div>
+      </div>
+      <!-- Botão Nova + Histórico -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b">Histórico</div>
+        <button onclick="solRcdNovaAbrir()" style="padding:8px 18px;background:#b45309;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">+ Nova Solicitação</button>
+      </div>
+      <div id="sol-historico-inline" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SOLICITAÇÕES RCD -->
+<div id="page-solrcd" style="display:none;position:fixed;left:60px;top:56px;right:0;bottom:0;overflow-y:auto;background:#eef1f6;z-index:100">
+  <div style="padding:24px 28px;max-width:1600px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div>
+        <div style="font-size:24px;font-weight:900;color:#0f172a;margin-bottom:4px">📋 Solicitações RCD</div>
+        <div style="font-size:13px;color:#94a3b8">Gestão de solicitações de reparo e cobrança de danos</div>
+      </div>
+      <button onclick="solRcdNovaAbrir()" style="padding:10px 20px;background:#F37021;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px">+ Nova Solicitação</button>
+    </div>
+    <!-- KPIs -->
+    <div id="sol-kpis" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px"></div>
+    <!-- Kanban -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px">
+      <div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6366f1;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#6366f1;display:inline-block"></span>Em Aprovação</div>
+        <div id="sol-col-aprovacao" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#f59e0b;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Ag. Orçamento</div>
+        <div id="sol-col-orcamento" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#10b981;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block"></span>Ag. Cliente</div>
+        <div id="sol-col-cliente" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#0ea5e9;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#0ea5e9;display:inline-block"></span>Ag. Execução</div>
+        <div id="sol-col-execucao" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8b5cf6;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#8b5cf6;display:inline-block"></span>Ag. Faturamento</div>
+        <div id="sol-col-faturamento" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
+      </div>
+    </div>
+    <!-- Histórico / Relatório -->
+    <div style="margin-top:24px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:12px">Concluídos</div>
+      <div id="sol-historico" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SOLICITAÇÃO RCD -->
+<div id="sol-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;width:900px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1;border-radius:14px 14px 0 0">
+      <div style="font-size:16px;font-weight:800;color:#0f172a">📋 Solicitação RCD</div>
+      <button onclick="solRcdFechar()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#94a3b8;line-height:1">×</button>
+    </div>
+    <div style="padding:20px 24px">
+      <input type="hidden" id="sol-id">
+      <!-- Busca de equipamento -->
+      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 14px;margin-bottom:16px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0369a1;margin-bottom:8px">Equipamento</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+          <input id="sol-equip-busca" type="text" placeholder="Nº Interno (ex: PCP01142)" style="flex:1;padding:8px 12px;border:1.5px solid #bae6fd;border-radius:7px;font-size:13px;font-weight:600" oninput="solRcdBuscarEquip()">
+          <button onclick="solRcdBuscarEquip(true)" style="padding:8px 14px;background:#0ea5e9;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">Buscar</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px 14px;font-size:12px" id="sol-equip-dados">
+          <div><span style="color:#94a3b8">Equipamento:</span> <span id="sol-eq-nome" style="font-weight:600">—</span></div>
+          <div><span style="color:#94a3b8">Fabricante:</span> <span id="sol-eq-fab" style="font-weight:600">—</span></div>
+          <div><span style="color:#94a3b8">Modelo:</span> <span id="sol-eq-modelo" style="font-weight:600">—</span></div>
+          <div><span style="color:#94a3b8">Nº Série:</span> <span id="sol-eq-serie" style="font-weight:600">—</span></div>
+          <div><span style="color:#94a3b8">Família:</span> <span id="sol-eq-familia" style="font-weight:600">—</span></div>
+          <div><span style="color:#94a3b8">Linha de Produto:</span> <span id="sol-eq-linha" style="font-weight:600">—</span></div>
+          <div><span style="color:#94a3b8">Filial:</span> <span id="sol-eq-filial" style="font-weight:600">—</span></div>
+          <div><span style="color:#94a3b8">Tipo de Contrato:</span> <span id="sol-eq-contrato" style="font-weight:600">—</span></div>
+          <div><span style="color:#94a3b8">Cliente:</span> <span id="sol-eq-cliente" style="font-weight:600">—</span></div>
+          <div style="grid-column:2/-1"><span style="color:#94a3b8">Planta/Obra:</span> <span id="sol-eq-planta" style="font-weight:600">—</span></div>
+          <div><span style="color:#94a3b8">Placa:</span> <input id="sol-eq-placa" type="text" style="width:100%;padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-weight:600"></div>
+          <div><span style="color:#94a3b8">Horímetro:</span> <input id="sol-eq-hor" type="text" style="width:100%;padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-weight:600"></div>
+          <div style="grid-column:3/-1"><span style="color:#94a3b8">CNPJ do Cliente:</span> <input id="sol-eq-cnpj" type="text" placeholder="00.000.000/0000-00" style="width:100%;padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-weight:600"></div>
+        </div>
+      </div>
+      <!-- Cabeçalho -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Nº O.M. <span style="color:#ef4444">*</span></label>
+          <input id="sol-om" type="text" placeholder="Nº O.M. Manusis" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Data</label>
+          <input id="sol-data" type="date" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Solicitante</label>
+          <input id="sol-responsavel" type="text" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+        </div>
+        <div style="grid-column:1/-1">
+          <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Descrição da ocorrência</label>
+          <textarea id="sol-descricao" rows="2" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;resize:vertical"></textarea>
+        </div>
+      </div>
+      <!-- Itens do orçamento -->
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Itens do Orçamento</div>
+          <button onclick="solRcdAddLinha()" style="padding:5px 12px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">+ Linha</button>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:#f8fafc">
+            <th style="padding:7px 8px;text-align:center;font-weight:600;color:#64748b;border-bottom:2px solid #e2e8f0;width:60px">Qtd</th>
+            <th style="padding:7px 8px;text-align:left;font-weight:600;color:#64748b;border-bottom:2px solid #e2e8f0;width:100px">PN</th>
+            <th style="padding:7px 8px;text-align:left;font-weight:600;color:#64748b;border-bottom:2px solid #e2e8f0">Descrição</th>
+            <th style="padding:7px 8px;text-align:right;font-weight:600;color:#64748b;border-bottom:2px solid #e2e8f0;width:110px">Valor Unit.</th>
+            <th style="padding:7px 8px;text-align:right;font-weight:600;color:#64748b;border-bottom:2px solid #e2e8f0;width:110px">Total</th>
+            <th style="width:28px;border-bottom:2px solid #e2e8f0"></th>
+          </tr></thead>
+          <tbody id="sol-itens-body"></tbody>
+        </table>
+        <div style="display:flex;justify-content:flex-end;gap:20px;padding:10px 8px 0;font-size:12px">
+          <span style="color:#64748b">Subtotal: <strong id="sol-subtotal">R$ 0,00</strong></span>
+          <span style="color:#64748b">BDI (<input id="sol-bdi" type="number" min="0" max="100" style="width:44px;padding:2px 4px;border:1px solid #e2e8f0;border-radius:4px;font-size:11px" oninput="solRcdCalcTotal()">%): <strong id="sol-bdi-val">R$ 0,00</strong></span>
+          <span style="color:#0f172a;font-weight:800">Total: <strong id="sol-total-val">R$ 0,00</strong></span>
+          <input type="hidden" id="sol-valor">
+        </div>
+      </div>
+      <!-- Botões -->
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:12px;border-top:1px solid #f1f5f9">
+        <button onclick="solRcdFechar()" style="padding:10px 20px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">Cancelar</button>
+        <button onclick="solRcdSalvar()" style="padding:10px 20px;background:#f59e0b;color:#fff;border:none;border-radius:7px;font-weight:700;font-size:13px;cursor:pointer">💾 Salvar</button>
+        <button onclick="solRcdEnviarAprovacao()" style="padding:10px 20px;background:#F37021;color:#fff;border:none;border-radius:7px;font-weight:700;font-size:13px;cursor:pointer">→ Enviar para Aprovação</button>
+      </div>
     </div>
   </div>
 </div>
