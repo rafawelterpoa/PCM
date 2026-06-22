@@ -14436,7 +14436,15 @@ function snavSetActive(id){
   if(id!=='snav-rcd'){const rcd=document.getElementById('page-rcd');if(rcd)rcd.style.display='none';}
 }
 
+function fecharPaginasFixed(){
+  // Páginas com position:fixed precisam ser fechadas explicitamente
+  ['page-rcd','page-solrcd'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+}
+
 function navegarPara(destino){
+  fecharPaginasFixed();
   if(destino==='home'){switchTab('home');snavSetActive('snav-home');return;}
   if(destino==='admin'){switchTab('admin');return;}
   if(destino==='gestao_integrada'){abrirTodo();snavSetActive('snav-gi');return;}
