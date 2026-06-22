@@ -14795,27 +14795,39 @@ function solRcdFiltrosRender(sfx, regs) {
   const el = document.getElementById('sol-filtros'+sfx);
   if (!el) return;
   const f = _solFiltros;
-  const inp = (id,ph,key,w) => `<input id="${id}" type="text" placeholder="${ph}" value="${f[key]}"
-    oninput="_solFiltros['${key}']=this.value;solRcdRenderTodos()"
-    style="width:${w};padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b">`;
-  const dat = (id,key,ph) => `<input id="${id}" type="date" value="${f[key]}" title="${ph}"
-    onchange="_solFiltros['${key}']=this.value;solRcdRenderTodos()"
-    style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b">`;
-  const temFiltro = Object.values(f).some(v=>v);
-  const limpar = temFiltro ? `<button onclick="Object.keys(_solFiltros).forEach(k=>_solFiltros[k]='');solRcdRenderTodos()"
-    style="padding:5px 10px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">✕ Limpar</button>` : '';
   const total = regs.length;
   const filt = solRcdFiltrarRegs(regs).length;
-  const badge = filt < total
+  const badgeTxt = filt < total
     ? `<span style="font-size:10px;color:#f59e0b;font-weight:700">${filt} de ${total}</span>`
     : `<span style="font-size:10px;color:#94a3b8">${total} registros</span>`;
+  // Se inputs já existem, só atualiza badge e botão limpar — não recria o DOM
+  if (document.getElementById('sf-equip'+sfx)) {
+    const badgeEl = el.querySelector('[data-sol-badge]');
+    if (badgeEl) badgeEl.innerHTML = badgeTxt;
+    const limparEl = el.querySelector('[data-sol-limpar]');
+    if (limparEl) limparEl.style.display = Object.values(f).some(v=>v) ? '' : 'none';
+    return;
+  }
+  // Primeira renderização
+  const inpH = (id,ph,key,w) => `<input id="${id}" type="text" placeholder="${ph}" value="${f[key]}"
+    oninput="_solFiltros['${key}']=this.value;solRcdAtualizarResultados()"
+    style="width:${w};padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b">`;
+  const dat = (id,key,ph) => `<input id="${id}" type="date" value="${f[key]}" title="${ph}"
+    onchange="_solFiltros['${key}']=this.value;solRcdAtualizarResultados()"
+    style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b">`;
   el.innerHTML = `<span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Filtros:</span>
-    ${inp('sf-equip'+sfx,'Equipamento','equip','120px')}
-    ${inp('sf-cli'+sfx,'Cliente','cliente','150px')}
-    ${inp('sf-resp'+sfx,'Responsável','responsavel','120px')}
+    ${inpH('sf-equip'+sfx,'Equipamento','equip','120px')}
+    ${inpH('sf-cli'+sfx,'Cliente','cliente','150px')}
+    ${inpH('sf-resp'+sfx,'Responsável','responsavel','120px')}
     <span style="display:flex;align-items:center;gap:4px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">De:</span>${dat('sf-de'+sfx,'de','Data início')}</span>
     <span style="display:flex;align-items:center;gap:4px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">Até:</span>${dat('sf-ate'+sfx,'ate','Data fim')}</span>
-    ${limpar}${badge}`;
+    <button data-sol-limpar onclick="Object.keys(_solFiltros).forEach(k=>_solFiltros[k]='');solRcdRenderTodos()"
+      style="padding:5px 10px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;display:${Object.values(f).some(v=>v)?'':'none'}">✕ Limpar</button>
+    <span data-sol-badge>${badgeTxt}</span>`;
+}
+
+function solRcdAtualizarResultados() {
+  solRcdRenderTodos();
 }
 
 function solRcdGraficos(sfx, regs) {
