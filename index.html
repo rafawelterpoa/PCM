@@ -4870,7 +4870,7 @@ async function doBaseUpdate(){
     const _pL=novos.filter(_isL).length;
     const _lo=novos.filter(n=>_isL(n)&&n.status==='Alugado').length;
     const _nLoc=_csvParseStats.nLocacao,_nVen=_csvParseStats.nVenda,_nSby=_csvParseStats.nStandby,_nVenAlug=_csvParseStats.nVendaAlugado||0;
-    const _loLoc=novos.filter(n=>(n.frota||'').toLowerCase().includes('loca')&&n.status==='Alugado').length;
+    const _loLoc=novos.filter(n=>n.status==='Alugado').length;
     const _alugados=novos.filter(n=>n.status==='Alugado');
     const _loEq=_alugados.filter(n=>frotaClassificar(n.tipo)==='equipamento').length;
     const _loImp=_alugados.filter(n=>frotaClassificar(n.tipo)==='implemento').length;
