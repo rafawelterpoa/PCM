@@ -4843,6 +4843,17 @@ async function doBaseUpdate(){
       adicionados++;
     }
   });
+  // Limpeza: marcar como baixado itens corrompidos (equipamento="sim"/"não") ausentes do novo CSV
+  const _novosIds=new Set(novos.map(n=>n.id));
+  const _corr=['sim','não','nao','yes','no'];
+  let _limpeza=0;
+  Object.values(state).forEach(eq=>{
+    if(!_novosIds.has(eq.id)&&!eq.baixado&&_corr.includes((eq.equipamento||'').toLowerCase().trim())){
+      eq.baixado=true;_limpeza++;
+    }
+  });
+  if(_limpeza>0)console.log(`[Limpeza] ${_limpeza} itens corrompidos marcados como baixado`);
+
   // Calcular e salvar estatísticas do CSV (Cards 1 e 2 — fonte de verdade = CSV)
   try{
     // Card 1: usa _csvParseStats que contou TODOS (gerencial=sim + status válido, inclui venda)
