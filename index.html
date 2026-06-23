@@ -15674,6 +15674,10 @@ function opTipoEquip(e){
   const orig=(EQUIPAMENTOS_ORIG||[]).find(x=>x.id===e.id);
   return frotaClassificar(orig?orig.tipo:e.familia);
 }
+function opAlugadosBase(){
+  if(EQUIPAMENTOS_ORIG&&EQUIPAMENTOS_ORIG.length) return EQUIPAMENTOS_ORIG.filter(e=>e.status==='Alugado');
+  return Object.values(typeof state!=='undefined'?state:{}).filter(e=>e.etapa==='alugado').map(e=>({...e,status:'Alugado'}));
+}
 function opContratoEquip(e){
   const orig=(EQUIPAMENTOS_ORIG||[]).find(x=>x.id===e.id);
   if(orig&&orig.tipoContrato) return orig.tipoContrato;
@@ -15691,7 +15695,7 @@ function opRenderKpis(opsFiltradas){
   const ops=opsFiltradas||OPERACOES_DATA.map(o=>({...o,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
   const totalOps=ops.length;
   // Em campo: quando há filtro de contrato, usa EQUIPAMENTOS_ORIG direto (mais preciso)
-  const _origAlug=(EQUIPAMENTOS_ORIG||[]).filter(e=>e.status==='Alugado'&&(!_opContratoFiltro||e.tipoContrato===_opContratoFiltro));
+  const _origAlug=opAlugadosBase().filter(e=>(!_opContratoFiltro||e.tipoContrato===_opContratoFiltro));
   const _cs=window._csvStats||{};
   const _hasBreakdown=_cs.locadosEq!=null&&!_opContratoFiltro;
   const _stateAlugados=_hasBreakdown?null:Object.values(typeof state!=='undefined'?state:{}).filter(e=>e.etapa==='alugado');
@@ -15724,7 +15728,7 @@ function opRenderChart(ops){
   // ── Gráfico 1: Top Famílias — barras VERTICAIS (fonte: EQUIPAMENTOS_ORIG) ─
   const el=document.getElementById('op-chart');
   if(el){
-    const todosLoc=(EQUIPAMENTOS_ORIG||[]).filter(e=>e.status==='Alugado'&&(!_opTipoFiltro||frotaClassificar(e.tipo)===_opTipoFiltro)&&(!_opContratoFiltro||e.tipoContrato===_opContratoFiltro));
+    const todosLoc=opAlugadosBase().filter(e=>(!_opTipoFiltro||frotaClassificar(e.tipo)===_opTipoFiltro)&&(!_opContratoFiltro||e.tipoContrato===_opContratoFiltro));
     const fams={};
     todosLoc.forEach(e=>{if(e.tipo)fams[e.tipo]=(fams[e.tipo]||0)+1;});
     const sorted=Object.entries(fams).sort((a,b)=>b[1]-a[1]).slice(0,8);
