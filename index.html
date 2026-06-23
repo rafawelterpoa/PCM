@@ -15941,7 +15941,7 @@ function rgRenderVisaoGeral(ativos,emOperacao){
   const nVendaStandby=(_cs.nVenda||0)+(_cs.nStandby||0);
   const paraLocacao=nLocacao||totalFrota;
   const locadosTotal=allActive.filter(e=>e.etapa==='alugado').length;
-  const _denLoc=_cs.paraLocacao||2435;
+  const _denLoc=_cs.nLocacao||2435;
   const _denTot=_cs.totalFrota||2643;
   const locadosLoc=(_cs.locados!=null&&_cs.locados>0)?_cs.locados:locadosTotal;
   const tuLocPct=_denLoc>0?Math.round(locadosLoc/_denLoc*100):0;
