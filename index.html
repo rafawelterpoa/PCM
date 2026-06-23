@@ -1050,10 +1050,10 @@ input.filter-sel{padding:5px 8px;height:34px}
         <span class="ac-badge" style="background:#eff6ff;color:#2563eb">em operação</span>
       </div>
       <div class="area-card-preview">
-        <div class="mini-filters">
-          <div class="mini-filter-row"><div class="mini-filter-dot" style="background:#2563eb"></div>Locação<div class="mini-filter-bar" style="background:#bfdbfe"></div></div>
-          <div class="mini-filter-row"><div class="mini-filter-dot" style="background:#16a34a"></div>Venda<div class="mini-filter-bar" style="background:#bbf7d0;width:40%"></div></div>
-          <div class="mini-filter-row"><div class="mini-filter-dot" style="background:#94a3b8"></div>Standby<div class="mini-filter-bar" style="background:#e2e8f0;width:20%"></div></div>
+        <div id="home-op-breakdown" style="display:flex;flex-direction:column;gap:4px;font-size:11px">
+          <div style="display:flex;justify-content:space-between;color:#64748b"><span>Equipamentos</span><span id="home-op-eq" style="font-weight:700;color:#1e293b">—</span></div>
+          <div style="display:flex;justify-content:space-between;color:#64748b"><span>Implementos</span><span id="home-op-imp" style="font-weight:700;color:#1e293b">—</span></div>
+          <div style="display:flex;justify-content:space-between;color:#64748b"><span>Acessórios</span><span id="home-op-ac" style="font-weight:700;color:#1e293b">—</span></div>
         </div>
       </div>
     </div>
@@ -4839,8 +4839,12 @@ async function doBaseUpdate(){
     const _lo=novos.filter(n=>_isL(n)&&n.status==='Alugado').length;
     const _nLoc=_csvParseStats.nLocacao,_nVen=_csvParseStats.nVenda,_nSby=_csvParseStats.nStandby,_nVenAlug=_csvParseStats.nVendaAlugado||0;
     const _loLoc=novos.filter(n=>(n.frota||'').toLowerCase().includes('loca')&&n.status==='Alugado').length;
+    const _alugados=novos.filter(n=>n.status==='Alugado');
+    const _loEq=_alugados.filter(n=>frotaClassificar(n.tipo)==='equipamento').length;
+    const _loImp=_alugados.filter(n=>frotaClassificar(n.tipo)==='implemento').length;
+    const _loAc=_alugados.filter(n=>frotaClassificar(n.tipo)==='acessorio').length;
     console.log(`[CSV] Frota Venda com status Alugado: ${_nVenAlug}`);
-    window._csvStats={totalFrota:_tot,nEq:_nEq,nImp:_nImp,nAc:_nAc,nOut:_nOut,paraLocacao:_pL,nLocacao:_nLoc,nVenda:_nVen,nStandby:_nSby,nVendaAlugado:_nVenAlug,locados:_loLoc,tu:_nLoc>0?Math.round(_loLoc/_nLoc*100):0,ts:agora};
+    window._csvStats={totalFrota:_tot,nEq:_nEq,nImp:_nImp,nAc:_nAc,nOut:_nOut,paraLocacao:_pL,nLocacao:_nLoc,nVenda:_nVen,nStandby:_nSby,nVendaAlugado:_nVenAlug,locados:_loLoc,locadosEq:_loEq,locadosImp:_loImp,locadosAc:_loAc,tu:_nLoc>0?Math.round(_loLoc/_nLoc*100):0,ts:agora};
     console.log('[CSV Stats]',window._csvStats);
     try{await fetch(FB_BASE+'/csv_stats.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._csvStats)});}catch(e){console.warn('csv_stats save:',e);}
   }catch(e){console.error('[CSV Stats ERRO]',e);}
@@ -15760,11 +15764,17 @@ function rgUpdateHomeKpis(ativos){
   const emPatio=ativos.filter(e=>e.etapa==='pronto');
   // Array real do state — usado internamente pelo board
   const emOperacao=Object.values(state).filter(e=>e.etapa==='alugado');
-  // Número exibido = total de equipamentos em OPERACOES_DATA — mesma fonte que a página interna
-  const emOpDisplay=OPERACOES_DATA.reduce((s,o)=>s+o.equips.length,0)||emOperacao.length;
+  // Número exibido = locadosTotal do CSV (fonte de verdade)
+  const _cs2=window._csvStats||{};
+  const emOpTotal=_cs2.locadosEq!=null?(_cs2.locadosEq+(_cs2.locadosImp||0)+(_cs2.locadosAc||0)):emOperacao.length;
   const elOf=document.getElementById('home-kpi-oficina');if(elOf)elOf.innerHTML=`<span style="color:#F37021;font-weight:800;font-size:16px">${emOficina.length}</span> em processo`;
   const elPat=document.getElementById('home-kpi-patio');if(elPat)elPat.innerHTML=`<span style="color:#16a34a;font-weight:800;font-size:16px">${emPatio.length}</span> prontos`;
-  const elOp=document.getElementById('home-kpi-operacoes');if(elOp)elOp.innerHTML=`<span style="color:#2563eb;font-weight:800;font-size:16px">${emOpDisplay}</span> em operação`;
+  const elOp=document.getElementById('home-kpi-operacoes');if(elOp)elOp.innerHTML=`<span style="color:#2563eb;font-weight:800;font-size:16px">${emOpTotal}</span> em operação`;
+  // Breakdown Eq / Imp / Ac
+  const _fmt=n=>n!=null?n.toLocaleString('pt-BR'):'—';
+  const elEq=document.getElementById('home-op-eq');if(elEq)elEq.textContent=_fmt(_cs2.locadosEq);
+  const elImp=document.getElementById('home-op-imp');if(elImp)elImp.textContent=_fmt(_cs2.locadosImp);
+  const elAc=document.getElementById('home-op-ac');if(elAc)elAc.textContent=_fmt(_cs2.locadosAc);
   rgRenderVisaoGeral(ativos,emOperacao);
 }
 
