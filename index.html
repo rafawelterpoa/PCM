@@ -15640,13 +15640,19 @@ function opSetTipo(v){
   });
   opRenderKpis(); opRender();
 }
+function opTipoEquip(e){
+  // Usa EQUIPAMENTOS_ORIG pelo ID como fonte de verdade; fallback para familia
+  const orig=(EQUIPAMENTOS_ORIG||[]).find(x=>x.id===e.id);
+  return frotaClassificar(orig?orig.tipo:e.familia);
+}
 function opEquipsFiltrados(equips){
   if(!_opTipoFiltro) return equips;
-  return equips.filter(e=>frotaClassificar(e.familia)===_opTipoFiltro);
+  return equips.filter(e=>opTipoEquip(e)===_opTipoFiltro);
 }
-function opRenderKpis(){
+function opRenderKpis(opsFiltradas){
   const el=document.getElementById('op-kpis');if(!el)return;
-  const ops=OPERACOES_DATA.map(o=>({...o,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
+  // Usa as ops já filtradas (com tipo+busca+estado+familia) se fornecidas, senão aplica só tipo
+  const ops=opsFiltradas||OPERACOES_DATA.map(o=>({...o,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
   const totalOps=ops.length;
   const totalEquips=ops.reduce((s,o)=>s+o.equips.length,0);
   const estados=[...new Set(ops.map(o=>o.estado).filter(Boolean))].length;
@@ -15697,6 +15703,7 @@ function opRender(){
   if(filtFam)ops=ops.filter(o=>o.equips.some(e=>e.familia===filtFam));
   if(busca)ops=ops.filter(o=>o.nome.toLowerCase().includes(busca)||o.cliente.toLowerCase().includes(busca)||(o.municipio||'').toLowerCase().includes(busca)||o.equips.some(e=>(e.id||'').toLowerCase().includes(busca)||(e.modelo||'').toLowerCase().includes(busca)||(e.familia||'').toLowerCase().includes(busca)));
 
+  opRenderKpis(ops);
   opRenderChart(ops);
   if(!lista)return;
   if(!ops.length){lista.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhuma operação encontrada.</div>';return;}
