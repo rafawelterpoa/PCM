@@ -15676,7 +15676,9 @@ function opTipoEquip(e){
 }
 function opContratoEquip(e){
   const orig=(EQUIPAMENTOS_ORIG||[]).find(x=>x.id===e.id);
-  return (orig?orig.tipoContrato:e.tipoContrato)||'';
+  if(orig&&orig.tipoContrato) return orig.tipoContrato;
+  const st=typeof state!=='undefined'&&state[e.id];
+  return (st?st.tipoContrato:null)||e.tipoContrato||'';
 }
 function opEquipsFiltrados(equips){
   let r=equips;
@@ -15696,11 +15698,11 @@ function opRenderKpis(opsFiltradas){
   const _csTotal=_hasBreakdown?(_cs.locadosEq+(_cs.locadosImp||0)+(_cs.locadosAc||0)):(_stateAlugados?_stateAlugados.length:0);
   let totalEquips;
   if(_opTipoFiltro==='equipamento'){
-    totalEquips=_opContratoFiltro?_origAlug.filter(e=>frotaClassificar(e.tipo)==='equipamento').length:(_hasBreakdown?(_cs.locadosEq||0):_origAlug.filter(e=>frotaClassificar(e.tipo)==='equipamento').length);
+    totalEquips=_origAlug.filter(e=>frotaClassificar(e.tipo)==='equipamento').length;
   }else if(_opTipoFiltro==='implemento'){
-    totalEquips=_opContratoFiltro?_origAlug.filter(e=>frotaClassificar(e.tipo)==='implemento').length:(_hasBreakdown?(_cs.locadosImp||0):_origAlug.filter(e=>frotaClassificar(e.tipo)==='implemento').length);
+    totalEquips=_origAlug.filter(e=>frotaClassificar(e.tipo)==='implemento').length;
   }else if(_opTipoFiltro==='acessorio'){
-    totalEquips=_opContratoFiltro?_origAlug.filter(e=>frotaClassificar(e.tipo)==='acessorio').length:(_hasBreakdown?(_cs.locadosAc||0):_origAlug.filter(e=>frotaClassificar(e.tipo)==='acessorio').length);
+    totalEquips=_origAlug.filter(e=>frotaClassificar(e.tipo)==='acessorio').length;
   }else{
     totalEquips=_opContratoFiltro?_origAlug.length:(_csTotal||ops.reduce((s,o)=>s+o.equips.length,0));
   }
