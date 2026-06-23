@@ -949,6 +949,10 @@ input.filter-sel{padding:5px 8px;height:34px}
           <select id="op-filtro-familia" onchange="opRender()" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;width:100%;background:#fff">
             <option value="">Família — Todas</option>
           </select>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-top:2px">Tipo</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px" id="op-filtro-tipo-wrap">
+            ${[['','Tudo'],['equipamento','Equipamentos'],['implemento','Implementos'],['acessorio','Acessórios']].map(([v,l])=>`<button onclick="opSetTipo('${v}')" data-tipo="${v}" style="padding:5px 11px;border-radius:20px;border:1px solid ${v===''?'#2563eb':'#e2e8f0'};background:${v===''?'#eff6ff':'#fff'};color:${v===''?'#2563eb':'#64748b'};font-size:11px;font-weight:600;cursor:pointer">${l}</button>`).join('')}
+          </div>
         </div>
       </div>
     </div>
@@ -15628,14 +15632,31 @@ function opInicializar(){
   opRender();
 }
 
+let _opTipoFiltro = '';
+function opSetTipo(v){
+  _opTipoFiltro = v;
+  document.querySelectorAll('#op-filtro-tipo-wrap button').forEach(b=>{
+    const sel = b.dataset.tipo === v;
+    b.style.background = sel ? '#eff6ff' : '#fff';
+    b.style.color = sel ? '#2563eb' : '#64748b';
+    b.style.borderColor = sel ? '#2563eb' : '#e2e8f0';
+  });
+  opRenderKpis(); opRender();
+}
+function opEquipsFiltrados(equips){
+  if(!_opTipoFiltro) return equips;
+  return equips.filter(e=>frotaClassificar(e.familia)===_opTipoFiltro);
+}
 function opRenderKpis(){
   const el=document.getElementById('op-kpis');if(!el)return;
-  const totalOps=OPERACOES_DATA.length;
-  const totalEquips=OPERACOES_DATA.reduce((s,o)=>s+o.equips.length,0);
-  const estados=[...new Set(OPERACOES_DATA.map(o=>o.estado).filter(Boolean))].length;
+  const ops=OPERACOES_DATA.map(o=>({...o,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
+  const totalOps=ops.length;
+  const totalEquips=ops.reduce((s,o)=>s+o.equips.length,0);
+  const estados=[...new Set(ops.map(o=>o.estado).filter(Boolean))].length;
+  const tipoLabel=_opTipoFiltro?({equipamento:'Equipamentos',implemento:'Implementos',acessorio:'Acessórios'}[_opTipoFiltro]):'unidades locadas';
   el.innerHTML=[
     {l:'Operações Ativas',v:totalOps,c:'#F37021',sub:'contratos ativos'},
-    {l:'Equipamentos em Campo',v:totalEquips,c:'#0f766e',sub:'unidades locadas'},
+    {l:'Em Campo',v:totalEquips,c:'#0f766e',sub:tipoLabel},
     {l:'Estados Atendidos',v:estados,c:'#2563eb',sub:'UFs com operação'},
   ].map(k=>`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 22px;border-top:3px solid ${k.c};box-shadow:0 1px 4px rgba(0,0,0,.04)">
     <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:10px">${k.l}</div>
@@ -15673,7 +15694,8 @@ function opRender(){
   if(detalhe)detalhe.style.display='none';
   if(lista)lista.style.display='block';
 
-  let ops=OPERACOES_DATA;
+  // Aplica filtro de tipo nos equipamentos de cada operação
+  let ops=OPERACOES_DATA.map(o=>({...o,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
   if(filtEstado)ops=ops.filter(o=>o.estado===filtEstado);
   if(filtFam)ops=ops.filter(o=>o.equips.some(e=>e.familia===filtFam));
   if(busca)ops=ops.filter(o=>o.nome.toLowerCase().includes(busca)||o.cliente.toLowerCase().includes(busca)||(o.municipio||'').toLowerCase().includes(busca)||o.equips.some(e=>(e.id||'').toLowerCase().includes(busca)||(e.modelo||'').toLowerCase().includes(busca)||(e.familia||'').toLowerCase().includes(busca)));
