@@ -16059,8 +16059,9 @@ function rgRenderVisaoGeral(ativos,emOperacao){
 // ══ CLASSIFICAÇÃO DE FROTA ════════════════════════════════════════════════════
 const FROTA_ACESSORIOS = new Set(["Kit Rádio Controle","Bateria Tracionária","Garra Florestal",
   "Carregador de bateria","Kit Anfibio","Medidor Volumétrico de Carga","Boom Híbrido","Base de Bateria",
-  "Container","Implemento Giratório","Material Rodante","Semirreboque Florestal","Carretinha",
+  "Container","Implemento Giratório","Material Rodante","Carretinha",
   "Boom Diesel","Berço de Bateria","Georeferenciador"]);
+const FROTA_IMPLEMENTOS_EXTRA = new Set(["Semirreboque Florestal"]);
 
 const FROTA_REVISAO = [
   {familia:'Carrinho de Baterias',qtd:15,motivo:'Verificar se tem motor — pode ser acessório'},
@@ -16077,7 +16078,7 @@ const FROTA_REVISAO = [
 
 function frotaClassificar(familia){
   if(!familia) return 'equipamento';
-  if(familia.startsWith('Implemento')||familia==='Espeto') return 'implemento';
+  if(familia.startsWith('Implemento')||familia==='Espeto'||FROTA_IMPLEMENTOS_EXTRA.has(familia)) return 'implemento';
   if(FROTA_ACESSORIOS.has(familia)) return 'acessorio';
   return 'equipamento';
 }
