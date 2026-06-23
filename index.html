@@ -3298,7 +3298,7 @@ function atualizarContagemTabs(){
 }
 
 // KANBAN
-function getEquipsByOficinaSid(s){return Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.etapa!=='pronto'&&e.oficina&&e.oficina.replace(/ /g,'_').replace(/[()]/g,'').replace(/\//g,'_')===s);}
+function getEquipsByOficinaSid(s){return Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.etapa!=='pronto'&&frotaClassificar(e.tipo)!=='acessorio'&&e.oficina&&e.oficina.replace(/ /g,'_').replace(/[()]/g,'').replace(/\//g,'_')===s);}
 
 function renderBoard(sid,visao){
   const boardId=`board-${sid}-${visao}`;
