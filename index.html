@@ -4870,11 +4870,10 @@ async function doBaseUpdate(){
     const _pL=novos.filter(_isL).length;
     const _lo=novos.filter(n=>_isL(n)&&n.status==='Alugado').length;
     const _nLoc=_csvParseStats.nLocacao,_nVen=_csvParseStats.nVenda,_nSby=_csvParseStats.nStandby,_nVenAlug=_csvParseStats.nVendaAlugado||0;
-    const _loLoc=novos.filter(n=>n.status==='Alugado').length;
-    const _alugados=novos.filter(n=>n.status==='Alugado');
-    const _loEq=_alugados.filter(n=>frotaClassificar(n.tipo)==='equipamento').length;
-    const _loImp=_alugados.filter(n=>frotaClassificar(n.tipo)==='implemento').length;
-    const _loAc=_alugados.filter(n=>frotaClassificar(n.tipo)==='acessorio').length;
+    const _loLoc=_csvParseStats.nAlugado||0;
+    const _loEq=_csvParseStats.nAlugEq||0;
+    const _loImp=_csvParseStats.nAlugImp||0;
+    const _loAc=_csvParseStats.nAlugAc||0;
     console.log(`[CSV] Frota Venda com status Alugado: ${_nVenAlug}`);
     window._csvStats={totalFrota:_tot,nEq:_nEq,nImp:_nImp,nAc:_nAc,nOut:_nOut,paraLocacao:_pL,nLocacao:_nLoc,nVenda:_nVen,nStandby:_nSby,nVendaAlugado:_nVenAlug,locados:_loLoc,locadosEq:_loEq,locadosImp:_loImp,locadosAc:_loAc,tu:_nLoc>0?Math.round(_loLoc/_nLoc*100):0,ts:agora};
     console.log('[CSV Stats]',window._csvStats);
@@ -5004,7 +5003,10 @@ function parseCSVToEquipamentos(csvText){
     {const _sk=(status||'(vazio)').trim();_dbgStatusMap[_sk]=(_dbgStatusMap[_sk]||0)+1;}
     // Contar TODOS os válidos (inclui venda e comodato) para Card 1 — Total Frota
     {const _t=frotaClassificar(familia);_csvParseStats.totalAll++;if(_t==='equipamento')_csvParseStats.nEq++;else if(_t==='implemento')_csvParseStats.nImp++;else if(_t==='acessorio')_csvParseStats.nAc++;
-     const _fL=(frota||'').toLowerCase();if(_fL.includes('loca'))_csvParseStats.nLocacao++;else if(_fL.includes('venda'))_csvParseStats.nVenda++;else if(_fL.includes('standby'))_csvParseStats.nStandby++;}
+     const _fL=(frota||'').toLowerCase();if(_fL.includes('loca'))_csvParseStats.nLocacao++;else if(_fL.includes('venda'))_csvParseStats.nVenda++;else if(_fL.includes('standby'))_csvParseStats.nStandby++;
+     // Contar alugados aqui — gerencial=sim já filtrado, antes de excluir venda/comodato/emFilial
+     if((status||'').trim().toLowerCase()==='alugado'){_csvParseStats.nAlugado=(_csvParseStats.nAlugado||0)+1;if(_t==='equipamento')_csvParseStats.nAlugEq=(_csvParseStats.nAlugEq||0)+1;else if(_t==='implemento')_csvParseStats.nAlugImp=(_csvParseStats.nAlugImp||0)+1;else if(_t==='acessorio')_csvParseStats.nAlugAc=(_csvParseStats.nAlugAc||0)+1;}
+    }
     if(frota&&frota.toLowerCase()==='venda'){if((status||'').toLowerCase()==='alugado')_csvParseStats.nVendaAlugado=(_csvParseStats.nVendaAlugado||0)+1;continue;} // Excluir venda do board
     const sl=status.toLowerCase();
     if(sl==='comodato')continue;                               // Comodato = Frota Venda: conta no total, fora do board
@@ -5012,7 +5014,7 @@ function parseCSVToEquipamentos(csvText){
     // Regra: Alugado mas fisicamente na oficina (alugaradoFilial=sim) → entra no Kanban como Manutenção
     const emFilial=alugaradoFilial.toLowerCase()==='sim';
     if(sn==='Alugado'&&emFilial)sn='Manutenção';
-    equips.push({id,equipamento:grupo||familia,modelo:`${fabric||''} ${modelo||''}`.trim(),tipo:familia,linhaProduto:linhaProduto||'',oficina:(oficina||'').trim(),status:sn,alugaradoFilial:emFilial,cliente:(clienteRes||'').trim(),reservado:!!(clienteRes||'').trim(),planta:(planta||'').trim(),estado:(estado||'').trim(),municipio:(municipio||'').trim(),tipoContrato:(tipoContrato||'').trim(),clienteNfe:(clienteNfe||'').trim(),frota:(frota||'').trim(),serie:(serie||'').trim(),placa:(placa||'').trim(),fabricante:(fabric||'').trim(),grupo:(grupo||familia||'').trim(),horimetro:(horimetro||'').trim()});
+    equips.push({id,equipamento:grupo||familia,modelo:`${fabric||''} ${modelo||''}`.trim(),tipo:familia,linhaProduto:linhaProduto||'',oficina:(oficina||'').trim(),status:sn,alugaradoFilial:emFilial,cliente:(clienteRes||'').trim(),reservado:!!(clienteRes||'').trim(),planta:(planta||'').trim(),estado:(estado||'').trim(),municipio:(municipio||'').trim(),tipoContrato:(tipoContrato||'').trim(),clienteNfe:(clienteNfe||'').trim(),frota:(frota||'').trim(),serie:(serie||'').trim(),placa:(placa||'').trim(),fabricante:(fabric||'').trim(),grupo:(grupo||familia||'').trim(),horimetro:(horimetro||'').trim(),gerencial:(gerencial||'').trim()});
   }
   console.log('[CSV-DIAG] totalAll='+_csvParseStats.totalAll+' | frota values:',_dbgFrotaMap,'| status values:',_dbgStatusMap);
   return equips;
@@ -15916,6 +15918,7 @@ function rgUpdateHomeKpis(ativos){
 
 function rgRenderVisaoGeral(ativos,emOperacao){
   const cont=document.getElementById('home-visao-geral');if(!cont)return;
+  console.log('[RG-DEBUG] _csvStats.locados=',window._csvStats?.locados);
   const ETAPAS_MANUT=new Set(['chegada','cl_entrada','manutencao','lavagem','catalogacao','solda','borracharia','funilaria','suprimentos','ag_baia','manut_int','cl_saida']);
 
   const disponiveis=ativos.filter(e=>e.etapa==='pronto');
@@ -15940,10 +15943,11 @@ function rgRenderVisaoGeral(ativos,emOperacao){
   const nLocacao=_cs.nLocacao||0;
   const nVendaStandby=(_cs.nVenda||0)+(_cs.nStandby||0);
   const paraLocacao=nLocacao||totalFrota;
-  const locadosTotal=allActive.filter(e=>e.etapa==='alugado').length;
+  const _rawLocados=allActive.filter(e=>e.etapa==='alugado').length;
+  const locadosTotal=(_cs.locados!=null&&_cs.locados>0)?_cs.locados:_rawLocados;
   const _denLoc=_cs.nLocacao||2435;
   const _denTot=_cs.totalFrota||2643;
-  const locadosLoc=(_cs.locados!=null&&_cs.locados>0)?_cs.locados:locadosTotal;
+  const locadosLoc=locadosTotal;
   const tuLocPct=_denLoc>0?Math.round(locadosLoc/_denLoc*100):0;
   const tuTotPct=_denTot>0?Math.round(locadosLoc/_denTot*100):0;
 
@@ -16016,7 +16020,7 @@ function rgRenderVisaoGeral(ativos,emOperacao){
       </div>`:''}
       <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f5f9">
         <span style="font-size:12px;color:#64748b;font-weight:500">Locados</span>
-        <span style="font-size:20px;font-weight:800;color:#2563eb">${fmt(locadosTotal)}</span>
+        <span style="font-size:20px;font-weight:800;color:#2563eb">${fmt(locadosLoc)}</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0 2px">
         <div style="flex:1">
