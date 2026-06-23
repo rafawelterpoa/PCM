@@ -15660,10 +15660,14 @@ function opRenderKpis(opsFiltradas){
   const el=document.getElementById('op-kpis');if(!el)return;
   const ops=opsFiltradas||OPERACOES_DATA.map(o=>({...o,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
   const totalOps=ops.length;
-  // Em campo: usa EQUIPAMENTOS_ORIG (todos os locados) filtrado por tipo — fonte de verdade = CSV
-  const todosLocados=(EQUIPAMENTOS_ORIG||[]).filter(e=>e.status==='Alugado');
-  const locadosFiltrados=_opTipoFiltro?todosLocados.filter(e=>frotaClassificar(e.tipo)===_opTipoFiltro):todosLocados;
-  const totalEquips=locadosFiltrados.length||ops.reduce((s,o)=>s+o.equips.length,0);
+  // Em campo: usa _csvStats como fonte de verdade (igual ao card home) — cobre 100% do CSV
+  const _cs=window._csvStats||{};
+  const _csTotal=(_cs.locadosEq||0)+(_cs.locadosImp||0)+(_cs.locadosAc||0);
+  let totalEquips;
+  if(_opTipoFiltro==='equipamento') totalEquips=_cs.locadosEq||0;
+  else if(_opTipoFiltro==='implemento') totalEquips=_cs.locadosImp||0;
+  else if(_opTipoFiltro==='acessorio') totalEquips=_cs.locadosAc||0;
+  else totalEquips=_csTotal||ops.reduce((s,o)=>s+o.equips.length,0);
   const estados=[...new Set(ops.map(o=>o.estado).filter(Boolean))].length;
   const tipoLabel=_opTipoFiltro?({equipamento:'Equipamentos',implemento:'Implementos',acessorio:'Acessórios'}[_opTipoFiltro]):'unidades locadas';
   el.innerHTML=[
