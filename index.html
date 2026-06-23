@@ -938,7 +938,8 @@ input.filter-sel{padding:5px 8px;height:34px}
         <button onclick="opSetTipo('acessorio')"   data-tipo="acessorio"   style="padding:7px 18px;border-radius:20px;border:2px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:700;cursor:pointer">Acessórios</button>
       </div>
       <div style="flex:1;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
-        <input id="op-busca" type="text" placeholder="🔍 Buscar operação ou cliente..." style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:20px;font-size:12px;width:240px;outline:none;box-sizing:border-box" oninput="opRender()">
+        <input id="op-busca-id" type="text" placeholder="🔍 Buscar por ID..." style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:20px;font-size:12px;width:160px;outline:none;box-sizing:border-box" oninput="opRender()">
+        <input id="op-busca" type="text" placeholder="🔍 Operação ou cliente..." style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:20px;font-size:12px;width:200px;outline:none;box-sizing:border-box" oninput="opRender()">
         <select id="op-filtro-estado" onchange="opRender()" style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:20px;font-size:12px;background:#fff;color:#475569">
           <option value="">Estado — Todos</option>
         </select>
@@ -948,10 +949,16 @@ input.filter-sel{padding:5px 8px;height:34px}
       </div>
     </div>
 
-    <!-- Gráfico Top Famílias -->
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.04);margin-bottom:20px">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:16px">Top Famílias</div>
-      <div id="op-chart"></div>
+    <!-- Gráficos lado a lado -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:16px">Top Famílias</div>
+        <div id="op-chart"></div>
+      </div>
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:16px">Top Clientes por Qtd. Equipamentos</div>
+        <div id="op-chart-clientes"></div>
+      </div>
     </div>
 
     <!-- Lista de operações -->
@@ -15668,28 +15675,62 @@ function opRenderKpis(opsFiltradas){
   </div>`).join('');
 }
 function opRenderChart(ops){
-  const el=document.getElementById('op-chart');if(!el)return;
-  const fams={};
-  (ops||OPERACOES_DATA).forEach(o=>o.equips.forEach(e=>{if(e.familia)fams[e.familia]=(fams[e.familia]||0)+1;}));
-  const sorted=Object.entries(fams).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  if(!sorted.length){el.innerHTML='<div style="text-align:center;color:#94a3b8;padding:20px;font-size:12px">Nenhum dado para exibir</div>';return;}
-  const max=sorted[0][1];
-  const palette=['#F37021','#fb923c','#fdba74','#fcd34d','#6ee7b7','#93c5fd','#c4b5fd','#f9a8d4'];
-  el.innerHTML=sorted.map(([fam,count],i)=>{
-    const pct=Math.round((count/max)*100);
-    return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-      <div style="width:150px;font-size:11px;color:#475569;text-align:right;flex-shrink:0;line-height:1.3">${fam}</div>
-      <div style="flex:1;background:#f1f5f9;border-radius:6px;height:22px;overflow:hidden">
-        <div style="width:${pct}%;background:${palette[i]||'#F37021'};height:100%;border-radius:6px;transition:width .4s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:6px">
-        </div>
-      </div>
-      <div style="width:36px;font-size:12px;font-weight:800;color:#1e293b;text-align:right">${count}</div>
-    </div>`;
-  }).join('');
+  const src=ops||OPERACOES_DATA;
+
+  // ── Gráfico 1: Top Famílias — barras VERTICAIS ────────────────────────────
+  const el=document.getElementById('op-chart');
+  if(el){
+    const fams={};
+    src.forEach(o=>o.equips.forEach(e=>{if(e.familia)fams[e.familia]=(fams[e.familia]||0)+1;}));
+    const sorted=Object.entries(fams).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    if(!sorted.length){el.innerHTML='<div style="text-align:center;color:#94a3b8;padding:20px;font-size:12px">Sem dados</div>';}
+    else{
+      const max=sorted[0][1];
+      const pal=['#F37021','#fb923c','#fdba74','#fcd34d','#6ee7b7','#93c5fd','#c4b5fd','#f9a8d4'];
+      el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:8px;height:160px;padding-bottom:4px">
+        ${sorted.map(([fam,n],i)=>{
+          const h=Math.max(16,Math.round((n/max)*140));
+          const short=fam.length>14?fam.slice(0,13)+'…':fam;
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="font-size:11px;font-weight:800;color:#1e293b">${n}</div>
+            <div style="width:100%;height:${h}px;background:${pal[i]||'#F37021'};border-radius:6px 6px 0 0;transition:height .4s ease"></div>
+            <div style="font-size:9px;color:#64748b;text-align:center;line-height:1.2;word-break:break-word;max-width:60px">${short}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+  }
+
+  // ── Gráfico 2: Top Clientes — barras HORIZONTAIS ──────────────────────────
+  const el2=document.getElementById('op-chart-clientes');
+  if(el2){
+    const clientes={};
+    src.forEach(o=>{
+      const key=o.cliente&&o.cliente!==o.nome?o.cliente:o.nome;
+      clientes[key]=(clientes[key]||0)+o.equips.length;
+    });
+    const sorted2=Object.entries(clientes).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    if(!sorted2.length){el2.innerHTML='<div style="text-align:center;color:#94a3b8;padding:20px;font-size:12px">Sem dados</div>';}
+    else{
+      const max2=sorted2[0][1];
+      el2.innerHTML=sorted2.map(([cli,n],i)=>{
+        const pct=Math.round((n/max2)*100);
+        const short=cli.length>28?cli.slice(0,27)+'…':cli;
+        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="width:140px;font-size:10px;color:#475569;text-align:right;flex-shrink:0;line-height:1.3">${short}</div>
+          <div style="flex:1;background:#f1f5f9;border-radius:4px;height:18px;overflow:hidden">
+            <div style="width:${pct}%;background:#2563eb;height:100%;border-radius:4px;transition:width .4s ease"></div>
+          </div>
+          <div style="width:30px;font-size:11px;font-weight:800;color:#1e293b;text-align:right">${n}</div>
+        </div>`;
+      }).join('');
+    }
+  }
 }
 
 function opRender(){
   const busca=(document.getElementById('op-busca')?.value||'').toLowerCase();
+  const buscaId=(document.getElementById('op-busca-id')?.value||'').toLowerCase().trim();
   const filtEstado=document.getElementById('op-filtro-estado')?.value||'';
   const filtFam=document.getElementById('op-filtro-familia')?.value||'';
   const detalhe=document.getElementById('op-detalhe');
@@ -15701,7 +15742,8 @@ function opRender(){
   let ops=OPERACOES_DATA.map(o=>({...o,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
   if(filtEstado)ops=ops.filter(o=>o.estado===filtEstado);
   if(filtFam)ops=ops.filter(o=>o.equips.some(e=>e.familia===filtFam));
-  if(busca)ops=ops.filter(o=>o.nome.toLowerCase().includes(busca)||o.cliente.toLowerCase().includes(busca)||(o.municipio||'').toLowerCase().includes(busca)||o.equips.some(e=>(e.id||'').toLowerCase().includes(busca)||(e.modelo||'').toLowerCase().includes(busca)||(e.familia||'').toLowerCase().includes(busca)));
+  if(buscaId)ops=ops.map(o=>({...o,equips:o.equips.filter(e=>(e.id||'').toLowerCase().includes(buscaId))})).filter(o=>o.equips.length>0);
+  if(busca)ops=ops.filter(o=>o.nome.toLowerCase().includes(busca)||o.cliente.toLowerCase().includes(busca)||(o.municipio||'').toLowerCase().includes(busca)||o.equips.some(e=>(e.modelo||'').toLowerCase().includes(busca)||(e.familia||'').toLowerCase().includes(busca)));
 
   opRenderKpis(ops);
   opRenderChart(ops);
