@@ -929,32 +929,29 @@ input.filter-sel{padding:5px 8px;height:34px}
     <!-- KPIs (3 cards) -->
     <div id="op-kpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px"></div>
 
-    <!-- Gráfico + Filtros lado a lado -->
-    <div style="display:grid;grid-template-columns:1fr 300px;gap:16px;margin-bottom:20px;align-items:start">
-
-      <!-- Gráfico de barras Top Famílias -->
-      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:16px">Top Famílias de Equipamentos</div>
-        <div id="op-chart"></div>
+    <!-- Barra de filtros de tipo -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <div id="op-filtro-tipo-wrap" style="display:flex;gap:6px;flex-wrap:wrap">
+        <button onclick="opSetTipo('')"            data-tipo=""           style="padding:7px 18px;border-radius:20px;border:2px solid #2563eb;background:#eff6ff;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer">Tudo</button>
+        <button onclick="opSetTipo('equipamento')" data-tipo="equipamento" style="padding:7px 18px;border-radius:20px;border:2px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:700;cursor:pointer">Equipamentos</button>
+        <button onclick="opSetTipo('implemento')"  data-tipo="implemento"  style="padding:7px 18px;border-radius:20px;border:2px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:700;cursor:pointer">Implementos</button>
+        <button onclick="opSetTipo('acessorio')"   data-tipo="acessorio"   style="padding:7px 18px;border-radius:20px;border:2px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:700;cursor:pointer">Acessórios</button>
       </div>
-
-      <!-- Filtros -->
-      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:14px">Filtros</div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <input id="op-busca" type="text" placeholder="Buscar operação ou cliente..." style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;width:100%;box-sizing:border-box;outline:none" oninput="opRender()">
-          <select id="op-filtro-estado" onchange="opRender()" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;width:100%;background:#fff">
-            <option value="">Estado — Todos</option>
-          </select>
-          <select id="op-filtro-familia" onchange="opRender()" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;width:100%;background:#fff">
-            <option value="">Família — Todas</option>
-          </select>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-top:2px">Tipo</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px" id="op-filtro-tipo-wrap">
-            ${[['','Tudo'],['equipamento','Equipamentos'],['implemento','Implementos'],['acessorio','Acessórios']].map(([v,l])=>`<button onclick="opSetTipo('${v}')" data-tipo="${v}" style="padding:5px 11px;border-radius:20px;border:1px solid ${v===''?'#2563eb':'#e2e8f0'};background:${v===''?'#eff6ff':'#fff'};color:${v===''?'#2563eb':'#64748b'};font-size:11px;font-weight:600;cursor:pointer">${l}</button>`).join('')}
-          </div>
-        </div>
+      <div style="flex:1;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+        <input id="op-busca" type="text" placeholder="🔍 Buscar operação ou cliente..." style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:20px;font-size:12px;width:240px;outline:none;box-sizing:border-box" oninput="opRender()">
+        <select id="op-filtro-estado" onchange="opRender()" style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:20px;font-size:12px;background:#fff;color:#475569">
+          <option value="">Estado — Todos</option>
+        </select>
+        <select id="op-filtro-familia" onchange="opRender()" style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:20px;font-size:12px;background:#fff;color:#475569">
+          <option value="">Família — Todas</option>
+        </select>
       </div>
+    </div>
+
+    <!-- Gráfico Top Famílias -->
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.04);margin-bottom:20px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:16px">Top Famílias</div>
+      <div id="op-chart"></div>
     </div>
 
     <!-- Lista de operações -->
