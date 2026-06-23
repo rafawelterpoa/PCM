@@ -3068,7 +3068,8 @@ function init(){
   if(saved){
     const origIds=new Set(EQUIPAMENTOS_ORIG.map(e=>e.id));
     Object.values(saved).forEach(sv=>{
-      if(sv&&sv.id&&sv.equipamento&&!origIds.has(sv.id)&&!sv.baixado){
+      const _corrV=(sv.equipamento||'').toLowerCase().trim();
+      if(sv&&sv.id&&sv.equipamento&&!['sim','não','nao','yes','no'].includes(_corrV)&&!origIds.has(sv.id)&&!sv.baixado){
         state[sv.id]=sv;
       }
     });
