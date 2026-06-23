@@ -1965,6 +1965,8 @@ async function loadFromFirebase(){
     if(rem&&Object.keys(rem).length>0){
       Object.entries(rem).forEach(([id,d])=>{
         if(!d||!d.equipamento)return;
+        const _eq=(d.equipamento||'').toLowerCase().trim();
+        if(['sim','não','nao','yes','no'].includes(_eq))return;
         if(state[id]){
           // Firebase é sempre fonte de verdade no carregamento inicial
           const _orig=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
