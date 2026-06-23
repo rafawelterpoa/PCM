@@ -15645,7 +15645,7 @@ function opSetTipo(v){
     b.style.color = sel ? '#2563eb' : '#64748b';
     b.style.borderColor = sel ? '#2563eb' : '#e2e8f0';
   });
-  opRenderKpis(); opRender();
+  opRender();
 }
 function opTipoEquip(e){
   // Usa EQUIPAMENTOS_ORIG pelo ID como fonte de verdade; fallback para familia
@@ -15658,10 +15658,12 @@ function opEquipsFiltrados(equips){
 }
 function opRenderKpis(opsFiltradas){
   const el=document.getElementById('op-kpis');if(!el)return;
-  // Usa as ops já filtradas (com tipo+busca+estado+familia) se fornecidas, senão aplica só tipo
   const ops=opsFiltradas||OPERACOES_DATA.map(o=>({...o,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
   const totalOps=ops.length;
-  const totalEquips=ops.reduce((s,o)=>s+o.equips.length,0);
+  // Em campo: usa EQUIPAMENTOS_ORIG (todos os locados) filtrado por tipo — fonte de verdade = CSV
+  const todosLocados=(EQUIPAMENTOS_ORIG||[]).filter(e=>e.status==='Alugado');
+  const locadosFiltrados=_opTipoFiltro?todosLocados.filter(e=>frotaClassificar(e.tipo)===_opTipoFiltro):todosLocados;
+  const totalEquips=locadosFiltrados.length||ops.reduce((s,o)=>s+o.equips.length,0);
   const estados=[...new Set(ops.map(o=>o.estado).filter(Boolean))].length;
   const tipoLabel=_opTipoFiltro?({equipamento:'Equipamentos',implemento:'Implementos',acessorio:'Acessórios'}[_opTipoFiltro]):'unidades locadas';
   el.innerHTML=[
@@ -15677,31 +15679,38 @@ function opRenderKpis(opsFiltradas){
 function opRenderChart(ops){
   const src=ops||OPERACOES_DATA;
 
-  // ── Gráfico 1: Top Famílias — barras VERTICAIS ────────────────────────────
+  // ── Gráfico 1: Top Famílias — barras VERTICAIS (fonte: EQUIPAMENTOS_ORIG) ─
   const el=document.getElementById('op-chart');
   if(el){
+    const todosLoc=(EQUIPAMENTOS_ORIG||[]).filter(e=>e.status==='Alugado'&&(!_opTipoFiltro||frotaClassificar(e.tipo)===_opTipoFiltro));
     const fams={};
-    src.forEach(o=>o.equips.forEach(e=>{if(e.familia)fams[e.familia]=(fams[e.familia]||0)+1;}));
+    todosLoc.forEach(e=>{if(e.tipo)fams[e.tipo]=(fams[e.tipo]||0)+1;});
     const sorted=Object.entries(fams).sort((a,b)=>b[1]-a[1]).slice(0,8);
-    if(!sorted.length){el.innerHTML='<div style="text-align:center;color:#94a3b8;padding:20px;font-size:12px">Sem dados</div>';}
+    if(!sorted.length){el.innerHTML='<div style="text-align:center;color:#94a3b8;padding:40px 20px;font-size:12px">Sem dados</div>';}
     else{
       const max=sorted[0][1];
-      const pal=['#F37021','#fb923c','#fdba74','#fcd34d','#6ee7b7','#93c5fd','#c4b5fd','#f9a8d4'];
-      el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:8px;height:160px;padding-bottom:4px">
-        ${sorted.map(([fam,n],i)=>{
-          const h=Math.max(16,Math.round((n/max)*140));
-          const short=fam.length>14?fam.slice(0,13)+'…':fam;
-          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-            <div style="font-size:11px;font-weight:800;color:#1e293b">${n}</div>
-            <div style="width:100%;height:${h}px;background:${pal[i]||'#F37021'};border-radius:6px 6px 0 0;transition:height .4s ease"></div>
-            <div style="font-size:9px;color:#64748b;text-align:center;line-height:1.2;word-break:break-word;max-width:60px">${short}</div>
-          </div>`;
-        }).join('')}
-      </div>`;
+      const pal=['#F37021','#fb923c','#fbbf24','#34d399','#60a5fa','#a78bfa','#f472b6','#94a3b8'];
+      el.innerHTML=`
+        <div style="display:flex;align-items:flex-end;justify-content:space-around;gap:6px;height:180px;border-bottom:2px solid #f1f5f9;margin-bottom:12px;padding:0 4px">
+          ${sorted.map(([fam,n],i)=>{
+            const h=Math.max(20,Math.round((n/max)*160));
+            return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0">
+              <div style="font-size:11px;font-weight:800;color:#1e293b;white-space:nowrap">${n}</div>
+              <div style="width:100%;max-width:52px;height:${h}px;background:${pal[i]};border-radius:6px 6px 0 0;transition:height .5s ease"></div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="display:flex;justify-content:space-around;gap:6px;padding:0 4px">
+          ${sorted.map(([fam],i)=>{
+            const words=fam.split(' ');
+            const label=words.length>2?words.slice(0,2).join(' ')+'…':fam;
+            return `<div style="flex:1;min-width:0;text-align:center;font-size:9px;color:#64748b;line-height:1.3;word-break:break-word">${label}</div>`;
+          }).join('')}
+        </div>`;
     }
   }
 
-  // ── Gráfico 2: Top Clientes — barras HORIZONTAIS ──────────────────────────
+  // ── Gráfico 2: Top Clientes — barras HORIZONTAIS (fonte: OPERACOES_DATA) ──
   const el2=document.getElementById('op-chart-clientes');
   if(el2){
     const clientes={};
@@ -15710,18 +15719,18 @@ function opRenderChart(ops){
       clientes[key]=(clientes[key]||0)+o.equips.length;
     });
     const sorted2=Object.entries(clientes).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    if(!sorted2.length){el2.innerHTML='<div style="text-align:center;color:#94a3b8;padding:20px;font-size:12px">Sem dados</div>';}
+    if(!sorted2.length){el2.innerHTML='<div style="text-align:center;color:#94a3b8;padding:40px 20px;font-size:12px">Sem dados</div>';}
     else{
       const max2=sorted2[0][1];
-      el2.innerHTML=sorted2.map(([cli,n],i)=>{
+      el2.innerHTML=sorted2.map(([cli,n])=>{
         const pct=Math.round((n/max2)*100);
-        const short=cli.length>28?cli.slice(0,27)+'…':cli;
-        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <div style="width:140px;font-size:10px;color:#475569;text-align:right;flex-shrink:0;line-height:1.3">${short}</div>
-          <div style="flex:1;background:#f1f5f9;border-radius:4px;height:18px;overflow:hidden">
-            <div style="width:${pct}%;background:#2563eb;height:100%;border-radius:4px;transition:width .4s ease"></div>
+        const short=cli.length>30?cli.slice(0,29)+'…':cli;
+        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">
+          <div style="width:150px;font-size:10px;font-weight:500;color:#475569;text-align:right;flex-shrink:0;line-height:1.3">${short}</div>
+          <div style="flex:1;background:#f1f5f9;border-radius:6px;height:20px;overflow:hidden">
+            <div style="width:${pct}%;background:linear-gradient(90deg,#2563eb,#60a5fa);height:100%;border-radius:6px;transition:width .5s ease"></div>
           </div>
-          <div style="width:30px;font-size:11px;font-weight:800;color:#1e293b;text-align:right">${n}</div>
+          <div style="width:32px;font-size:11px;font-weight:800;color:#1e293b;text-align:right">${n}</div>
         </div>`;
       }).join('');
     }
