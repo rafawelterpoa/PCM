@@ -95,7 +95,7 @@ body{
   width:40px;height:3px;background:#E8630A;border-radius:2px;margin:14px 0}
 .login-left-sub{font-size:11px;color:rgba(255,255,255,.45);text-align:center;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
 /* left: bottom module icons */
-.login-left-bottom{padding:20px 36px 28px;display:flex;gap:28px;justify-content:center;flex-direction:column;align-items:center}
+.login-left-bottom{padding:20px 32px 28px;display:flex;flex-direction:column;gap:20px;align-items:center}
 .login-mod-icon{
   display:flex;flex-direction:column;align-items:center;gap:6px}
 .login-mod-icon svg{opacity:.7}
@@ -795,17 +795,33 @@ input.filter-sel{padding:5px 10px;height:32px}
       <div class="login-left-sub">Planejamento e Controle de Manutenção</div>
     </div>
     <div class="login-left-bottom">
-      <div class="login-mod-icon">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        <span class="login-mod-label">Gestão Oficinas</span>
+      <div style="display:flex;gap:20px;justify-content:center;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.1);width:100%">
+        <div style="text-align:center">
+          <div style="font-size:20px;font-weight:800;color:#E8630A;line-height:1">2.000</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.45);margin-top:3px;text-transform:uppercase;letter-spacing:.5px">ativos em campo</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:20px;font-weight:800;color:#E8630A;line-height:1">+170</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.45);margin-top:3px;text-transform:uppercase;letter-spacing:.5px">clientes atendidos</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:20px;font-weight:800;color:#E8630A;line-height:1">16</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.45);margin-top:3px;text-transform:uppercase;letter-spacing:.5px">estados</div>
+        </div>
       </div>
-      <div class="login-mod-icon">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
-        <span class="login-mod-label">Contratos</span>
-      </div>
-      <div class="login-mod-icon">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M1 3h22v5H1zM1 10h22v5H1zM1 17h22v5H1z"/></svg>
-        <span class="login-mod-label">Frota</span>
+      <div style="display:flex;gap:28px;justify-content:center">
+        <div class="login-mod-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          <span class="login-mod-label">Gestão Oficinas</span>
+        </div>
+        <div class="login-mod-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+          <span class="login-mod-label">Contratos</span>
+        </div>
+        <div class="login-mod-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4"><path d="M2 17h2M4 17v-3l2-2h4l2 3h2l1-1h1l1 2v1H2z"/><path d="M6 17v1a1 1 0 002 0v-1M14 17v1a1 1 0 002 0v-1"/><path d="M4 14h8M8 12V9M6 9h4"/><rect x="16" y="10" width="4" height="4" rx=".5"/></svg>
+          <span class="login-mod-label">Frota</span>
+        </div>
       </div>
     </div>
   </div>
@@ -821,7 +837,6 @@ input.filter-sel{padding:5px 10px;height:32px}
       <div class="login-field">
         <label>Senha</label>
         <input class="login-input" type="password" id="login-pass" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
       </div>
       <div class="login-links">
         <button onclick="abrirPrimeiroAcesso()" class="login-link">Primeiro acesso</button>
