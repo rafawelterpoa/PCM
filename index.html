@@ -13946,6 +13946,7 @@ function mtAutoFillFamilia(){
 function mtSalvar(){
   const equipId=(document.getElementById('mt-equip-id')?.value||'').trim().toUpperCase();
   if(!equipId)return alert('Informe o ID do equipamento.');
+  if(equipId.length!==8)return alert('O ID do equipamento deve ter exatamente 8 caracteres (ex: MCP04741).');
   const tipo=document.getElementById('mt-tipo')?.value||'';
   if(!tipo)return alert('Selecione o tipo de manutenção.');
   const obj={
@@ -14097,7 +14098,7 @@ function mtRender(){
     <td style="padding:10px 12px;font-family:monospace;font-size:11px;color:#5A7280">${r.rc||'—'}</td>
     <td style="padding:10px 12px;font-family:monospace;font-size:11px;color:#5A7280">${r.pc||'—'}</td>
     <td style="padding:10px 12px;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1A2E35" title="${r.descricao||''}">${r.descricao||'—'}</td>
-    <td style="padding:10px 12px;text-align:right;font-weight:700;color:#B91C1C;font-size:12px">${r.valor?'R$ '+r.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'}</td>
+    <td style="padding:10px 12px;text-align:right;font-weight:700;color:#B91C1C;font-size:12px;white-space:nowrap">${r.valor?'R$ '+r.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'}</td>
     <td style="padding:10px 12px;font-size:11px;color:#8FA4AE">${r.dataRegistro||'—'}</td>
     <td style="padding:10px 12px;text-align:right;white-space:nowrap">
       ${!abaHist?`<button onclick="mtConcluir('${r.id}')" style="padding:4px 10px;background:#E8F5EE;color:#1E8A4C;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin-right:4px">✓ Concluir</button>`:`<span style="font-size:11px;color:#8FA4AE;margin-right:8px">${r.dataConclusao||''}</span>`}
@@ -16586,8 +16587,8 @@ if ('serviceWorker' in navigator) {
 </div>
 
 <!-- MANUTENÇÃO DE TERCEIROS -->
-<div id="page-manuterceiros" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#F4F6F8;z-index:100">
-  <div style="padding:24px 28px;max-width:1400px">
+<div id="page-manuterceiros" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow:auto;background:#F4F6F8;z-index:100">
+  <div style="padding:24px 28px;min-width:1200px">
 
     <!-- FORMULÁRIO -->
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
@@ -16597,7 +16598,7 @@ if ('serviceWorker' in navigator) {
       </div>
       <!-- Linha 1 -->
       <div class="gi-form-row" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:10px">
-        <div><label class="gi-label">ID Equipamento</label><input class="gi-input" id="mt-equip-id" placeholder="Ex: MCP04741" oninput="mtAutoFillFamilia()"></div>
+        <div><label class="gi-label">ID Equipamento</label><input class="gi-input" id="mt-equip-id" placeholder="Ex: MCP04741" maxlength="8" oninput="this.value=this.value.toUpperCase();mtAutoFillFamilia()"></div>
         <div><label class="gi-label">Família</label><input class="gi-input" id="mt-familia" placeholder="Auto-preenchido" readonly style="background:#f8fafc"></div>
         <div><label class="gi-label">Tipo de Manutenção</label>
           <select class="gi-select" id="mt-tipo">
@@ -16653,7 +16654,7 @@ if ('serviceWorker' in navigator) {
     </div>
 
     <!-- Tabela -->
-    <div id="mt-tabela" style="overflow-x:auto"></div>
+    <div id="mt-tabela"></div>
   </div>
 </div>
 
