@@ -1171,155 +1171,160 @@ input.filter-sel{padding:5px 10px;height:32px}
   <div class="areas-grid-7">
 
     <!-- OFICINA -->
-    <div class="area-card-new" style="border-top:3px solid #F37021;cursor:default">
-      <div class="area-card-header" onclick="navegarPara('oficinas')" style="cursor:pointer">
-        <div class="ac-icon">🔧</div>
-        <div class="ac-title">Oficina</div>
-        <div class="ac-desc">Kanban de manutenção por oficina</div>
-        <div class="ac-kpi" id="home-kpi-oficina" style="color:#F37021">—</div>
-        <span class="ac-badge" style="background:#fff3e6;color:#F37021" id="home-badge-oficina">em processo</span>
+    <div class="area-card-new" style="border-top:3px solid #E8630A;cursor:default">
+      <div onclick="navegarPara('oficinas')" style="cursor:pointer;display:flex;flex-direction:column;gap:8px;flex:1">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:32px;height:32px;border-radius:8px;background:#FDE8D8;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🔧</div>
+          <div><div class="ac-title">Oficina</div><div class="ac-desc">Kanban de manutenção</div></div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <div id="home-kpi-oficina" style="font-size:28px;font-weight:700;color:#E8630A;line-height:1">—</div>
+          <div style="font-size:12px;color:#8FA4AE">em processo</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Recepção</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-of-bar-recep" style="height:100%;background:#E8630A;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-of-recep" style="font-weight:600;color:#1A2E35;width:24px;text-align:right;flex-shrink:0">—</span></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Manutenção</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-of-bar-manut" style="height:100%;background:#E8630A;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-of-manut" style="font-weight:600;color:#1A2E35;width:24px;text-align:right;flex-shrink:0">—</span></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Prontos</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-of-bar-pronto" style="height:100%;background:#1D9E75;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-of-pronto" style="font-weight:600;color:#1D9E75;width:24px;text-align:right;flex-shrink:0">—</span></div>
+        </div>
       </div>
-      <div class="area-card-preview">
-        <div class="mini-kanban" onclick="navegarPara('oficinas')" style="cursor:pointer">
-          <div class="mini-kcol"><div class="mini-kcol-hd">Rec.</div><div class="mini-card orange"></div><div class="mini-card orange"></div><div class="mini-card"></div></div>
-          <div class="mini-kcol"><div class="mini-kcol-hd">Diag.</div><div class="mini-card orange"></div><div class="mini-card"></div></div>
-          <div class="mini-kcol"><div class="mini-kcol-hd">Exec.</div><div class="mini-card orange"></div><div class="mini-card orange"></div><div class="mini-card orange"></div></div>
-          <div class="mini-kcol"><div class="mini-kcol-hd">Pront.</div><div class="mini-card green"></div><div class="mini-card green"></div></div>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid #f1f0ee">
-          <button onclick="event.stopPropagation();navegarPara('manuterceiros')" style="flex:1;background:#faf5ff;border:1px solid #e9d5ff;border-radius:6px;padding:5px 6px;font-size:10px;font-weight:600;color:#7c3aed;cursor:pointer;text-align:center">🏭 Manut. Terceiros</button>
-          <button onclick="event.stopPropagation();navegarPara('valepecas')" style="flex:1;background:#fff5f5;border:1px solid #fecaca;border-radius:6px;padding:5px 6px;font-size:10px;font-weight:600;color:#dc2626;cursor:pointer;text-align:center">🔩 Vale Peças</button>
-        </div>
+      <div style="display:flex;gap:6px;padding-top:10px;border-top:1px solid #F4F6F8">
+        <button onclick="event.stopPropagation();navegarPara('manuterceiros')" style="flex:1;background:#faf5ff;border:1px solid #e9d5ff;border-radius:6px;padding:5px 6px;font-size:10px;font-weight:600;color:#7c3aed;cursor:pointer;text-align:center">🏭 Manut. Terceiros</button>
+        <button onclick="event.stopPropagation();navegarPara('valepecas')" style="flex:1;background:#fff5f5;border:1px solid #fecaca;border-radius:6px;padding:5px 6px;font-size:10px;font-weight:600;color:#dc2626;cursor:pointer;text-align:center">🔩 Vale Peças</button>
       </div>
     </div>
 
     <!-- PROGRAMAÇÃO -->
     <div class="area-card-new" onclick="switchTab('programacao')" style="border-top:3px solid #7c3aed">
-      <div class="area-card-header">
-        <div class="ac-icon">📅</div>
-        <div class="ac-title">Programação de Oficinas</div>
-        <div class="ac-desc">Visão semanal com data de liberação</div>
-        <div class="ac-kpi" id="home-kpi-prog" style="color:#7c3aed">—</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">📅</div>
+        <div><div class="ac-title">Programação</div><div class="ac-desc">Semana atual — <span id="home-prog-semana" style="color:#7c3aed;font-weight:600">S—</span></div></div>
       </div>
-      <div class="area-card-preview">
-        <div class="mini-cal">
-          <div class="mini-cal-grid">
-            <div class="mini-cal-day">S</div><div class="mini-cal-day">T</div><div class="mini-cal-day">Q</div><div class="mini-cal-day">Q</div><div class="mini-cal-day">S</div><div class="mini-cal-day">S</div><div class="mini-cal-day">D</div>
-            <div class="mini-cal-day has"></div><div class="mini-cal-day has"></div><div class="mini-cal-day today"></div><div class="mini-cal-day has"></div><div class="mini-cal-day"></div><div class="mini-cal-day has"></div><div class="mini-cal-day"></div>
-            <div class="mini-cal-day"></div><div class="mini-cal-day has"></div><div class="mini-cal-day has"></div><div class="mini-cal-day"></div><div class="mini-cal-day has"></div><div class="mini-cal-day"></div><div class="mini-cal-day"></div>
-          </div>
-        </div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <div id="home-kpi-prog" style="font-size:28px;font-weight:700;color:#7c3aed;line-height:1">—</div>
+        <div style="font-size:12px;color:#8FA4AE">programados</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Concluídos</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-conc" style="height:100%;background:#1D9E75;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-conc" style="font-weight:600;color:#1D9E75;width:24px;text-align:right;flex-shrink:0">—</span></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Atrasados</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-atras" style="height:100%;background:#B91C1C;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-atras" style="font-weight:600;color:#B91C1C;width:24px;text-align:right;flex-shrink:0">—</span></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Reservados</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-res" style="height:100%;background:#7c3aed;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-res" style="font-weight:600;color:#7c3aed;width:24px;text-align:right;flex-shrink:0">—</span></div>
       </div>
     </div>
 
     <!-- PÁTIO -->
-    <div class="area-card-new" onclick="navegarPara('patio')" style="border-top:3px solid #16a34a">
-      <div class="area-card-header">
-        <div class="ac-icon">🏠</div>
-        <div class="ac-title">Gestão de Pátios</div>
-        <div class="ac-desc">Equipamentos prontos para locação ou venda</div>
-        <div class="ac-kpi" id="home-kpi-patio" style="color:#16a34a">—</div>
+    <div class="area-card-new" onclick="navegarPara('patio')" style="border-top:3px solid #1D9E75">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:#E1F5EE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🏠</div>
+        <div><div class="ac-title">Gestão de Pátios</div><div class="ac-desc">Prontos para locação ou venda</div></div>
       </div>
-      <div class="area-card-preview">
-        <div class="mini-map">
-          <div class="mini-map-row">
-            <div class="mini-map-slot ocupado">A1</div><div class="mini-map-slot ocupado">A2</div><div class="mini-map-slot">A3</div><div class="mini-map-slot ocupado">A4</div>
-          </div>
-          <div class="mini-map-row">
-            <div class="mini-map-slot">B1</div><div class="mini-map-slot ocupado">B2</div><div class="mini-map-slot ocupado">B3</div><div class="mini-map-slot vazio">B4</div>
-          </div>
-          <div class="mini-map-row">
-            <div class="mini-map-slot ocupado">C1</div><div class="mini-map-slot">C2</div><div class="mini-map-slot">C3</div><div class="mini-map-slot ocupado">C4</div>
-          </div>
-        </div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <div id="home-kpi-patio" style="font-size:28px;font-weight:700;color:#1D9E75;line-height:1">—</div>
+        <div style="font-size:12px;color:#8FA4AE">prontos</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Locação</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-pat-bar-loc" style="height:100%;background:#2563eb;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-pat-loc" style="font-weight:600;color:#2563eb;width:24px;text-align:right;flex-shrink:0">—</span></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Venda</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-pat-bar-venda" style="height:100%;background:#1D9E75;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-pat-venda" style="font-weight:600;color:#1D9E75;width:24px;text-align:right;flex-shrink:0">—</span></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Sem classif.</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-pat-bar-sem" style="height:100%;background:#94a3b8;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-pat-sem" style="font-weight:600;color:#94a3b8;width:24px;text-align:right;flex-shrink:0">—</span></div>
       </div>
     </div>
 
     <!-- OPERAÇÕES -->
     <div class="area-card-new" onclick="navegarPara('operacoes')" style="border-top:3px solid #2563eb">
-      <div class="area-card-header">
-        <div class="ac-icon">⚡</div>
-        <div class="ac-title">Operações</div>
-        <div class="ac-desc">Equipamentos em campo — plantas e obras</div>
-        <div class="ac-kpi" id="home-kpi-operacoes" style="color:#2563eb">—</div>
-        <span class="ac-badge" style="background:#eff6ff;color:#2563eb">em operação</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">⚡</div>
+        <div><div class="ac-title">Operações</div><div class="ac-desc">Equipamentos em campo</div></div>
       </div>
-      <div class="area-card-preview">
-        <div id="home-op-breakdown" style="display:flex;flex-direction:column;gap:4px;font-size:11px">
-          <div style="display:flex;justify-content:space-between;color:#64748b"><span>Equipamentos</span><span id="home-op-eq" style="font-weight:700;color:#1e293b">—</span></div>
-          <div style="display:flex;justify-content:space-between;color:#64748b"><span>Implementos</span><span id="home-op-imp" style="font-weight:700;color:#1e293b">—</span></div>
-          <div style="display:flex;justify-content:space-between;color:#64748b"><span>Acessórios</span><span id="home-op-ac" style="font-weight:700;color:#1e293b">—</span></div>
-        </div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <div id="home-kpi-operacoes" style="font-size:28px;font-weight:700;color:#2563eb;line-height:1">—</div>
+        <div style="font-size:12px;color:#8FA4AE">em operação</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Equipamentos</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-op-bar-eq" style="height:100%;background:#2563eb;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-op-eq" style="font-weight:600;color:#2563eb;width:36px;text-align:right;flex-shrink:0">—</span></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Implementos</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-op-bar-imp" style="height:100%;background:#7c3aed;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-op-imp" style="font-weight:600;color:#7c3aed;width:36px;text-align:right;flex-shrink:0">—</span></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Acessórios</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-op-bar-ac" style="height:100%;background:#94a3b8;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-op-ac" style="font-weight:600;color:#94a3b8;width:36px;text-align:right;flex-shrink:0">—</span></div>
       </div>
     </div>
 
     <!-- GESTÃO INTEGRADA -->
     <div class="area-card-new" onclick="abrirTodo()" style="border-top:3px solid #0f766e">
-      <div class="area-card-header">
-        <div class="ac-icon">✅</div>
-        <div class="ac-title">Gestão Integrada</div>
-        <div class="ac-desc">TO-DO, KPIs, reuniões e indicadores</div>
-        <div class="ac-kpi" id="home-kpi-gi" style="color:#0f766e">—</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:#CCFBF1;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">✅</div>
+        <div><div class="ac-title">Gestão Integrada</div><div class="ac-desc">TO-DO, KPIs e reuniões</div></div>
       </div>
-      <div class="area-card-preview">
-        <div class="mini-todo">
-          <div class="mini-todo-item"><div class="mini-todo-check done"></div><span class="mini-todo-text">Reunião semanal realizada</span></div>
-          <div class="mini-todo-item"><div class="mini-todo-check done"></div><span class="mini-todo-text">KPIs atualizados</span></div>
-          <div class="mini-todo-item"><div class="mini-todo-check pending"></div><span class="mini-todo-text">Relatório mensal pendente</span></div>
-          <div class="mini-todo-item"><div class="mini-todo-check pending"></div><span class="mini-todo-text">Alinhamento com operações</span></div>
-        </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div class="mini-todo-item"><div class="mini-todo-check done"></div><span class="mini-todo-text">Reunião semanal realizada</span></div>
+        <div class="mini-todo-item"><div class="mini-todo-check done"></div><span class="mini-todo-text">KPIs atualizados</span></div>
+        <div class="mini-todo-item"><div class="mini-todo-check pending"></div><span class="mini-todo-text">Relatório mensal pendente</span></div>
+        <div class="mini-todo-item"><div class="mini-todo-check pending"></div><span class="mini-todo-text">Alinhamento com operações</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:4px;padding-top:8px;border-top:1px solid #F4F6F8">
+        <div style="flex:1;height:5px;background:#F4F6F8;border-radius:3px;overflow:hidden"><div style="width:50%;height:100%;background:#0f766e;border-radius:3px"></div></div>
+        <span style="font-size:11px;font-weight:600;color:#0f766e">2 / 4</span>
       </div>
     </div>
 
     <!-- HISTÓRICO DE ATIVOS -->
     <div class="area-card-new" onclick="abrirHistoricoAtivos()" style="border-top:3px solid #6366f1">
-      <div class="area-card-header">
-        <div class="ac-icon">⏱</div>
-        <div class="ac-title">Histórico de Ativos</div>
-        <div class="ac-desc">Linha do tempo de movimentações</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">⏱</div>
+        <div><div class="ac-title">Histórico de Ativos</div><div class="ac-desc">Linha do tempo de movimentações</div></div>
       </div>
-      <div class="area-card-preview">
-        <div class="mini-timeline">
-          <div class="mini-tl-item"><div class="mini-tl-dot" style="background:#6366f1"></div><div class="mini-tl-bar" style="width:80%"></div></div>
-          <div class="mini-tl-item"><div class="mini-tl-dot" style="background:#6366f1;opacity:.7"></div><div class="mini-tl-bar" style="width:55%;opacity:.7"></div></div>
-          <div class="mini-tl-item"><div class="mini-tl-dot" style="background:#6366f1;opacity:.4"></div><div class="mini-tl-bar" style="width:35%;opacity:.4"></div></div>
-          <div class="mini-tl-item"><div class="mini-tl-dot" style="background:#6366f1;opacity:.2"></div><div class="mini-tl-bar" style="width:20%;opacity:.2"></div></div>
-        </div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <div id="home-hist-total" style="font-size:28px;font-weight:700;color:#6366f1;line-height:1">—</div>
+        <div style="font-size:12px;color:#8FA4AE">ativos monitorados</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Últ. 24h</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-hist-bar-24h" style="height:100%;background:#6366f1;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-hist-24h" style="font-weight:600;color:#6366f1;width:36px;text-align:right;flex-shrink:0">—</span></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Esta semana</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-hist-bar-sem" style="height:100%;background:#6366f1;border-radius:2px;width:60%;transition:width .4s"></div></div><span id="home-hist-semana" style="font-weight:600;color:#6366f1;width:36px;text-align:right;flex-shrink:0">—</span></div>
       </div>
     </div>
 
     <!-- RCD — AVARIAS -->
     <div class="area-card-new" onclick="navegarPara('rcd')" style="border-top:3px solid #b45309">
-      <div class="area-card-header">
-        <div class="ac-icon">⚠️</div>
-        <div class="ac-title">RCD — Avarias</div>
-        <div class="ac-desc">Cobranças de avarias a clientes</div>
-        <div class="ac-kpi" id="home-kpi-rcd" style="color:#b45309">—</div>
-        <span class="ac-badge" style="background:#fef3c7;color:#b45309" id="home-badge-rcd">em aberto</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">⚠️</div>
+        <div><div class="ac-title">RCD — Avarias</div><div class="ac-desc">Cobranças de avarias a clientes</div></div>
       </div>
-      <div class="area-card-preview" style="background:#fffbeb">
-        <div style="display:flex;flex-direction:column;gap:5px;padding:4px 0">
-          <div style="display:flex;justify-content:space-between;font-size:10px;color:#92400e">
-            <span>Desmobilização</span><span id="home-rcd-desm" style="font-weight:700">—</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:10px;color:#92400e">
-            <span>Em operação</span><span id="home-rcd-oper" style="font-weight:700">—</span>
-          </div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:#8FA4AE;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">Triagem</div>
+          <div id="home-rcd-triagem" style="font-size:22px;font-weight:700;color:#b45309;line-height:1">—</div>
+        </div>
+        <div style="width:1px;background:#E2E8ED;align-self:stretch"></div>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:#8FA4AE;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">Desmob.</div>
+          <div id="home-rcd-desmob" style="font-size:22px;font-weight:700;color:#1A2E35;line-height:1">—</div>
+        </div>
+        <div style="width:1px;background:#E2E8ED;align-self:stretch"></div>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:#8FA4AE;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">Contrato</div>
+          <div id="home-rcd-contrato" style="font-size:22px;font-weight:700;color:#1A2E35;line-height:1">—</div>
         </div>
       </div>
     </div>
+
     <!-- GARANTIAS -->
     <div class="area-card-new" onclick="navegarPara('garantias')" style="border-top:3px solid #0891b2">
-      <div class="area-card-header">
-        <div class="ac-icon">🛡️</div>
-        <div class="ac-title">Garantias</div>
-        <div class="ac-desc">Controle de garantias de equipamentos</div>
-        <div class="ac-kpi" id="home-kpi-garantias" style="color:#0891b2">—</div>
-        <span class="ac-badge" style="background:#e0f2fe;color:#0891b2" id="home-badge-garantias">ativas</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:#E0F2FE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🛡️</div>
+        <div><div class="ac-title">Garantias</div><div class="ac-desc">Controle de garantias de equipamentos</div></div>
       </div>
-      <div class="area-card-preview" style="background:#f0f9ff">
-        <div style="font-size:11px;color:#0891b2;font-weight:600;text-align:center;padding:10px">Em desenvolvimento</div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:#8FA4AE;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">Ativas</div>
+          <div id="home-gar-ativas" style="font-size:22px;font-weight:700;color:#0891b2;line-height:1">—</div>
+        </div>
+        <div style="width:1px;background:#E2E8ED;align-self:stretch"></div>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:#8FA4AE;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">A vencer</div>
+          <div id="home-gar-vencer" style="font-size:22px;font-weight:700;color:#B45309;line-height:1">—</div>
+        </div>
+        <div style="width:1px;background:#E2E8ED;align-self:stretch"></div>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:#8FA4AE;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">Vencidas</div>
+          <div id="home-gar-vencidas" style="font-size:22px;font-weight:700;color:#B91C1C;line-height:1">—</div>
+        </div>
       </div>
+      <div style="font-size:11px;color:#0891b2;font-weight:600;text-align:center;padding:4px 0;background:#E0F2FE;border-radius:6px">Em desenvolvimento</div>
     </div>
 
   </div>
@@ -16292,21 +16297,86 @@ function opVerDetalhe(idx){
 // Atualizar cards da home com links corretos
 function rgUpdateHomeKpis(ativos){
   if(!ativos)ativos=Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado');
+  const safe=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  const setBar=(id,n,total)=>{const el=document.getElementById(id);if(el)el.style.width=(total>0?Math.round(n/total*100):0)+'%';};
+
+  // ── Oficina ────────────────────────────────────────────────────────────────
   const emOficina=ativos.filter(e=>e.etapa!=='pronto');
   const emPatio=ativos.filter(e=>e.etapa==='pronto');
-  // Array real do state — usado internamente pelo board
+  const nRecep=emOficina.filter(e=>e.etapa==='chegada').length;
+  const nManut=emOficina.filter(e=>e.etapa!=='chegada').length;
+  const nPront=emPatio.length;
+  safe('home-kpi-oficina',emOficina.length);
+  safe('home-of-recep',nRecep);safe('home-of-manut',nManut);safe('home-of-pronto',nPront);
+  setBar('home-of-bar-recep',nRecep,emOficina.length||1);
+  setBar('home-of-bar-manut',nManut,emOficina.length||1);
+  const totOfPat=emOficina.length+nPront||1;
+  setBar('home-of-bar-pronto',nPront,totOfPat);
+
+  // ── Programação — semana atual ─────────────────────────────────────────────
+  const sa=semanaAtual();
+  const snNum=sa.split('-W')[1];
+  safe('home-prog-semana','S'+snNum);
+  const allProg=Object.values(state).filter(e=>!e.baixado&&e.semana);
+  const progSem=allProg.filter(e=>e.semana===sa);
+  const progConc=progSem.filter(e=>e.etapa==='pronto').length;
+  const progAtras=allProg.filter(e=>e.semana<sa&&e.etapa!=='pronto').length;
+  const progRes=progSem.filter(e=>e.reservado).length;
+  safe('home-kpi-prog',progSem.length);
+  safe('home-prog-conc',progConc);safe('home-prog-atras',progAtras);safe('home-prog-res',progRes);
+  const totProg=progSem.length||1;
+  setBar('home-prog-bar-conc',progConc,totProg);
+  setBar('home-prog-bar-atras',progAtras,Math.max(progAtras,totProg));
+  setBar('home-prog-bar-res',progRes,totProg);
+
+  // ── Pátio ─────────────────────────────────────────────────────────────────
+  safe('home-kpi-patio',emPatio.length);
+  const patLoc=emPatio.filter(e=>{const o=EQUIPAMENTOS_ORIG&&EQUIPAMENTOS_ORIG.find(x=>x.id===e.id);return(o?.frota||e.frota||'').toLowerCase().includes('locacao')||(o?.frota||e.frota||'').toLowerCase().includes('locação');}).length;
+  const patVenda=emPatio.filter(e=>{const o=EQUIPAMENTOS_ORIG&&EQUIPAMENTOS_ORIG.find(x=>x.id===e.id);return(o?.frota||e.frota||'').toLowerCase().includes('venda');}).length;
+  const patSem=emPatio.length-patLoc-patVenda;
+  safe('home-pat-loc',patLoc);safe('home-pat-venda',patVenda);safe('home-pat-sem',Math.max(0,patSem));
+  setBar('home-pat-bar-loc',patLoc,emPatio.length||1);
+  setBar('home-pat-bar-venda',patVenda,emPatio.length||1);
+  setBar('home-pat-bar-sem',Math.max(0,patSem),emPatio.length||1);
+
+  // ── Operações ─────────────────────────────────────────────────────────────
   const emOperacao=Object.values(state).filter(e=>e.etapa==='alugado');
-  // Número exibido = locadosTotal do CSV (fonte de verdade)
   const _cs2=window._csvStats||{};
-  const emOpTotal=_cs2.locadosEq!=null?(_cs2.locadosEq+(_cs2.locadosImp||0)+(_cs2.locadosAc||0)):emOperacao.length;
-  const elOf=document.getElementById('home-kpi-oficina');if(elOf)elOf.innerHTML=`<span style="color:#F37021;font-weight:800;font-size:16px">${emOficina.length}</span> em processo`;
-  const elPat=document.getElementById('home-kpi-patio');if(elPat)elPat.innerHTML=`<span style="color:#16a34a;font-weight:800;font-size:16px">${emPatio.length}</span> prontos`;
-  const elOp=document.getElementById('home-kpi-operacoes');if(elOp)elOp.innerHTML=`<span style="color:#2563eb;font-weight:800;font-size:16px">${emOpTotal}</span> em operação`;
-  // Breakdown Eq / Imp / Ac
-  const _fmt=n=>n!=null?n.toLocaleString('pt-BR'):'—';
-  const elEq=document.getElementById('home-op-eq');if(elEq)elEq.textContent=_fmt(_cs2.locadosEq);
-  const elImp=document.getElementById('home-op-imp');if(elImp)elImp.textContent=_fmt(_cs2.locadosImp);
-  const elAc=document.getElementById('home-op-ac');if(elAc)elAc.textContent=_fmt(_cs2.locadosAc);
+  const emOpEq=_cs2.locadosEq!=null?_cs2.locadosEq:emOperacao.length;
+  const emOpImp=_cs2.locadosImp||0;
+  const emOpAc=_cs2.locadosAc||0;
+  const emOpTotal=emOpEq+emOpImp+emOpAc;
+  safe('home-kpi-operacoes',emOpTotal);
+  safe('home-op-eq',emOpEq);safe('home-op-imp',emOpImp);safe('home-op-ac',emOpAc);
+  setBar('home-op-bar-eq',emOpEq,emOpTotal||1);
+  setBar('home-op-bar-imp',emOpImp,emOpTotal||1);
+  setBar('home-op-bar-ac',emOpAc,emOpTotal||1);
+
+  // ── RCD ───────────────────────────────────────────────────────────────────
+  try{
+    const chegadas=Object.values(state).filter(e=>!e.baixado&&e.etapa==='chegada');
+    const idsAtivos=new Set(Object.values(_rcdRegistros||{}).map(r=>r.equip_id+'|'+r.chegada_ts));
+    const nTriagem=chegadas.filter(e=>!idsAtivos.has(e.id+'|'+(e.etapa_desde||''))).length;
+    const nDesmob=Object.values(_rcdRegistros||{}).filter(r=>['aguardando_inspecao','em_orcamento','aguardando_cliente'].includes(r.status)).length;
+    const nContrato=Object.values(_solRegistros||{}).filter(r=>r.status&&r.status!=='concluido'&&r.status!=='cancelado').length;
+    safe('home-rcd-triagem',nTriagem);safe('home-rcd-desmob',nDesmob);safe('home-rcd-contrato',nContrato);
+  }catch(e2){}
+
+  // ── Histórico de Ativos ───────────────────────────────────────────────────
+  try{
+    const logs=Object.values(window._logsAtivos||{});
+    const agora=Date.now();
+    const h24=agora-86400000;
+    const semTs=agora-604800000;
+    const logs24h=logs.filter(l=>l.ts>h24).length;
+    const logsSem=logs.filter(l=>l.ts>semTs).length;
+    const totalIds=new Set(logs.map(l=>l.id)).size;
+    safe('home-hist-total',totalIds||'—');
+    safe('home-hist-24h',logs24h);safe('home-hist-semana',logsSem);
+    setBar('home-hist-bar-24h',logs24h,logsSem||1);
+    setBar('home-hist-bar-sem',logsSem,Math.max(logsSem,1));
+  }catch(e3){}
+
   rgRenderVisaoGeral(ativos,emOperacao);
 }
 
