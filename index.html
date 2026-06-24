@@ -15935,8 +15935,24 @@ function opRenderKpis(opsFiltradas){
   const el=document.getElementById('op-kpis');if(!el)return;
   const ops=opsFiltradas||OPERACOES_DATA.map(o=>({...o,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
   const totalOps=ops.length;
-  // Em campo: sempre conta direto dos ops já filtrados (consistente com tabela e gráficos)
-  const totalEquips=ops.reduce((s,o)=>s+o.equips.length,0);
+  // Em campo: usa EQUIPAMENTOS_ORIG como fonte de verdade para os totais por tipo
+  const _origAlug=opAlugadosBase();
+  const _cs=window._csvStats||{};
+  const _hasBreakdown=_cs.locadosEq!=null;
+  let totalEquips;
+  if(_opContratoFiltro){
+    // Com filtro de contrato, usa ops filtrados (EQUIPAMENTOS_ORIG não tem tipoContrato)
+    totalEquips=ops.reduce((s,o)=>s+o.equips.length,0);
+  }else if(_opTipoFiltro==='equipamento'){
+    totalEquips=_hasBreakdown?(_cs.locadosEq||0):_origAlug.filter(e=>frotaClassificar(e.tipo)==='equipamento').length;
+  }else if(_opTipoFiltro==='implemento'){
+    totalEquips=_hasBreakdown?(_cs.locadosImp||0):_origAlug.filter(e=>frotaClassificar(e.tipo)==='implemento').length;
+  }else if(_opTipoFiltro==='acessorio'){
+    totalEquips=_hasBreakdown?(_cs.locadosAc||0):_origAlug.filter(e=>frotaClassificar(e.tipo)==='acessorio').length;
+  }else{
+    const total=_hasBreakdown?(_cs.locadosEq+(_cs.locadosImp||0)+(_cs.locadosAc||0)):0;
+    totalEquips=total||_origAlug.length;
+  }
   const estados=[...new Set(ops.map(o=>o.estado).filter(Boolean))].length;
   const tipoLabel=_opTipoFiltro?({equipamento:'Equipamentos',implemento:'Implementos',acessorio:'Acessórios'}[_opTipoFiltro]):'unidades locadas';
   el.innerHTML=[
