@@ -400,15 +400,16 @@ input.filter-sel{padding:5px 8px;height:34px}
 .modal-ov.show{display:flex}
 #modal-card.show{display:block}
 #modal-card.show .modal-card{transform:translateX(0)}
-.modal-card{position:fixed;top:56px;right:0;bottom:0;width:580px;max-width:94vw;background:#fff;border-left:1px solid #E2E8ED;box-shadow:-12px 0 40px rgba(0,0,0,.18);overflow-y:auto;overflow-x:hidden;z-index:401;transform:translateX(100%);transition:transform .26s cubic-bezier(.4,0,.2,1);box-sizing:border-box}
+.modal-card{position:fixed;top:56px;right:0;bottom:0;width:580px;max-width:94vw;background:#fff;border-left:1px solid #E2E8ED;box-shadow:-12px 0 40px rgba(0,0,0,.18);z-index:401;transform:translateX(100%);transition:transform .26s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
 .modal-ov.open .modal-card{transform:translateX(0)}
+.mc-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 24px 24px;display:flex;flex-direction:column;gap:18px;box-sizing:border-box;width:100%}
+.mc-footer{flex-shrink:0;padding:14px 24px;border-top:1px solid #E2E8ED;display:flex;gap:8px;justify-content:flex-end;align-items:center;background:#fff}
 .mc-header{padding:16px 18px 12px;border-bottom:1px solid var(--borda);display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .mc-id{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:2px}
 .mc-equip{font-size:15px;font-weight:700;color:var(--text);line-height:1.25}
 .mc-modelo{font-size:12px;color:var(--text3);margin-top:2px}
 .mc-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;line-height:1;padding:2px}
 .mc-close:hover{color:var(--text)}
-.mc-body{padding:20px 24px 80px;display:flex;flex-direction:column;gap:18px;box-sizing:border-box;width:100%}
 .mc-section{display:flex;flex-direction:column;gap:8px}
 .mc-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#8FA4AE;margin-bottom:4px}
 .mc-field{display:flex;flex-direction:column;gap:5px}
@@ -428,7 +429,6 @@ input.filter-sel{padding:5px 8px;height:34px}
 .etapa-step.current{background:#E8630A;color:#fff;border-color:#E8630A}
 .etapa-step.done{background:#1D9E75;color:#fff;border-color:#1D9E75}
 .mc-etapa-flow{display:flex;flex-wrap:wrap;gap:6px}
-.mc-footer{padding:14px 24px;border-top:1px solid #E2E8ED;display:flex;gap:8px;justify-content:flex-end;align-items:center;position:sticky;bottom:0;background:#fff;z-index:10}
 .mc-info-box{background:#F4F6F8;border-radius:8px;padding:12px 14px;font-size:12px;color:#5A7280;line-height:1.6;border:1px solid #E2E8ED}
 .reserva-btn{flex:1;padding:10px 8px;border-radius:8px;border:1.5px solid #E2E8ED;cursor:pointer;text-align:center;font-size:12px;font-weight:600;color:#8FA4AE;background:#F4F6F8;transition:all .15s;user-select:none}
 .reserva-btn:hover{border-color:#C8D4DA;color:#5A7280}
@@ -1750,7 +1750,7 @@ input.filter-sel{padding:5px 8px;height:34px}
 <!-- MODAIS -->
 <div class="modal-ov" id="modal-card" onclick="if(event.target===this)closeModal('modal-card')">
   <div class="modal-card">
-    <div class="mc-header" style="position:sticky;top:0;background:#fff;z-index:10;border-bottom:1px solid #E2E8ED;padding:16px 20px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+    <div class="mc-header" style="flex-shrink:0;background:#fff;border-bottom:1px solid #E2E8ED;padding:16px 20px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
       <div style="flex:1;min-width:0">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8FA4AE;margin-bottom:4px" id="mc-id"></div>
         <div style="font-size:16px;font-weight:700;color:#1A2E35;line-height:1.2;margin-bottom:3px" id="mc-equip"></div>
