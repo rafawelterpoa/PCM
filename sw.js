@@ -1,4 +1,4 @@
-const CACHE = 'mills-pcm-v4';
+const CACHE = 'mills-pcm-v5';
 const STATIC = ['/PCM/manifest.json'];
 
 self.addEventListener('install', e => {
