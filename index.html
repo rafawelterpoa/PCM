@@ -1333,11 +1333,17 @@ input.filter-sel{padding:5px 10px;height:32px}
 <!-- PROGRAMAÇÃO -->
 <div class="page" id="page-programacao">
 <div class="prog-wrap">
-  <div class="page-hdr">
-    <div class="page-hdr-title"><span style="color:#F37021">📅</span> Programação</div>
-    <div class="page-hdr-sub">Planejamento semanal de liberação por oficina</div>
+  <div style="margin-bottom:20px;background:#fff;border-radius:12px;border:1px solid #E2E8ED;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="width:4px;height:40px;background:#E8630A;border-radius:2px;flex-shrink:0"></div>
+      <div>
+        <div style="font-size:20px;font-weight:700;color:#1A2E35;line-height:1.2">Programação</div>
+        <div style="font-size:12px;color:#8FA4AE;margin-top:3px">Planejamento semanal de liberação por oficina</div>
+      </div>
+    </div>
+    <div id="prog-header-stats" style="display:flex;gap:24px;align-items:center"></div>
   </div>
-  <div class="prog-toolbar" style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+  <div class="prog-toolbar" style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:12px 16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
     <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;flex-shrink:0;align-self:center;margin-right:4px">Filtros</span>
     <select class="filter-sel prog-filter-item" id="prog-oficina-sel" onchange="renderProgramacao()"><option value="">Todas as oficinas</option></select>
     <select class="filter-sel prog-filter-item" id="prog-prio-sel" onchange="renderProgramacao()">
@@ -1356,8 +1362,8 @@ input.filter-sel{padding:5px 10px;height:32px}
     <input type="date" class="filter-sel" id="prog-embarque-ate" onchange="renderProgramacao()" title="Embarque até" style="width:140px;flex-shrink:0">
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('prog-embarque-ate').value='';renderProgramacao()" title="Limpar filtro de embarque" style="flex-shrink:0;white-space:nowrap">✕ Data</button>
   </div>
-  <div class="prog-filter-bar" id="prog-stats-bar" style="display:none">
-    <span id="prog-stats-text" style="font-size:12px;color:var(--text2)"></span>
+  <div id="prog-stats-bar" style="display:none;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+    <span id="prog-stats-text"></span>
   </div>
   <div id="prog-graficos" style="margin-bottom:12px"></div>
   <div class="prog-semanas" id="prog-semanas"></div>
@@ -4573,8 +4579,14 @@ function renderProgramacao(){
   const tot=equips.length,pron=equips.filter(e=>e.etapa==='pronto').length,atr=equips.filter(e=>e.etapa!=='pronto'&&semanaPassada(e.semana)).length,res=equips.filter(e=>e.reservado).length;
   if(tot>0){
     statsBar.style.display='flex';
+    const chip=(val,label,cor,bg)=>`<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;background:${bg};color:${cor}"><span style="font-size:14px;font-weight:800">${val}</span>${label}</span>`;
     document.getElementById('prog-stats-text').innerHTML=
-      `<b>${tot}</b> programados · <b style="color:var(--verde2)">${pron}</b> concluídos · <b style="color:var(--terra)">${atr}</b> atrasados · <b style="color:var(--laranja)">${res}</b> reservados`;
+      chip(tot,'programados','#1A2E35','#F0F4F6')+
+      chip(pron,'concluídos','#1E8A4C','#E8F5EE')+
+      chip(atr,'atrasados','#B91C1C','#FEE2E2')+
+      chip(res,'reservados','#6D28D9','#EDE9FE');
+    const hdrStats=document.getElementById('prog-header-stats');
+    if(hdrStats) hdrStats.innerHTML=`<div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#E8630A">${tot}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Programados</div></div><div style="width:1px;height:32px;background:#E2E8ED"></div><div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#1E8A4C">${pron}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Concluídos</div></div><div style="width:1px;height:32px;background:#E2E8ED"></div><div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#B91C1C">${atr}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Atrasados</div></div>`;
   } else statsBar.style.display='none';
 
   // Gráficos rosca — sempre visíveis se houver dados
