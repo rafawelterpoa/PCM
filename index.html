@@ -16515,7 +16515,7 @@ if ('serviceWorker' in navigator) {
   });
 
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/PCM/sw.js', {updateViaCache: 'none'})
+    navigator.serviceWorker.register('/PCM/sw.js?v=18', {updateViaCache: 'none'})
       .then(reg => {
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;
