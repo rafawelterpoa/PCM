@@ -108,12 +108,17 @@ body{
 .hlogo{height:34px;width:auto;filter:drop-shadow(0 0 6px rgba(243,112,33,.3))}
 .htitle{color:rgba(255,255,255,.9);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase}
 .htitle span{color:rgba(255,255,255,.9)}
+.hcenter{display:flex;align-items:center;gap:16px;position:absolute;left:50%;transform:translateX(-50%)}
+.hdate{color:rgba(255,255,255,.55);font-size:11px;font-weight:500}
+.hsync{display:flex;align-items:center;gap:5px;font-size:10px;color:rgba(255,255,255,.4)}
+.hactions-right{display:flex;align-items:center;gap:10px}
+.huser-block{display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 10px;border-radius:8px;transition:background .15s}
+.huser-block:hover{background:rgba(255,255,255,.07)}
+.huser-name{color:rgba(255,255,255,.85);font-size:12px;font-weight:600;line-height:1}
+.huser-role{color:#E8630A;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;line-height:1}
+.hbtn-sair{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.55);padding:0 12px;height:30px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.hbtn-sair:hover{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)}
 .hactions{display:flex;align-items:center;gap:8px}
-.hactions .btn-outline{background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.25)}
-.hactions .btn-outline:hover{background:rgba(255,255,255,.18);border-color:var(--laranja);color:#fff}
-.hactions .btn-ghost{background:transparent;color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2)}
-.hactions .btn-ghost:hover{color:#fff;border-color:rgba(255,255,255,.5)}
-.hdate{color:rgba(255,255,255,.6);font-size:11px}
 .huser{
   color:var(--verde2);font-size:11px;font-weight:600;
   padding:3px 8px;background:rgba(18,196,126,.12);
@@ -758,28 +763,74 @@ input.filter-sel{padding:5px 8px;height:34px}
 </div>
 
 <!-- HEADER -->
-<header class="header" style="background:#111827">
+<header class="header">
   <div class="hbrand">
     <svg class="hlogo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 34" width="110" height="34"><text x="2" y="27" font-family="Arial Black,Arial,sans-serif" font-size="27" font-weight="900" fill="#F37021" letter-spacing="-1">MILLS</text></svg>
+    <div style="width:1px;height:24px;background:rgba(255,255,255,.15)"></div>
     <div class="htitle">Gestão de <span>Frota Pesada</span></div>
   </div>
-  <div class="hactions-right">
+  <div class="hcenter">
     <span class="hdate" id="header-date"></span>
-    <span id="sync-status" style="font-size:10px;color:#12c47e;margin-right:4px">● Live</span>
-    <div class="header-settings-btn" title="Configurações Sistema" onclick="switchToAdmin()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span class="hsync" id="sync-status">
+      <svg width="7" height="7" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#12c47e"/></svg>
+      Sincronizado
+    </span>
+  </div>
+  <div class="hactions-right">
+    <div class="huser-block" onclick="abrirPainelAdmin()" title="Área administrativa">
+      <div class="header-avatar" id="header-avatar">RW</div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <span class="huser-name" id="header-user-name">Rafael Welter</span>
+        <span class="huser-role" id="header-user-role">PCM</span>
+      </div>
     </div>
-    <div class="header-avatar" id="header-avatar" title="Usuário">RW</div>
-    <span class="huser" id="header-user" style="display:none"></span>
-    <button class="btn btn-outline btn-sm" onclick="navegarPara('home')" title="Início" style="display:none">🏠 Início</button>
-    <button class="btn btn-outline btn-sm" onclick="navegarPara('admin')" id="btn-admin" style="display:none" title="Admin">⚙ Admin</button>
-    <button class="btn btn-outline btn-sm" onclick="exportarBackup()" title="Backup" style="color:#12c47e;border-color:#12c47e">💾</button>
-    <button class="btn btn-outline btn-sm" onclick="document.getElementById('input-restaurar').click()" title="Restaurar" style="color:#7F77DD;border-color:#7F77DD">↩</button>
-    <input type="file" id="input-restaurar" accept=".json" style="display:none" onchange="(function(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>restaurarBackupJSON(ev.target.result);r.readAsText(f);e.target.value='';})(event)">
-    <button class="btn btn-orange btn-sm" onclick="solicitarNovaBase()">Nova base</button>
-    <button class="btn btn-outline btn-sm" onclick="doLogout()">Sair</button>
+    <button class="hbtn-sair" onclick="doLogout()">Sair</button>
   </div>
 </header>
+
+<!-- PAINEL ADMIN (overlay) -->
+<div id="painel-admin-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.45)" onclick="fecharPainelAdmin(event)">
+  <div id="painel-admin" style="position:absolute;top:64px;right:20px;width:320px;background:#fff;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.2);overflow:hidden;border:1px solid #e2e8ed">
+    <!-- Header do painel -->
+    <div style="background:#1A2E35;padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="color:#fff;font-size:14px;font-weight:700">Área Administrativa</div>
+        <div style="color:rgba(255,255,255,.5);font-size:11px;margin-top:2px" id="painel-admin-subinfo">Perfil: —</div>
+      </div>
+      <button onclick="fecharPainelAdmin(null)" style="background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- Conteúdo: master vê botões, outros veem bloqueio -->
+    <div id="painel-admin-master" style="display:none;padding:16px 20px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8fa4ae;margin-bottom:4px">Base de dados</div>
+      <button onclick="exportarBackup();fecharPainelAdmin(null)" style="display:flex;align-items:center;gap:10px;background:#f4f6f8;border:1px solid #e2e8ed;border-radius:8px;padding:11px 14px;cursor:pointer;font-size:13px;font-weight:500;color:#1a2e35;width:100%;text-align:left">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E8A4C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar Backup
+      </button>
+      <button onclick="document.getElementById('input-restaurar').click()" style="display:flex;align-items:center;gap:10px;background:#f4f6f8;border:1px solid #e2e8ed;border-radius:8px;padding:11px 14px;cursor:pointer;font-size:13px;font-weight:500;color:#1a2e35;width:100%;text-align:left">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7F77DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Restaurar Backup
+      </button>
+      <button onclick="solicitarNovaBase();fecharPainelAdmin(null)" style="display:flex;align-items:center;gap:10px;background:#fff7f2;border:1px solid #fcd5b8;border-radius:8px;padding:11px 14px;cursor:pointer;font-size:13px;font-weight:500;color:#c85508;width:100%;text-align:left">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8630A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+        Nova Base
+      </button>
+      <div style="height:1px;background:#e2e8ed;margin:4px 0"></div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8fa4ae;margin-bottom:4px">Sistema</div>
+      <button onclick="navegarPara('admin');fecharPainelAdmin(null)" style="display:flex;align-items:center;gap:10px;background:#f4f6f8;border:1px solid #e2e8ed;border-radius:8px;padding:11px 14px;cursor:pointer;font-size:13px;font-weight:500;color:#1a2e35;width:100%;text-align:left">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A2E35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Configurações
+      </button>
+    </div>
+    <div id="painel-admin-bloqueado" style="display:none;padding:32px 20px;text-align:center">
+      <div style="width:48px;height:48px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div style="font-size:14px;font-weight:700;color:#1a2e35;margin-bottom:6px">Sem acesso</div>
+      <div style="font-size:12px;color:#8fa4ae;line-height:1.5">Esta área é restrita ao perfil <strong>Master</strong>.<br>Entre em contato com o administrador.</div>
+    </div>
+  </div>
+</div>
+<input type="file" id="input-restaurar" accept=".json" style="display:none" onchange="(function(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>restaurarBackupJSON(ev.target.result);r.readAsText(f);e.target.value='';})(event)">
 
 <!-- Notificação boas-vindas -->
 <div id="notif-bem-vindo" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;background:#fff;border:1px solid #bfdbfe;border-left:4px solid #3b82f6;border-radius:10px;padding:12px 18px;font-size:13px;color:#1e293b;box-shadow:0 4px 24px rgba(0,0,0,.12);max-width:520px;width:90%;align-items:center;gap:12px;transition:opacity .4s">
@@ -2232,10 +2283,18 @@ function doLogin(){
   }
   currentUser=user;
   document.getElementById('login-overlay').style.display='none';
-  document.getElementById('header-user').textContent=user.nome+(user.setor?' · '+user.setor:'');
-  // Update avatar initials
+  // Update header user block
   const avatarEl=document.getElementById('header-avatar');
   if(avatarEl){const parts=(user.nome||'RW').split(' ');avatarEl.textContent=parts.length>1?(parts[0][0]+parts[parts.length-1][0]).toUpperCase():parts[0].substring(0,2).toUpperCase();}
+  const nameEl=document.getElementById('header-user-name');
+  if(nameEl)nameEl.textContent=(user.nome||'').split(' ').slice(0,2).join(' ');
+  const roleEl=document.getElementById('header-user-role');
+  if(roleEl)roleEl.textContent=perfilLabel(user.perfil)||user.perfil||'Usuário';
+  // Update sidebar footer
+  const sfAvatar=document.getElementById('snav-footer-avatar');
+  if(sfAvatar){const parts=(user.nome||'').split(' ');sfAvatar.textContent=parts.length>1?(parts[0][0]+parts[parts.length-1][0]).toUpperCase():parts[0].substring(0,2).toUpperCase();}
+  const sfName=document.getElementById('snav-footer-name');
+  if(sfName)sfName.textContent=(user.nome||'').split(' ').slice(0,2).join(' ');
   // Atualizar greeting na home
   const dias=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   const meses=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
@@ -2981,6 +3040,21 @@ function solicitarNovaBase(){
     ()=>showModal('modal-base'));
 }
 
+function abrirPainelAdmin(){
+  const overlay=document.getElementById('painel-admin-overlay');
+  const masterDiv=document.getElementById('painel-admin-master');
+  const bloqDiv=document.getElementById('painel-admin-bloqueado');
+  const subinfo=document.getElementById('painel-admin-subinfo');
+  const isMaster=currentUser&&currentUser.perfil==='master';
+  if(subinfo)subinfo.textContent='Perfil: '+(perfilLabel(currentUser&&currentUser.perfil)||'—')+' · '+(currentUser&&currentUser.nome||'');
+  masterDiv.style.display=isMaster?'flex':'none';
+  bloqDiv.style.display=isMaster?'none':'block';
+  overlay.style.display='block';
+}
+function fecharPainelAdmin(e){
+  if(e&&e.target!==document.getElementById('painel-admin-overlay'))return;
+  document.getElementById('painel-admin-overlay').style.display='none';
+}
 function doLogout(){
   // Fecha todos os overlays que poderiam ficar em cima da tela de login
   fecharTodosOverlays();
