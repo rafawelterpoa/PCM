@@ -769,28 +769,19 @@ input.filter-sel{padding:5px 8px;height:34px}
     <div style="width:1px;height:24px;background:rgba(255,255,255,.15)"></div>
     <div class="htitle">Gestão de <span>Frota Pesada</span></div>
   </div>
-  <div class="hcenter">
+  <div class="hactions-right">
     <span class="hdate" id="header-date"></span>
     <span class="hsync" id="sync-status">
       <svg width="7" height="7" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#12c47e"/></svg>
       Sincronizado
     </span>
-  </div>
-  <div class="hactions-right">
-    <div class="huser-block" onclick="abrirPainelAdmin()" title="Área administrativa">
-      <div class="header-avatar" id="header-avatar">RW</div>
-      <div style="display:flex;flex-direction:column;gap:2px">
-        <span class="huser-name" id="header-user-name">Rafael Welter</span>
-        <span class="huser-role" id="header-user-role">PCM</span>
-      </div>
-    </div>
     <button class="hbtn-sair" onclick="doLogout()">Sair</button>
   </div>
 </header>
 
 <!-- PAINEL ADMIN (overlay) -->
 <div id="painel-admin-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.45)" onclick="fecharPainelAdmin(event)">
-  <div id="painel-admin" style="position:absolute;top:64px;right:20px;width:320px;background:#fff;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.2);overflow:hidden;border:1px solid #e2e8ed">
+  <div id="painel-admin" style="position:absolute;bottom:80px;left:230px;width:320px;background:#fff;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.2);overflow:hidden;border:1px solid #e2e8ed">
     <!-- Header do painel -->
     <div style="background:#1A2E35;padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
       <div>
@@ -904,12 +895,13 @@ input.filter-sel{padding:5px 8px;height:34px}
   </div>
 
   <div class="snav-footer">
-    <div class="snav-footer-user" id="snav-footer-user">
+    <div class="snav-footer-user" id="snav-footer-user" onclick="abrirPainelAdmin()" title="Área administrativa" style="cursor:pointer">
       <div class="snav-footer-avatar" id="snav-footer-avatar">RF</div>
       <div class="snav-footer-info">
         <span class="snav-footer-name" id="snav-footer-name">Rafael Welter</span>
-        <span class="snav-footer-role">PCM</span>
+        <span class="snav-footer-role" id="snav-footer-role-label">PCM</span>
       </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </div>
   </div>
 
