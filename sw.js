@@ -1,4 +1,4 @@
-// SW v16 — busca /index.html diretamente (CDN key diferente de /)
+// SW v17 — busca /index.html diretamente (CDN key diferente de /)
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
