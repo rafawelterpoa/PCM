@@ -240,26 +240,40 @@ input:focus,select:focus,textarea:focus{
 
 /* ══ KANBAN ══ */
 .kanban-wrap{padding:14px 18px}
-.kanban-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+/* Linha 1: título + count */
+.kanban-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px}
+.kanban-title{font-size:18px;font-weight:700;color:#1A2E35;white-space:nowrap}
+.kanban-title span{color:#E8630A;font-size:14px;font-weight:600}
+.kanban-atualizar{display:flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid #E2E8ED;border-radius:8px;background:#fff;font-size:12px;font-weight:600;color:#5A7280;cursor:pointer;transition:all .15s;flex-shrink:0}
+.kanban-atualizar:hover{border-color:#E8630A;color:#E8630A}
+/* Linha 2: tabs + filtros */
+.kanban-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .kanban-toolbar .subtabs{flex-shrink:0}
-.kanban-toolbar .search-box{flex-shrink:0}
-.kanban-title{font-size:15px;font-weight:700;color:#1A2E35;white-space:nowrap;flex-shrink:0;margin-right:8px}
-.kanban-title span{color:#E8630A}
-.search-box{padding:5px 10px;border:1px solid #E2E8ED;border-radius:20px;font-size:12px;background:#fff;outline:none;width:160px;color:#1A2E35;height:30px;flex-shrink:0}
+.search-box{padding:6px 12px;border:1px solid #E2E8ED;border-radius:20px;font-size:12px;background:#fff;outline:none;width:180px;color:#1A2E35;height:32px;flex-shrink:0}
 .search-box:focus{border-color:#E8630A;box-shadow:0 0 0 2px rgba(232,99,10,.1)}
-.filter-sel{height:30px;min-height:30px;padding:4px 8px;font-size:11px;min-width:120px;max-width:180px}
-.search-box:focus{border-color:var(--laranja)}
-.filter-sel{padding:5px 8px;border:1px solid var(--borda);border-radius:5px;font-size:12px;background:#ffffff;outline:none;color:#374151;height:auto;min-height:34px;box-sizing:border-box;min-width:150px;max-width:260px;flex-shrink:1;vertical-align:middle;cursor:pointer}
+.filter-sel{padding:5px 10px;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;background:#fff;outline:none;color:#374151;height:32px;min-width:140px;max-width:240px;flex-shrink:1;cursor:pointer}
+.filter-sel:focus{border-color:#E8630A}
 .prog-filter-item{min-width:160px;max-width:260px}
-input.filter-sel{padding:5px 8px;height:34px}
-.filter-sel:focus{border-color:var(--laranja)}
-.kanban-layout{display:flex;gap:0;align-items:flex-start;width:100%;height:calc(100vh - 230px)}
+input.filter-sel{padding:5px 10px;height:32px}
+.kanban-layout{display:flex;gap:0;align-items:flex-start;width:100%;height:calc(100vh - 250px)}
 .kanban-board-wrap{flex:1;min-width:0;overflow-x:auto;overflow-y:hidden;padding-right:10px;height:100%}
-.kanban-board{display:inline-flex;gap:8px;padding-bottom:10px;align-items:flex-start;height:100%;min-width:max-content}
-.kcol{flex:0 0 220px;background:#F4F6F8;border-radius:10px;border:1px solid #E2E8ED;display:flex;flex-direction:column;height:calc(100vh - 248px)}
-.kcol-hd{padding:12px 14px 10px;border-bottom:1px solid #E2E8ED;background:#EAECEF;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:space-between}
-.kcol-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#5A7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kcol-count{font-size:13px;font-weight:700;color:#fff;background:#1A2E35;border-radius:20px;padding:2px 9px;line-height:1.4}
+.kanban-board{display:inline-flex;gap:10px;padding-bottom:10px;align-items:flex-start;height:100%;min-width:max-content}
+.kcol{flex:0 0 240px;background:#F4F6F8;border-radius:10px;border:1px solid #E2E8ED;display:flex;flex-direction:column;height:calc(100vh - 268px)}
+.kcol-hd{padding:10px 14px 9px;border-bottom:1px solid #E2E8ED;background:#fff;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:space-between;border-top:3px solid #C8D4DA}
+/* cores por etapa */
+.kcol[data-etapa="chegada"] .kcol-hd{border-top-color:#64748B}
+.kcol[data-etapa="cl_entrada"] .kcol-hd{border-top-color:#0891B2}
+.kcol[data-etapa="manutencao"] .kcol-hd{border-top-color:#E8630A}
+.kcol[data-etapa="cl_saida"] .kcol-hd{border-top-color:#7C3AED}
+.kcol[data-etapa="pronto"] .kcol-hd{border-top-color:#16A34A}
+.kcol-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#5A7280;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.kcol-title::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+.kcol[data-etapa="chegada"] .kcol-title{color:#64748B}
+.kcol[data-etapa="cl_entrada"] .kcol-title{color:#0891B2}
+.kcol[data-etapa="manutencao"] .kcol-title{color:#E8630A}
+.kcol[data-etapa="cl_saida"] .kcol-title{color:#7C3AED}
+.kcol[data-etapa="pronto"] .kcol-title{color:#16A34A}
+.kcol-count{font-size:12px;font-weight:700;color:#fff;background:#1A2E35;border-radius:20px;padding:2px 8px;line-height:1.4}
 .kcol-body{padding:6px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px}
 .kcol-body::-webkit-scrollbar{width:3px}.kcol-body::-webkit-scrollbar-thumb{background:#C8D4DA;border-radius:4px}
 .kcol.drag-over .kcol-body{background:rgba(232,99,10,.06);border-radius:6px;outline:2px dashed #E8630A;outline-offset:-3px}
@@ -1455,8 +1469,11 @@ input.filter-sel{padding:5px 8px;height:34px}
 
 <div class="page" id="page-Assis_SP">
 <div class="kanban-wrap">
+  <div class="kanban-header">
+    <span class="kanban-title">Assis (SP) — <span style="color:var(--laranja)">— equipamentos</span></span>
+    <button class="kanban-atualizar" onclick="renderBoard('Assis_SP','geral');renderBoard('Assis_SP','oficina')">↻ Atualizar</button>
+  </div>
   <div class="kanban-toolbar">
-    <span class="kanban-title">Assis (SP) — <span style="color:var(--laranja)" id="ktitle-Assis_SP">— equipamentos</span></span>
     <div class="subtabs">
       <button class="subtab active" id="subtab-Assis_SP-geral" onclick="switchSubtab('Assis_SP','geral')">Visão Geral</button>
       <button class="subtab" id="subtab-Assis_SP-oficina" onclick="switchSubtab('Assis_SP','oficina')">Visão Oficina</button>
@@ -1483,8 +1500,11 @@ input.filter-sel{padding:5px 8px;height:34px}
 </div>
 </div><div class="page" id="page-Contagem_MG">
 <div class="kanban-wrap">
+  <div class="kanban-header">
+    <span class="kanban-title">Contagem (MG) — <span style="color:var(--laranja)">— equipamentos</span></span>
+    <button class="kanban-atualizar" onclick="renderBoard('Contagem_MG','geral');renderBoard('Contagem_MG','oficina')">↻ Atualizar</button>
+  </div>
   <div class="kanban-toolbar">
-    <span class="kanban-title">Contagem (MG) — <span style="color:var(--laranja)" id="ktitle-Contagem_MG">— equipamentos</span></span>
     <div class="subtabs">
       <button class="subtab active" id="subtab-Contagem_MG-geral" onclick="switchSubtab('Contagem_MG','geral')">Visão Geral</button>
       <button class="subtab" id="subtab-Contagem_MG-oficina" onclick="switchSubtab('Contagem_MG','oficina')">Visão Oficina</button>
@@ -1511,8 +1531,11 @@ input.filter-sel{padding:5px 8px;height:34px}
 </div>
 </div><div class="page" id="page-Osasco_SP">
 <div class="kanban-wrap">
+  <div class="kanban-header">
+    <span class="kanban-title">Osasco (SP) — <span style="color:var(--laranja)">— equipamentos</span></span>
+    <button class="kanban-atualizar" onclick="renderBoard('Osasco_SP','geral');renderBoard('Osasco_SP','oficina')">↻ Atualizar</button>
+  </div>
   <div class="kanban-toolbar">
-    <span class="kanban-title">Osasco (SP) — <span style="color:var(--laranja)" id="ktitle-Osasco_SP">— equipamentos</span></span>
     <div class="subtabs">
       <button class="subtab active" id="subtab-Osasco_SP-geral" onclick="switchSubtab('Osasco_SP','geral')">Visão Geral</button>
       <button class="subtab" id="subtab-Osasco_SP-oficina" onclick="switchSubtab('Osasco_SP','oficina')">Visão Oficina</button>
@@ -1539,8 +1562,11 @@ input.filter-sel{padding:5px 8px;height:34px}
 </div>
 </div><div class="page" id="page-Parauapebas_PA">
 <div class="kanban-wrap">
+  <div class="kanban-header">
+    <span class="kanban-title">Parauapebas (PA) — <span style="color:var(--laranja)">— equipamentos</span></span>
+    <button class="kanban-atualizar" onclick="renderBoard('Parauapebas_PA','geral');renderBoard('Parauapebas_PA','oficina')">↻ Atualizar</button>
+  </div>
   <div class="kanban-toolbar">
-    <span class="kanban-title">Parauapebas (PA) — <span style="color:var(--laranja)" id="ktitle-Parauapebas_PA">— equipamentos</span></span>
     <div class="subtabs">
       <button class="subtab active" id="subtab-Parauapebas_PA-geral" onclick="switchSubtab('Parauapebas_PA','geral')">Visão Geral</button>
       <button class="subtab" id="subtab-Parauapebas_PA-oficina" onclick="switchSubtab('Parauapebas_PA','oficina')">Visão Oficina</button>
@@ -1567,8 +1593,11 @@ input.filter-sel{padding:5px 8px;height:34px}
 </div>
 </div><div class="page" id="page-Santos_SP">
 <div class="kanban-wrap">
+  <div class="kanban-header">
+    <span class="kanban-title">Santos (SP) — <span style="color:var(--laranja)">— equipamentos</span></span>
+    <button class="kanban-atualizar" onclick="renderBoard('Santos_SP','geral');renderBoard('Santos_SP','oficina')">↻ Atualizar</button>
+  </div>
   <div class="kanban-toolbar">
-    <span class="kanban-title">Santos (SP) — <span style="color:var(--laranja)" id="ktitle-Santos_SP">— equipamentos</span></span>
     <div class="subtabs">
       <button class="subtab active" id="subtab-Santos_SP-geral" onclick="switchSubtab('Santos_SP','geral')">Visão Geral</button>
       <button class="subtab" id="subtab-Santos_SP-oficina" onclick="switchSubtab('Santos_SP','oficina')">Visão Oficina</button>
@@ -1595,8 +1624,11 @@ input.filter-sel{padding:5px 8px;height:34px}
 </div>
 </div><div class="page" id="page-Sumaré_SP">
 <div class="kanban-wrap">
+  <div class="kanban-header">
+    <span class="kanban-title">Sumaré (SP) — <span style="color:var(--laranja)">— equipamentos</span></span>
+    <button class="kanban-atualizar" onclick="renderBoard('Sumaré_SP','geral');renderBoard('Sumaré_SP','oficina')">↻ Atualizar</button>
+  </div>
   <div class="kanban-toolbar">
-    <span class="kanban-title">Sumaré (SP) — <span style="color:var(--laranja)" id="ktitle-Sumare_SP">— equipamentos</span></span>
     <div class="subtabs">
       <button class="subtab active" id="subtab-Sumaré_SP-geral" onclick="switchSubtab('Sumaré_SP','geral')">Visão Geral</button>
       <button class="subtab" id="subtab-Sumaré_SP-oficina" onclick="switchSubtab('Sumaré_SP','oficina')">Visão Oficina</button>
@@ -1623,8 +1655,11 @@ input.filter-sel{padding:5px 8px;height:34px}
 </div>
 </div><div class="page" id="page-São_José_dos_Pinhais_PR">
 <div class="kanban-wrap">
+  <div class="kanban-header">
+    <span class="kanban-title">São José dos Pinhais (PR) — <span style="color:var(--laranja)">— equipamentos</span></span>
+    <button class="kanban-atualizar" onclick="renderBoard('São_José_dos_Pinhais_PR','geral');renderBoard('São_José_dos_Pinhais_PR','oficina')">↻ Atualizar</button>
+  </div>
   <div class="kanban-toolbar">
-    <span class="kanban-title">São José dos Pinhais (PR) — <span style="color:var(--laranja)" id="ktitle-Sao_Jose_dos_Pinhais_PR">— equipamentos</span></span>
     <div class="subtabs">
       <button class="subtab active" id="subtab-São_José_dos_Pinhais_PR-geral" onclick="switchSubtab('São_José_dos_Pinhais_PR','geral')">Visão Geral</button>
       <button class="subtab" id="subtab-São_José_dos_Pinhais_PR-oficina" onclick="switchSubtab('São_José_dos_Pinhais_PR','oficina')">Visão Oficina</button>
