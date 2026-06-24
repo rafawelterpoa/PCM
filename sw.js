@@ -1,4 +1,4 @@
-// SW v15 — cache: reload força CDN a revalidar sem query string
+// SW v16 — busca /index.html diretamente (CDN key diferente de /)
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
@@ -15,11 +15,10 @@ self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-// cache:'reload' envia Cache-Control:no-cache ao CDN, forçando revalidação com origem
 self.addEventListener('fetch', e => {
   if (e.request.mode === 'navigate') {
     e.respondWith(
-      fetch(e.request, {cache: 'reload'})
+      fetch('https://rafawelterpoa.github.io/PCM/index.html', {cache: 'reload'})
         .catch(() => fetch(e.request))
     );
   }
