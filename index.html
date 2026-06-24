@@ -15039,7 +15039,7 @@ function solRcdRender(sfx=''){
     const valAgCliente = valPorStatus('aguardando_cliente');
     const valAgExec    = valPorStatus('aguardando_execucao');
     const valAgFat     = valPorStatus('aguardando_faturamento');
-    const kpiCard=(label,val,cor,sub='',acento=cor)=>`<div style="background:#fff;border-radius:10px;border:1px solid #E2E8ED;border-left:3px solid ${acento};padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06)"><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;margin-bottom:6px">${label}</div><div style="font-size:22px;font-weight:800;color:${cor};line-height:1.1">${val}</div>${sub?`<div style="font-size:11px;color:#8FA4AE;margin-top:4px">${sub}</div>`:''}</div>`;
+    const kpiCard=(label,val,cor,sub='',acento=cor)=>`<div style="background:#fff;border-radius:10px;border:1px solid #E2E8ED;border-left:3px solid ${acento};padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06)"><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;margin-bottom:6px">${label}</div><div style="font-size:16px;font-weight:800;color:${cor};line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${val}</div>${sub?`<div style="font-size:11px;color:#8FA4AE;margin-top:4px">${sub}</div>`:''}</div>`;
     kpiEl.innerHTML=
       kpiCard('Ativos',filtAtivos.length,'#1A2E35',filtRegs.length+' total','#E8630A')+
       kpiCard('Valor Faturado',fmt(valFaturado),'#1E8A4C',concluidos.length+' registros','#1E8A4C')+
@@ -16647,16 +16647,6 @@ if ('serviceWorker' in navigator) {
 <!-- RCD — AVARIAS -->
 <div id="page-rcd" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#F4F6F8;z-index:100">
   <div style="padding:24px 28px;max-width:1400px">
-    <div style="margin-bottom:20px;background:#fff;border-radius:12px;border:1px solid #E2E8ED;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:14px">
-        <div style="width:4px;height:40px;background:#E8630A;border-radius:2px;flex-shrink:0"></div>
-        <div>
-          <div style="font-size:20px;font-weight:700;color:#1A2E35;line-height:1.2">RCD — Avarias</div>
-          <div style="font-size:12px;color:#8FA4AE;margin-top:3px">Controle de cobranças de avarias a clientes</div>
-        </div>
-      </div>
-      <div id="rcd-header-stats" style="display:flex;gap:24px;align-items:center"></div>
-    </div>
 
     <!-- Sub-abas -->
     <div style="display:flex;gap:0;border-bottom:2px solid #E2E8ED;margin-bottom:20px">
