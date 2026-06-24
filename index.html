@@ -3275,7 +3275,7 @@ function switchTab(tabId){
   else if(tabId==='mapa')renderMapa();
   else if(tabId==='admin')renderAdminPage();
   else if(tabId==='home')renderHome();
-  else if(tabId!=='bi')renderBoard(tabId,'geral');
+  else if(tabId!=='bi'){renderBoard(tabId,'geral');renderLogAtividades(tabId);}
   else{renderBiEtapas();updateKpisDinamicos();}
 }
 function switchToAdmin(){
@@ -3655,6 +3655,52 @@ function renderLog(sid){
   </div>`).join('');
 }
 
+function renderLogAtividades(sid){
+  if(!sid)return;
+  const page=document.getElementById('page-'+sid);if(!page)return;
+  let wrap=document.getElementById('log-ativ-'+sid);
+  if(!wrap){
+    wrap=document.createElement('div');
+    wrap.id='log-ativ-'+sid;
+    wrap.style.cssText='margin-top:24px;padding:0 4px 40px';
+    page.querySelector('.kanban-wrap').appendChild(wrap);
+  }
+  const eqs=Object.values(state).filter(e=>e.oficina&&e.oficina.replace(/ /g,'_').replace(/[()]/g,'').replace(/\//g,'_')===sid&&!e.baixado);
+  const entries=[];
+  eqs.forEach(e=>{(e.historico||[]).forEach(h=>entries.push({...h,eqId:e.id,equip:e.equipamento}));});
+  entries.sort((a,b)=>b.ts-a.ts);
+  if(!entries.length){wrap.innerHTML='<div style="font-size:11px;color:#8FA4AE;padding:12px 4px">Nenhuma atividade registrada.</div>';return;}
+  const rows=entries.slice(0,200).map(h=>`
+    <tr style="border-bottom:1px solid #F0F4F6">
+      <td style="padding:7px 10px;font-size:11px;color:#8FA4AE;white-space:nowrap">${h.data||''} ${h.hora||''}</td>
+      <td style="padding:7px 10px;font-size:11px;font-weight:700;color:#E8630A;white-space:nowrap">${h.eqId||''}</td>
+      <td style="padding:7px 10px;font-size:11px;color:#5A7280;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis">${h.equip||''}</td>
+      <td style="padding:7px 10px;font-size:11px;font-weight:600;color:#1D4ED8;white-space:nowrap">${h.perfil||'—'}</td>
+      <td style="padding:7px 10px;font-size:11px;color:#5A7280">${h.from||''}</td>
+      <td style="padding:7px 10px;font-size:11px">→</td>
+      <td style="padding:7px 10px;font-size:11px;font-weight:600;color:#1A2E35">${h.to||''}</td>
+    </tr>`).join('');
+  wrap.innerHTML=`
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#5A7280;margin-bottom:10px">
+      Log de Atividades · ${entries.length} registros
+    </div>
+    <div style="overflow-x:auto;border-radius:10px;border:1px solid #E2E8ED;background:#fff">
+      <table style="width:100%;border-collapse:collapse;font-family:inherit">
+        <thead>
+          <tr style="background:#F4F6F8;border-bottom:2px solid #E2E8ED">
+            <th style="padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8FA4AE;text-align:left">Data / Hora</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8FA4AE;text-align:left">ID</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8FA4AE;text-align:left">Equipamento</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8FA4AE;text-align:left">Usuário</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8FA4AE;text-align:left">De</th>
+            <th style="padding:8px 10px"></th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8FA4AE;text-align:left">Para</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
 function filterCards(sid,v){const bg=document.getElementById(`board-${sid}-geral`),bo=document.getElementById(`board-${sid}-oficina`);if(bg){bg._search=v;renderBoard(sid,'geral');}if(bo){bo._search=v;renderBoard(sid,'oficina');}}
 function filterTipoManut(sid,v){const bg=document.getElementById(`board-${sid}-geral`),bo=document.getElementById(`board-${sid}-oficina`);if(bg){bg._tipoManut=v;renderBoard(sid,'geral');}if(bo){bo._tipoManut=v;renderBoard(sid,'oficina');}}
 
@@ -3811,13 +3857,22 @@ function updatePrioOpts(p){['critica','alta','media','baixa'].forEach(x=>{docume
 function setPrioridade(p){const cur=pendingCardChanges.prioridade!==undefined?pendingCardChanges.prioridade:state[currentCardId]?.prioridade;const np=cur===p?null:p;pendingCardChanges.prioridade=np;updatePrioOpts(np);}
 function setComplexidade(val){
   const eq=state[currentCardId];if(!eq)return;
+  const _oldC=eq.complexidade||'';
   eq.complexidade=val||undefined;
+  const CL={facil:'Fácil',medio:'Médio',dificil:'Difícil'};
+  if((val||'')!==_oldC){
+    const u=currentUser?currentUser.nome:'operador';
+    if(!eq.historico)eq.historico=[];
+    eq.historico.push({from:'Complexidade: '+(CL[_oldC]||'—'),to:'Complexidade: '+(CL[val]||'—'),ts:Date.now(),hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:u});
+    if(eq.historico.length>300)eq.historico=eq.historico.slice(-300);
+  }
   ['facil','medio','dificil','none'].forEach(v=>{
     const el=document.getElementById('comp-'+v);
     if(el)el.classList.toggle('active',(val==='none'?v==='none':v===val)||(!val&&v==='none'));
   });
   salvarCard(currentCardId);
   renderBoard(currentCardSid,currentCardVisao);
+  renderLogAtividades(currentCardSid);
 }
 function setSemana(v){pendingCardChanges.semana=v||null;}
 function setObs(v){pendingCardChanges.obs=v;}
@@ -3970,6 +4025,11 @@ function _salvarCard(){
   if(!currentCardId)return;
   const eq=state[currentCardId];
   const perfil=pendingCardChanges._perfilAutenticado||null;
+  // Capturar valores anteriores para log
+  const _u=currentUser?currentUser.nome:'operador';
+  const _ts=Date.now(),_hora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),_data=new Date().toLocaleDateString('pt-BR');
+  function _logH(from,to){if(!eq.historico)eq.historico=[];eq.historico.push({from,to,ts:_ts,hora:_hora,data:_data,perfil:_u});if(eq.historico.length>300)eq.historico=eq.historico.slice(-300);}
+  const _oldOrdens=[...(eq.ordens||[])],_oldRC=eq.reqCompra||'',_oldTipo=eq.tipoManut||'',_oldPrio=eq.prioridade||'',_oldSemana=eq.semana||'',_oldObs=eq.obs||'',_oldEmbarque=eq.dataEmbarque||'';
   if(pendingCardChanges.obs!==undefined)eq.obs=pendingCardChanges.obs;
   if(pendingCardChanges.ordens!==undefined)eq.ordens=pendingCardChanges.ordens;
   if(pendingCardChanges.reqCompra!==undefined)eq.reqCompra=pendingCardChanges.reqCompra;
@@ -3978,6 +4038,15 @@ function _salvarCard(){
   if(pendingCardChanges.reservado!==undefined)eq.reservado=pendingCardChanges.reservado;
   if(pendingCardChanges.cliente!==undefined)eq.cliente=pendingCardChanges.cliente;
   if(pendingCardChanges.dataEmbarque!==undefined)eq.dataEmbarque=pendingCardChanges.dataEmbarque;
+  // Log de campos alterados
+  if(pendingCardChanges.ordens!==undefined){const add=(eq.ordens||[]).filter(o=>!_oldOrdens.includes(o)),rem=_oldOrdens.filter(o=>!(eq.ordens||[]).includes(o));add.forEach(o=>_logH('—','+ Ordem: '+o));rem.forEach(o=>_logH('Ordem: '+o,'— Removida'));}
+  if(pendingCardChanges.reqCompra!==undefined&&eq.reqCompra!==_oldRC)_logH('RC: '+(_oldRC||'—'),'RC: '+(eq.reqCompra||'—'));
+  if(pendingCardChanges.tipoManut!==undefined&&eq.tipoManut!==_oldTipo)_logH('Tipo: '+(_oldTipo||'—'),'Tipo: '+(eq.tipoManut||'—'));
+  const _PL={critica:'Crítica',alta:'Alta',media:'Média',baixa:'Baixa'};
+  if(pendingCardChanges.prioridade!==undefined&&eq.prioridade!==_oldPrio)_logH('Prio: '+(_PL[_oldPrio]||'—'),'Prio: '+(_PL[eq.prioridade]||'—'));
+  if(pendingCardChanges.semana!==undefined){const ns=pendingCardChanges.semana||'';if(ns!==_oldSemana)_logH('Semana: '+(_oldSemana||'—'),'Semana: '+(ns||'—'));}
+  if(pendingCardChanges.obs!==undefined&&eq.obs!==_oldObs)_logH('Obs: '+(_oldObs||'—'),'Obs: '+(eq.obs||'—'));
+  if(pendingCardChanges.dataEmbarque!==undefined&&eq.dataEmbarque!==_oldEmbarque){const df=d=>d?new Date(d+'T12:00:00').toLocaleDateString('pt-BR'):'—';_logH('Embarque: '+df(_oldEmbarque),'Embarque: '+df(eq.dataEmbarque));}
   if(pendingCardChanges.prevLiberacao!==undefined){
     const novaData=pendingCardChanges.prevLiberacao;
     const dataAnterior=eq.prevLiberacao||'';
@@ -4065,6 +4134,7 @@ function _salvarCard(){
   // Atualizar mapa se estiver visível
   if(document.getElementById('page-mapa')?.classList.contains('active'))renderMapa();
   showToast('Card '+currentCardId+' atualizado'+(currentUser?' ['+currentUser.nome+']':''));
+  renderLogAtividades(currentCardSid);
 }
 
 // SENHA
