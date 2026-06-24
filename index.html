@@ -415,10 +415,10 @@ input.filter-sel{padding:5px 10px;height:32px}
 .modal-ov.show{display:flex}
 #modal-card.show{display:block}
 #modal-card.show .modal-card{transform:translateX(0)}
-.modal-card{position:fixed;top:56px;right:0;bottom:0;width:520px;max-width:96vw;background:#fff;border-left:1px solid #E2E8ED;box-shadow:-8px 0 32px rgba(0,0,0,.14);overflow-y:auto;overscroll-behavior:contain;z-index:401;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+.modal-card{position:fixed;top:56px;right:0;bottom:0;width:520px;max-width:96vw;background:#fff;border-left:1px solid #E2E8ED;box-shadow:-8px 0 32px rgba(0,0,0,.14);z-index:401;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
 .modal-ov.open .modal-card{transform:translateX(0)}
-.mc-body{padding:14px 18px 40px;display:flex;flex-direction:column;gap:12px}
-.mc-footer{padding:12px 18px;border-top:1px solid var(--borda);display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.mc-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px 18px 24px;display:flex;flex-direction:column;gap:12px}
+.mc-footer{flex-shrink:0;padding:12px 18px;border-top:1px solid #E2E8ED;display:flex;gap:8px;justify-content:flex-end;align-items:center;background:#fff}
 .mc-header{padding:16px 18px 12px;border-bottom:1px solid var(--borda);display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .mc-id{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:2px}
 .mc-equip{font-size:15px;font-weight:700;color:var(--text);line-height:1.25}
@@ -1786,7 +1786,7 @@ input.filter-sel{padding:5px 10px;height:32px}
 <!-- MODAIS -->
 <div class="modal-ov" id="modal-card" onclick="if(event.target===this)closeModal('modal-card')">
   <div class="modal-card">
-    <div class="mc-header" style="position:sticky;top:0;background:#fff;z-index:10;border-bottom:1px solid #E2E8ED;padding:16px 20px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+    <div class="mc-header" style="flex-shrink:0;background:#fff;border-bottom:1px solid #E2E8ED;padding:16px 20px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
       <div style="flex:1;min-width:0">
         <div style="font-size:22px;font-weight:800;color:#E8630A;letter-spacing:.04em;line-height:1;margin-bottom:5px" id="mc-id"></div>
         <div style="font-size:14px;font-weight:600;color:#1A2E35;line-height:1.3;margin-bottom:2px" id="mc-equip"></div>
