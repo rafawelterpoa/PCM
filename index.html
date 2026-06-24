@@ -1064,12 +1064,12 @@ input.filter-sel{padding:5px 10px;height:32px}
       </div>
       <!-- Linha 2: buscas + selects -->
       <div style="padding:8px 14px;display:flex;align-items:center;gap:8px;background:#F4F6F8;flex-wrap:wrap">
-        <input id="op-busca-id" type="text" placeholder="🔍 Buscar por ID..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:140px;outline:none;box-sizing:border-box;background:#fff;color:#1A2E35" oninput="opRender()">
-        <input id="op-busca" type="text" placeholder="🔍 Operação ou cliente..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:200px;outline:none;box-sizing:border-box;background:#fff;color:#1A2E35" oninput="opRender()">
-        <select id="op-filtro-estado" onchange="opRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;background:#fff;color:#5A7280;outline:none">
+        <input id="op-busca-id" type="text" placeholder="🔍 Buscar por ID..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:130px;outline:none;box-sizing:border-box;background:#fff;color:#1A2E35" oninput="opRender()">
+        <input id="op-busca" type="text" placeholder="🔍 Operação ou cliente..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:190px;outline:none;box-sizing:border-box;background:#fff;color:#1A2E35" oninput="opRender()">
+        <select id="op-filtro-estado" onchange="opRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:150px;background:#fff;color:#5A7280;outline:none;box-sizing:border-box">
           <option value="">Estado — Todos</option>
         </select>
-        <select id="op-filtro-familia" onchange="opRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;background:#fff;color:#5A7280;outline:none">
+        <select id="op-filtro-familia" onchange="opRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:150px;background:#fff;color:#5A7280;outline:none;box-sizing:border-box">
           <option value="">Família — Todas</option>
         </select>
       </div>
@@ -15947,7 +15947,7 @@ function opRenderKpis(opsFiltradas){
   }else if(_opTipoFiltro==='implemento'){
     totalEquips=_opContratoFiltro?_origAlug.filter(e=>frotaClassificar(e.tipo)==='implemento').length:(_hasBreakdown?(_cs.locadosImp||0):_origAlug.filter(e=>frotaClassificar(e.tipo)==='implemento').length);
   }else if(_opTipoFiltro==='acessorio'){
-    totalEquips=_opContratoFiltro?_origAlug.filter(e=>frotaClassificar(e.tipo)==='acessorio').length:(_hasBreakdown?(_cs.locadosAc||0):_origAlug.filter(e=>frotaClassificar(e.tipo)==='acessorio').length);
+    totalEquips=_origAlug.filter(e=>frotaClassificar(e.tipo)==='acessorio').length;
   }else{
     totalEquips=_opContratoFiltro?_origAlug.length:(_csTotal||ops.reduce((s,o)=>s+o.equips.length,0));
   }
@@ -15969,7 +15969,7 @@ function opRenderChart(ops){
   // ── Gráfico 1: Top Famílias — barras VERTICAIS ─────────────────────────────
   const el=document.getElementById('op-chart');
   if(el){
-    const todosLoc=opAlugadosBase().filter(e=>(!_opTipoFiltro||frotaClassificar(e.tipo)===_opTipoFiltro)&&(!_opContratoFiltro||e.tipoContrato===_opContratoFiltro));
+    const todosLoc=src.flatMap(o=>o.equips);
     const fams={};
     todosLoc.forEach(e=>{if(e.tipo)fams[e.tipo]=(fams[e.tipo]||0)+1;});
     const sorted=Object.entries(fams).sort((a,b)=>b[1]-a[1]).slice(0,8);
