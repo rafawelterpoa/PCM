@@ -14047,43 +14047,47 @@ function mtRender(){
     const totalValor=_mtRegistros.reduce((s,r)=>s+(r.valor||0),0);
     const porTipo={};_mtRegistros.forEach(r=>{if(r.tipo)porTipo[r.tipo]=(porTipo[r.tipo]||0)+1;});
     const topTipo=Object.entries(porTipo).sort((a,b)=>b[1]-a[1])[0];
+    const nForn=[...new Set(_mtRegistros.map(r=>r.fornecedor).filter(Boolean))].length;
     kpiEl.innerHTML=[
-      {l:'Total de Registros',v:_mtRegistros.length,c:'#7c3aed',s:'serviços cadastrados'},
-      {l:'Valor Total',v:'R$ '+totalValor.toLocaleString('pt-BR',{minimumFractionDigits:2}),c:'#dc2626',s:'em serviços externos'},
-      {l:'Fornecedores',v:[...new Set(_mtRegistros.map(r=>r.fornecedor).filter(Boolean))].length,c:'#0f766e',s:'fornecedores diferentes'},
-      {l:'Tipo Mais Freq.',v:topTipo?topTipo[0]:'—',c:'#d97706',s:topTipo?topTipo[1]+' registros':''},
-    ].map(k=>`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 18px;border-top:3px solid ${k.c}">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:6px">${k.l}</div>
-      <div style="font-size:22px;font-weight:900;color:${k.c};line-height:1.1;margin-bottom:2px">${k.v}</div>
-      <div style="font-size:11px;color:#94a3b8">${k.s}</div>
+      {l:'Total de Registros',v:_mtRegistros.length,c:'#7c3aed',s:'serviços cadastrados',a:'#7c3aed'},
+      {l:'Valor Total',v:'R$ '+totalValor.toLocaleString('pt-BR',{minimumFractionDigits:2}),c:'#B91C1C',s:'em serviços externos',a:'#B91C1C'},
+      {l:'Fornecedores',v:nForn,c:'#1E8A4C',s:'fornecedores diferentes',a:'#1E8A4C'},
+      {l:'Tipo Mais Freq.',v:topTipo?topTipo[0]:'—',c:'#B45309',s:topTipo?topTipo[1]+' registros':'',a:'#f59e0b'},
+    ].map(k=>`<div style="background:#fff;border:1px solid #E2E8ED;border-left:3px solid ${k.a};border-radius:10px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;margin-bottom:6px">${k.l}</div>
+      <div style="font-size:22px;font-weight:800;color:${k.c};line-height:1.1;margin-bottom:4px">${k.v}</div>
+      <div style="font-size:11px;color:#8FA4AE">${k.s}</div>
     </div>`).join('');
+    const hdrStats=document.getElementById('mt-header-stats');
+    if(hdrStats) hdrStats.innerHTML=`<div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#7c3aed">${_mtRegistros.length}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Registros</div></div><div style="width:1px;height:32px;background:#E2E8ED"></div><div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#B91C1C">R$ ${(totalValor/1000).toLocaleString('pt-BR',{minimumFractionDigits:0})}k</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Valor Total</div></div><div style="width:1px;height:32px;background:#E2E8ED"></div><div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#1E8A4C">${nForn}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Fornecedores</div></div>`;
   }
 
   // Tabela
   const tabEl=document.getElementById('mt-tabela');if(!tabEl)return;
   if(!dados.length){tabEl.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhum registro encontrado.</div>';return;}
-  const colHd=s=>`<th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;border-bottom:1px solid #e2e8f0;background:#f8fafc;white-space:nowrap">${s}</th>`;
-  const tipoCor={Corretiva:'#dc2626',Sinistro:'#d97706','Preparação para Mobilização':'#2563eb',Preventiva:'#16a34a'};
-  const rows=dados.map((r,i)=>`<tr style="background:${i%2?'#fff':'#fafbff'};border-bottom:1px solid #f1f5f9">
-    <td style="padding:8px 12px;font-family:monospace;font-weight:700;font-size:12px;color:#1e293b">${r.equipId||'—'}</td>
-    <td style="padding:8px 12px;font-size:11px;color:#64748b">${r.familia||'—'}</td>
-    <td style="padding:8px 12px"><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:${tipoCor[r.tipo]||'#94a3b8'}18;color:${tipoCor[r.tipo]||'#94a3b8'}">${r.tipo||'—'}</span></td>
-    <td style="padding:8px 12px;font-size:11px">${r.fornecedor||'—'}</td>
-    <td style="padding:8px 12px;font-size:11px;color:#64748b">${r.solicitante||'—'}</td>
-    <td style="padding:8px 12px;font-size:11px;color:#64748b">${r.aprovador||'—'}</td>
-    <td style="padding:8px 12px;font-family:monospace;font-size:11px">${r.om||'—'}</td>
-    <td style="padding:8px 12px;font-family:monospace;font-size:11px">${r.rc||'—'}</td>
-    <td style="padding:8px 12px;font-family:monospace;font-size:11px">${r.pc||'—'}</td>
-    <td style="padding:8px 12px;font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.descricao||''}">${r.descricao||'—'}</td>
-    <td style="padding:8px 12px;text-align:right;font-weight:700;color:#dc2626">${r.valor?'R$ '+r.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'}</td>
-    <td style="padding:8px 12px;font-size:11px;color:#94a3b8">${r.dataRegistro||'—'}</td>
-    <td style="padding:8px 12px;text-align:center;white-space:nowrap">
-      <button onclick="mtEditar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#F37021;font-size:13px" title="Editar">✏</button>
-      <button onclick="mtDeletar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px" title="Remover">🗑</button>
+  const colHd=s=>`<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#5A7280;border-bottom:1px solid #E2E8ED;background:#F4F6F8;white-space:nowrap">${s}</th>`;
+  const tipoCor={Corretiva:'#B91C1C',Sinistro:'#B45309','Preparação para Mobilização':'#1D4ED8',Preventiva:'#1E8A4C'};
+  const tipoBg={Corretiva:'#FEE2E2',Sinistro:'#FEF3C7','Preparação para Mobilização':'#DBEAFE',Preventiva:'#E8F5EE'};
+  const rows=dados.map(r=>`<tr style="border-bottom:1px solid #E2E8ED;transition:background 120ms" onmouseenter="this.style.background='#F8FAFB'" onmouseleave="this.style.background=''">
+    <td style="padding:10px 12px;font-family:monospace;font-weight:700;font-size:12px;color:#1A2E35">${r.equipId||'—'}</td>
+    <td style="padding:10px 12px;font-size:12px;color:#5A7280">${r.familia||'—'}</td>
+    <td style="padding:10px 12px"><span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:${tipoBg[r.tipo]||'#F0F4F6'};color:${tipoCor[r.tipo]||'#5A7280'}">${r.tipo||'—'}</span></td>
+    <td style="padding:10px 12px;font-size:12px;font-weight:500;color:#1A2E35">${r.fornecedor||'—'}</td>
+    <td style="padding:10px 12px;font-size:12px;color:#5A7280">${r.solicitante||'—'}</td>
+    <td style="padding:10px 12px;font-size:12px;color:#5A7280">${r.aprovador||'—'}</td>
+    <td style="padding:10px 12px;font-family:monospace;font-size:11px;color:#5A7280">${r.om||'—'}</td>
+    <td style="padding:10px 12px;font-family:monospace;font-size:11px;color:#5A7280">${r.rc||'—'}</td>
+    <td style="padding:10px 12px;font-family:monospace;font-size:11px;color:#5A7280">${r.pc||'—'}</td>
+    <td style="padding:10px 12px;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1A2E35" title="${r.descricao||''}">${r.descricao||'—'}</td>
+    <td style="padding:10px 12px;text-align:right;font-weight:700;color:#B91C1C;font-size:12px">${r.valor?'R$ '+r.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'}</td>
+    <td style="padding:10px 12px;font-size:11px;color:#8FA4AE">${r.dataRegistro||'—'}</td>
+    <td style="padding:10px 12px;text-align:right;white-space:nowrap">
+      <button onclick="mtEditar('${r.id}')" style="padding:4px 10px;background:#FDE8D8;color:#E8630A;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin-right:4px">Editar</button>
+      <button onclick="mtDeletar('${r.id}')" style="padding:4px 10px;background:#FEE2E2;color:#B91C1C;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer">Excluir</button>
     </td>
   </tr>`).join('');
-  tabEl.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)">
-  <table style="width:100%;border-collapse:collapse;font-size:12px">
+  tabEl.innerHTML=`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
     <thead><tr>${['ID Equip.','Família','Tipo','Fornecedor','Solicitante','Aprovador','O.M.','RC','PC','Descrição','Valor','Data','Ações'].map(colHd).join('')}</tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
@@ -16565,17 +16569,23 @@ if ('serviceWorker' in navigator) {
 </div>
 
 <!-- MANUTENÇÃO DE TERCEIROS -->
-<div id="page-manuterceiros" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#eef1f6;z-index:100">
+<div id="page-manuterceiros" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#F4F6F8;z-index:100">
   <div style="padding:24px 28px;max-width:1400px">
-    <div class="page-hdr">
-      <div class="page-hdr-title"><span style="color:#7c3aed">🏭</span> Manutenção de Terceiros</div>
-      <div class="page-hdr-sub">Controle de serviços externos e mão de obra de terceiros</div>
+    <div style="margin-bottom:20px;background:#fff;border-radius:12px;border:1px solid #E2E8ED;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:4px;height:40px;background:#7c3aed;border-radius:2px;flex-shrink:0"></div>
+        <div>
+          <div style="font-size:20px;font-weight:700;color:#1A2E35;line-height:1.2">Manutenção de Terceiros</div>
+          <div style="font-size:12px;color:#8FA4AE;margin-top:3px">Controle de serviços externos e mão de obra de terceiros</div>
+        </div>
+      </div>
+      <div id="mt-header-stats" style="display:flex;gap:24px;align-items:center"></div>
     </div>
 
     <!-- FORMULÁRIO -->
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b" id="mt-form-label">Novo Registro</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #E2E8ED">
+        <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#5A7280" id="mt-form-label">Novo Registro</span>
         <button class="gi-btn ghost" id="mt-cancelar-btn" style="display:none;font-size:11px;padding:5px 12px" onclick="mtCancelar()">✕ Cancelar</button>
       </div>
       <!-- Linha 1 -->
@@ -16612,22 +16622,22 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
 
+    <!-- KPIs rápidos -->
+    <div id="mt-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px"></div>
+
     <!-- FILTROS + TABELA -->
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px">
-      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Filtros</div>
-      <input id="mt-busca" oninput="mtRender()" placeholder="🔍 ID, equipamento, fornecedor..." style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;flex:1;min-width:160px;outline:none">
-      <select id="mt-fil-tipo" onchange="mtRender()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;background:#fff">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:12px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;white-space:nowrap">Filtros</span>
+      <input id="mt-busca" oninput="mtRender()" placeholder="ID, equipamento, fornecedor..." style="padding:8px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;flex:1;min-width:160px;outline:none;color:#1A2E35">
+      <select id="mt-fil-tipo" onchange="mtRender()" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;background:#fff;color:#1A2E35">
         <option value="">Tipo — Todos</option>
         <option>Corretiva</option><option>Sinistro</option><option>Preparação para Mobilização</option><option>Preventiva</option>
       </select>
-      <select id="mt-fil-fornecedor" onchange="mtRender()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;background:#fff">
+      <select id="mt-fil-fornecedor" onchange="mtRender()" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;background:#fff;color:#1A2E35">
         <option value="">Fornecedor — Todos</option>
       </select>
-      <button onclick="mtGerarRelatorio()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:11px;font-weight:700;cursor:pointer;margin-left:auto">📊 Relatório</button>
+      <button onclick="mtGerarRelatorio()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;margin-left:auto;white-space:nowrap">Relatório</button>
     </div>
-
-    <!-- KPIs rápidos -->
-    <div id="mt-kpis" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px"></div>
 
     <!-- Tabela -->
     <div id="mt-tabela" style="overflow-x:auto"></div>
