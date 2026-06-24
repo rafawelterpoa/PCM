@@ -12885,20 +12885,20 @@ function rcdRenderIndicadores() {
   const ticketMed = comOrc.length > 0 ? valorTotal / comOrc.length : 0;
 
   function kpi(label, valor, cor, sub, clique) {
-    return `<div onclick="${clique||''}" style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:14px 16px;cursor:${clique?'pointer':'default'};transition:box-shadow .15s" onmouseenter="this.style.boxShadow='0 2px 12px rgba(0,0,0,.1)'" onmouseleave="this.style.boxShadow='none'">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;margin-bottom:6px">${label}</div>
-      <div style="font-size:22px;font-weight:800;color:${cor}">${valor}</div>
-      ${sub ? `<div style="font-size:11px;color:#94a3b8;margin-top:3px">${sub}</div>` : ''}
+    return `<div onclick="${clique||''}" style="background:#fff;border-radius:12px;border:1px solid #E2E8ED;padding:16px 18px;cursor:${clique?'pointer':'default'};box-shadow:0 1px 3px rgba(0,0,0,.06);transition:box-shadow 120ms" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)'" onmouseleave="this.style.boxShadow='0 1px 3px rgba(0,0,0,.06)'">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;margin-bottom:8px">${label}</div>
+      <div style="font-size:28px;font-weight:700;color:${cor};line-height:1;margin-bottom:4px">${valor}</div>
+      ${sub ? `<div style="font-size:11px;color:#8FA4AE">${sub}</div>` : ''}
     </div>`;
   }
 
   kpiEl.innerHTML =
-    kpi('Casos Ativos',       ativos.length,      '#b45309', `${regs.length} total`) +
-    kpi('Valor em Orçamento', fmt(valorTotal),     '#0ea5e9', `${comOrc.length} orçamentos`) +
-    kpi('Ticket Médio',       fmt(ticketMed),      '#8b5cf6', '') +
-    kpi('Aguard. Inspeção',   nAguInsp,            '#6366f1', '', "rcdDesmobSub('tratamento')") +
-    kpi('Em Orçamento',       nEmOrc,              '#f59e0b', '', "rcdDesmobSub('tratamento')") +
-    kpi('Aguard. Cliente',    nAguCli,             '#10b981', `${nConclui} concluídos`, "rcdDesmobSub('tratamento')");
+    kpi('Casos Ativos',       ativos.length,      '#E8630A', `${regs.length} total`) +
+    kpi('Valor em Orçamento', fmt(valorTotal),     '#1D4ED8', `${comOrc.length} orçamentos`) +
+    kpi('Ticket Médio',       fmt(ticketMed),      '#1A2E35', '') +
+    kpi('Ag. Inspeção',       nAguInsp,            '#1D4ED8', '', "rcdDesmobSub('tratamento')") +
+    kpi('Em Orçamento',       nEmOrc,              '#B45309', '', "rcdDesmobSub('tratamento')") +
+    kpi('Ag. Cliente',        nAguCli,             '#1E8A4C', `${nConclui} concluídos`, "rcdDesmobSub('tratamento')");
 
   // Painel detalhe — barras de status + top clientes
   const detEl = document.getElementById('rcd-ind-detalhe'); if(!detEl) return;
@@ -12970,15 +12970,17 @@ function rcdRenderTriagem() {
 
   el.innerHTML = pendentes.map(e => {
     const desde = e.etapa_desde ? new Date(e.etapa_desde).toLocaleDateString('pt-BR') : '—';
-    return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700;color:#1e293b">${e.id}</div>
-        <div style="font-size:11px;color:#64748b;margin-top:2px">${e.equipamento||'—'}</div>
-        <div style="font-size:10px;color:#94a3b8;margin-top:3px">Oficina: ${e.oficina||'—'} &nbsp;·&nbsp; Chegada: ${desde}</div>
+    const initials = (e.id||'').slice(0,2).toUpperCase();
+    return `<div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)">
+      <div style="width:40px;height:40px;border-radius:10px;background:#FDE8D8;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#E8630A;flex-shrink:0">${initials}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:#1A2E35">${e.id}</div>
+        <div style="font-size:12px;color:#5A7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.equipamento||'—'}</div>
+        <div style="font-size:11px;color:#8FA4AE;margin-top:3px">${e.oficina||'—'} &nbsp;·&nbsp; Chegada: ${desde}</div>
       </div>
-      <div style="display:flex;gap:8px">
-        <button onclick="rcdTriagem('${e.id}','${e.etapa_desde||''}',true)" style="padding:7px 16px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">✔ Elegível</button>
-        <button onclick="rcdTriagem('${e.id}','${e.etapa_desde||''}',false)" style="padding:7px 16px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">✘ Não elegível</button>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button onclick="rcdTriagem('${e.id}','${e.etapa_desde||''}',true)" style="padding:7px 16px;background:#1E8A4C;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:background 120ms" onmouseover="this.style.background='#166a3a'" onmouseout="this.style.background='#1E8A4C'">✔ Elegível</button>
+        <button onclick="rcdTriagem('${e.id}','${e.etapa_desde||''}',false)" style="padding:7px 16px;background:#fff;color:#5A7280;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:background 120ms" onmouseover="this.style.background='#F4F6F8'" onmouseout="this.style.background='#fff'">✘ Não elegível</button>
       </div>
     </div>`;
   }).join('');
@@ -13012,7 +13014,7 @@ function rcdRenderTratamento() {
   const fases = { aguardando_inspecao: 'rcd-col-inspecao', em_orcamento: 'rcd-col-orcamento', aguardando_cliente: 'rcd-col-cliente', aguardando_faturamento: 'rcd-col-faturamento' };
   const proxima = { aguardando_inspecao: 'em_orcamento', em_orcamento: 'aguardando_cliente', aguardando_cliente: 'aguardando_faturamento', aguardando_faturamento: null };
   const proximaLabel = { aguardando_inspecao: 'Em Orçamento', em_orcamento: 'Aguardando Cliente', aguardando_cliente: 'Ag. Faturamento', aguardando_faturamento: null };
-  const STATUS_COR = { aguardando_inspecao:'#6366f1', em_orcamento:'#f59e0b', aguardando_cliente:'#10b981', aguardando_faturamento:'#8b5cf6' };
+  const STATUS_COR = { aguardando_inspecao:'#1D4ED8', em_orcamento:'#B45309', aguardando_cliente:'#1E8A4C', aguardando_faturamento:'#6D28D9' };
   const STATUS_LABEL = { aguardando_inspecao:'Ag. Inspeção', em_orcamento:'Em Orçamento', aguardando_cliente:'Ag. Cliente', aguardando_faturamento:'Ag. Faturamento' };
 
   Object.entries(fases).forEach(([status, colId]) => {
@@ -13042,22 +13044,22 @@ function rcdRenderTratamento() {
           ${clienteCard ? `<div style="font-size:10px;color:#64748b">👤 ${clienteCard}</div>` : ''}
           ${r.dt_entrada_inspecao ? `<div style="font-size:10px;color:#64748b">📅 ${new Date(r.dt_entrada_inspecao+'T00:00').toLocaleDateString('pt-BR')}</div>` : ''}
         </div>` : '';
-      return `<div style="background:#fff;border:1px solid #e2e8f0;border-left:3px solid ${cor};border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div>
-            <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id}</div>
-            <div style="font-size:11px;color:#64748b;margin-top:2px">${r.equip_nome}</div>
-            <div style="font-size:10px;color:#94a3b8;margin-top:3px">${clienteCard||r.oficina} · ${desde}</div>
+      return `<div style="background:#fff;border:1px solid #E2E8ED;border-left:3px solid ${cor};border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.05)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="min-width:0">
+            <div style="font-size:12px;font-weight:700;color:#1A2E35">${r.equip_id}</div>
+            <div style="font-size:11px;color:#5A7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.equip_nome}</div>
+            <div style="font-size:10px;color:#8FA4AE;margin-top:3px">${clienteCard||r.oficina||'—'} · ${desde}</div>
             ${extraInfo}
           </div>
-          ${isInsp ? `<button onclick="rcdInspAbrir('${r.id}')" style="padding:4px 8px;background:#eff0ff;color:#6366f1;border:1px solid #c7d2fe;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;margin-left:8px">✏ Editar</button>` : ''}
-          ${status==='em_orcamento' ? `<button onclick="rcdOrcAbrir('${r.id}')" style="padding:4px 8px;background:#fffbeb;color:#f59e0b;border:1px solid #fde68a;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;margin-left:8px">📄 Orçamento</button>` : ''}
+          ${isInsp ? `<button onclick="rcdInspAbrir('${r.id}')" style="padding:4px 9px;background:#DBEAFE;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">✏ Editar</button>` : ''}
+          ${status==='em_orcamento' ? `<button onclick="rcdOrcAbrir('${r.id}')" style="padding:4px 9px;background:#FEF3C7;color:#B45309;border:1px solid #FDE68A;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">📄 Orçamento</button>` : ''}
         </div>
-        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">
-          ${prox ? `<button onclick="rcdAvancar('${r.id}','${prox}')" ${bloqueado?'disabled title="Preencha a ordem de inspeção primeiro"':''} style="flex:1;padding:5px 8px;background:${bloqueado?'#e2e8f0':cor};color:${bloqueado?'#94a3b8':'#fff'};border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:${bloqueado?'not-allowed':'pointer'}">→ ${proxLbl}</button>` : ''}
-          ${status==='aguardando_cliente' ? `<button onclick="rcdOrcAbrir('${r.id}')" style="flex:1;padding:5px 8px;background:#fffbeb;color:#f59e0b;border:1px solid #fde68a;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer">✏ Editar Orç.</button>` : ''}
-          ${status==='em_orcamento' ? `<button onclick="rcdConcluirSemAvaria('${r.id}')" style="flex:1;padding:5px 8px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer">✓ Sem Avaria</button>` : ''}
-          ${status!=='aguardando_inspecao' ? `<button onclick="rcdConcluir('${r.id}')" style="flex:1;padding:5px 8px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer">Concluir</button>` : ''}
+        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:5px">
+          ${prox ? `<button onclick="rcdAvancar('${r.id}','${prox}')" ${bloqueado?'disabled title="Preencha a ordem de inspeção primeiro"':''} style="flex:1;padding:5px 8px;background:${bloqueado?'#F4F6F8':cor};color:${bloqueado?'#8FA4AE':'#fff'};border:none;border-radius:6px;font-size:10px;font-weight:600;cursor:${bloqueado?'not-allowed':'pointer'}">→ ${proxLbl}</button>` : ''}
+          ${status==='aguardando_cliente' ? `<button onclick="rcdOrcAbrir('${r.id}')" style="flex:1;padding:5px 8px;background:#FEF3C7;color:#B45309;border:1px solid #FDE68A;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer">✏ Editar Orç.</button>` : ''}
+          ${status==='em_orcamento' ? `<button onclick="rcdConcluirSemAvaria('${r.id}')" style="flex:1;padding:5px 8px;background:#E8F5EE;color:#1E8A4C;border:1px solid #A7F3D0;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer">✓ Sem Avaria</button>` : ''}
+          ${status!=='aguardando_inspecao' ? `<button onclick="rcdConcluir('${r.id}')" style="flex:1;padding:5px 8px;background:#F4F6F8;color:#5A7280;border:1px solid #E2E8ED;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer">Concluir</button>` : ''}
         </div>
       </div>`;
     }).join('');
@@ -16551,17 +16553,20 @@ if ('serviceWorker' in navigator) {
 </div>
 
 <!-- RCD — AVARIAS -->
-<div id="page-rcd" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#eef1f6;z-index:100">
+<div id="page-rcd" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#F4F6F8;z-index:100">
   <div style="padding:24px 28px;max-width:1400px">
-    <div class="page-hdr">
-      <div class="page-hdr-title"><span style="color:#b45309">⚠️</span> RCD — Avarias</div>
-      <div class="page-hdr-sub">Controle de cobranças de avarias a clientes</div>
+    <div style="margin-bottom:20px;display:flex;align-items:flex-start;gap:10px">
+      <div style="width:3px;height:24px;background:#E8630A;border-radius:2px;flex-shrink:0;margin-top:4px"></div>
+      <div>
+        <div style="font-size:20px;font-weight:700;color:#1A2E35;line-height:1.2">RCD — Avarias</div>
+        <div style="font-size:12px;color:#8FA4AE;margin-top:3px">Controle de cobranças de avarias a clientes</div>
+      </div>
     </div>
 
     <!-- Sub-abas -->
-    <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:20px">
-      <button id="rcd-tab-desmob" onclick="rcdAba('desmob')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#b45309;border-bottom:2px solid #b45309;margin-bottom:-2px">Desmobilização</button>
-      <button id="rcd-tab-operacao" onclick="rcdAba('operacao')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px">Em Operação</button>
+    <div style="display:flex;gap:0;border-bottom:2px solid #E2E8ED;margin-bottom:20px">
+      <button id="rcd-tab-desmob" onclick="rcdAba('desmob')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#E8630A;border-bottom:2px solid #E8630A;margin-bottom:-2px">Desmobilização</button>
+      <button id="rcd-tab-operacao" onclick="rcdAba('operacao')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#8FA4AE;border-bottom:2px solid transparent;margin-bottom:-2px">Em Operação</button>
     </div>
 
     <!-- ABA DESMOBILIZAÇÃO -->
@@ -16583,11 +16588,11 @@ if ('serviceWorker' in navigator) {
         </div>
       </div>
       <!-- Sub-navegação Desmob -->
-      <div style="display:flex;gap:8px;margin-bottom:18px">
-        <button id="rcd-dsub-triagem" onclick="rcdDesmobSub('triagem')" style="padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:#b45309;color:#fff">Triagem</button>
-        <button id="rcd-dsub-tratamento" onclick="rcdDesmobSub('tratamento')" style="padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:#f1f5f9;color:#64748b">Em Tratamento</button>
-        <button id="rcd-dsub-historico" onclick="rcdDesmobSub('historico')" style="padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:#f1f5f9;color:#64748b">Histórico</button>
-        <button onclick="rcdCarregar()" style="margin-left:auto;padding:7px 14px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid #e2e8f0;cursor:pointer;background:#fff;color:#64748b">↻ Atualizar</button>
+      <div style="display:flex;gap:6px;margin-bottom:18px;align-items:center">
+        <button id="rcd-dsub-triagem" onclick="rcdDesmobSub('triagem')" style="padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #E8630A;cursor:pointer;background:#FDE8D8;color:#E8630A">Triagem</button>
+        <button id="rcd-dsub-tratamento" onclick="rcdDesmobSub('tratamento')" style="padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #E2E8ED;cursor:pointer;background:#fff;color:#5A7280">Em Tratamento</button>
+        <button id="rcd-dsub-historico" onclick="rcdDesmobSub('historico')" style="padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #E2E8ED;cursor:pointer;background:#fff;color:#5A7280">Histórico</button>
+        <button onclick="rcdCarregar()" style="margin-left:auto;padding:6px 14px;border-radius:7px;font-size:11px;font-weight:600;border:1px solid #E2E8ED;cursor:pointer;background:#fff;color:#5A7280">↻ Atualizar</button>
       </div>
 
       <!-- TRIAGEM -->
@@ -16598,21 +16603,21 @@ if ('serviceWorker' in navigator) {
 
       <!-- EM TRATAMENTO -->
       <div id="rcd-panel-tratamento" style="display:none">
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
           <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #6366f1">Aguardando Inspeção</div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#1D4ED8;margin-bottom:10px;padding:9px 12px;background:#DBEAFE;border-radius:8px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#1D4ED8;flex-shrink:0"></span>Ag. Inspeção</div>
             <div id="rcd-col-inspecao" style="display:flex;flex-direction:column;gap:8px"></div>
           </div>
           <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #f59e0b">Em Orçamento</div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#B45309;margin-bottom:10px;padding:9px 12px;background:#FEF3C7;border-radius:8px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#B45309;flex-shrink:0"></span>Em Orçamento</div>
             <div id="rcd-col-orcamento" style="display:flex;flex-direction:column;gap:8px"></div>
           </div>
           <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #10b981">Aguardando Cliente</div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#1E8A4C;margin-bottom:10px;padding:9px 12px;background:#E8F5EE;border-radius:8px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#1E8A4C;flex-shrink:0"></span>Ag. Cliente</div>
             <div id="rcd-col-cliente" style="display:flex;flex-direction:column;gap:8px"></div>
           </div>
           <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #8b5cf6">Aguardando Faturamento</div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6D28D9;margin-bottom:10px;padding:9px 12px;background:#EDE9FE;border-radius:8px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#6D28D9;flex-shrink:0"></span>Ag. Faturamento</div>
             <div id="rcd-col-faturamento" style="display:flex;flex-direction:column;gap:8px"></div>
           </div>
         </div>
