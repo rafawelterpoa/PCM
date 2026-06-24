@@ -15023,14 +15023,19 @@ function solRcdRender(sfx=''){
     const valAgCliente = valPorStatus('aguardando_cliente');
     const valAgExec    = valPorStatus('aguardando_execucao');
     const valAgFat     = valPorStatus('aguardando_faturamento');
-    const kpiCard=(label,val,cor,sub='')=>`<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:12px 14px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;margin-bottom:4px">${label}</div><div style="font-size:18px;font-weight:800;color:${cor}">${val}</div>${sub?`<div style="font-size:10px;color:#94a3b8;margin-top:2px">${sub}</div>`:''}</div>`;
+    const kpiCard=(label,val,cor,sub='',acento=cor)=>`<div style="background:#fff;border-radius:10px;border:1px solid #E2E8ED;border-left:3px solid ${acento};padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06)"><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;margin-bottom:6px">${label}</div><div style="font-size:22px;font-weight:800;color:${cor};line-height:1.1">${val}</div>${sub?`<div style="font-size:11px;color:#8FA4AE;margin-top:4px">${sub}</div>`:''}</div>`;
     kpiEl.innerHTML=
-      kpiCard('Ativos',filtAtivos.length,'#0f172a',filtRegs.length+' total')+
-      kpiCard('Valor Faturado',fmt(valFaturado),'#15803d',concluidos.length+' registros')+
-      kpiCard('Ag. Cliente',fmt(valAgCliente),'#10b981',filtAtivos.filter(r=>r.status==='aguardando_cliente').length+' casos')+
-      kpiCard('Ag. Execução',fmt(valAgExec),'#0ea5e9',filtAtivos.filter(r=>r.status==='aguardando_execucao').length+' casos')+
-      kpiCard('Ag. Faturamento',fmt(valAgFat),'#8b5cf6',filtAtivos.filter(r=>r.status==='aguardando_faturamento').length+' casos')+
-      kpiCard('Ag. Orçamento',filtAtivos.filter(r=>r.status==='aguardando_orcamento').length,'#f59e0b',filtAtivos.filter(r=>r.status==='em_aprovacao').length+' em aprovação');
+      kpiCard('Ativos',filtAtivos.length,'#1A2E35',filtRegs.length+' total','#E8630A')+
+      kpiCard('Valor Faturado',fmt(valFaturado),'#1E8A4C',concluidos.length+' registros','#1E8A4C')+
+      kpiCard('Ag. Cliente',fmt(valAgCliente),'#10b981',filtAtivos.filter(r=>r.status==='aguardando_cliente').length+' casos','#10b981')+
+      kpiCard('Ag. Execução',fmt(valAgExec),'#1D4ED8',filtAtivos.filter(r=>r.status==='aguardando_execucao').length+' casos','#3b82f6')+
+      kpiCard('Ag. Faturamento',fmt(valAgFat),'#6D28D9',filtAtivos.filter(r=>r.status==='aguardando_faturamento').length+' casos','#8b5cf6')+
+      kpiCard('Ag. Orçamento',filtAtivos.filter(r=>r.status==='aguardando_orcamento').length,'#B45309',filtAtivos.filter(r=>r.status==='em_aprovacao').length+' em aprovação','#f59e0b');
+    const hdrStats=document.getElementById('rcd-header-stats');
+    if(hdrStats){
+      const taxaConv=concluidos.length&&filtRegs.filter(r=>['concluido','nao_elegivel'].includes(r.status)).length?Math.round(concluidos.length/filtRegs.filter(r=>['concluido','nao_elegivel'].includes(r.status)).length*100):0;
+      hdrStats.innerHTML=`<div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#E8630A">${filtAtivos.length}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Em aberto</div></div><div style="width:1px;height:32px;background:#E2E8ED"></div><div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#1E8A4C">${fmt(valFaturado)}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Faturado</div></div><div style="width:1px;height:32px;background:#E2E8ED"></div><div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#1A2E35">${taxaConv}%</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Conversão</div></div>`;
+    }
   }
 
   // Kanban
@@ -15288,27 +15293,27 @@ function solRcdGraficos(sfx, regs) {
   });
 
   el.innerHTML = `
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:8px">Taxa de Conversão</div>
-      <div style="position:relative;width:140px;height:140px">
-        <canvas id="sol-chart-conv${sfx}" width="140" height="140"></canvas>
-        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:24px;font-weight:900;color:#0f172a;pointer-events:none">${taxaConv}%</div>
+    <div style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;margin-bottom:10px;align-self:flex-start">Taxa de Conversão</div>
+      <div style="position:relative;width:130px;height:130px">
+        <canvas id="sol-chart-conv${sfx}" width="130" height="130"></canvas>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:26px;font-weight:900;color:#1A2E35;pointer-events:none">${taxaConv}%</div>
       </div>
-      <div style="font-size:11px;color:#64748b;margin-top:8px;text-align:center">${concluidos.length} faturados de ${fechados} fechados</div>
+      <div style="font-size:11px;color:#8FA4AE;margin-top:10px;text-align:center">${concluidos.length} faturados de ${fechados} fechados</div>
     </div>
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:12px">Orçamentos enviados por mês</div>
+    <div style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;margin-bottom:14px">Orçamentos enviados por mês</div>
       <canvas id="sol-chart-mes${sfx}" height="120"></canvas>
     </div>
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:12px">Faturamento por mês (R$)</div>
+    <div style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;margin-bottom:14px">Faturamento por mês (R$)</div>
       <canvas id="sol-chart-fat${sfx}" height="120"></canvas>
     </div>
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:8px">Lead Time Médio</div>
-      <div style="font-size:48px;font-weight:900;color:${leadTimes.length?'#F37021':'#cbd5e1'};line-height:1">${leadTimes.length?leadMedio:'—'}</div>
-      <div style="font-size:13px;color:#64748b;margin-top:4px">${leadTimes.length?'dias':'sem dados'}</div>
-      <div style="font-size:10px;color:#94a3b8;margin-top:8px;text-align:center">Envio → Faturamento<br>${leadTimes.length} com timestamps</div>
+    <div style="background:#fff;border:1px solid #E2E8ED;border-top:3px solid #E8630A;border-radius:10px;padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;margin-bottom:10px">Lead Time Médio</div>
+      <div style="font-size:52px;font-weight:900;color:${leadTimes.length?'#E8630A':'#C8D4DA'};line-height:1">${leadTimes.length?leadMedio:'—'}</div>
+      <div style="font-size:13px;font-weight:600;color:#5A7280;margin-top:6px">${leadTimes.length?'dias':'sem dados'}</div>
+      <div style="font-size:11px;color:#8FA4AE;margin-top:8px;text-align:center">Envio → Faturamento<br>${leadTimes.length} registros</div>
     </div>`;
 
   ['conv','mes','fat'].forEach(k => {
@@ -16620,12 +16625,15 @@ if ('serviceWorker' in navigator) {
 <!-- RCD — AVARIAS -->
 <div id="page-rcd" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#F4F6F8;z-index:100">
   <div style="padding:24px 28px;max-width:1400px">
-    <div style="margin-bottom:20px;display:flex;align-items:flex-start;gap:10px">
-      <div style="width:3px;height:24px;background:#E8630A;border-radius:2px;flex-shrink:0;margin-top:4px"></div>
-      <div>
-        <div style="font-size:20px;font-weight:700;color:#1A2E35;line-height:1.2">RCD — Avarias</div>
-        <div style="font-size:12px;color:#8FA4AE;margin-top:3px">Controle de cobranças de avarias a clientes</div>
+    <div style="margin-bottom:20px;background:#fff;border-radius:12px;border:1px solid #E2E8ED;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:4px;height:40px;background:#E8630A;border-radius:2px;flex-shrink:0"></div>
+        <div>
+          <div style="font-size:20px;font-weight:700;color:#1A2E35;line-height:1.2">RCD — Avarias</div>
+          <div style="font-size:12px;color:#8FA4AE;margin-top:3px">Controle de cobranças de avarias a clientes</div>
+        </div>
       </div>
+      <div id="rcd-header-stats" style="display:flex;gap:24px;align-items:center"></div>
     </div>
 
     <!-- Sub-abas -->
@@ -16832,35 +16840,35 @@ if ('serviceWorker' in navigator) {
         <button onclick="solRcdNovaAbrir()" style="padding:10px 16px;background:#F37021;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;margin-top:0">+ Nova Solicitação</button>
       </div>
       <!-- Filtros -->
-      <div id="sol-filtros-inline" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;align-items:center"></div>
+      <div id="sol-filtros-inline" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:12px 16px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.04)"></div>
       <!-- Gráficos analíticos -->
       <div id="sol-graficos-inline" style="display:grid;grid-template-columns:1fr 2fr 2fr 1fr;gap:14px;margin-bottom:24px;align-items:start"></div>
       <!-- Sub-abas Kanban / Histórico -->
-      <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:20px">
-        <button id="sol-tab-kanban-inline" onclick="solRcdAba('kanban','-inline')" style="padding:9px 18px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:none;color:#F37021;border-bottom:2px solid #F37021;margin-bottom:-2px">Kanban</button>
-        <button id="sol-tab-historico-inline" onclick="solRcdAba('historico','-inline')" style="padding:9px 18px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:none;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px">Histórico / Concluídos</button>
+      <div style="display:flex;gap:0;border-bottom:2px solid #E2E8ED;margin-bottom:20px">
+        <button id="sol-tab-kanban-inline" onclick="solRcdAba('kanban','-inline')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#E8630A;border-bottom:2px solid #E8630A;margin-bottom:-2px">Kanban</button>
+        <button id="sol-tab-historico-inline" onclick="solRcdAba('historico','-inline')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#8FA4AE;border-bottom:2px solid transparent;margin-bottom:-2px">Histórico / Concluídos</button>
       </div>
       <!-- Kanban -->
       <div id="sol-kanban-inline-wrap">
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px">
         <div>
-          <div id="sol-col-hdr-em_aprovacao-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #6366f1">Em Aprovação</div>
+          <div id="sol-col-hdr-em_aprovacao-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6366f1;margin-bottom:10px;padding:9px 12px;background:#EEF2FF;border-radius:8px;display:flex;align-items:center;justify-content:space-between"><span style="display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#6366f1;flex-shrink:0"></span>Em Aprovação</span></div>
           <div id="sol-col-aprovacao-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
         </div>
         <div>
-          <div id="sol-col-hdr-aguardando_orcamento-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #f59e0b">Ag. Orçamento</div>
+          <div id="sol-col-hdr-aguardando_orcamento-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#B45309;margin-bottom:10px;padding:9px 12px;background:#FEF3C7;border-radius:8px;display:flex;align-items:center;justify-content:space-between"><span style="display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#f59e0b;flex-shrink:0"></span>Ag. Orçamento</span></div>
           <div id="sol-col-orcamento-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
         </div>
         <div>
-          <div id="sol-col-hdr-aguardando_cliente-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #10b981">Ag. Cliente</div>
+          <div id="sol-col-hdr-aguardando_cliente-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#1E8A4C;margin-bottom:10px;padding:9px 12px;background:#E8F5EE;border-radius:8px;display:flex;align-items:center;justify-content:space-between"><span style="display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#10b981;flex-shrink:0"></span>Ag. Cliente</span></div>
           <div id="sol-col-cliente-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
         </div>
         <div>
-          <div id="sol-col-hdr-aguardando_execucao-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #3b82f6">Ag. Execução</div>
+          <div id="sol-col-hdr-aguardando_execucao-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#1D4ED8;margin-bottom:10px;padding:9px 12px;background:#DBEAFE;border-radius:8px;display:flex;align-items:center;justify-content:space-between"><span style="display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#3b82f6;flex-shrink:0"></span>Ag. Execução</span></div>
           <div id="sol-col-execucao-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
         </div>
         <div>
-          <div id="sol-col-hdr-aguardando_faturamento-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#fff;border-radius:8px;border-left:3px solid #8b5cf6">Ag. Faturamento</div>
+          <div id="sol-col-hdr-aguardando_faturamento-inline" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6D28D9;margin-bottom:10px;padding:9px 12px;background:#EDE9FE;border-radius:8px;display:flex;align-items:center;justify-content:space-between"><span style="display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#8b5cf6;flex-shrink:0"></span>Ag. Faturamento</span></div>
           <div id="sol-col-faturamento-inline" style="display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
         </div>
       </div>
