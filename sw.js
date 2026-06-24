@@ -1,4 +1,4 @@
-// SW v13 — HTML sempre da rede + auto-reload ao atualizar
+// SW v14 — cache-bust via query string + auto-reload
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
@@ -15,11 +15,14 @@ self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-// Navegações HTML sempre da rede, sem cache HTTP
+// Navegações: adiciona ?_cb=timestamp para burlar CDN do GitHub Pages
 self.addEventListener('fetch', e => {
   if (e.request.mode === 'navigate') {
+    const url = new URL(e.request.url);
+    url.searchParams.set('_cb', Date.now());
     e.respondWith(
-      fetch(e.request, {cache: 'no-store'}).catch(() => fetch(e.request))
+      fetch(url.toString(), {cache: 'no-store', headers: {'Cache-Control': 'no-cache'}})
+        .catch(() => fetch(e.request))
     );
   }
 });
