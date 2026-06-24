@@ -1,4 +1,4 @@
-// SW v10 — HTML sempre da rede, sem cache
+// SW v11 — HTML sempre da rede, sem cache, com fallback
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
@@ -13,9 +13,10 @@ self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-// Navegação (HTML): sempre busca da rede ignorando cache HTTP
 self.addEventListener('fetch', e => {
   if (e.request.mode === 'navigate') {
-    e.respondWith(fetch(e.request, {cache: 'no-store'}));
+    e.respondWith(
+      fetch(e.request, {cache: 'no-store'}).catch(() => fetch(e.request))
+    );
   }
 });
