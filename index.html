@@ -15966,38 +15966,60 @@ function opRenderKpis(opsFiltradas){
 function opRenderChart(ops){
   const src=ops||OPERACOES_DATA;
 
-  // ── Gráfico 1: Top Famílias — barras VERTICAIS (fonte: EQUIPAMENTOS_ORIG) ─
+  // ── Gráfico 1: Top Famílias — barras VERTICAIS ─────────────────────────────
   const el=document.getElementById('op-chart');
   if(el){
     const todosLoc=opAlugadosBase().filter(e=>(!_opTipoFiltro||frotaClassificar(e.tipo)===_opTipoFiltro)&&(!_opContratoFiltro||e.tipoContrato===_opContratoFiltro));
     const fams={};
     todosLoc.forEach(e=>{if(e.tipo)fams[e.tipo]=(fams[e.tipo]||0)+1;});
     const sorted=Object.entries(fams).sort((a,b)=>b[1]-a[1]).slice(0,8);
-    if(!sorted.length){el.innerHTML='<div style="text-align:center;color:#94a3b8;padding:40px 20px;font-size:12px">Sem dados</div>';}
+    if(!sorted.length){el.innerHTML='<div style="text-align:center;color:#8FA4AE;padding:40px 20px;font-size:12px">Sem dados</div>';}
     else{
       const max=sorted[0][1];
-      const pal=['#F37021','#fb923c','#fbbf24','#34d399','#60a5fa','#a78bfa','#f472b6','#94a3b8'];
+      // Degradê do laranja Mills para tons mais frios
+      const pal=['#E8630A','#F07C35','#F59556','#F9AE77','#94a3b8','#b0bec5','#cfd8dc','#eceff1'];
+      const steps=4;
+      const gridLines=Array.from({length:steps},(_,i)=>Math.round(max*(steps-i)/steps));
       el.innerHTML=`
-        <div style="display:flex;align-items:flex-end;justify-content:space-around;gap:6px;height:180px;border-bottom:2px solid #f1f5f9;margin-bottom:12px;padding:0 4px">
-          ${sorted.map(([fam,n],i)=>{
-            const h=Math.max(20,Math.round((n/max)*160));
-            return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0">
-              <div style="font-size:11px;font-weight:800;color:#1e293b;white-space:nowrap">${n}</div>
-              <div style="width:100%;max-width:52px;height:${h}px;background:${pal[i]};border-radius:6px 6px 0 0;transition:height .5s ease"></div>
-            </div>`;
-          }).join('')}
+        <div style="position:relative;display:flex;gap:8px">
+          <!-- Eixo Y -->
+          <div style="display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;height:180px;padding-bottom:2px;flex-shrink:0">
+            ${gridLines.map(v=>`<div style="font-size:9px;color:#C8D4DA;font-weight:500;line-height:1">${v}</div>`).join('')}
+            <div style="font-size:9px;color:#C8D4DA">0</div>
+          </div>
+          <!-- Área das barras -->
+          <div style="flex:1;position:relative">
+            <!-- Linhas de grade -->
+            <div style="position:absolute;inset:0 0 0 0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none">
+              ${gridLines.map(()=>`<div style="border-top:1px dashed #E2E8ED;width:100%"></div>`).join('')}
+              <div style="border-top:2px solid #E2E8ED;width:100%"></div>
+            </div>
+            <!-- Barras -->
+            <div style="display:flex;align-items:flex-end;justify-content:space-around;gap:4px;height:180px;padding:0 2px;position:relative">
+              ${sorted.map(([fam,n],i)=>{
+                const h=Math.max(16,Math.round((n/max)*168));
+                const words=fam.split(' ');
+                const label=words.length>2?words.slice(0,2).join(' ')+'…':fam;
+                return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0" title="${fam}: ${n}">
+                  <div style="font-size:10px;font-weight:700;color:#1A2E35">${n}</div>
+                  <div style="width:100%;max-width:48px;height:${h}px;background:${pal[i]};border-radius:5px 5px 0 0;transition:height .4s ease;cursor:default"></div>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>
         </div>
-        <div style="display:flex;justify-content:space-around;gap:6px;padding:0 4px">
+        <!-- Labels eixo X -->
+        <div style="display:flex;justify-content:space-around;gap:4px;padding:8px 0 0 28px">
           ${sorted.map(([fam],i)=>{
             const words=fam.split(' ');
             const label=words.length>2?words.slice(0,2).join(' ')+'…':fam;
-            return `<div style="flex:1;min-width:0;text-align:center;font-size:9px;color:#64748b;line-height:1.3;word-break:break-word">${label}</div>`;
+            return `<div style="flex:1;min-width:0;text-align:center;font-size:9px;color:#8FA4AE;line-height:1.3">${label}</div>`;
           }).join('')}
         </div>`;
     }
   }
 
-  // ── Gráfico 2: Top Clientes — barras HORIZONTAIS (fonte: OPERACOES_DATA) ──
+  // ── Gráfico 2: Top Clientes — barras HORIZONTAIS ───────────────────────────
   const el2=document.getElementById('op-chart-clientes');
   if(el2){
     const clientes={};
@@ -16006,18 +16028,20 @@ function opRenderChart(ops){
       clientes[key]=(clientes[key]||0)+o.equips.length;
     });
     const sorted2=Object.entries(clientes).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    if(!sorted2.length){el2.innerHTML='<div style="text-align:center;color:#94a3b8;padding:40px 20px;font-size:12px">Sem dados</div>';}
+    if(!sorted2.length){el2.innerHTML='<div style="text-align:center;color:#8FA4AE;padding:40px 20px;font-size:12px">Sem dados</div>';}
     else{
       const max2=sorted2[0][1];
-      el2.innerHTML=sorted2.map(([cli,n])=>{
+      el2.innerHTML=sorted2.map(([cli,n],i)=>{
         const pct=Math.round((n/max2)*100);
-        const short=cli.length>30?cli.slice(0,29)+'…':cli;
-        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">
-          <div style="width:150px;font-size:10px;font-weight:500;color:#475569;text-align:right;flex-shrink:0;line-height:1.3">${short}</div>
-          <div style="flex:1;background:#f1f5f9;border-radius:6px;height:20px;overflow:hidden">
-            <div style="width:${pct}%;background:linear-gradient(90deg,#2563eb,#60a5fa);height:100%;border-radius:6px;transition:width .5s ease"></div>
+        const short=cli.length>28?cli.slice(0,27)+'…':cli;
+        const isTop=i===0;
+        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="width:18px;font-size:10px;font-weight:700;color:${isTop?'#E8630A':'#C8D4DA'};text-align:right;flex-shrink:0">${i+1}</div>
+          <div style="width:130px;font-size:10px;font-weight:${isTop?'600':'400'};color:${isTop?'#1A2E35':'#5A7280'};text-align:right;flex-shrink:0;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${short}</div>
+          <div style="flex:1;background:#F4F6F8;border-radius:4px;height:18px;overflow:hidden">
+            <div style="width:${pct}%;background:${isTop?'#E8630A':'linear-gradient(90deg,#E8630A,#F5A96D)'};opacity:${isTop?1:0.4+i*0.06};height:100%;border-radius:4px;transition:width .4s ease"></div>
           </div>
-          <div style="width:32px;font-size:11px;font-weight:800;color:#1e293b;text-align:right">${n}</div>
+          <div style="width:28px;font-size:11px;font-weight:700;color:#1A2E35;text-align:right;flex-shrink:0">${n}</div>
         </div>`;
       }).join('');
     }
@@ -16047,28 +16071,40 @@ function opRender(){
   if(!ops.length){lista.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhuma operação encontrada.</div>';return;}
 
   const _CTcor={'Gestão de frota':['#EDE9FF','#5B4DB5'],'Locação':['#DBEAFE','#1D4ED8'],'Locação + Operação':['#D1FAE5','#065F46'],'Venda':['#FEE2E2','#B91C1C']};
-  lista.innerHTML=`<div style="font-size:11px;color:#8FA4AE;margin-bottom:10px;font-weight:600">${ops.length} operação(ões) encontrada(s)</div>
-  <div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)">
-  <table style="width:100%;border-collapse:collapse;font-size:12px">
-    <thead><tr style="background:#F4F6F8;border-bottom:2px solid #E2E8ED">
-      <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE">Planta / Obra</th>
-      <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE">Cliente</th>
-      <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE">Equip.</th>
-      <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE">Município</th>
-      <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE">UF</th>
+  lista.innerHTML=`<div style="font-size:11px;color:#8FA4AE;margin-bottom:10px;font-weight:600;letter-spacing:.03em">${ops.length} operaç${ops.length===1?'ão':'ões'} encontrada${ops.length===1?'':'s'}</div>
+  <div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="background:#F4F6F8">
+      <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;border-bottom:2px solid #E2E8ED">Planta / Obra</th>
+      <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;border-bottom:2px solid #E2E8ED">Cliente</th>
+      <th style="padding:11px 16px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;border-bottom:2px solid #E2E8ED">Equip.</th>
+      <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;border-bottom:2px solid #E2E8ED">Município</th>
+      <th style="padding:11px 16px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;border-bottom:2px solid #E2E8ED">UF</th>
+      <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;border-bottom:2px solid #E2E8ED">Contrato</th>
     </tr></thead>
     <tbody>
-      ${ops.sort((a,b)=>b.equips.length-a.equips.length).map((op)=>{
+      ${ops.sort((a,b)=>b.equips.length-a.equips.length).map((op,rank)=>{
         const ct=op.equips[0]?opContratoEquip(op.equips[0]):'';
         const cc=_CTcor[ct]||['#F4F6F8','#5A7280'];
-        const ctBadge=ct?`<span style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;background:${cc[0]};color:${cc[1]};margin-left:6px">${ct}</span>`:'';
+        const ctBadge=ct?`<span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;background:${cc[0]};color:${cc[1]}">${ct}</span>`:'<span style="color:#C8D4DA;font-size:11px">—</span>';
         const idx=OPERACOES_DATA.indexOf(op);
-        return `<tr style="border-bottom:1px solid #F0F4F6;cursor:pointer;transition:background .1s" onclick="opVerDetalhe(${idx})" onmouseover="this.style.background='#F8FAFB'" onmouseout="this.style.background=''">
-          <td style="padding:10px 14px;color:#1A2E35;font-weight:600">${op.nome}${ctBadge}</td>
-          <td style="padding:10px 14px;color:#5A7280;font-size:11px">${op.cliente&&op.cliente!==op.nome?op.cliente:'—'}</td>
-          <td style="padding:10px 14px;text-align:right;font-weight:700;color:#E8630A;font-size:17px">${op.equips.length}</td>
-          <td style="padding:10px 14px;color:#5A7280">${op.municipio||'—'}</td>
-          <td style="padding:10px 14px;text-align:right">${op.estado?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(232,99,10,.08);color:#E8630A;border:1px solid rgba(232,99,10,.15)">${op.estado}</span>`:'—'}</td>
+        const initials=(op.nome||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+        const avatarColors=['#E8630A','#1D4ED8','#065F46','#5B4DB5','#B45309','#0F766E'];
+        const ac=avatarColors[rank%avatarColors.length];
+        return `<tr style="border-bottom:1px solid #F0F4F6;cursor:pointer;transition:background 120ms" onclick="opVerDetalhe(${idx})" onmouseover="this.style.background='#FAFBFC'" onmouseout="this.style.background=''">
+          <td style="padding:12px 16px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:32px;height:32px;border-radius:8px;background:${ac};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">${initials}</div>
+              <div style="font-weight:600;color:#1A2E35;line-height:1.3">${op.nome}</div>
+            </div>
+          </td>
+          <td style="padding:12px 16px;color:#5A7280;font-size:12px">${op.cliente&&op.cliente!==op.nome?op.cliente:'—'}</td>
+          <td style="padding:12px 16px;text-align:center">
+            <div style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:28px;background:rgba(232,99,10,.08);border-radius:6px;font-weight:700;color:#E8630A;font-size:15px">${op.equips.length}</div>
+          </td>
+          <td style="padding:12px 16px;color:#5A7280;font-size:12px">${op.municipio||'—'}</td>
+          <td style="padding:12px 16px;text-align:center">${op.estado?`<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:#F4F6F8;color:#5A7280;border:1px solid #E2E8ED">${op.estado}</span>`:'—'}</td>
+          <td style="padding:12px 16px">${ctBadge}</td>
         </tr>`;}).join('')}
     </tbody>
   </table></div>`;
