@@ -13975,7 +13975,7 @@ function mtSalvar(){
     obj.id=editId;obj.ts=_mtRegistros.find(r=>r.id===editId)?.ts||Date.now();
     mtCancelar();
   }else{
-    obj.id='MT_'+Date.now();obj.ts=Date.now();
+    obj.id='MT_'+Date.now();obj.ts=Date.now();obj.status='em_andamento';
     _mtRegistros.unshift(obj);
     ['mt-equip-id','mt-familia','mt-fornecedor','mt-om','mt-rc','mt-pc','mt-descricao','mt-valor','mt-justificativa'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     document.getElementById('mt-tipo').value='';
@@ -14004,6 +14004,28 @@ async function mtDeletar(id){
   _mtRegistros=_mtRegistros.filter(r=>r.id!==id);
   await mtDeleteFirebase(id);
   mtRender();mtUpdateHomeBadge();mtPopularFiltroFornecedor();showToast('🗑 Registro removido.');
+}
+
+let _mtAbaAtiva='andamento';
+function mtAba(aba){
+  _mtAbaAtiva=aba;
+  ['andamento','historico'].forEach(a=>{
+    const btn=document.getElementById('mt-tab-'+a);if(!btn)return;
+    const ativo=a===aba;
+    btn.style.color=ativo?'#7c3aed':'#8FA4AE';
+    btn.style.borderBottomColor=ativo?'#7c3aed':'transparent';
+  });
+  mtRender();
+}
+
+async function mtConcluir(id){
+  if(!confirm('Marcar esta manutenção como concluída?'))return;
+  const idx=_mtRegistros.findIndex(r=>r.id===id);
+  if(idx<0)return;
+  _mtRegistros[idx].status='concluido';
+  _mtRegistros[idx].dataConclusao=new Date().toLocaleDateString('pt-BR');
+  await mtSalvarTudo(_mtRegistros[idx]);
+  mtRender();showToast('✅ Manutenção concluída!');
 }
 
 function mtCancelar(){
@@ -14036,7 +14058,8 @@ function mtRender(){
   const busca=(document.getElementById('mt-busca')?.value||'').toLowerCase();
   const filtTipo=document.getElementById('mt-fil-tipo')?.value||'';
   const filtForn=document.getElementById('mt-fil-fornecedor')?.value||'';
-  let dados=_mtRegistros;
+  const abaHist=_mtAbaAtiva==='historico';
+  let dados=_mtRegistros.filter(r=>abaHist?(r.status==='concluido'):(r.status!=='concluido'));
   if(busca)dados=dados.filter(r=>(r.equipId||'').toLowerCase().includes(busca)||(r.fornecedor||'').toLowerCase().includes(busca)||(r.familia||'').toLowerCase().includes(busca)||(r.descricao||'').toLowerCase().includes(busca));
   if(filtTipo)dados=dados.filter(r=>r.tipo===filtTipo);
   if(filtForn)dados=dados.filter(r=>r.fornecedor===filtForn);
@@ -14082,13 +14105,14 @@ function mtRender(){
     <td style="padding:10px 12px;text-align:right;font-weight:700;color:#B91C1C;font-size:12px">${r.valor?'R$ '+r.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'}</td>
     <td style="padding:10px 12px;font-size:11px;color:#8FA4AE">${r.dataRegistro||'—'}</td>
     <td style="padding:10px 12px;text-align:right;white-space:nowrap">
+      ${!abaHist?`<button onclick="mtConcluir('${r.id}')" style="padding:4px 10px;background:#E8F5EE;color:#1E8A4C;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin-right:4px">✓ Concluir</button>`:`<span style="font-size:11px;color:#8FA4AE;margin-right:8px">${r.dataConclusao||''}</span>`}
       <button onclick="mtEditar('${r.id}')" style="padding:4px 10px;background:#FDE8D8;color:#E8630A;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin-right:4px">Editar</button>
       <button onclick="mtDeletar('${r.id}')" style="padding:4px 10px;background:#FEE2E2;color:#B91C1C;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer">Excluir</button>
     </td>
   </tr>`).join('');
   tabEl.innerHTML=`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)">
   <table style="width:100%;border-collapse:collapse;font-size:13px">
-    <thead><tr>${['ID Equip.','Família','Tipo','Fornecedor','Solicitante','Aprovador','O.M.','RC','PC','Descrição','Valor','Data','Ações'].map(colHd).join('')}</tr></thead>
+    <thead><tr>${[...(abaHist?['Conclusão']:['']),'ID Equip.','Família','Tipo','Fornecedor','Solicitante','Aprovador','O.M.','RC','PC','Descrição','Valor','Data','Ações'].filter(Boolean).map(colHd).join('')}</tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
 }
@@ -16571,16 +16595,6 @@ if ('serviceWorker' in navigator) {
 <!-- MANUTENÇÃO DE TERCEIROS -->
 <div id="page-manuterceiros" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#F4F6F8;z-index:100">
   <div style="padding:24px 28px;max-width:1400px">
-    <div style="margin-bottom:20px;background:#fff;border-radius:12px;border:1px solid #E2E8ED;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:14px">
-        <div style="width:4px;height:40px;background:#7c3aed;border-radius:2px;flex-shrink:0"></div>
-        <div>
-          <div style="font-size:20px;font-weight:700;color:#1A2E35;line-height:1.2">Manutenção de Terceiros</div>
-          <div style="font-size:12px;color:#8FA4AE;margin-top:3px">Controle de serviços externos e mão de obra de terceiros</div>
-        </div>
-      </div>
-      <div id="mt-header-stats" style="display:flex;gap:24px;align-items:center"></div>
-    </div>
 
     <!-- FORMULÁRIO -->
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
@@ -16625,18 +16639,24 @@ if ('serviceWorker' in navigator) {
     <!-- KPIs rápidos -->
     <div id="mt-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px"></div>
 
-    <!-- FILTROS + TABELA -->
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:12px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
-      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;white-space:nowrap">Filtros</span>
-      <input id="mt-busca" oninput="mtRender()" placeholder="ID, equipamento, fornecedor..." style="padding:8px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;flex:1;min-width:160px;outline:none;color:#1A2E35">
-      <select id="mt-fil-tipo" onchange="mtRender()" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;background:#fff;color:#1A2E35">
+    <!-- ABAS -->
+    <div style="display:flex;gap:0;border-bottom:2px solid #E2E8ED;margin-bottom:16px">
+      <button id="mt-tab-andamento" onclick="mtAba('andamento')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#7c3aed;border-bottom:2px solid #7c3aed;margin-bottom:-2px">Em Andamento</button>
+      <button id="mt-tab-historico" onclick="mtAba('historico')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#8FA4AE;border-bottom:2px solid transparent;margin-bottom:-2px">Histórico / Concluídos</button>
+    </div>
+
+    <!-- FILTROS -->
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:10px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;white-space:nowrap;flex-shrink:0">Filtros</span>
+      <input id="mt-busca" oninput="mtRender()" placeholder="ID, equipamento, fornecedor..." style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;flex:1;outline:none;color:#1A2E35">
+      <select id="mt-fil-tipo" onchange="mtRender()" style="padding:7px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;background:#fff;color:#1A2E35;flex-shrink:0">
         <option value="">Tipo — Todos</option>
         <option>Corretiva</option><option>Sinistro</option><option>Preparação para Mobilização</option><option>Preventiva</option>
       </select>
-      <select id="mt-fil-fornecedor" onchange="mtRender()" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;background:#fff;color:#1A2E35">
+      <select id="mt-fil-fornecedor" onchange="mtRender()" style="padding:7px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;background:#fff;color:#1A2E35;flex-shrink:0">
         <option value="">Fornecedor — Todos</option>
       </select>
-      <button onclick="mtGerarRelatorio()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;margin-left:auto;white-space:nowrap">Relatório</button>
+      <button onclick="mtGerarRelatorio()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">Relatório</button>
     </div>
 
     <!-- Tabela -->
