@@ -1043,25 +1043,29 @@ input.filter-sel{padding:5px 10px;height:32px}
     <!-- KPIs (3 cards) -->
     <div id="op-kpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px"></div>
 
-    <!-- Filtros unificados — linha 1: tipo + contrato + busca -->
-    <div style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <div id="op-filtro-tipo-wrap" style="display:flex;gap:5px;flex-wrap:wrap">
-        <button onclick="opSetTipo('')"            data-tipo=""           style="padding:5px 14px;border-radius:20px;border:1.5px solid #E8630A;background:#FDE8D8;color:#E8630A;font-size:11px;font-weight:600;cursor:pointer">Tudo</button>
-        <button onclick="opSetTipo('equipamento')" data-tipo="equipamento" style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Equipamentos</button>
-        <button onclick="opSetTipo('implemento')"  data-tipo="implemento"  style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Implementos</button>
-        <button onclick="opSetTipo('acessorio')"   data-tipo="acessorio"   style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Acessórios</button>
+    <!-- Filtros unificados -->
+    <div style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;margin-bottom:16px;overflow:hidden">
+      <!-- Linha 1: tipo + contrato -->
+      <div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #F0F4F6;flex-wrap:wrap">
+        <div id="op-filtro-tipo-wrap" style="display:flex;gap:5px">
+          <button onclick="opSetTipo('')"            data-tipo=""           style="padding:5px 14px;border-radius:20px;border:1.5px solid #E8630A;background:#FDE8D8;color:#E8630A;font-size:11px;font-weight:600;cursor:pointer">Tudo</button>
+          <button onclick="opSetTipo('equipamento')" data-tipo="equipamento" style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Equipamentos</button>
+          <button onclick="opSetTipo('implemento')"  data-tipo="implemento"  style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Implementos</button>
+          <button onclick="opSetTipo('acessorio')"   data-tipo="acessorio"   style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Acessórios</button>
+        </div>
+        <div style="width:1px;height:20px;background:#E2E8ED;flex-shrink:0"></div>
+        <div id="op-filtro-contrato-wrap" style="display:flex;gap:5px;flex-wrap:wrap">
+          <button onclick="opSetContrato('')"                   data-contrato=""                    style="padding:5px 14px;border-radius:20px;border:1.5px solid #7c3aed;background:#f5f3ff;color:#7c3aed;font-size:11px;font-weight:600;cursor:pointer">Todos contratos</button>
+          <button onclick="opSetContrato('Gestão de frota')"    data-contrato="Gestão de frota"     style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Gestão de frota</button>
+          <button onclick="opSetContrato('Locação')"            data-contrato="Locação"             style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Locação</button>
+          <button onclick="opSetContrato('Locação + Operação')" data-contrato="Locação + Operação"  style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Locação + Operação</button>
+          <button onclick="opSetContrato('Venda')"              data-contrato="Venda"               style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Venda</button>
+        </div>
       </div>
-      <div style="width:1px;height:20px;background:#E2E8ED;flex-shrink:0"></div>
-      <div id="op-filtro-contrato-wrap" style="display:flex;gap:5px;flex-wrap:wrap">
-        <button onclick="opSetContrato('')"                   data-contrato=""                    style="padding:5px 14px;border-radius:20px;border:1.5px solid #7c3aed;background:#f5f3ff;color:#7c3aed;font-size:11px;font-weight:600;cursor:pointer">Todos contratos</button>
-        <button onclick="opSetContrato('Gestão de frota')"    data-contrato="Gestão de frota"     style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Gestão de frota</button>
-        <button onclick="opSetContrato('Locação')"            data-contrato="Locação"             style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Locação</button>
-        <button onclick="opSetContrato('Locação + Operação')" data-contrato="Locação + Operação"  style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Locação + Operação</button>
-        <button onclick="opSetContrato('Venda')"              data-contrato="Venda"               style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Venda</button>
-      </div>
-      <div style="flex:1;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;min-width:0">
-        <input id="op-busca-id" type="text" placeholder="Buscar por ID..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:140px;outline:none;box-sizing:border-box;color:#1A2E35" oninput="opRender()">
-        <input id="op-busca" type="text" placeholder="Operação ou cliente..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:190px;outline:none;box-sizing:border-box;color:#1A2E35" oninput="opRender()">
+      <!-- Linha 2: buscas + selects -->
+      <div style="padding:8px 14px;display:flex;align-items:center;gap:8px;background:#F4F6F8;flex-wrap:wrap">
+        <input id="op-busca-id" type="text" placeholder="🔍 Buscar por ID..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:140px;outline:none;box-sizing:border-box;background:#fff;color:#1A2E35" oninput="opRender()">
+        <input id="op-busca" type="text" placeholder="🔍 Operação ou cliente..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:200px;outline:none;box-sizing:border-box;background:#fff;color:#1A2E35" oninput="opRender()">
         <select id="op-filtro-estado" onchange="opRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;background:#fff;color:#5A7280;outline:none">
           <option value="">Estado — Todos</option>
         </select>
