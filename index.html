@@ -16411,12 +16411,13 @@ if ('serviceWorker' in navigator) {
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;
           nw.addEventListener('statechange', () => {
-            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-              nw.postMessage({type:'SKIP_WAITING'});
-            }
+            if (nw.state === 'installed') nw.postMessage({type:'SKIP_WAITING'});
           });
         });
       }).catch(e => console.warn('SW PCM:', e));
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data && e.data.type === 'SW_UPDATED') window.location.reload();
+    });
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       window.location.reload();
     });
