@@ -13710,7 +13710,7 @@ function vpMudarAba(aba){
   if(ldEl)ldEl.style.display=aba==='devolvidas'?'':'none';
   ['abertas','devolvidas'].forEach(a=>{
     const btn=document.getElementById('vptab-'+a);
-    if(btn){btn.style.background=a===aba?'#dc2626':'#e2e8f0';btn.style.color=a===aba?'#fff':'#475569';}
+    if(btn){btn.style.color=a===aba?'#dc2626':'#8FA4AE';btn.style.borderBottomColor=a===aba?'#dc2626':'transparent';}
   });
   vpRender();
 }
@@ -13841,7 +13841,7 @@ function vpRender(){
   const abertas=_vpRegistros.filter(r=>!r.devolvido&&(!filtOf||r.oficina===filtOf));
   const devolvidas=_vpRegistros.filter(r=>r.devolvido&&(!filtOf||r.oficina===filtOf));
   const hoje=new Date().toISOString().split('T')[0];
-  const colHd=s=>`<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;border-bottom:1px solid #e2e8f0;background:#f8fafc;white-space:nowrap">${s}</th>`;
+  const colHd=s=>`<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#5A7280;border-bottom:1px solid #E2E8ED;background:#F4F6F8;white-space:nowrap">${s}</th>`;
   const dataFmt=d=>d?d.split('-').reverse().join('/'):'—';
   const itensCell=itens=>{if(!itens||!itens.length)return'—';return itens.map(it=>`<div style="font-size:11px;font-family:monospace"><span style="font-weight:700;color:#dc2626">${it.pn||'—'}</span> <span style="color:#64748b">×${it.qtd||1}</span>${it.desc?` <span style="color:#475569">${it.desc}</span>`:''}</div>`).join('');};
 
@@ -13850,29 +13850,29 @@ function vpRender(){
   if(laEl){
     if(!abertas.length){laEl.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhum vale pendente.</div>';}
     else{
-      const rows=abertas.map((r,i)=>{
+      const rows=abertas.map(r=>{
         const atrasado=r.dataPrevDev&&r.dataPrevDev<hoje;
-        return`<tr style="background:${i%2?'#fff':'#fafbff'};border-bottom:1px solid #f1f5f9">
-          <td style="padding:8px 10px;font-size:11px;white-space:nowrap">${dataFmt(r.data)}</td>
-          <td style="padding:8px 10px;font-family:monospace;font-weight:700;font-size:12px">${r.equipRet||'—'}</td>
-          <td style="padding:8px 10px;font-family:monospace;font-size:12px;color:#64748b">${r.equipDest||'—'}</td>
-          <td style="padding:8px 10px;font-size:11px">${r.oficina||'—'}</td>
-          <td style="padding:8px 10px;font-size:11px">${r.solicitante||'—'}</td>
-          <td style="padding:8px 10px;font-size:11px">${r.om||'—'}</td>
-          <td style="padding:8px 10px;font-size:11px">${r.rc||'—'}</td>
-          <td style="padding:8px 10px;min-width:160px">${itensCell(r.itens)}</td>
-          <td style="padding:8px 10px;font-size:11px;color:${atrasado?'#dc2626':'#64748b'};font-weight:${atrasado?700:400};white-space:nowrap">${dataFmt(r.dataPrevDev)}${atrasado?' ⚠':''}</td>
-          <td style="padding:8px 10px;font-size:11px">${r.operacao||'—'}</td>
-          <td style="padding:8px 10px;font-size:11px">${r.gestor||'—'}</td>
-          <td style="padding:8px 10px;text-align:center;white-space:nowrap">
-            <button onclick="vpAbrirDevolucao('${r.id}')" style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600">↩ Devolver</button>
-            <button onclick="vpEditar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#F37021;font-size:13px">✏</button>
-            <button onclick="vpDeletar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px">🗑</button>
+        return`<tr style="border-bottom:1px solid #E2E8ED" onmouseenter="this.style.background='#F8FAFB'" onmouseleave="this.style.background=''">
+          <td style="padding:10px 12px;font-size:12px;white-space:nowrap;color:#1A2E35">${dataFmt(r.data)}</td>
+          <td style="padding:10px 12px;font-family:monospace;font-weight:700;font-size:12px;color:#1A2E35">${r.equipRet||'—'}</td>
+          <td style="padding:10px 12px;font-family:monospace;font-size:12px;color:#5A7280">${r.equipDest||'—'}</td>
+          <td style="padding:10px 12px;font-size:12px;color:#1A2E35">${r.oficina||'—'}</td>
+          <td style="padding:10px 12px;font-size:12px;color:#1A2E35">${r.solicitante||'—'}</td>
+          <td style="padding:10px 12px;font-size:12px;color:#5A7280">${r.om||'—'}</td>
+          <td style="padding:10px 12px;font-size:12px;color:#5A7280">${r.rc||'—'}</td>
+          <td style="padding:10px 12px;min-width:160px">${itensCell(r.itens)}</td>
+          <td style="padding:10px 12px;white-space:nowrap">${atrasado?`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;background:#FEE2E2;color:#B91C1C;font-size:11px;font-weight:600">${dataFmt(r.dataPrevDev)} ⚠</span>`:`<span style="font-size:12px;color:#5A7280">${dataFmt(r.dataPrevDev)}</span>`}</td>
+          <td style="padding:10px 12px;font-size:12px;color:#1A2E35">${r.operacao||'—'}</td>
+          <td style="padding:10px 12px;font-size:12px;color:#1A2E35">${r.gestor||'—'}</td>
+          <td style="padding:10px 12px;text-align:right;white-space:nowrap">
+            <button onclick="vpAbrirDevolucao('${r.id}')" style="padding:4px 10px;background:#E8F5EE;color:#1E8A4C;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin-right:4px">↩ Devolver</button>
+            <button onclick="vpEditar('${r.id}')" style="padding:4px 10px;background:#FDE8D8;color:#E8630A;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin-right:4px">Editar</button>
+            <button onclick="vpDeletar('${r.id}')" style="padding:4px 10px;background:#FEE2E2;color:#B91C1C;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer">Excluir</button>
           </td>
         </tr>`;
       }).join('');
-      laEl.innerHTML=`<div style="margin-bottom:8px;font-size:11px;color:#94a3b8">${abertas.length} vale(s) pendente(s)</div>
-      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
+      laEl.innerHTML=`<div style="margin-bottom:10px;font-size:12px;color:#8FA4AE;font-weight:500">${abertas.length} vale(s) pendente(s)</div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid #E2E8ED;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)">
       <thead><tr>${['Data','Equip. Ret.','Equip. Dest.','Oficina','Solicitante','O.M.','RC','Itens / Peças','Prev. Dev.','Operação','Gestor','Ações'].map(colHd).join('')}</tr></thead>
       <tbody>${rows}</tbody></table></div>`;
     }
@@ -13882,19 +13882,19 @@ function vpRender(){
   if(ldEl){
     if(!devolvidas.length){ldEl.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhuma devolução registrada.</div>';}
     else{
-      const rows=devolvidas.map((r,i)=>`<tr style="background:${i%2?'#fff':'#f0fdf4'};border-bottom:1px solid #f1f5f9">
-        <td style="padding:8px 10px;font-size:11px;white-space:nowrap">${dataFmt(r.data)}</td>
-        <td style="padding:8px 10px;font-family:monospace;font-weight:700;font-size:12px">${r.equipRet||'—'}</td>
-        <td style="padding:8px 10px;font-family:monospace;font-size:12px;color:#64748b">${r.equipDest||'—'}</td>
-        <td style="padding:8px 10px;font-size:11px">${r.oficina||'—'}</td>
-        <td style="padding:8px 10px;font-size:11px">${r.solicitante||'—'}</td>
-        <td style="padding:8px 10px;min-width:140px">${itensCell(r.itens)}</td>
-        <td style="padding:8px 10px;font-size:11px;color:#16a34a;font-weight:600;white-space:nowrap">${dataFmt(r.dataDevolucao)}</td>
-        <td style="padding:8px 10px;font-size:11px;color:#64748b">${r.obsDev||'—'}</td>
-        <td style="padding:8px 10px;text-align:center"><button onclick="vpDeletar('${r.id}')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px">🗑</button></td>
+      const rows=devolvidas.map(r=>`<tr style="border-bottom:1px solid #E2E8ED" onmouseenter="this.style.background='#F8FAFB'" onmouseleave="this.style.background=''">
+        <td style="padding:10px 12px;font-size:12px;white-space:nowrap;color:#1A2E35">${dataFmt(r.data)}</td>
+        <td style="padding:10px 12px;font-family:monospace;font-weight:700;font-size:12px;color:#1A2E35">${r.equipRet||'—'}</td>
+        <td style="padding:10px 12px;font-family:monospace;font-size:12px;color:#5A7280">${r.equipDest||'—'}</td>
+        <td style="padding:10px 12px;font-size:12px;color:#1A2E35">${r.oficina||'—'}</td>
+        <td style="padding:10px 12px;font-size:12px;color:#1A2E35">${r.solicitante||'—'}</td>
+        <td style="padding:10px 12px;min-width:140px">${itensCell(r.itens)}</td>
+        <td style="padding:10px 12px;white-space:nowrap"><span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;background:#E8F5EE;color:#1E8A4C;font-size:11px;font-weight:600">${dataFmt(r.dataDevolucao)}</span></td>
+        <td style="padding:10px 12px;font-size:12px;color:#5A7280">${r.obsDev||'—'}</td>
+        <td style="padding:10px 12px;text-align:right"><button onclick="vpDeletar('${r.id}')" style="padding:4px 10px;background:#FEE2E2;color:#B91C1C;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer">Excluir</button></td>
       </tr>`).join('');
-      ldEl.innerHTML=`<div style="margin-bottom:8px;font-size:11px;color:#94a3b8">${devolvidas.length} devolução(ões)</div>
-      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
+      ldEl.innerHTML=`<div style="margin-bottom:10px;font-size:12px;color:#8FA4AE;font-weight:500">${devolvidas.length} devolução(ões)</div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid #E2E8ED;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)">
       <thead><tr>${['Data Ret.','Equip. Ret.','Equip. Dest.','Oficina','Solicitante','Itens / Peças','Data Dev.','Obs. Dev.','Ações'].map(colHd).join('')}</tr></thead>
       <tbody>${rows}</tbody></table></div>`;
     }
@@ -17076,17 +17076,13 @@ if ('serviceWorker' in navigator) {
 </div>
 
 <!-- VALE PEÇAS -->
-<div id="page-valepecas" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#eef1f6;z-index:100">
+<div id="page-valepecas" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#F4F6F8;z-index:100">
   <div style="padding:24px 28px;max-width:1400px">
-    <div class="page-hdr">
-      <div class="page-hdr-title"><span style="color:#dc2626">🔩</span> Vale Peças</div>
-      <div class="page-hdr-sub">Controle de retirada e devolução de peças entre equipamentos</div>
-    </div>
 
     <!-- ── FORMULÁRIO (TOPO) ─────────────────────────────────────── -->
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b" id="vp-form-label">Novo Registro</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #E2E8ED">
+        <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#5A7280" id="vp-form-label">Novo Registro</span>
         <button class="gi-btn ghost" id="vp-cancelar-btn" style="display:none;font-size:11px;padding:5px 12px" onclick="vpCancelar()">✕ Cancelar edição</button>
       </div>
       <!-- Linha 1: Dados principais -->
@@ -17128,11 +17124,11 @@ if ('serviceWorker' in navigator) {
           <button type="button" onclick="vpAddItem()" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer">+ Adicionar Item</button>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:12px">
-          <thead><tr style="background:#0f172a;color:#fff">
-            <th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:700">P.N. (Part Number)</th>
-            <th style="padding:6px 10px;text-align:center;font-size:10px;font-weight:700;width:80px">Qtd</th>
-            <th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:700">Descrição da Peça</th>
-            <th style="padding:6px 10px;width:36px"></th>
+          <thead><tr style="background:#F4F6F8">
+            <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#5A7280;border-bottom:1px solid #E2E8ED">P.N. (Part Number)</th>
+            <th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:#5A7280;border-bottom:1px solid #E2E8ED;width:80px">Qtd</th>
+            <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#5A7280;border-bottom:1px solid #E2E8ED">Descrição da Peça</th>
+            <th style="padding:8px 10px;border-bottom:1px solid #E2E8ED;width:36px"></th>
           </tr></thead>
           <tbody id="vp-itens-tbody"></tbody>
         </table>
@@ -17149,11 +17145,11 @@ if ('serviceWorker' in navigator) {
     </div>
 
     <!-- ── VISUALIZAÇÃO (BAIXO) ──────────────────────────────────── -->
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
-      <button id="vptab-abertas" onclick="vpMudarAba('abertas')" style="font-size:12px;font-weight:700;padding:7px 18px;border-radius:7px;border:none;cursor:pointer;background:#dc2626;color:#fff">⚠ Pendentes</button>
-      <button id="vptab-devolvidas" onclick="vpMudarAba('devolvidas')" style="font-size:12px;font-weight:700;padding:7px 18px;border-radius:7px;border:none;cursor:pointer;background:#e2e8f0;color:#475569">✅ Devolvidas</button>
-      <div style="margin-left:auto">
-        <select id="vp-fil-oficina" onchange="vpRender()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;background:#fff">
+    <div style="display:flex;align-items:center;border-bottom:2px solid #E2E8ED;margin-bottom:16px">
+      <button id="vptab-abertas" onclick="vpMudarAba('abertas')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#dc2626;border-bottom:2px solid #dc2626;margin-bottom:-2px">Pendentes</button>
+      <button id="vptab-devolvidas" onclick="vpMudarAba('devolvidas')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#8FA4AE;border-bottom:2px solid transparent;margin-bottom:-2px">Devolvidas</button>
+      <div style="margin-left:auto;padding-bottom:6px">
+        <select id="vp-fil-oficina" onchange="vpRender()" style="padding:7px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;background:#fff;color:#1A2E35">
           <option value="">Oficina — Todas</option>
           <option>Assis (SP)</option><option>Contagem (MG)</option><option>Osasco (SP)</option>
           <option>Parauapebas (PA)</option><option>Santos (SP)</option><option>Sumaré (SP)</option>
