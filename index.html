@@ -526,8 +526,8 @@ input.filter-sel{padding:5px 10px;height:32px}
 
 
 /* ══ PROG DASHBOARD ══ */
-.prog-dashboard{display:flex;gap:10px;margin-bottom:12px;align-items:stretch;flex-wrap:nowrap}
-.prog-roscas{display:flex;gap:8px;flex-wrap:nowrap;flex-shrink:0;align-items:flex-start}
+.prog-dashboard{display:flex;gap:10px;margin-bottom:12px;align-items:stretch;flex-wrap:nowrap;height:240px}
+.prog-roscas{display:flex;gap:8px;flex-wrap:nowrap;flex:1;align-items:stretch}
 .prog-linha-wrap{flex:1;min-width:0;background:#fff;border-radius:10px;border:1px solid var(--borda);box-shadow:0 1px 4px rgba(0,0,0,.05);overflow:hidden;display:flex;flex-direction:column}
 .prog-linha-hd{background:#f7f9fc;padding:7px 12px;border-bottom:1px solid var(--borda);display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto}
 .prog-linha-hd::-webkit-scrollbar{height:2px}
@@ -543,7 +543,7 @@ input.filter-sel{padding:5px 10px;height:32px}
 .sem-desempenho.media{background:#fffbeb;border-color:#fde68a;color:#92400e}
 .sem-desempenho.baixa{background:#fef2f2;border-color:#fecaca;color:#991b1b}
 /* Fix graficos container no flex */
-#prog-graficos .prog-dashboard .graf-section{min-width:220px;max-width:260px}
+#prog-graficos .prog-dashboard .prog-roscas .graf-section{flex:1;min-width:0;max-width:none}
 
 /* ══════════════════════════════════════════
    MILLS DESIGN SYSTEM — UPGRADE v2
@@ -4607,7 +4607,6 @@ function renderProgramacao(){
     const cliAtivos=Object.entries(cntCli).sort((a,b)=>b[1]-a[1]);
     grafDiv.innerHTML=`<div class="prog-dashboard">
       <div class="prog-roscas">
-        ${rosca('Por etapa',etAtivos.map(x=>({label:x.label,n:x.n,cor:x.cor})),tot)}
         ${rosca('Por oficina',ofAtivos.map(([l,n])=>({label:l,n,cor:''})),tot)}
         ${cliAtivos.length>0?rosca('Por cliente',cliAtivos.map(([l,n])=>({label:l,n,cor:''})),equips.filter(e=>e.reservado&&e.cliente).length):''}
       </div>
