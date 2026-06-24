@@ -1769,19 +1769,14 @@ input.filter-sel{padding:5px 8px;height:34px}
         </div>
       </div>
       <!-- Reserva para locação -->
-      <div>
-        <div class="mc-section-title">Reserva para locação</div>
-        <div class="reserva-toggle">
-          <div class="reserva-btn" id="res-sim" style="cursor:default;opacity:.7" title="Reserva definida pelo sistema">✓ Sim — Reservado</div>
-          <div class="reserva-btn active-nao" id="res-nao" style="cursor:default;opacity:.7" title="Reserva definida pelo sistema">✗ Não disponível</div>
+      <div id="campo-cliente" style="display:none">
+        <div class="mc-section-title">Reservado</div>
+        <div style="padding:10px 14px;background:rgba(29,158,117,.08);border:1px solid rgba(29,158,117,.25);border-radius:8px;font-size:13px;font-weight:700;color:#1D9E75;display:flex;align-items:center;gap:8px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span id="mc-cliente-texto">—</span>
         </div>
-        <div class="mc-field" id="campo-cliente" style="margin-top:8px;display:none">
-          <label>Cliente (reserva do sistema)</label>
-          <div id="mc-cliente-display" style="padding:7px 10px;background:#f0faf5;border:1px solid rgba(18,196,126,.3);border-radius:7px;font-size:12px;font-weight:600;color:var(--verde2);display:flex;align-items:center;gap:6px">
-            <span>◈</span><span id="mc-cliente-texto">—</span>
-          </div>
-          <input type="hidden" id="mc-cliente">
-        </div>
+        <input type="hidden" id="mc-cliente">
+      </div>
         <div style="margin-top:8px">
           <div class="mc-section-title">Previsão de Liberação de Oficina</div>
           <input type="date" id="mc-prev-liberacao" oninput="setPrevLiberacao(this.value)" style="width:100%;padding:8px 10px;border:1px solid var(--borda);border-radius:7px;font-size:12px;background:#fff;outline:none;color:var(--text)">
@@ -1794,14 +1789,9 @@ input.filter-sel{padding:5px 8px;height:34px}
         </div>
       </div>
       <!-- Destinação -->
-      <div>
+      <div id="mc-dest-section">
         <div class="mc-section-title">Destinação do equipamento</div>
-        <div style="display:flex;gap:6px">
-          <div class="reserva-btn" id="dest-locacao" onclick="setDestinacao('Locação')">📦 Locação</div>
-          <div class="reserva-btn" id="dest-venda" onclick="setDestinacao('Venda')">💰 Venda</div>
-          <div class="reserva-btn" id="dest-ambos" onclick="setDestinacao('Venda/Locação')">🔄 Venda/Locação</div>
-          <div class="reserva-btn" id="dest-nenhum" onclick="setDestinacao('')">✕ Limpar</div>
-        </div>
+        <div id="mc-dest-display" style="padding:10px 14px;background:#F4F6F8;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;font-weight:600;color:#5A7280">—</div>
       </div>
       <!-- Manutenção Finalizada — só aparece quando em manutenção -->
       <div id="mc-manut-section" style="display:none">
@@ -3675,9 +3665,9 @@ function openCardModal(eqId,visao){
     document.getElementById('manut-sim').className = 'reserva-btn';
     document.getElementById('manut-nao').className = 'reserva-btn active-nao';
   }
-  // Reserva
-  updateReservaBtns(eq.reservado);
-  document.getElementById('campo-cliente').style.display=eq.reservado?'flex':'none';
+  // Reserva — só exibe se reservado, sem toggles
+  const campoCliente=document.getElementById('campo-cliente');
+  if(campoCliente)campoCliente.style.display=eq.reservado?'block':'none';
   if(eq.reservado&&eq.cliente){
     document.getElementById('mc-cliente-texto').textContent=eq.cliente;
     document.getElementById('mc-cliente').value=eq.cliente;
@@ -3713,9 +3703,16 @@ function openCardModal(eqId,visao){
   const localInput=document.getElementById('mc-local-map');
   if(localInput){localInput.value=eq.localMap||'';}
   if(pendingCardChanges.localMap!==undefined)delete pendingCardChanges.localMap;
-  // Destinação
-  setDestinacao(eq.destinacao||'');
-  if(pendingCardChanges.destinacao!==undefined)delete pendingCardChanges.destinacao;
+  // Destinação — read-only, vem do CSV
+  const destEl=document.getElementById('mc-dest-display');
+  if(destEl){
+    const destCores={Locação:{bg:'rgba(29,158,117,.1)',cor:'#1D9E75'},Venda:{bg:'rgba(220,38,38,.1)',cor:'#DC2626'},'Venda/Locação':{bg:'rgba(127,119,221,.1)',cor:'#7F77DD'}};
+    const dc=destCores[eq.destinacao];
+    destEl.style.background=dc?dc.bg:'#F4F6F8';
+    destEl.style.color=dc?dc.cor:'#8FA4AE';
+    destEl.style.borderColor=dc?dc.cor+'55':'#E2E8ED';
+    destEl.textContent=eq.destinacao||'Não definido';
+  }
   populateOficinaSel(eqId);
   // Semana
   const ss=document.getElementById('mc-semana-sel');ss.value=eq.semana||'';
