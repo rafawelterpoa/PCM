@@ -16406,16 +16406,20 @@ if ('serviceWorker' in navigator) {
   });
 
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/PCM/sw.js')
+    navigator.serviceWorker.register('/PCM/sw.js', {updateViaCache: 'none'})
       .then(reg => {
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;
           nw.addEventListener('statechange', () => {
-            if (nw.state === 'installed' && navigator.serviceWorker.controller)
-              showToast('🔄 Nova versão disponível! Recarregue o app.');
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              nw.postMessage({type:'SKIP_WAITING'});
+            }
           });
         });
       }).catch(e => console.warn('SW PCM:', e));
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
   });
 }
 </script>

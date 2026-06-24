@@ -1,8 +1,12 @@
-const CACHE = 'mills-pcm-v7';
+const CACHE = 'mills-pcm-v8';
 const STATIC = ['/PCM/manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC)).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
