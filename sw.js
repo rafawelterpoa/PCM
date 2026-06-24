@@ -1,4 +1,4 @@
-// SW v14 — cache-bust via query string + auto-reload
+// SW v15 — cache: reload força CDN a revalidar sem query string
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
@@ -15,13 +15,11 @@ self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-// Navegações: adiciona ?_cb=timestamp para burlar CDN do GitHub Pages
+// cache:'reload' envia Cache-Control:no-cache ao CDN, forçando revalidação com origem
 self.addEventListener('fetch', e => {
   if (e.request.mode === 'navigate') {
-    const url = new URL(e.request.url);
-    url.searchParams.set('_cb', Date.now());
     e.respondWith(
-      fetch(url.toString(), {cache: 'no-store', headers: {'Cache-Control': 'no-cache'}})
+      fetch(e.request, {cache: 'reload'})
         .catch(() => fetch(e.request))
     );
   }
