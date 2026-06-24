@@ -14107,7 +14107,7 @@ function mtRender(){
     </td>
   </tr>`).join('');
   tabEl.innerHTML=`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)">
-  <table style="width:100%;border-collapse:collapse;font-size:13px">
+  <table style="width:100%;min-width:1100px;border-collapse:collapse;font-size:13px">
     <thead><tr>${[...(abaHist?['Conclusão']:['']),'ID Equip.','Família','Tipo','Fornecedor','Solicitante','Aprovador','O.M.','RC','PC','Descrição','Valor','Data','Ações'].filter(Boolean).map(colHd).join('')}</tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
@@ -16642,12 +16642,12 @@ if ('serviceWorker' in navigator) {
     <!-- FILTROS -->
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:10px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
       <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;white-space:nowrap;flex-shrink:0">Filtros</span>
-      <input id="mt-busca" oninput="mtRender()" placeholder="ID, equipamento, fornecedor..." style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;flex:1;outline:none;color:#1A2E35">
-      <select id="mt-fil-tipo" onchange="mtRender()" style="padding:7px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;background:#fff;color:#1A2E35;flex-shrink:0">
+      <input id="mt-busca" oninput="mtRender()" placeholder="ID, equipamento, fornecedor..." style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;flex:1;min-width:160px;outline:none;color:#1A2E35">
+      <select id="mt-fil-tipo" onchange="mtRender()" style="padding:7px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;background:#fff;color:#1A2E35;flex-shrink:0;max-width:160px">
         <option value="">Tipo — Todos</option>
         <option>Corretiva</option><option>Sinistro</option><option>Preparação para Mobilização</option><option>Preventiva</option>
       </select>
-      <select id="mt-fil-fornecedor" onchange="mtRender()" style="padding:7px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;background:#fff;color:#1A2E35;flex-shrink:0">
+      <select id="mt-fil-fornecedor" onchange="mtRender()" style="padding:7px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;background:#fff;color:#1A2E35;flex-shrink:0;max-width:180px">
         <option value="">Fornecedor — Todos</option>
       </select>
       <button onclick="mtGerarRelatorio()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">Relatório</button>
