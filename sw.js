@@ -1,4 +1,4 @@
-// SW v12 — HTML sempre da rede + auto-reload ao atualizar
+// SW v13 — HTML sempre da rede + auto-reload ao atualizar
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
