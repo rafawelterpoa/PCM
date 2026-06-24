@@ -1058,16 +1058,21 @@ input.filter-sel{padding:5px 10px;height:32px}
 </div>
 
 <!-- PÁTIO SELECTOR -->
-<div class="page" id="page-patio">
-  <div style="padding:24px 28px;background:#F4F6F8;min-height:100%">
+<div class="page" id="page-patio" style="display:flex;flex-direction:column;height:calc(100vh - 56px)">
+  <!-- CABEÇALHO FIXO — KPIs + oficinas + filtros -->
+  <div style="background:#F4F6F8;padding:16px 28px 12px;border-bottom:1px solid #E2E8ED;box-shadow:0 2px 6px rgba(0,0,0,.06);flex-shrink:0">
+    <!-- KPIs rápidos — cards grandes -->
+    <div id="patio-kpis" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:12px"></div>
+    <!-- Pátios por oficina — cards pequenos -->
+    <div id="patio-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:12px"></div>
     <!-- Filtros -->
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:18px;background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:10px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+    <div style="display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:8px 14px;box-shadow:0 1px 2px rgba(0,0,0,.04)">
       <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;flex-shrink:0;margin-right:4px">Filtros</span>
-      <input id="patio-busca" type="text" placeholder="Buscar equipamento..." style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;width:220px;flex-shrink:0;outline:none" oninput="patioRender()">
-      <select id="patio-filtro-of" onchange="patioRender()" style="padding:7px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;background:#fff;cursor:pointer;flex-shrink:0">
+      <input id="patio-busca" type="text" placeholder="Buscar equipamento..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;width:220px;flex-shrink:0;outline:none" oninput="patioRender()">
+      <select id="patio-filtro-of" onchange="patioRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;background:#fff;cursor:pointer;flex-shrink:0;max-width:180px">
         <option value="">Oficina — Todas</option>
       </select>
-      <select id="patio-filtro-tipo" onchange="patioRender()" style="padding:7px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;background:#fff;cursor:pointer;flex-shrink:0">
+      <select id="patio-filtro-tipo" onchange="patioRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;background:#fff;cursor:pointer;flex-shrink:0;max-width:160px">
         <option value="">Tipo Frota — Todos</option>
         <option value="locação">Locação</option>
         <option value="venda">Venda</option>
@@ -1075,16 +1080,13 @@ input.filter-sel{padding:5px 10px;height:32px}
         <option value="__sem__">Sem Identificação</option>
       </select>
     </div>
-    <!-- KPIs rápidos — cards grandes -->
-    <div id="patio-kpis" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:20px"></div>
-    <!-- Pátios por oficina — cards pequenos -->
-    <div id="patio-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:24px"></div>
-    <!-- Lista de equipamentos -->
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:10px;margin-top:4px">Lista de Equipamentos</div>
-    <div id="patio-lista" style="overflow-x:auto"></div>
-    <!-- Gráfico por família -->
+  </div>
+  <!-- LISTA ROLÁVEL -->
+  <div style="flex:1;overflow-y:auto;overflow-x:auto;background:#F4F6F8;padding:16px 28px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:10px">Lista de Equipamentos</div>
+    <div id="patio-lista"></div>
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin:20px 0 10px">Por Família</div>
-    <div id="patio-familias" style="overflow-x:auto"></div>
+    <div id="patio-familias"></div>
   </div>
 </div>
 
