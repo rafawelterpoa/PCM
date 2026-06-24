@@ -3700,7 +3700,7 @@ function openCardModal(eqId,visao){
   document.getElementById('mc-equip').textContent=eq.equipamento;
   document.getElementById('mc-modelo').textContent=eq.modelo+' | '+eq.tipo;
   const ci=etapaGeralIndex(eq.etapa);
-  document.getElementById('mc-etapa-flow').innerHTML=ETAPAS_GERAL.map((e,i)=>`<span class="etapa-step${i<ci?' done':i===ci?' current':''}">${e.label}</span>`).join('');
+  const etapaFlow=document.getElementById('mc-etapa-flow');if(etapaFlow)etapaFlow.innerHTML=ETAPAS_GERAL.map((e,i)=>`<span class="etapa-step${i<ci?' done':i===ci?' current':''}">${e.label}</span>`).join('');
   updatePrioOpts(eq.prioridade);
   // Complexidade
   ['facil','medio','dificil','none'].forEach(v=>{
