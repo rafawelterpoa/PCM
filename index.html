@@ -15961,8 +15961,26 @@ function patioRender(){
   if(famEl){
     const famMap={};
     equips.forEach(e=>{const o=EQUIPAMENTOS_ORIG.find(x=>x.id===e.id);const fam=o?.tipo||e.tipo||'Outros';if(!famMap[fam])famMap[fam]=0;famMap[fam]++;});
-    const rows=Object.entries(famMap).sort((a,b)=>b[1]-a[1]).map(([f,n],ki)=>`<tr style="background:${ki%2?'#fff':'#fafbff'}"><td style="padding:9px 14px;font-weight:600;color:#1e293b">${f}</td><td style="padding:9px 14px;text-align:center;font-weight:800;color:#1D9E75;font-size:14px">${n}</td><td style="padding:9px 14px"><div style="background:#f1f5f9;border-radius:4px;height:8px;overflow:hidden"><div style="background:#1D9E75;border-radius:4px;height:100%;width:${Math.round(n/equips.length*100)}%;transition:width .3s"></div></div></td></tr>`).join('');
-    famEl.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#f8fafc"><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Família</th><th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Qtd</th><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Distribuição</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    const entries=Object.entries(famMap).sort((a,b)=>b[1]-a[1]);
+    const maxN=entries[0]?.[1]||1;
+    const CORES=['#1D9E75','#2563eb','#7c3aed','#E8630A','#B91C1C','#B45309','#0e7490','#4f46e5','#15803d','#9333ea'];
+    const bars=entries.map(([f,n],i)=>{
+      const pct=Math.round(n/equips.length*100);
+      const barW=Math.round(n/maxN*100);
+      const cor=CORES[i%CORES.length];
+      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F4F6F8">
+        <div style="width:180px;font-size:12px;font-weight:600;color:#1A2E35;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${f}">${f}</div>
+        <div style="flex:1;background:#F4F6F8;border-radius:4px;height:18px;overflow:hidden">
+          <div style="background:${cor};height:100%;width:${barW}%;border-radius:4px;transition:width .4s ease"></div>
+        </div>
+        <div style="width:28px;font-size:13px;font-weight:800;color:${cor};text-align:right;flex-shrink:0">${n}</div>
+        <div style="width:34px;font-size:11px;color:#8FA4AE;text-align:right;flex-shrink:0">${pct}%</div>
+      </div>`;
+    }).join('');
+    famEl.innerHTML=`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8FA4AE;margin-bottom:12px">Distribuição por família — ${equips.length} equipamentos</div>
+      ${bars}
+    </div>`;
   }
 }
 
