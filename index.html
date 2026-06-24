@@ -1032,39 +1032,40 @@ input.filter-sel{padding:5px 10px;height:32px}
   <div style="padding:24px 28px;max-width:1400px">
 
     <!-- Header -->
-    <div style="margin-bottom:22px">
-      <div style="font-size:24px;font-weight:900;color:#0f172a;margin-bottom:4px;display:flex;align-items:center;gap:10px"><span style="color:#F37021">⚡</span> Em contrato</div>
-      <div style="font-size:13px;color:#94a3b8">Equipamentos em campo — plantas e obras ativas</div>
+    <div style="margin-bottom:20px;display:flex;align-items:flex-start;gap:10px">
+      <div style="width:3px;height:24px;background:#E8630A;border-radius:2px;flex-shrink:0;margin-top:4px"></div>
+      <div>
+        <div style="font-size:20px;font-weight:700;color:#1A2E35;line-height:1.2">Em contrato</div>
+        <div style="font-size:12px;color:#8FA4AE;margin-top:3px">Equipamentos em campo — plantas e obras ativas</div>
+      </div>
     </div>
 
     <!-- KPIs (3 cards) -->
     <div id="op-kpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px"></div>
 
-    <!-- Barra de filtros de tipo -->
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-      <div id="op-filtro-tipo-wrap" style="display:flex;gap:6px;flex-wrap:wrap">
-        <button onclick="opSetTipo('')"            data-tipo=""           style="padding:7px 18px;border-radius:20px;border:2px solid #2563eb;background:#eff6ff;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer">Tudo</button>
-        <button onclick="opSetTipo('equipamento')" data-tipo="equipamento" style="padding:7px 18px;border-radius:20px;border:2px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:700;cursor:pointer">Equipamentos</button>
-        <button onclick="opSetTipo('implemento')"  data-tipo="implemento"  style="padding:7px 18px;border-radius:20px;border:2px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:700;cursor:pointer">Implementos</button>
-        <button onclick="opSetTipo('acessorio')"   data-tipo="acessorio"   style="padding:7px 18px;border-radius:20px;border:2px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:700;cursor:pointer">Acessórios</button>
+    <!-- Filtros unificados — linha 1: tipo + contrato + busca -->
+    <div style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div id="op-filtro-tipo-wrap" style="display:flex;gap:5px;flex-wrap:wrap">
+        <button onclick="opSetTipo('')"            data-tipo=""           style="padding:5px 14px;border-radius:20px;border:1.5px solid #E8630A;background:#FDE8D8;color:#E8630A;font-size:11px;font-weight:600;cursor:pointer">Tudo</button>
+        <button onclick="opSetTipo('equipamento')" data-tipo="equipamento" style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Equipamentos</button>
+        <button onclick="opSetTipo('implemento')"  data-tipo="implemento"  style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Implementos</button>
+        <button onclick="opSetTipo('acessorio')"   data-tipo="acessorio"   style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Acessórios</button>
       </div>
-    </div>
-    <!-- Filtro tipo de contrato -->
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-      <div id="op-filtro-contrato-wrap" style="display:flex;gap:6px;flex-wrap:wrap">
-        <button onclick="opSetContrato('')"                   data-contrato=""                    style="padding:5px 14px;border-radius:20px;border:2px solid #7c3aed;background:#f5f3ff;color:#7c3aed;font-size:11px;font-weight:700;cursor:pointer">Todos contratos</button>
-        <button onclick="opSetContrato('Gestão de frota')"    data-contrato="Gestão de frota"     style="padding:5px 14px;border-radius:20px;border:2px solid #e2e8f0;background:#fff;color:#64748b;font-size:11px;font-weight:700;cursor:pointer">Gestão de frota</button>
-        <button onclick="opSetContrato('Locação')"            data-contrato="Locação"             style="padding:5px 14px;border-radius:20px;border:2px solid #e2e8f0;background:#fff;color:#64748b;font-size:11px;font-weight:700;cursor:pointer">Locação</button>
-        <button onclick="opSetContrato('Locação + Operação')" data-contrato="Locação + Operação"  style="padding:5px 14px;border-radius:20px;border:2px solid #e2e8f0;background:#fff;color:#64748b;font-size:11px;font-weight:700;cursor:pointer">Locação + Operação</button>
-        <button onclick="opSetContrato('Venda')"              data-contrato="Venda"               style="padding:5px 14px;border-radius:20px;border:2px solid #e2e8f0;background:#fff;color:#64748b;font-size:11px;font-weight:700;cursor:pointer">Venda</button>
+      <div style="width:1px;height:20px;background:#E2E8ED;flex-shrink:0"></div>
+      <div id="op-filtro-contrato-wrap" style="display:flex;gap:5px;flex-wrap:wrap">
+        <button onclick="opSetContrato('')"                   data-contrato=""                    style="padding:5px 14px;border-radius:20px;border:1.5px solid #7c3aed;background:#f5f3ff;color:#7c3aed;font-size:11px;font-weight:600;cursor:pointer">Todos contratos</button>
+        <button onclick="opSetContrato('Gestão de frota')"    data-contrato="Gestão de frota"     style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Gestão de frota</button>
+        <button onclick="opSetContrato('Locação')"            data-contrato="Locação"             style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Locação</button>
+        <button onclick="opSetContrato('Locação + Operação')" data-contrato="Locação + Operação"  style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Locação + Operação</button>
+        <button onclick="opSetContrato('Venda')"              data-contrato="Venda"               style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Venda</button>
       </div>
-      <div style="flex:1;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
-        <input id="op-busca-id" type="text" placeholder="🔍 Buscar por ID..." style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:20px;font-size:12px;width:160px;outline:none;box-sizing:border-box" oninput="opRender()">
-        <input id="op-busca" type="text" placeholder="🔍 Operação ou cliente..." style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:20px;font-size:12px;width:200px;outline:none;box-sizing:border-box" oninput="opRender()">
-        <select id="op-filtro-estado" onchange="opRender()" style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:20px;font-size:12px;background:#fff;color:#475569">
+      <div style="flex:1;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;min-width:0">
+        <input id="op-busca-id" type="text" placeholder="Buscar por ID..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:140px;outline:none;box-sizing:border-box;color:#1A2E35" oninput="opRender()">
+        <input id="op-busca" type="text" placeholder="Operação ou cliente..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:190px;outline:none;box-sizing:border-box;color:#1A2E35" oninput="opRender()">
+        <select id="op-filtro-estado" onchange="opRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;background:#fff;color:#5A7280;outline:none">
           <option value="">Estado — Todos</option>
         </select>
-        <select id="op-filtro-familia" onchange="opRender()" style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:20px;font-size:12px;background:#fff;color:#475569">
+        <select id="op-filtro-familia" onchange="opRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;background:#fff;color:#5A7280;outline:none">
           <option value="">Família — Todas</option>
         </select>
       </div>
@@ -15889,9 +15890,9 @@ function opSetTipo(v){
   _opTipoFiltro = v;
   document.querySelectorAll('#op-filtro-tipo-wrap button').forEach(b=>{
     const sel = b.dataset.tipo === v;
-    b.style.background = sel ? '#eff6ff' : '#fff';
-    b.style.color = sel ? '#2563eb' : '#64748b';
-    b.style.borderColor = sel ? '#2563eb' : '#e2e8f0';
+    b.style.background = sel ? '#FDE8D8' : '#fff';
+    b.style.color = sel ? '#E8630A' : '#5A7280';
+    b.style.borderColor = sel ? '#E8630A' : '#E2E8ED';
   });
   opRender();
 }
@@ -15900,8 +15901,8 @@ function opSetContrato(v){
   document.querySelectorAll('#op-filtro-contrato-wrap button').forEach(b=>{
     const sel = b.dataset.contrato === v;
     b.style.background = sel ? '#f5f3ff' : '#fff';
-    b.style.color = sel ? '#7c3aed' : '#64748b';
-    b.style.borderColor = sel ? '#7c3aed' : '#e2e8f0';
+    b.style.color = sel ? '#7c3aed' : '#5A7280';
+    b.style.borderColor = sel ? '#7c3aed' : '#E2E8ED';
   });
   opRender();
 }
@@ -15949,13 +15950,13 @@ function opRenderKpis(opsFiltradas){
   const estados=[...new Set(ops.map(o=>o.estado).filter(Boolean))].length;
   const tipoLabel=_opTipoFiltro?({equipamento:'Equipamentos',implemento:'Implementos',acessorio:'Acessórios'}[_opTipoFiltro]):'unidades locadas';
   el.innerHTML=[
-    {l:'Operações Ativas',v:totalOps,c:'#F37021',sub:'contratos ativos'},
-    {l:'Em Campo',v:totalEquips,c:'#0f766e',sub:tipoLabel},
-    {l:'Estados Atendidos',v:estados,c:'#2563eb',sub:'UFs com operação'},
-  ].map(k=>`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 22px;border-top:3px solid ${k.c};box-shadow:0 1px 4px rgba(0,0,0,.04)">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:10px">${k.l}</div>
-    <div style="font-size:34px;font-weight:900;color:${k.c};line-height:1;margin-bottom:4px">${k.v}</div>
-    <div style="font-size:11px;color:#94a3b8">${k.sub}</div>
+    {l:'Operações Ativas',v:totalOps,c:'#E8630A',sub:'contratos ativos'},
+    {l:'Em Campo',v:totalEquips,c:'#1A2E35',sub:tipoLabel},
+    {l:'Estados Atendidos',v:estados,c:'#1D4ED8',sub:'UFs com operação'},
+  ].map(k=>`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;margin-bottom:8px">${k.l}</div>
+    <div style="font-size:32px;font-weight:700;color:${k.c};line-height:1;margin-bottom:4px">${k.v?.toLocaleString('pt-BR')}</div>
+    <div style="font-size:11px;color:#8FA4AE">${k.sub}</div>
   </div>`).join('');
 }
 function opRenderChart(ops){
@@ -16041,24 +16042,30 @@ function opRender(){
   if(!lista)return;
   if(!ops.length){lista.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhuma operação encontrada.</div>';return;}
 
-  lista.innerHTML=`<div style="font-size:11px;color:#94a3b8;margin-bottom:10px;font-weight:600">${ops.length} operação(ões) encontrada(s)</div>
-  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)">
+  const _CTcor={'Gestão de frota':['#EDE9FF','#5B4DB5'],'Locação':['#DBEAFE','#1D4ED8'],'Locação + Operação':['#D1FAE5','#065F46'],'Venda':['#FEE2E2','#B91C1C']};
+  lista.innerHTML=`<div style="font-size:11px;color:#8FA4AE;margin-bottom:10px;font-weight:600">${ops.length} operação(ões) encontrada(s)</div>
+  <div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)">
   <table style="width:100%;border-collapse:collapse;font-size:12px">
-    <thead><tr style="background:#f8fafc">
-      <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Planta / Obra</th>
-      <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Cliente</th>
-      <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Equip.</th>
-      <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Município</th>
-      <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">UF</th>
+    <thead><tr style="background:#F4F6F8;border-bottom:2px solid #E2E8ED">
+      <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE">Planta / Obra</th>
+      <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE">Cliente</th>
+      <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE">Equip.</th>
+      <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE">Município</th>
+      <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE">UF</th>
     </tr></thead>
     <tbody>
-      ${ops.sort((a,b)=>b.equips.length-a.equips.length).map((op,ki)=>`<tr style="background:${ki%2?'#fff':'#fafbff'};border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s" onclick="opVerDetalhe(${OPERACOES_DATA.indexOf(op)})" onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background='${ki%2?'#fff':'#fafbff'}'">
-        <td style="padding:10px 14px;font-weight:700;color:#1e293b">${op.nome}</td>
-        <td style="padding:10px 14px;color:#64748b;font-size:11px">${op.cliente&&op.cliente!==op.nome?op.cliente:'—'}</td>
-        <td style="padding:10px 14px;text-align:center;font-weight:900;color:#F37021;font-size:18px">${op.equips.length}</td>
-        <td style="padding:10px 14px;color:#64748b">${op.municipio||'—'}</td>
-        <td style="padding:10px 14px;text-align:center">${op.estado?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(243,112,33,.1);color:#F37021;border:1px solid rgba(243,112,33,.2)">${op.estado}</span>`:'—'}</td>
-      </tr>`).join('')}
+      ${ops.sort((a,b)=>b.equips.length-a.equips.length).map((op)=>{
+        const ct=op.equips[0]?opContratoEquip(op.equips[0]):'';
+        const cc=_CTcor[ct]||['#F4F6F8','#5A7280'];
+        const ctBadge=ct?`<span style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;background:${cc[0]};color:${cc[1]};margin-left:6px">${ct}</span>`:'';
+        const idx=OPERACOES_DATA.indexOf(op);
+        return `<tr style="border-bottom:1px solid #F0F4F6;cursor:pointer;transition:background .1s" onclick="opVerDetalhe(${idx})" onmouseover="this.style.background='#F8FAFB'" onmouseout="this.style.background=''">
+          <td style="padding:10px 14px;color:#1A2E35;font-weight:600">${op.nome}${ctBadge}</td>
+          <td style="padding:10px 14px;color:#5A7280;font-size:11px">${op.cliente&&op.cliente!==op.nome?op.cliente:'—'}</td>
+          <td style="padding:10px 14px;text-align:right;font-weight:700;color:#E8630A;font-size:17px">${op.equips.length}</td>
+          <td style="padding:10px 14px;color:#5A7280">${op.municipio||'—'}</td>
+          <td style="padding:10px 14px;text-align:right">${op.estado?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(232,99,10,.08);color:#E8630A;border:1px solid rgba(232,99,10,.15)">${op.estado}</span>`:'—'}</td>
+        </tr>`;}).join('')}
     </tbody>
   </table></div>`;
 }
