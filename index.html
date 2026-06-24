@@ -466,32 +466,41 @@ input.filter-sel{padding:5px 8px;height:34px}
 /* ── App Shell Layout ── */
 .app-shell{display:flex;flex-direction:column;min-height:100vh}
 .app-body{display:flex;flex:1;min-height:0;width:100%;overflow:hidden;height:calc(100vh - 56px)}
-.app-main{flex:1;min-width:0;width:100%;overflow-y:auto;overflow-x:hidden;background:var(--bg);margin-left:60px}
+.app-main{flex:1;min-width:0;width:100%;overflow-y:auto;overflow-x:hidden;background:var(--bg);margin-left:220px}
 .app-main .page{width:100%;box-sizing:border-box}
 .app-main .home-wrap{width:100%;box-sizing:border-box;padding:22px 28px}
 
 /* ── Sidebar ── */
 .sidebar-nav{
   position:fixed;top:56px;left:0;bottom:0;
-  width:60px;z-index:150;
-  background:#111827;
-  display:flex;flex-direction:column;align-items:center;
-  padding:12px 0 16px;gap:2px;
-  border-right:1px solid rgba(255,255,255,.06);
+  width:220px;z-index:150;
+  background:#1A2E35;
+  display:flex;flex-direction:column;align-items:stretch;
+  padding:8px 10px 0;gap:2px;
+  border-right:1px solid rgba(255,255,255,.07);
   overflow-y:auto;
   scrollbar-width:none}
 .sidebar-nav::-webkit-scrollbar{display:none}
+.snav-section-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.3);padding:14px 8px 6px;flex-shrink:0}
 .snav-item{
-  width:44px;height:44px;border-radius:10px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  cursor:pointer;transition:all .18s;
-  gap:3px;position:relative;color:rgba(255,255,255,.45);
-  border:1px solid transparent;flex-shrink:0}
-.snav-item:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.85)}
-.snav-item.active{background:rgba(243,112,33,.15);color:#F37021;border-color:rgba(243,112,33,.25)}
-.snav-item svg{width:20px;height:20px;flex-shrink:0}
-.snav-label{font-size:9px;font-weight:600;letter-spacing:.02em;text-align:center;line-height:1;white-space:nowrap;max-width:50px;overflow:hidden;text-overflow:ellipsis}
-.snav-divider{width:28px;height:1px;background:rgba(255,255,255,.08);margin:4px 0;flex-shrink:0}
+  width:100%;height:40px;border-radius:8px;
+  display:flex;flex-direction:row;align-items:center;
+  cursor:pointer;transition:all .15s;
+  gap:10px;padding:0 10px;position:relative;
+  color:rgba(255,255,255,.55);
+  border:none;flex-shrink:0}
+.snav-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.9)}
+.snav-item.active{background:rgba(232,99,10,.18);color:#F37021}
+.snav-item.active::before{content:'';position:absolute;left:-10px;top:50%;transform:translateY(-50%);width:3px;height:22px;background:#E8630A;border-radius:0 3px 3px 0}
+.snav-item svg{width:18px;height:18px;flex-shrink:0}
+.snav-label{font-size:13px;font-weight:500;letter-spacing:0;text-align:left;line-height:1;white-space:nowrap;flex:1}
+.snav-divider{height:1px;background:rgba(255,255,255,.07);margin:6px 0;flex-shrink:0}
+.snav-footer{margin-top:auto;padding:12px 8px 16px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.snav-footer-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px}
+.snav-footer-avatar{width:32px;height:32px;border-radius:50%;background:#E8630A;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.snav-footer-info{display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.snav-footer-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.snav-footer-role{font-size:10px;color:#E8630A;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .snav-badge{
   position:absolute;top:6px;right:6px;
   background:#ef4444;color:#fff;
@@ -783,13 +792,17 @@ input.filter-sel{padding:5px 8px;height:34px}
 
 <!-- SIDEBAR NAV -->
 <nav class="sidebar-nav" id="sidebar-nav">
+
   <div class="snav-item active" onclick="navegarPara('home')" title="Início" id="snav-home">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    <span class="snav-label">Home</span>
+    <span class="snav-label">Início</span>
   </div>
+
+  <div class="snav-section-label">Operações</div>
+
   <div class="snav-item" onclick="navegarPara('oficinas')" title="Oficinas" id="snav-oficinas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-    <span class="snav-label">Oficina</span>
+    <span class="snav-label">Oficinas</span>
   </div>
   <div class="snav-item" onclick="navegarPara('patio')" title="Pátio" id="snav-patio">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
@@ -797,29 +810,33 @@ input.filter-sel{padding:5px 8px;height:34px}
   </div>
   <div class="snav-item" onclick="navegarPara('operacoes')" title="Em contrato" id="snav-operacoes">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-    <span class="snav-label">Contrato</span>
+    <span class="snav-label">Em Contrato</span>
   </div>
-  <div class="snav-item" onclick="switchTab('programacao')" title="Programação" id="snav-programacao">
+  <div class="snav-item" onclick="switchTab('programacao')" title="Programação de Oficinas" id="snav-programacao">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-    <span class="snav-label">Prog.Of.</span>
+    <span class="snav-label">Prog. Oficinas</span>
   </div>
+
+  <div class="snav-section-label">Ferramentas</div>
 
   <div class="snav-item" id="snav-rcd" onclick="navegarPara('rcd')" title="RCD — Avarias">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-    <span class="snav-label">RCD</span>
+    <span class="snav-label">RCD — Avarias</span>
   </div>
   <div class="snav-item" id="snav-manuterceiros" onclick="navegarPara('manuterceiros')" title="Manut. Terceiros">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-    <span class="snav-label">M. Terc.</span>
+    <span class="snav-label">Manut. Terceiros</span>
   </div>
   <div class="snav-item" id="snav-valepecas" onclick="navegarPara('valepecas')" title="Vale Peças">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-    <span class="snav-label">Vale Peç.</span>
+    <span class="snav-label">Vale Peças</span>
   </div>
-  <div class="snav-divider"></div>
+
+  <div class="snav-section-label">Análise</div>
+
   <div class="snav-item" onclick="abrirTodo()" title="Gestão Integrada" id="snav-gi">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-    <span class="snav-label">Gestão</span>
+    <span class="snav-label">Gestão Integrada</span>
   </div>
   <div class="snav-item" id="snav-historico" onclick="abrirHistoricoAtivos()" title="Histórico de Ativos">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -829,12 +846,22 @@ input.filter-sel{padding:5px 8px;height:34px}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
     <span class="snav-label">Mapa</span>
   </div>
-  <div class="snav-divider"></div>
   <div class="snav-item" id="snav-notif" onclick="switchTab('alteracoes')" title="Alterações" style="position:relative">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
     <div class="snav-badge" id="snav-badge-alt">0</div>
     <span class="snav-label">Alertas</span>
   </div>
+
+  <div class="snav-footer">
+    <div class="snav-footer-user" id="snav-footer-user">
+      <div class="snav-footer-avatar" id="snav-footer-avatar">RF</div>
+      <div class="snav-footer-info">
+        <span class="snav-footer-name" id="snav-footer-name">Rafael Welter</span>
+        <span class="snav-footer-role">PCM</span>
+      </div>
+    </div>
+  </div>
+
 </nav>
 
 <!-- MAIN CONTENT AREA -->
