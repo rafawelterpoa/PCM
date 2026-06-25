@@ -1,4 +1,4 @@
-// SW v38 — home Pátio: Venda inclui Standby
+// SW v39 — home Pátio: usa só tipoFrota de EQUIPAMENTOS_ORIG, sem fallbacks
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
