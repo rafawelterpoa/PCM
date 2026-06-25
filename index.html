@@ -1184,7 +1184,7 @@ input.filter-sel{padding:5px 10px;height:32px}
         <div style="display:flex;flex-direction:column;gap:5px">
           <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Recepção</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-of-bar-recep" style="height:100%;background:#E8630A;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-of-recep" style="font-weight:600;color:#1A2E35;width:24px;text-align:right;flex-shrink:0">—</span></div>
           <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Manutenção</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-of-bar-manut" style="height:100%;background:#E8630A;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-of-manut" style="font-weight:600;color:#1A2E35;width:24px;text-align:right;flex-shrink:0">—</span></div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Prontos</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-of-bar-pronto" style="height:100%;background:#1D9E75;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-of-pronto" style="font-weight:600;color:#1D9E75;width:24px;text-align:right;flex-shrink:0">—</span></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Rev. Saída</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-of-bar-pronto" style="height:100%;background:#7c3aed;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-of-pronto" style="font-weight:600;color:#7c3aed;width:24px;text-align:right;flex-shrink:0">—</span></div>
         </div>
       </div>
       <div style="display:flex;gap:6px;padding-top:10px;border-top:1px solid #F4F6F8">
@@ -16347,17 +16347,16 @@ function rgUpdateHomeKpis(ativos){
   const setBar=(id,n,total)=>{const el=document.getElementById(id);if(el)el.style.width=(total>0?Math.round(n/total*100):0)+'%';};
 
   // ── Oficina ────────────────────────────────────────────────────────────────
-  const emOficina=ativos.filter(e=>e.etapa!=='pronto');
+  const emOficina=ativos.filter(e=>['chegada','cl_entrada','manutencao','cl_saida'].includes(e.etapa));
   const emPatio=ativos.filter(e=>e.etapa==='pronto');
-  const nRecep=emOficina.filter(e=>e.etapa==='chegada').length;
-  const nManut=emOficina.filter(e=>e.etapa!=='chegada').length;
-  const nPront=emPatio.length;
+  const nRecep=emOficina.filter(e=>e.etapa==='chegada'||e.etapa==='cl_entrada').length;
+  const nManut=emOficina.filter(e=>e.etapa==='manutencao').length;
+  const nRevSaida=emOficina.filter(e=>e.etapa==='cl_saida').length;
   safe('home-kpi-oficina',emOficina.length);
-  safe('home-of-recep',nRecep);safe('home-of-manut',nManut);safe('home-of-pronto',nPront);
+  safe('home-of-recep',nRecep);safe('home-of-manut',nManut);safe('home-of-pronto',nRevSaida);
   setBar('home-of-bar-recep',nRecep,emOficina.length||1);
   setBar('home-of-bar-manut',nManut,emOficina.length||1);
-  const totOfPat=emOficina.length+nPront||1;
-  setBar('home-of-bar-pronto',nPront,totOfPat);
+  setBar('home-of-bar-pronto',nRevSaida,emOficina.length||1);
 
   // ── Programação — semana atual ─────────────────────────────────────────────
   const sa=semanaAtual();

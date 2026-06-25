@@ -1,4 +1,4 @@
-// SW v39 — home Pátio: usa só tipoFrota de EQUIPAMENTOS_ORIG, sem fallbacks
+// SW v40 — home Oficina: Recepção=chegada+cl_entrada, Manut, Rev.Saída=cl_saida
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
