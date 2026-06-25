@@ -2162,8 +2162,11 @@ async function loadFromFirebase(){
       if(bd&&typeof bd==='object'&&Object.keys(bd).length>0){
         const origMap={};EQUIPAMENTOS_ORIG.forEach(e=>{origMap[e.id]=e;});
         Object.entries(bd).forEach(([id,b])=>{
-          if(origMap[id])origMap[id].status=b.status||origMap[id].status;
-          else if(b.status){EQUIPAMENTOS_ORIG.push({id,status:b.status,oficina:b.oficina||''});}
+          if(origMap[id]){
+            origMap[id].status=b.status||origMap[id].status;
+            // base_atual é fonte de verdade para oficina — propagar mudanças de filial
+            if(b.oficina)origMap[id].oficina=b.oficina;
+          } else if(b.status){EQUIPAMENTOS_ORIG.push({id,status:b.status,oficina:b.oficina||''});}
         });
       }
     }

@@ -1,4 +1,4 @@
-// SW v27 — Programação: cards altura fixa 210px, cor roxo-cinza→laranja/amber/slate Mills
+// SW v28 — fix: oficina revertendo ao Kanban original após upload de CSV
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
