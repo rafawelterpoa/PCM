@@ -1,4 +1,4 @@
-// SW v29 — Programação: gráficos h220, top6+Outros clientes, KPIs reparados/manutenção corrigidos
+// SW v30 — header: Mills caixa baixa, PCM fonte maior
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
