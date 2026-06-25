@@ -1,4 +1,4 @@
-// SW v36 — home Programação: exclui alugado do cálculo, ordem Reservados>Conc>Atras
+// SW v37 — home Pátio: corrige Locação/Venda usando tipoFrota
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
