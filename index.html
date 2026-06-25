@@ -16462,20 +16462,20 @@ function rgRenderVisaoGeral(ativos,emOperacao){
   const tuTotPct=_denTot>0?Math.round(locadosLoc/_denTot*100):0;
 
   // ── CARDS 3 & 4: Manutenção e Pátio — todos os tipos (espelha Oficina e Pátio) ─
-  const getFr=e=>(e.frota||'').toLowerCase();
-  const hasFrotaData=allActive.some(e=>(e.frota||'')!=='');
+  const getFr=e=>{const o=EQUIPAMENTOS_ORIG&&EQUIPAMENTOS_ORIG.find(x=>x.id===e.id);return(o?.tipoFrota||'').toLowerCase();};
+  const hasFrotaData=allActive.some(e=>getFr(e)!=='');
 
   const manutTotal=manutencao.length;
   const patioTotal=disponiveis.length;
 
-  const manutLoc=manutencao.filter(e=>getFr(e).includes('loca')).length;
-  const manutVen=manutencao.filter(e=>getFr(e).includes('venda')).length;
-  const manutSby=manutencao.filter(e=>getFr(e).includes('standby')).length;
-  const manutSD=manutTotal-manutLoc-manutVen-manutSby; // sem dado de frota
+  const manutLoc=manutencao.filter(e=>getFr(e)==='locação').length;
+  const manutVen=manutencao.filter(e=>getFr(e)==='venda').length;
+  const manutSby=manutencao.filter(e=>getFr(e)==='standby').length;
+  const manutSD=manutTotal-manutLoc-manutVen-manutSby;
 
-  const patioLoc=disponiveis.filter(e=>getFr(e).includes('loca')).length;
-  const patioVen=disponiveis.filter(e=>getFr(e).includes('venda')).length;
-  const patioSby=disponiveis.filter(e=>getFr(e).includes('standby')).length;
+  const patioLoc=disponiveis.filter(e=>getFr(e)==='locação').length;
+  const patioVen=disponiveis.filter(e=>getFr(e)==='venda').length;
+  const patioSby=disponiveis.filter(e=>getFr(e)==='standby').length;
   const patioSD=patioTotal-patioLoc-patioVen-patioSby;
 
   const pctM=n=>manutTotal>0?Math.round(n/manutTotal*100):0;
