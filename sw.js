@@ -1,4 +1,4 @@
-// SW v42 — header: logo mills minúsculo, botão Sair pill laranja com ícone
+// SW v43 — favicon: letra m laranja fundo escuro
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
