@@ -4593,9 +4593,14 @@ function renderProgramacao(){
     if(hdrStats){
       const reparados=Object.values(state).filter(e=>e.etapa==='pronto'&&!e.baixado).length;
       const emManutencao=Object.values(state).filter(e=>e.semana&&!e.baixado&&e.etapa!=='pronto'&&e.etapa!=='alugado').length;
+      const semProg=EQUIPAMENTOS_ORIG.length-emManutencao;
+      const prontosPorSem={};
+      Object.values(state).filter(e=>e.etapa==='pronto'&&e.semana&&!e.baixado).forEach(e=>{prontosPorSem[e.semana]=(prontosPorSem[e.semana]||0)+1;});
+      const semsVals=Object.values(prontosPorSem);
+      const mediaLib=semsVals.length?Math.round(semsVals.reduce((a,b)=>a+b,0)/semsVals.length):0;
       const sep=`<div style="width:1px;height:36px;background:#E2E8ED"></div>`;
       const kpi=(val,label,cor)=>`<div style="text-align:center"><div style="font-size:22px;font-weight:800;color:${cor};line-height:1">${val}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em;margin-top:3px">${label}</div></div>`;
-      hdrStats.innerHTML=kpi(reparados,'Reparados','#1E8A4C')+sep+kpi(emManutencao,'Em Manutenção','#E8630A');
+      hdrStats.innerHTML=kpi(reparados,'Reparados','#1E8A4C')+sep+kpi(emManutencao,'Em Manutenção','#E8630A')+sep+kpi(semProg,'Sem Programação','#5A7280')+sep+kpi(mediaLib,'Média/Semana','#1D4ED8');
     }
   } else statsBar.style.display='none';
 

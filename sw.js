@@ -1,4 +1,4 @@
-// SW v30 — header: Mills caixa baixa, PCM fonte maior
+// SW v31 — header Programação: +Sem Programação e Média/Semana
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
