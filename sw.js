@@ -1,4 +1,4 @@
-// SW v28 — fix: oficina revertendo ao Kanban original após upload de CSV
+// SW v29 — Programação: gráficos h220, top6+Outros clientes, KPIs reparados/manutenção corrigidos
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

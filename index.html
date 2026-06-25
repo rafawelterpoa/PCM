@@ -526,7 +526,7 @@ input.filter-sel{padding:5px 10px;height:32px}
 
 
 /* ══ PROG DASHBOARD ══ */
-.prog-dashboard{display:flex;gap:10px;margin-bottom:12px;align-items:stretch;flex-wrap:nowrap;min-height:240px}
+.prog-dashboard{display:flex;gap:10px;margin-bottom:12px;align-items:stretch;flex-wrap:nowrap;height:220px}
 .prog-roscas{display:flex;gap:8px;flex-wrap:nowrap;flex:0 0 auto;align-items:stretch}
 .prog-linha-wrap{flex:1;min-width:0;background:#fff;border-radius:10px;border:1px solid var(--borda);box-shadow:0 1px 4px rgba(0,0,0,.05);overflow:hidden;display:flex;flex-direction:column}
 .prog-linha-hd{background:#f7f9fc;padding:7px 12px;border-bottom:1px solid var(--borda);display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto}
@@ -4591,7 +4591,7 @@ function renderProgramacao(){
       chip(res,'reservados','#6D28D9','#EDE9FE');
     const hdrStats=document.getElementById('prog-header-stats');
     if(hdrStats){
-      const reparados=Object.values(state).filter(e=>e.etapa==='pronto'&&!e.baixado&&e.semana).length;
+      const reparados=Object.values(state).filter(e=>e.etapa==='pronto'&&!e.baixado).length;
       const emManutencao=Object.values(state).filter(e=>e.semana&&!e.baixado&&e.etapa!=='pronto'&&e.etapa!=='alugado').length;
       const sep=`<div style="width:1px;height:36px;background:#E2E8ED"></div>`;
       const kpi=(val,label,cor)=>`<div style="text-align:center"><div style="font-size:22px;font-weight:800;color:${cor};line-height:1">${val}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em;margin-top:3px">${label}</div></div>`;
@@ -4616,13 +4616,17 @@ function renderProgramacao(){
     // Por oficina
     const cntOf={};equips.forEach(e=>{cntOf[e.oficina]=(cntOf[e.oficina]||0)+1;});
     const ofAtivos=Object.entries(cntOf).sort((a,b)=>b[1]-a[1]);
-    // Por cliente
+    // Por cliente — top 6 + Outros
     const cntCli={};equips.filter(e=>e.reservado&&e.cliente).forEach(e=>{cntCli[e.cliente]=(cntCli[e.cliente]||0)+1;});
-    const cliAtivos=Object.entries(cntCli).sort((a,b)=>b[1]-a[1]);
+    const cliSort=Object.entries(cntCli).sort((a,b)=>b[1]-a[1]);
+    const cliTop6=cliSort.slice(0,6);
+    const cliOutros=cliSort.slice(6).reduce((s,[,n])=>s+n,0);
+    const cliAtivos=[...cliTop6,...(cliOutros>0?[['Outros',cliOutros]]:[])] ;
+    const cliTotal=equips.filter(e=>e.reservado&&e.cliente).length;
     grafDiv.innerHTML=`<div class="prog-dashboard">
       <div class="prog-roscas">
         ${rosca('Por oficina',ofAtivos.map(([l,n])=>({label:l,n,cor:''})),tot)}
-        ${cliAtivos.length>0?rosca('Por cliente',cliAtivos.map(([l,n])=>({label:l,n,cor:''})),equips.filter(e=>e.reservado&&e.cliente).length):''}
+        ${cliAtivos.length>0?rosca('Por cliente',cliAtivos.map(([l,n])=>({label:l,n,cor:''})),cliTotal):''}
       </div>
       <div class="prog-linha-wrap" id="prog-linha-wrap">
         <div class="prog-linha-hd">
