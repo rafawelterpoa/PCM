@@ -1,4 +1,4 @@
-// SW v24 — busca /index.html diretamente (CDN key diferente de /)
+// SW v25 — GI redesign Mills UX tokens
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

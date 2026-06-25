@@ -10016,69 +10016,90 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
 <!-- TO-DO / KPI / ROTINA MODULE — isolado                  -->
 <!-- ══════════════════════════════════════════════════════ -->
 <style>
-#todo-overlay{display:none;position:fixed;top:56px;left:220px;right:0;bottom:0;z-index:9200;background:#f1f5f9;overflow:auto}
+/* GI — tokens Mills */
+#todo-overlay{display:none;position:fixed;top:56px;left:220px;right:0;bottom:0;z-index:9200;background:#F4F6F8;overflow:auto}
 #todo-panel{width:100%;min-height:100vh;display:flex;flex-direction:column}
 #todo-panel .tp-hd{display:none}
-#todo-panel .tp-tabs{display:flex;border-bottom:2px solid #f1f5f9;flex-shrink:0;background:#fff;padding:0 24px;position:sticky;top:0;z-index:10;box-shadow:0 1px 6px rgba(0,0,0,.06)}
-#todo-panel .tp-tab{padding:14px 20px;font-size:12px;font-weight:600;cursor:pointer;color:#94a3b8;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;white-space:nowrap}
-#todo-panel .tp-tab.active{color:#F37021;border-bottom-color:#F37021}
-#todo-panel .tp-tab:hover{color:#0f172a}
+#todo-panel .tp-tabs{display:flex;border-bottom:2px solid #E2E8ED;flex-shrink:0;background:#fff;padding:0 24px;position:sticky;top:0;z-index:10;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+#todo-panel .tp-tab{padding:13px 18px;font-size:12px;font-weight:600;cursor:pointer;color:#8FA4AE;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;white-space:nowrap}
+#todo-panel .tp-tab.active{color:#E8630A;border-bottom-color:#E8630A}
+#todo-panel .tp-tab:hover{color:#1A2E35}
 .gi-body{padding:24px 32px;max-width:1500px;width:100%;margin:0 auto;box-sizing:border-box}
-.gi-page-title{font-size:20px;font-weight:700;color:#0f172a;margin-bottom:4px}
-.gi-page-sub{font-size:12px;color:#64748b;margin-bottom:20px}
-.gi-form-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.gi-page-title{font-size:20px;font-weight:700;color:#1A2E35;margin-bottom:4px}
+.gi-page-sub{font-size:12px;color:#5A7280;margin-bottom:20px}
+.gi-form-card{background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04)}
 .gi-form-row{display:grid;gap:12px;margin-bottom:12px}
-.gi-label{display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#64748b;margin-bottom:5px}
-.gi-input,.gi-select{width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;background:#fff;color:#1e293b;outline:none;transition:border .15s;box-sizing:border-box}
-.gi-input:focus,.gi-select:focus{border-color:#F37021;box-shadow:0 0 0 2px rgba(243,112,33,.08)}
-.gi-btn{padding:9px 20px;background:#F37021;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s;white-space:nowrap}
-.gi-btn:hover{background:#d4611a}
-.gi-btn.sec{background:#004042}.gi-btn.sec:hover{background:#003030}
-.gi-btn.blue{background:#2563eb}.gi-btn.blue:hover{background:#1d4ed8}
-.gi-btn.ghost{background:transparent;color:#64748b;border:1px solid #e2e8f0}.gi-btn.ghost:hover{border-color:#F37021;color:#F37021}
-.gi-table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
-.gi-table th{background:#0f172a;color:#fff;padding:9px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
-.gi-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;color:#334155}
+.gi-label{display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;margin-bottom:5px}
+.gi-input,.gi-select{width:100%;padding:8px 10px;border:1px solid #C8D4DA;border-radius:6px;font-size:12px;background:#fff;color:#1A2E35;outline:none;transition:border .15s,box-shadow .15s;box-sizing:border-box}
+.gi-input:focus,.gi-select:focus{border-color:#E8630A;box-shadow:0 0 0 3px rgba(232,99,10,.12)}
+.gi-btn{padding:9px 20px;background:#E8630A;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s;white-space:nowrap}
+.gi-btn:hover{background:#C85508}
+.gi-btn.sec{background:#1A2E35}.gi-btn.sec:hover{background:#0e1e24}
+.gi-btn.blue{background:#1D4ED8}.gi-btn.blue:hover{background:#1e40af}
+.gi-btn.ghost{background:transparent;color:#5A7280;border:1px solid #C8D4DA}.gi-btn.ghost:hover{border-color:#E8630A;color:#E8630A}
+.gi-table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.gi-table th{background:#1A2E35;color:#fff;padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.gi-table td{padding:10px 12px;border-bottom:1px solid #F0F4F6;vertical-align:middle;color:#1A2E35}
 .gi-table tr:last-child td{border-bottom:none}
-.gi-table tr:hover td{background:#f8fafc}
-.gi-table tr.done-row td{opacity:.6}
-.todo-check{width:17px;height:17px;border-radius:4px;border:2px solid #cbd5e1;cursor:pointer;flex-shrink:0;appearance:none;-webkit-appearance:none;background:#fff;transition:all .12s}
-.todo-check:checked{background:#1D9E75;border-color:#1D9E75;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 10 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4l3 3 5-6' stroke='%23fff' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-size:10px 8px;background-repeat:no-repeat;background-position:center}
-.todo-done-text{text-decoration:line-through;color:#94a3b8}
+.gi-table tr:hover td{background:#F8FAFB}
+.gi-table tr.done-row td{opacity:.55}
+.todo-check{width:17px;height:17px;border-radius:4px;border:2px solid #C8D4DA;cursor:pointer;flex-shrink:0;appearance:none;-webkit-appearance:none;background:#fff;transition:all .12s}
+.todo-check:checked{background:#1E8A4C;border-color:#1E8A4C;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 10 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4l3 3 5-6' stroke='%23fff' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-size:10px 8px;background-repeat:no-repeat;background-position:center}
+.todo-done-text{text-decoration:line-through;color:#8FA4AE}
 .gi-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap}
-.gi-badge.area{background:#e2e8f0;color:#334155}
+.gi-badge.area{background:#E2E8ED;color:#1A2E35}
 .gi-prio{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase}
-.gi-prio.alta{background:#fee2e2;color:#991b1b}
-.gi-prio.media{background:#fef3c7;color:#92400e}
-.gi-prio.baixa{background:#d1fae5;color:#065f46}
+.gi-prio.alta{background:#FEE2E2;color:#991b1b}
+.gi-prio.media{background:#FEF3C7;color:#92400e}
+.gi-prio.baixa{background:#E8F5EE;color:#1E8A4C}
 .gi-status{display:inline-block;padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700;white-space:nowrap;border:1.5px solid}
-.gi-status.aberto{background:#dbeafe;color:#1e40af;border-color:#93c5fd}
-.gi-status.atrasado{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
-.gi-status.concluido-ok{background:#d1fae5;color:#065f46;border-color:#6ee7b7}
-.gi-status.concluido-atraso{background:#fef3c7;color:#92400e;border-color:#fcd34d}
-.gi-prazo-ok{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7;display:inline-block;padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700}
-.gi-prazo-atrasado{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;display:inline-block;padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700}
-.gi-prazo-alerta{background:#fef3c7;color:#92400e;border:1.5px solid #fcd34d;display:inline-block;padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700}
-.gi-prazo-none{color:#94a3b8;font-size:11px}
-.concluir-btn{background:#F37021;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
-.concluir-btn:hover{background:#d4611a}
+.gi-status.aberto{background:#DBEAFE;color:#1D4ED8;border-color:#93c5fd}
+.gi-status.atrasado{background:#FEE2E2;color:#991b1b;border-color:#fca5a5}
+.gi-status.concluido-ok{background:#E8F5EE;color:#1E8A4C;border-color:#6ee7b7}
+.gi-status.concluido-atraso{background:#FEF3C7;color:#92400e;border-color:#fcd34d}
+.gi-prazo-ok{background:#E8F5EE;color:#1E8A4C;border:1.5px solid #6ee7b7;display:inline-block;padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700}
+.gi-prazo-atrasado{background:#FEE2E2;color:#991b1b;border:1.5px solid #fca5a5;display:inline-block;padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700}
+.gi-prazo-alerta{background:#FEF3C7;color:#92400e;border:1.5px solid #fcd34d;display:inline-block;padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700}
+.gi-prazo-none{color:#8FA4AE;font-size:11px}
+.concluir-btn{background:#E8630A;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+.concluir-btn:hover{background:#C85508}
 .gi-del{background:none;border:1px solid #fca5a5;color:#ef4444;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer}
-.gi-del:hover{background:#fee2e2}
-.gi-edit-btn{background:#2563eb;color:#fff;border:none;border-radius:5px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer}
-.gi-edit-btn:hover{background:#1d4ed8}
-.gi-empty{text-align:center;padding:40px;color:#94a3b8;font-size:13px}
+.gi-del:hover{background:#FEE2E2}
+.gi-edit-btn{background:#1D4ED8;color:#fff;border:none;border-radius:5px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer}
+.gi-edit-btn:hover{background:#1e40af}
+.gi-empty{text-align:center;padding:48px;color:#8FA4AE;font-size:13px}
 .kpi-farol{padding:3px 10px;border-radius:4px;font-weight:700;font-size:10px;text-transform:uppercase;display:inline-block;white-space:nowrap}
-.kpi-farol.atingido{background:#d1fae5;color:#065f46}
-.kpi-farol.atencao{background:#fef08a;color:#854d0e}
-.kpi-farol.critico{background:#fee2e2;color:#991b1b}
-.kpi-farol.linha{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+.kpi-farol.atingido{background:#E8F5EE;color:#1E8A4C}
+.kpi-farol.atencao{background:#FEF3C7;color:#B45309}
+.kpi-farol.critico{background:#FEE2E2;color:#991b1b}
+.kpi-farol.linha{background:#F0F4F6;color:#5A7280;border:1px solid #C8D4DA}
 .kpi-acomp{font-weight:800;font-size:13px}
-.kpi-acomp.bom{color:#1D9E75}.kpi-acomp.medio{color:#F37021}.kpi-acomp.ruim{color:#C24003}
-/* Modal edição inline */
-.gi-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9500;align-items:center;justify-content:center}
+.kpi-acomp.bom{color:#1E8A4C}.kpi-acomp.medio{color:#E8630A}.kpi-acomp.ruim{color:#B91C1C}
+/* Utilitários GI */
+.gi-filters-bar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:10px 16px}
+.gi-filters-label{font-size:10px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.gi-charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.gi-chart-title{font-size:11px;font-weight:700;color:#5A7280;margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em}
+.gi-radio-label{display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;padding:6px 10px;border:1px solid #C8D4DA;border-radius:6px;background:#F4F6F8;white-space:nowrap;color:#1A2E35;transition:all .15s}
+.gi-radio-label:has(input:checked){border-color:#E8630A;background:#FDE8D8;color:#E8630A;font-weight:600}
+.gi-sol-display{padding:8px 12px;background:#E8F5EE;border:1px solid #86efac;border-radius:6px;font-size:12px;font-weight:600;color:#1E8A4C;display:flex;align-items:center;gap:6px}
+.gi-add-resp-btn{background:#DBEAFE;border:1px solid #93c5fd;color:#1D4ED8;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.15s}
+.gi-add-resp-btn:hover{background:#bfdbfe}
+.gi-section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#5A7280}
+/* KPI table th especiais */
+.kpi-th-ref{width:70px;text-align:center;background:#1A2E35;color:#fff}
+.kpi-th-meta{width:75px;text-align:center;background:#223540;color:#fff}
+.kpi-th-melhoria{width:80px;text-align:center;color:#1E8A4C;background:#E8F5EE}
+.kpi-th-acomp{width:75px;text-align:center;color:#E8630A;background:#FDE8D8}
+/* Reuniões Gerenciais sub-tabs */
+.rg-tabs-bar{display:flex;gap:0;border-bottom:2px solid #E2E8ED;margin-bottom:20px;overflow-x:auto;flex-wrap:nowrap}
+/* Modal */
+.gi-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9500;align-items:center;justify-content:center}
 .gi-modal-overlay.open{display:flex}
 .gi-modal-box{background:#fff;border-radius:12px;width:700px;max-height:90vh;overflow-y:auto;padding:28px;box-shadow:0 12px 48px rgba(0,0,0,.25)}
-.gi-modal-title{font-size:16px;font-weight:700;color:#0f172a;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
+.gi-modal-title{font-size:16px;font-weight:700;color:#1A2E35;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
+.gi-modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#8FA4AE;line-height:1;padding:0 2px}
+.gi-modal-close:hover{color:#1A2E35}
 </style>
 
 <span id="todo-badge" style="display:none"></span>
@@ -10120,7 +10141,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
         <div class="gi-form-row" style="grid-template-columns:1fr 2fr">
           <div>
             <label class="gi-label">Solicitante</label>
-            <div id="todo-solicitante-display" style="padding:8px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:7px;font-size:12px;font-weight:600;color:#166534;display:flex;align-items:center;gap:6px">
+            <div id="todo-solicitante-display" class="gi-sol-display">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
               <span id="todo-solicitante-nome">Carregando...</span>
             </div>
@@ -10132,15 +10153,15 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
                 <option value="">Selecione o responsável...</option>
               </select>
               <div id="todo-resp-chips" style="display:flex;gap:4px;flex-wrap:wrap"></div>
-              <button type="button" onclick="todoAddResp()" style="background:#e0f2fe;border:1px solid #7dd3fc;color:#0369a1;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">+ Adicionar</button>
+              <button type="button" onclick="todoAddResp()" class="gi-add-resp-btn">+ Adicionar</button>
             </div>
             <input type="hidden" id="todo-resp-lista" value="">
           </div>
         </div>
       </div>
       <!-- Filtros atividades -->
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px">
-        <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">⊟ Filtros:</div>
+      <div class="gi-filters-bar">
+        <div class="gi-filters-label">⊟ Filtros:</div>
         <select class="gi-select" style="width:145px;font-size:11px" id="td-fil-area" onchange="todoRenderLista()">
           <option value="">Área — Todas</option>
           <option>Avarias</option><option>Garantias</option><option>PCM</option>
@@ -10168,7 +10189,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
           <option value="baixa">Baixa</option>
         </select>
         <button class="gi-btn ghost" style="font-size:11px;padding:6px 12px" onclick="tdLimparFiltros()">✕ Limpar</button>
-        <span id="td-fil-count" style="font-size:10px;color:#94a3b8"></span>
+        <span id="td-fil-count" style="font-size:10px;color:#8FA4AE"></span>
       </div>
 
       <table class="gi-table">
@@ -10193,14 +10214,14 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
     <div id="tp-aba-graficos" class="gi-body" style="display:none">
       <div class="gi-page-title">Dashboard Analítico de Performance</div>
       <div class="gi-page-sub">Monitoramento consolidado e visão integrada de resultados.</div>
-      <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-        <select class="gi-select" style="width:180px" id="graf-filtro-area" onchange="giRenderGraficos()"><option value="">Todas as áreas</option><option>Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Gestão de Ativos</option><option>Performance</option></select>
-        <select class="gi-select" style="width:180px" id="graf-filtro-status" onchange="giRenderGraficos()"><option value="">Todos os status</option><option value="aberto">Abertos</option><option value="concluido">Concluídos</option><option value="atrasado">Atrasados</option></select>
+      <div class="gi-filters-bar" style="margin-bottom:20px">
+        <select class="gi-select" style="width:180px" id="graf-filtro-area" onchange="giRenderGraficos()"><option value="">Área — Todas</option><option>Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Gestão de Ativos</option><option>Performance</option></select>
+        <select class="gi-select" style="width:180px" id="graf-filtro-status" onchange="giRenderGraficos()"><option value="">Status — Todos</option><option value="aberto">Abertos</option><option value="concluido">Concluídos</option><option value="atrasado">Atrasados</option></select>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px" id="gi-charts-container">
-        <div class="gi-form-card"><div class="gi-chart-title" style="font-size:11px;font-weight:700;color:#475569;margin-bottom:12px">Volume de Atividades por Responsável</div><canvas id="chart-resp" height="220"></canvas></div>
-        <div class="gi-form-card"><div class="gi-chart-title" style="font-size:11px;font-weight:700;color:#475569;margin-bottom:12px">Demandas por Área de Atuação</div><canvas id="chart-area" height="220"></canvas></div>
-        <div class="gi-form-card"><div class="gi-chart-title" style="font-size:11px;font-weight:700;color:#475569;margin-bottom:12px">Volume por Subárea / Processo</div><canvas id="chart-sub" height="220"></canvas></div>
+      <div class="gi-charts-grid" id="gi-charts-container">
+        <div class="gi-form-card"><div class="gi-chart-title">Volume de Atividades por Responsável</div><canvas id="chart-resp" height="220"></canvas></div>
+        <div class="gi-form-card"><div class="gi-chart-title">Demandas por Área de Atuação</div><canvas id="chart-area" height="220"></canvas></div>
+        <div class="gi-form-card"><div class="gi-chart-title">Volume por Subárea / Processo</div><canvas id="chart-sub" height="220"></canvas></div>
       </div>
     </div>
 
@@ -10210,7 +10231,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <div class="gi-page-sub">Acompanhamento mensal por área — referência 2025 vs metas 2026.</div>
       <div class="gi-form-card" id="kpi-form-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <span id="kpi-form-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b"></span>
+          <span id="kpi-form-label" class="gi-section-label"></span>
           <button class="gi-btn ghost" id="kpi-cancelar-btn" style="display:none;font-size:11px;padding:6px 14px" onclick="kpiCancelarEdicao()">Cancelar</button>
         </div>
         <div class="gi-form-row" style="grid-template-columns:1fr 1fr 2fr 1fr 1fr 1fr 1fr;grid-template-rows:auto auto">
@@ -10246,9 +10267,9 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
           <select class="gi-select" style="width:150px" id="tkpi-farol"><option value="auto">Farol automático</option><option value="Atingido">Atingido</option><option value="Atenção">Atenção</option><option value="Crítico">Crítico</option><option value="Em linha">Em linha</option></select>
         </div>
       </div>
-      <!-- Barra de filtros estilo Excel -->
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px">
-        <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">⊟ Filtros:</div>
+      <!-- Barra de filtros -->
+      <div class="gi-filters-bar">
+        <div class="gi-filters-label">⊟ Filtros:</div>
         <div>
           <select class="gi-select" style="width:140px;font-size:11px" id="kpi-fil-area" onchange="tkpiRenderTabela()">
             <option value="">Área — Todas</option>
@@ -10296,7 +10317,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
           </select>
         </div>
         <button class="gi-btn ghost" style="font-size:11px;padding:6px 12px" onclick="kpiLimparFiltros()">✕ Limpar</button>
-        <span id="kpi-fil-count" style="font-size:10px;color:#94a3b8;margin-left:4px"></span>
+        <span id="kpi-fil-count" style="font-size:10px;color:#8FA4AE;margin-left:4px"></span>
       </div>
 
       <div style="overflow-x:auto">
@@ -10313,20 +10334,20 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
                   <span onclick="kpiToggleSort('resp')" style="cursor:pointer;opacity:.5;font-size:10px">⇅</span>
                 </div>
               </th>
-              <th style="width:70px;text-align:center;background:#1e3a5f">Ref 2025</th>
-              <th style="width:75px;text-align:center;background:#1e40af">Meta 2026</th>
+              <th class="kpi-th-ref">Ref 2025</th>
+              <th class="kpi-th-meta">Meta 2026</th>
               <th style="width:52px;text-align:center">Jan</th><th style="width:52px;text-align:center">Fev</th>
               <th style="width:52px;text-align:center">Mar</th><th style="width:52px;text-align:center">Abr</th>
               <th style="width:52px;text-align:center">Mai</th><th style="width:52px;text-align:center">Jun</th>
               <th style="width:52px;text-align:center">Jul</th><th style="width:52px;text-align:center">Ago</th>
               <th style="width:52px;text-align:center">Set</th><th style="width:52px;text-align:center">Out</th>
               <th style="width:52px;text-align:center">Nov</th><th style="width:52px;text-align:center">Dez</th>
-              <th style="width:80px;text-align:center;color:#1D9E75;background:#f0fdf4">
+              <th class="kpi-th-melhoria">
                 <div style="display:flex;align-items:center;justify-content:center;gap:3px">Melhoria %
                   <span onclick="kpiToggleSort('melhoria-desc')" style="cursor:pointer;opacity:.6;font-size:10px">⇅</span>
                 </div>
               </th>
-              <th style="width:75px;text-align:center;color:#F37021;background:#fff7ed">
+              <th class="kpi-th-acomp">
                 <div style="display:flex;align-items:center;justify-content:center;gap:3px">Acomp %
                   <span onclick="kpiToggleSort('acomp-desc')" style="cursor:pointer;opacity:.6;font-size:10px">⇅</span>
                 </div>
@@ -10349,7 +10370,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <!-- BLOCO 1: Cadastro de Indicadores -->
       <div class="gi-form-card" id="rs-ind-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b" id="rs-ind-label">Novo Indicador</span>
+          <span class="gi-section-label" id="rs-ind-label">Novo Indicador</span>
           <button class="gi-btn ghost" id="rs-ind-cancelar-btn" style="display:none;font-size:11px;padding:6px 14px" onclick="rsIndCancelar()">✕ Cancelar</button>
         </div>
         <div class="gi-form-row" style="grid-template-columns:2fr 3fr 1fr 1fr 1fr;margin-bottom:10px">
@@ -10395,7 +10416,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <!-- Lista de indicadores -->
       <div style="margin-bottom:20px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Indicadores Cadastrados</span>
+          <span class="gi-section-label">Indicadores Cadastrados</span>
           <div style="display:flex;gap:6px">
             <select class="gi-select" style="width:180px;font-size:11px" id="rs-fil-ind-area" onchange="rsIndRenderLista()">
               <option value="">Grupo — Todos</option>
@@ -10412,7 +10433,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <!-- BLOCO 2: Adicionar valor de semana -->
       <div class="gi-form-card" id="rs-semana-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b" id="rs-sem-label">Adicionar Valor de Semana</span>
+          <span class="gi-section-label" id="rs-sem-label">Adicionar Valor de Semana</span>
           <button class="gi-btn ghost" id="rs-sem-cancelar-btn" style="display:none;font-size:11px;padding:6px 14px" onclick="rsSemCancelar()">✕ Cancelar</button>
         </div>
         <div class="gi-form-row" style="grid-template-columns:1fr 1fr 1fr 1fr 2fr;margin-bottom:10px">
@@ -10420,8 +10441,8 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
             <select class="gi-select" id="rs-sem-ind"><option value="">Selecione...</option></select></div>
           <div><label class="gi-label">Tipo de Período</label>
             <div style="display:flex;gap:6px;margin-top:2px">
-              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;white-space:nowrap"><input type="radio" name="rs-sem-modo" value="semana" checked onchange="rsSemModoChange()"> Semana</label>
-              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;white-space:nowrap"><input type="radio" name="rs-sem-modo" value="mes" onchange="rsSemModoChange()"> 📅 Mês</label>
+              <label class="gi-radio-label"><input type="radio" name="rs-sem-modo" value="semana" checked onchange="rsSemModoChange()"> Semana</label>
+              <label class="gi-radio-label"><input type="radio" name="rs-sem-modo" value="mes" onchange="rsSemModoChange()"> 📅 Mês</label>
             </div>
           </div>
           <div><label class="gi-label" id="rs-sem-semana-lbl">Semana (ex: S21/2026)</label>
@@ -10438,8 +10459,8 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       </div>
 
       <!-- Filtros e tabela -->
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px">
-        <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Filtros</div>
+      <div class="gi-filters-bar">
+        <div class="gi-filters-label">Filtros</div>
         <select class="gi-select" style="width:190px;font-size:11px" id="rs-tab-area" onchange="rsRenderTabela()">
           <option value="">Grupo — Todos</option>
           <option>S&OP / Implantação</option><option>Estoque de Equipamentos</option><option>PCM</option><option>Avarias/Garantias</option><option>Telemetria</option>
@@ -10483,7 +10504,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <div class="gi-page-title">🏢 Reuniões Gerenciais</div>
       <div class="gi-page-sub">S&OP · Estoque · PCM · Avarias/Garantia · Telemetria</div>
 
-      <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:20px;overflow-x:auto;flex-wrap:nowrap">
+      <div class="rg-tabs-bar">
         <button class="rg-tab active" onclick="rgAba('saop')" id="rg-tab-saop">S&OP / Implantação</button>
         <button class="rg-tab" onclick="rgAba('estoque')" id="rg-tab-estoque">📦 Estoque</button>
         <button class="rg-tab" onclick="rgAba('pcm')" id="rg-tab-pcm">⚙️ PCM</button>
@@ -10523,28 +10544,28 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
     <div id="tp-aba-metas" class="gi-body" style="display:none">
       <div class="gi-page-title">Metas e Desempenho por Área</div>
       <div class="gi-page-sub">Visão consolidada do atingimento de metas 2026 por área e responsável.</div>
-      <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-        <select class="gi-select" style="width:180px" id="metas-fil-area" onchange="metasRender()"><option value="">Todas as áreas</option><option>Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Gestão de Ativos</option><option>Performance</option></select>
-        <select class="gi-select" style="width:180px" id="metas-fil-resp" onchange="metasRender()"><option value="">Todos os responsáveis</option></select>
-        <select class="gi-select" style="width:150px" id="metas-fil-farol" onchange="metasRender()"><option value="">Todos os farois</option><option value="Atingido">✅ Atingido</option><option value="Em linha">🟡 Em linha</option><option value="Atenção">⚠️ Atenção</option><option value="Crítico">🔴 Crítico</option></select>
+      <div class="gi-filters-bar" style="margin-bottom:20px">
+        <select class="gi-select" style="width:180px" id="metas-fil-area" onchange="metasRender()"><option value="">Área — Todas</option><option>Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Gestão de Ativos</option><option>Performance</option></select>
+        <select class="gi-select" style="width:180px" id="metas-fil-resp" onchange="metasRender()"><option value="">Responsável — Todos</option></select>
+        <select class="gi-select" style="width:150px" id="metas-fil-farol" onchange="metasRender()"><option value="">Farol — Todos</option><option value="Atingido">✅ Atingido</option><option value="Em linha">🟡 Em linha</option><option value="Atenção">⚠️ Atenção</option><option value="Crítico">🔴 Crítico</option></select>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+      <div class="gi-charts-grid" style="margin-bottom:20px">
         <div class="gi-form-card">
-          <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em">📊 Atingimento por Área (%)</div>
+          <div class="gi-chart-title">📊 Atingimento por Área (%)</div>
           <canvas id="metas-chart-area" height="240"></canvas>
         </div>
         <div class="gi-form-card">
-          <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em">👤 Atingimento por Responsável (%)</div>
+          <div class="gi-chart-title">👤 Atingimento por Responsável (%)</div>
           <canvas id="metas-chart-resp" height="240"></canvas>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="gi-charts-grid">
         <div class="gi-form-card">
-          <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em">🚦 Distribuição por Farol</div>
+          <div class="gi-chart-title">🚦 Distribuição por Farol</div>
           <canvas id="metas-chart-farol" height="240"></canvas>
         </div>
         <div class="gi-form-card">
-          <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em">📈 Evolução Mensal — Média de Atingimento</div>
+          <div class="gi-chart-title">📈 Evolução Mensal — Média de Atingimento</div>
           <canvas id="metas-chart-evolucao" height="240"></canvas>
         </div>
       </div>
@@ -10555,7 +10576,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <div class="gi-modal-box" style="width:500px">
         <div class="gi-modal-title">
           <span>Editar Atividade</span>
-          <button onclick="fecharModalTodo()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8">✕</button>
+          <button onclick="fecharModalTodo()" class="gi-modal-close">✕</button>
         </div>
         <div class="gi-form-row c2">
           <div><label class="gi-label">Data de Conclusão</label><input class="gi-input" type="date" id="edit-dt-conclusao"></div>
@@ -10581,7 +10602,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <!-- Formulário de lançamento -->
       <div class="gi-form-card" id="gp-form-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b" id="gp-form-label">Novo Lançamento</span>
+          <span class="gi-section-label" id="gp-form-label">Novo Lançamento</span>
           <button class="gi-btn ghost" id="gp-cancelar-btn" style="display:none;font-size:11px;padding:6px 14px" onclick="gpCancelar()">✕ Cancelar</button>
         </div>
         <!-- Linha 1: Programador + Tipo + Período -->
@@ -10595,8 +10616,8 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
           <div>
             <label class="gi-label">Tipo de Período</label>
             <div style="display:flex;gap:6px;margin-top:4px">
-              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;white-space:nowrap"><input type="radio" name="gp-modo" value="semana" checked onchange="gpModoChange()"> Semana</label>
-              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;white-space:nowrap"><input type="radio" name="gp-modo" value="mes" onchange="gpModoChange()"> 📅 Mês</label>
+              <label class="gi-radio-label"><input type="radio" name="gp-modo" value="semana" checked onchange="gpModoChange()"> Semana</label>
+              <label class="gi-radio-label"><input type="radio" name="gp-modo" value="mes" onchange="gpModoChange()"> 📅 Mês</label>
             </div>
           </div>
           <div>
@@ -10624,8 +10645,8 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       </div>
 
       <!-- Filtros e seleção de view -->
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px">
-        <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Filtros</div>
+      <div class="gi-filters-bar">
+        <div class="gi-filters-label">Filtros</div>
         <select class="gi-select" style="width:170px;font-size:11px" id="gp-fil-prog" onchange="gpRenderTabela()">
           <option value="">Programador — Todos</option>
         </select>
@@ -14827,7 +14848,7 @@ function rgRenderSemanal(aba){
 
 // CSS
 const rgStyle=document.createElement('style');
-rgStyle.textContent='.rg-tab{background:none;border:none;border-bottom:3px solid transparent;padding:12px 16px;font-size:12px;font-weight:600;color:#64748b;cursor:pointer;white-space:nowrap;transition:all .15s}.rg-tab:hover{color:#0f766e}.rg-tab.active{color:#0f766e;border-bottom-color:#0f766e}';
+rgStyle.textContent='.rg-tab{background:none;border:none;border-bottom:3px solid transparent;padding:12px 16px;font-size:12px;font-weight:600;color:#8FA4AE;cursor:pointer;white-space:nowrap;transition:all .15s}.rg-tab:hover{color:#1A2E35}.rg-tab.active{color:#E8630A;border-bottom-color:#E8630A}';
 document.head.appendChild(rgStyle);
 // ═════════════════════════════════════════════════════════════════════════════
 
