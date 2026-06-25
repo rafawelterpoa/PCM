@@ -1,4 +1,4 @@
-// SW v33 — fix RCD home card: carregar rcd+sol no startup, filtro desmob completo
+// SW v34 — fix filtros RCD: kanban Em Operação agora respeita filtros aplicados
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

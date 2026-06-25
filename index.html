@@ -15132,7 +15132,7 @@ function solRcdRender(sfx=''){
 
   Object.entries(COLS).forEach(([status,colId])=>{
     const col=document.getElementById(colId);if(!col)return;
-    const rList=ativos.filter(r=>r.status===status);
+    const rList=filtAtivos.filter(r=>r.status===status);
     if(!rList.length){col.innerHTML='<div style="padding:12px;text-align:center;color:#cbd5e1;font-size:11px">Nenhuma</div>';return;}
     const cor=CORES[status];
     col.innerHTML=rList.map(r=>{
