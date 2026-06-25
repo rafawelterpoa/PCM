@@ -2263,12 +2263,14 @@ async function loadFromFirebase(){
     // Não escrever no Firebase na migração — campos serão salvos na próxima operação normal
     console.log("[FB Load] CCB02905 etapa final:", state["CCB02905"]?state["CCB02905"].etapa:"nao encontrado");
     reRenderAtivo();setSyncStatus('ok');fbListen();
+    rcdCarregar();solRcdCarregar();
   }catch(e){
     console.error('[Firebase erro]',e.message||e);
     setSyncStatus('error');
     showToast('⚠ Modo offline — usando dados locais');
     reRenderAtivo();
     fbListen();
+    rcdCarregar();solRcdCarregar();
   }
 }
 
@@ -16400,7 +16402,7 @@ function rgUpdateHomeKpis(ativos){
     const chegadas=Object.values(state).filter(e=>!e.baixado&&e.etapa==='chegada');
     const idsAtivos=new Set(Object.values(_rcdRegistros||{}).map(r=>r.equip_id+'|'+r.chegada_ts));
     const nTriagem=chegadas.filter(e=>!idsAtivos.has(e.id+'|'+(e.etapa_desde||''))).length;
-    const nDesmob=Object.values(_rcdRegistros||{}).filter(r=>['aguardando_inspecao','em_orcamento','aguardando_cliente'].includes(r.status)).length;
+    const nDesmob=Object.values(_rcdRegistros||{}).filter(r=>['aguardando_inspecao','em_orcamento','aguardando_cliente','aguardando_faturamento'].includes(r.status)).length;
     const nContrato=Object.values(_solRegistros||{}).filter(r=>r.status&&r.status!=='concluido'&&r.status!=='cancelado').length;
     safe('home-rcd-triagem',nTriagem);safe('home-rcd-desmob',nDesmob);safe('home-rcd-contrato',nContrato);
   }catch(e2){}

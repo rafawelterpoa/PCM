@@ -1,4 +1,4 @@
-// SW v32 — fix RCD home card: TRIAGEM/DESMOB/CONTRATO sync com Firebase
+// SW v33 — fix RCD home card: carregar rcd+sol no startup, filtro desmob completo
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
