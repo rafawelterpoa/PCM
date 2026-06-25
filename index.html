@@ -13003,6 +13003,10 @@ function rcdRenderIndicadores() {
   const comOrc    = regs.filter(r => r.orc_valor > 0);
   const valorTotal= comOrc.reduce((s, r) => s + (parseFloat(r.orc_valor) || 0), 0);
   const ticketMed = comOrc.length > 0 ? valorTotal / comOrc.length : 0;
+  const nAguFat   = regs.filter(r => r.status === 'aguardando_faturamento').length;
+  const _concl    = regs.filter(r => r.ts_conclusao && r.ts_triagem);
+  const _ltDias   = _concl.map(r => Math.round((r.ts_conclusao - r.ts_triagem) / 86400000));
+  const leadTimeMedio = _ltDias.length > 0 ? Math.round(_ltDias.reduce((s,x)=>s+x,0)/_ltDias.length) : null;
 
   function kpi(label, valor, cor, sub, clique) {
     return `<div onclick="${clique||''}" style="background:#fff;border-radius:12px;border:1px solid #E2E8ED;padding:16px 18px;cursor:${clique?'pointer':'default'};box-shadow:0 1px 3px rgba(0,0,0,.06);transition:box-shadow 120ms" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)'" onmouseleave="this.style.boxShadow='0 1px 3px rgba(0,0,0,.06)'">
@@ -13013,12 +13017,14 @@ function rcdRenderIndicadores() {
   }
 
   kpiEl.innerHTML =
-    kpi('Casos Ativos',       ativos.length,      '#E8630A', `${regs.length} total`) +
-    kpi('Valor em Orçamento', fmt(valorTotal),     '#1D4ED8', `${comOrc.length} orçamentos`) +
-    kpi('Ticket Médio',       fmt(ticketMed),      '#1A2E35', '') +
-    kpi('Ag. Inspeção',       nAguInsp,            '#1D4ED8', '', "rcdDesmobSub('tratamento')") +
-    kpi('Em Orçamento',       nEmOrc,              '#B45309', '', "rcdDesmobSub('tratamento')") +
-    kpi('Ag. Cliente',        nAguCli,             '#1E8A4C', `${nConclui} concluídos`, "rcdDesmobSub('tratamento')");
+    kpi('Casos Ativos',       ativos.length,                                   '#E8630A', `${regs.length} total`) +
+    kpi('Valor em Orçamento', fmt(valorTotal),                                 '#1D4ED8', `${comOrc.length} orçamentos`) +
+    kpi('Ticket Médio',       fmt(ticketMed),                                  '#1A2E35', '') +
+    kpi('Lead Time Médio',    leadTimeMedio !== null ? leadTimeMedio+'d' : '—','#6D28D9', `${_concl.length} concluídos`) +
+    kpi('Ag. Inspeção',       nAguInsp,                                        '#1D4ED8', '', "rcdDesmobSub('tratamento')") +
+    kpi('Em Orçamento',       nEmOrc,                                          '#B45309', '', "rcdDesmobSub('tratamento')") +
+    kpi('Ag. Cliente',        nAguCli,                                         '#1E8A4C', `${nConclui} concluídos`, "rcdDesmobSub('tratamento')") +
+    kpi('Ag. Faturamento',    nAguFat,                                         '#6D28D9', '', "rcdDesmobSub('tratamento')");
 
   // Painel detalhe — barras de status + top clientes
   const detEl = document.getElementById('rcd-ind-detalhe'); if(!detEl) return;
@@ -13137,6 +13143,17 @@ function rcdRenderTratamento() {
   const STATUS_COR = { aguardando_inspecao:'#1D4ED8', em_orcamento:'#B45309', aguardando_cliente:'#1E8A4C', aguardando_faturamento:'#6D28D9' };
   const STATUS_LABEL = { aguardando_inspecao:'Ag. Inspeção', em_orcamento:'Em Orçamento', aguardando_cliente:'Ag. Cliente', aguardando_faturamento:'Ag. Faturamento' };
 
+  // Tempos médios por fase (baseado em registros concluídos)
+  const _toDays = ms => Math.round(ms / 86400000);
+  const _conclT = Object.values(_rcdRegistros).filter(r => r.ts_conclusao && r.ts_triagem);
+  function _avgD(arr) { return arr.length ? Math.round(arr.reduce((s,x)=>s+x,0)/arr.length) : null; }
+  const avgFaseDias = {
+    aguardando_inspecao:  _avgD(_conclT.filter(r=>r.ts_em_orcamento).map(r=>_toDays(r.ts_em_orcamento-r.ts_triagem))),
+    em_orcamento:         _avgD(_conclT.filter(r=>r.ts_em_orcamento&&r.ts_aguardando_cliente).map(r=>_toDays(r.ts_aguardando_cliente-r.ts_em_orcamento))),
+    aguardando_cliente:   _avgD(_conclT.filter(r=>r.ts_aguardando_cliente&&r.ts_aguardando_faturamento).map(r=>_toDays(r.ts_aguardando_faturamento-r.ts_aguardando_cliente))),
+    aguardando_faturamento:_avgD(_conclT.filter(r=>r.ts_aguardando_faturamento&&r.ts_conclusao).map(r=>_toDays(r.ts_conclusao-r.ts_aguardando_faturamento))),
+  };
+
   Object.entries(fases).forEach(([status, colId]) => {
     const col = document.getElementById(colId); if(!col) return;
     const regs = Object.values(_rcdRegistros).filter(r => r.status === status);
@@ -13146,6 +13163,11 @@ function rcdRenderTratamento() {
       const prox = proxima[status];
       const proxLbl = proximaLabel[status];
       const desde = r.ts_triagem ? new Date(r.ts_triagem).toLocaleDateString('pt-BR') : '—';
+      const _tsEntrada = {aguardando_inspecao:r.ts_triagem,em_orcamento:r.ts_em_orcamento,aguardando_cliente:r.ts_aguardando_cliente,aguardando_faturamento:r.ts_aguardando_faturamento}[status];
+      const _diasFase = _tsEntrada ? Math.floor((Date.now()-_tsEntrada)/86400000) : null;
+      const _avgF = avgFaseDias[status];
+      const _overdue = _diasFase!==null && _avgF!==null && _diasFase>_avgF;
+      const _diasBadge = _diasFase!==null ? `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:${_overdue?'#FEE2E2':'#F0F4F6'};color:${_overdue?'#B91C1C':'#5A7280'}">${_diasFase}d${_overdue?' ⚠':''}</span>` : '';
       const isInsp = status === 'aguardando_inspecao';
       const temOrdem = !!(r.ordem_inspecao);
       const bloqueado = isInsp && !temOrdem;
@@ -13169,7 +13191,7 @@ function rcdRenderTratamento() {
           <div style="min-width:0">
             <div style="font-size:12px;font-weight:700;color:#1A2E35">${r.equip_id}</div>
             <div style="font-size:11px;color:#5A7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.equip_nome}</div>
-            <div style="font-size:10px;color:#8FA4AE;margin-top:3px">${clienteCard||r.oficina||'—'} · ${desde}</div>
+            <div style="font-size:10px;color:#8FA4AE;margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${clienteCard||r.oficina||'—'} · ${desde} ${_diasBadge}</div>
             ${extraInfo}
           </div>
           ${isInsp ? `<button onclick="rcdInspAbrir('${r.id}')" style="padding:4px 9px;background:#DBEAFE;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">✏ Editar</button>` : ''}
@@ -13183,6 +13205,18 @@ function rcdRenderTratamento() {
         </div>
       </div>`;
     }).join('');
+  });
+
+  // Atualiza cabeçalhos das colunas com tempo médio
+  const _hdrCfg = {
+    'rcd-hdr-inspecao':    {label:'Ag. Inspeção',     avg:avgFaseDias.aguardando_inspecao,   cor:'#1D4ED8', bg:'#DBEAFE'},
+    'rcd-hdr-orcamento':   {label:'Em Orçamento',     avg:avgFaseDias.em_orcamento,          cor:'#B45309', bg:'#FEF3C7'},
+    'rcd-hdr-cliente':     {label:'Ag. Cliente',      avg:avgFaseDias.aguardando_cliente,    cor:'#1E8A4C', bg:'#E8F5EE'},
+    'rcd-hdr-faturamento': {label:'Ag. Faturamento',  avg:avgFaseDias.aguardando_faturamento,cor:'#6D28D9', bg:'#EDE9FE'},
+  };
+  Object.entries(_hdrCfg).forEach(([id,{label,avg,cor}]) => {
+    const el = document.getElementById(id); if(!el) return;
+    el.innerHTML = `<span style="width:7px;height:7px;border-radius:50%;background:${cor};flex-shrink:0"></span>${label}${avg!==null?`<span style="margin-left:auto;font-size:9px;font-weight:500;opacity:.75;background:rgba(0,0,0,.07);padding:2px 6px;border-radius:99px">méd. ${avg}d</span>`:''}`;
   });
 }
 
@@ -16803,7 +16837,7 @@ if ('serviceWorker' in navigator) {
     <div id="rcd-aba-desmob">
       <!-- INDICADORES RCD — apenas na aba Desmobilização -->
       <div id="rcd-indicadores" style="margin-bottom:20px">
-        <div id="rcd-kpi-cards" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:12px"></div>
+        <div id="rcd-kpi-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:12px"></div>
         <div id="rcd-ind-detalhe" style="display:none;background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:18px 20px">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
             <div>
@@ -16835,19 +16869,19 @@ if ('serviceWorker' in navigator) {
       <div id="rcd-panel-tratamento" style="display:none">
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
           <div>
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#1D4ED8;margin-bottom:10px;padding:9px 12px;background:#DBEAFE;border-radius:8px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#1D4ED8;flex-shrink:0"></span>Ag. Inspeção</div>
+            <div id="rcd-hdr-inspecao" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#1D4ED8;margin-bottom:10px;padding:9px 12px;background:#DBEAFE;border-radius:8px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#1D4ED8;flex-shrink:0"></span>Ag. Inspeção</div>
             <div id="rcd-col-inspecao" style="display:flex;flex-direction:column;gap:8px"></div>
           </div>
           <div>
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#B45309;margin-bottom:10px;padding:9px 12px;background:#FEF3C7;border-radius:8px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#B45309;flex-shrink:0"></span>Em Orçamento</div>
+            <div id="rcd-hdr-orcamento" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#B45309;margin-bottom:10px;padding:9px 12px;background:#FEF3C7;border-radius:8px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#B45309;flex-shrink:0"></span>Em Orçamento</div>
             <div id="rcd-col-orcamento" style="display:flex;flex-direction:column;gap:8px"></div>
           </div>
           <div>
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#1E8A4C;margin-bottom:10px;padding:9px 12px;background:#E8F5EE;border-radius:8px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#1E8A4C;flex-shrink:0"></span>Ag. Cliente</div>
+            <div id="rcd-hdr-cliente" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#1E8A4C;margin-bottom:10px;padding:9px 12px;background:#E8F5EE;border-radius:8px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#1E8A4C;flex-shrink:0"></span>Ag. Cliente</div>
             <div id="rcd-col-cliente" style="display:flex;flex-direction:column;gap:8px"></div>
           </div>
           <div>
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6D28D9;margin-bottom:10px;padding:9px 12px;background:#EDE9FE;border-radius:8px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#6D28D9;flex-shrink:0"></span>Ag. Faturamento</div>
+            <div id="rcd-hdr-faturamento" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6D28D9;margin-bottom:10px;padding:9px 12px;background:#EDE9FE;border-radius:8px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#6D28D9;flex-shrink:0"></span>Ag. Faturamento</div>
             <div id="rcd-col-faturamento" style="display:flex;flex-direction:column;gap:8px"></div>
           </div>
         </div>

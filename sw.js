@@ -1,4 +1,4 @@
-// SW v46 — histórico: sticky header + conteúdo direto no overlay, zero gap
+// SW v47 — RCD: lead time médio, tempos por fase, badge de dias nos cards
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
