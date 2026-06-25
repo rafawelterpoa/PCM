@@ -1,4 +1,4 @@
-// SW v31 — header Programação: +Sem Programação e Média/Semana
+// SW v32 — fix RCD home card: TRIAGEM/DESMOB/CONTRATO sync com Firebase
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

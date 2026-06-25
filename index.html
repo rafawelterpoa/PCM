@@ -12879,6 +12879,7 @@ async function rcdCarregar() {
     _rcdRegistros = (d && typeof d === 'object') ? d : {};
   } catch(e) { _rcdRegistros = {}; }
   rcdRender();
+  rgUpdateHomeKpis();
   rcdListen();   // inicia/reinicia listener SSE após carga inicial
 }
 
@@ -12939,6 +12940,7 @@ function rcdListen() {
 
 // Renderiza apenas se a página RCD estiver visível, sem piscar
 function rcdRenderSilent() {
+  rgUpdateHomeKpis();
   const pg = document.getElementById('page-rcd');
   if (!pg || pg.style.display === 'none') return;
   rcdRender();
@@ -15023,6 +15025,7 @@ async function solRcdCarregar(){
   }catch(e){_solRegistros={};}
   _solCarregado=true;
   solRcdRenderTodos();
+  rgUpdateHomeKpis();
   solRcdListen();
 }
 
@@ -15059,6 +15062,7 @@ function solRcdListen(){
     if(msg.path==='/'){_solRegistros=(msg.data&&typeof msg.data==='object')?msg.data:{};}
     else{const parts=msg.path.replace(/^\//,'').split('/');const rid=parts[0];if(msg.data===null)delete _solRegistros[rid];else if(parts.length===1)_solRegistros[rid]=msg.data;else{if(!_solRegistros[rid])_solRegistros[rid]={};_solRegistros[rid][parts[1]]=msg.data;}}
     solRcdRenderTodos();
+    rgUpdateHomeKpis();
   });
   es.onerror=()=>{es.close();_solEs=null;setTimeout(()=>solRcdListen(),8000);};
 }
