@@ -1,4 +1,4 @@
-// SW v26 — Programação: filtros abaixo dos gráficos, KPIs Reparados/Manutenção, roscas corrigidas
+// SW v27 — Programação: cards altura fixa 210px, cor roxo-cinza→laranja/amber/slate Mills
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
