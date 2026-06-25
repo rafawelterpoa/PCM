@@ -1,4 +1,4 @@
-// SW v43 — favicon: letra m laranja fundo escuro
+// SW v44 — histórico: remove gap entre filtros e tabela
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
