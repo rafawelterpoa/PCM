@@ -1,4 +1,4 @@
-// SW v44 — histórico: remove gap entre filtros e tabela
+// SW v45 — histórico: remove flex do wrapper, elimina gap entre filtros e tabela
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
