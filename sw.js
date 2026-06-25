@@ -1,4 +1,4 @@
-// SW v25 — GI redesign Mills UX tokens
+// SW v26 — Programação: filtros abaixo dos gráficos, KPIs Reparados/Manutenção, roscas corrigidas
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
