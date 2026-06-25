@@ -1,4 +1,4 @@
-// SW v45 — histórico: remove flex do wrapper, elimina gap entre filtros e tabela
+// SW v46 — histórico: sticky header + conteúdo direto no overlay, zero gap
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
