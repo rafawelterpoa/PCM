@@ -1,4 +1,4 @@
-// SW v41 — Pátio Disponível: usa tipoFrota de EQUIPAMENTOS_ORIG
+// SW v42 — header: logo mills minúsculo, botão Sair pill laranja com ícone
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
