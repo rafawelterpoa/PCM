@@ -1,4 +1,4 @@
-// SW v37 — home Pátio: corrige Locação/Venda usando tipoFrota
+// SW v38 — home Pátio: Venda inclui Standby
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

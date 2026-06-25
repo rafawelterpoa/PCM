@@ -16378,7 +16378,7 @@ function rgUpdateHomeKpis(ativos){
   // ── Pátio ─────────────────────────────────────────────────────────────────
   safe('home-kpi-patio',emPatio.length);
   const patLoc=emPatio.filter(e=>{const o=EQUIPAMENTOS_ORIG&&EQUIPAMENTOS_ORIG.find(x=>x.id===e.id);const f=(o?.tipoFrota||o?.frota||e.tipoFrota||e.frota||'').toLowerCase();return f.includes('locacao')||f.includes('locação');}).length;
-  const patVenda=emPatio.filter(e=>{const o=EQUIPAMENTOS_ORIG&&EQUIPAMENTOS_ORIG.find(x=>x.id===e.id);const f=(o?.tipoFrota||o?.frota||e.tipoFrota||e.frota||'').toLowerCase();return f.includes('venda');}).length;
+  const patVenda=emPatio.filter(e=>{const o=EQUIPAMENTOS_ORIG&&EQUIPAMENTOS_ORIG.find(x=>x.id===e.id);const f=(o?.tipoFrota||o?.frota||e.tipoFrota||e.frota||'').toLowerCase();return f.includes('venda')||f.includes('standby');}).length;
   const patSem=emPatio.length-patLoc-patVenda;
   safe('home-pat-loc',patLoc);safe('home-pat-venda',patVenda);safe('home-pat-sem',Math.max(0,patSem));
   setBar('home-pat-bar-loc',patLoc,emPatio.length||1);
