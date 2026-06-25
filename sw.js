@@ -1,4 +1,4 @@
-// SW v35 — RCD kanban: cliente visível no card, filtro busca equip_cliente|cliente
+// SW v36 — home Programação: exclui alugado do cálculo, ordem Reservados>Conc>Atras
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

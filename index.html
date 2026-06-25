@@ -1204,9 +1204,9 @@ input.filter-sel{padding:5px 10px;height:32px}
         <div style="font-size:12px;color:#8FA4AE">programados</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Reservados</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-res" style="height:100%;background:#7c3aed;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-res" style="font-weight:600;color:#7c3aed;width:24px;text-align:right;flex-shrink:0">—</span></div>
         <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Concluídos</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-conc" style="height:100%;background:#1D9E75;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-conc" style="font-weight:600;color:#1D9E75;width:24px;text-align:right;flex-shrink:0">—</span></div>
         <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Atrasados</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-atras" style="height:100%;background:#B91C1C;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-atras" style="font-weight:600;color:#B91C1C;width:24px;text-align:right;flex-shrink:0">—</span></div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Reservados</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-res" style="height:100%;background:#7c3aed;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-res" style="font-weight:600;color:#7c3aed;width:24px;text-align:right;flex-shrink:0">—</span></div>
       </div>
     </div>
 
@@ -16363,7 +16363,7 @@ function rgUpdateHomeKpis(ativos){
   const sa=semanaAtual();
   const snNum=sa.split('-W')[1];
   safe('home-prog-semana','S'+snNum);
-  const allProg=Object.values(state).filter(e=>!e.baixado&&e.semana);
+  const allProg=Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.semana);
   const progSem=allProg.filter(e=>e.semana===sa);
   const progConc=progSem.filter(e=>e.etapa==='pronto').length;
   const progAtras=allProg.filter(e=>e.semana<sa&&e.etapa!=='pronto').length;
