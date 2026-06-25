@@ -1,4 +1,4 @@
-// SW v34 — fix filtros RCD: kanban Em Operação agora respeita filtros aplicados
+// SW v35 — RCD kanban: cliente visível no card, filtro busca equip_cliente|cliente
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

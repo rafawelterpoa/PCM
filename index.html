@@ -15151,6 +15151,7 @@ function solRcdRender(sfx=''){
           <div>
             <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id||'—'}${r.numero?` <span style="font-size:10px;font-weight:400;color:#94a3b8">#${r.numero}</span>`:''}</div>
             <div style="font-size:10px;color:#64748b;margin-top:1px">${r.equip_nome||''}</div>
+            ${(r.equip_cliente||r.cliente)?`<div style="font-size:10px;color:#1D4ED8;font-weight:600;margin-top:2px">👤 ${r.equip_cliente||r.cliente}</div>`:''}
           </div>
           <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px">
             <span style="font-size:10px;color:#94a3b8">${solRcdFmtDias(dias)}</span>
@@ -15256,7 +15257,7 @@ function solRcdFiltrarRegs(regs) {
   return regs.filter(r => {
     const f = _solFiltros;
     if (f.equip && !(r.equip_id||'').toLowerCase().includes(f.equip.toLowerCase())) return false;
-    if (f.cliente && !(r.equip_cliente||'').toLowerCase().includes(f.cliente.toLowerCase())) return false;
+    if (f.cliente && !(r.equip_cliente||r.cliente||'').toLowerCase().includes(f.cliente.toLowerCase())) return false;
     if (f.responsavel && !(r.responsavel||'').toLowerCase().includes(f.responsavel.toLowerCase())) return false;
     if (f.de) { const ts = r.ts_criacao||0; if (ts < new Date(f.de+'T00:00:00').getTime()) return false; }
     if (f.ate) { const ts = r.ts_criacao||0; if (ts > new Date(f.ate+'T23:59:59').getTime()) return false; }
