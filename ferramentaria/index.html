@@ -61,7 +61,6 @@ a{text-decoration:none;color:inherit}
   --white:         #FFFFFF;
   --text:          #1A2E35;
 
-  --sidebar-w: 240px;
 }
 
 /* ===================== LOGIN ===================== */
@@ -150,46 +149,56 @@ a{text-decoration:none;color:inherit}
 .login-logo p{color:var(--text-muted);font-size:0.85rem;margin-top:4px}
 .login-error{color:#ff6b6b;font-size:0.82rem;margin-top:8px;text-align:center;display:none}
 
-/* ===================== APP LAYOUT ===================== */
-#app{display:none;flex:1;min-height:100vh}
-.sidebar{
-  width:var(--sidebar-w);background:#223540;color:#fff;
-  position:fixed;top:0;left:0;height:100vh;overflow-y:auto;
-  display:flex;flex-direction:column;z-index:100;transition:transform .3s;
-}
-.sidebar-header{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.1)}
-.sidebar-header h2{font-size:1rem;font-weight:700;color:#fff}
-.sidebar-header p{font-size:0.72rem;color:rgba(255,255,255,0.5);margin-top:2px}
-.sidebar-user{padding:12px 18px;background:rgba(0,0,0,0.15);font-size:0.78rem}
-.sidebar-user strong{display:block;color:#fff}
-.sidebar-user span{color:rgba(255,255,255,0.5);font-size:0.72rem}
-nav{flex:1;padding:10px 0}
-nav a{
-  display:flex;align-items:center;gap:10px;padding:11px 18px;
-  color:rgba(255,255,255,0.65);font-size:0.88rem;transition:all .15s;border-left:3px solid transparent;
-}
-nav a:hover,nav a.active{
-  color:#fff;background:rgba(255,255,255,0.08);border-left-color:#E8630A;
-}
-nav a .nav-icon{font-size:1.1rem;width:20px;text-align:center}
-.sidebar-footer{padding:12px 18px;border-top:1px solid rgba(255,255,255,0.1);font-size:0.72rem;color:rgba(255,255,255,0.4)}
-.btn-logout{
-  display:block;width:100%;margin-top:6px;padding:7px;
-  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);
-  color:rgba(255,255,255,0.7);border-radius:5px;font-size:0.78rem;transition:.2s;
-}
-.btn-logout:hover{background:#E8630A;border-color:#E8630A;color:#fff}
+/* ===================== APP LAYOUT — PCM ===================== */
+#app{display:none;flex-direction:column;min-height:100vh}
 
-/* ===================== MAIN CONTENT ===================== */
-.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
-.topbar{
-  background:#fff;border-bottom:1px solid #E2E8ED;
-  padding:14px 24px;display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(0,0,0,0.06);
+/* Header */
+.header{
+  background:#1A2E35;padding:0 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  height:56px;position:sticky;top:0;z-index:100;
+  border-bottom:3px solid #E8630A;
+  box-shadow:0 2px 12px rgba(0,0,0,.18);
 }
-.topbar h3{font-size:1.05rem;font-weight:600;color:#1A2E35}
-.topbar-right{display:flex;align-items:center;gap:10px}
-.content{padding:24px;flex:1;background:#F4F6F8}
+
+/* Body flex */
+.app-body{display:flex;flex:1;min-height:0;width:100%;height:calc(100vh - 56px)}
+
+/* Sidebar nav */
+.sidebar-nav{
+  position:fixed;top:56px;left:0;bottom:0;
+  width:220px;z-index:150;
+  background:#1A2E35;
+  display:flex;flex-direction:column;align-items:stretch;
+  padding:8px 10px 0;gap:2px;
+  border-right:1px solid rgba(255,255,255,.07);
+  overflow-y:auto;
+}
+.snav-section-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.3);padding:14px 8px 6px}
+.snav-item{
+  width:100%;height:40px;border-radius:8px;
+  display:flex;flex-direction:row;align-items:center;
+  gap:10px;padding:0 10px 0 20px;
+  color:rgba(255,255,255,.65);font-size:13px;font-weight:500;
+  cursor:pointer;border:none;background:transparent;
+  position:relative;transition:all .15s;text-align:left;
+}
+.snav-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.9)}
+.snav-item.active{background:rgba(232,99,10,.18);color:#E8630A}
+.snav-item.active::before{
+  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:3px;height:22px;background:#E8630A;border-radius:0 3px 3px 0;
+}
+
+/* Footer sidebar */
+.snav-footer{margin-top:auto;padding:12px 8px 16px;border-top:1px solid rgba(255,255,255,.07)}
+.snav-footer-avatar{width:32px;height:32px;border-radius:50%;background:#E8630A;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.snav-footer-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.85)}
+.snav-footer-role{font-size:10px;color:#E8630A;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+
+/* Main content */
+.app-main{flex:1;min-width:0;overflow-y:auto;background:#F4F6F8;margin-left:220px;padding:24px}
+.content{flex:1;background:#F4F6F8}
 
 /* ===================== CARDS ===================== */
 .cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
@@ -328,9 +337,9 @@ tr:hover td{background:#F8FAFB}
 
 /* ===================== RESPONSIVE ===================== */
 @media(max-width:768px){
-  .sidebar{transform:translateX(-100%)}
-  .sidebar.open{transform:translateX(0)}
-  .main{margin-left:0}
+  .sidebar-nav{transform:translateX(-100%);transition:transform .3s}
+  .sidebar-nav.open{transform:translateX(0)}
+  .app-main{margin-left:0}
   .hamburger{display:block}
   .cards-row{grid-template-columns:1fr 1fr}
   .form-grid{grid-template-columns:1fr}
@@ -342,12 +351,6 @@ tr:hover td{background:#F8FAFB}
 @media(max-width:400px){
   .cards-row{grid-template-columns:1fr}
 }
-
-/* ===================== OVERLAY MOBILE ===================== */
-#sidebarOverlay{
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99;
-}
-#sidebarOverlay.open{display:block}
 
 /* Toast */
 #toast{
@@ -427,77 +430,56 @@ tr:hover td{background:#F8FAFB}
 
 </div>
 
+<!-- ==================== HEADER PCM ==================== -->
+<header class="header" id="app-header" style="display:none">
+  <div style="display:flex;align-items:center;gap:14px">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 34" width="110" height="34">
+      <text x="2" y="27" font-family="Arial Black,Arial,sans-serif" font-size="27" font-weight="900" fill="#E8630A" letter-spacing="-1">Mills</text>
+    </svg>
+  </div>
+  <div style="position:absolute;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.85);font-size:16px;font-weight:700;letter-spacing:.18em">FERRAMENTARIA</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div style="text-align:right">
+      <div style="color:rgba(255,255,255,.85);font-size:12px;font-weight:600" id="hdr-user-name">—</div>
+      <div style="color:#E8630A;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em" id="hdr-user-role">—</div>
+    </div>
+    <button style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.55);padding:0 12px;height:30px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer" onclick="doLogout()">Sair</button>
+  </div>
+</header>
+
 <!-- ==================== APP ==================== -->
-<div id="app" style="display:none;flex:1">
-  <div id="sidebarOverlay" onclick="closeSidebar()"></div>
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <img src="logo_nova_mills-removebg-preview.png" alt="MILLS" style="height:30px;margin-bottom:4px;display:block;filter:brightness(0) invert(1)">
-      <p style="font-size:0.75rem;font-weight:700;color:rgba(255,255,255,0.8);letter-spacing:.06em;text-transform:uppercase;margin-top:2px">Ferramentaria</p>
-    </div>
-    <div class="sidebar-user">
-      <strong id="sidebarUserName">—</strong>
-      <span id="sidebarUserPerfil">—</span>
-    </div>
-    <nav id="sidebarNav">
-      <a href="#" class="active" onclick="navigate('dashboard',this)" data-page="dashboard">
-        <span class="nav-icon">🏠</span> Dashboard
-      </a>
-      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);padding:10px 18px 4px;margin-top:4px">Kits</div>
-      <a href="#" onclick="navigate('kitcampo',this)" data-page="kitcampo">
-        <span class="nav-icon">🚜</span> Kit de Campo
-      </a>
-      <a href="#" onclick="navigate('kitoficina',this)" data-page="kitoficina">
-        <span class="nav-icon">🧰</span> Kit de Oficina
-      </a>
-      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);padding:10px 18px 4px;margin-top:4px">Ferramentaria</div>
-      <a href="#" onclick="navigate('ferramentaria',this)" data-page="ferramentaria">
-        <span class="nav-icon">🏭</span> Ferramentaria
-      </a>
-      <a href="#" onclick="navigate('oficina_coletiva',this)" data-page="oficina_coletiva">
-        <span class="nav-icon">🔨</span> Oficina
-      </a>
-      <a href="#" onclick="navigate('catalogo',this)" data-page="catalogo">
-        <span class="nav-icon">📒</span> Catálogo
-      </a>
-      <a href="#" onclick="navigate('ferramentas',this)" data-page="ferramentas">
-        <span class="nav-icon">🔧</span> Ferramentas
-      </a>
-      <a href="#" onclick="navigate('movimentacoes',this)" data-page="movimentacoes">
-        <span class="nav-icon">↔️</span> Movimentações
-      </a>
-      <a href="#" onclick="navigate('calibracao',this)" data-page="calibracao">
-        <span class="nav-icon">📐</span> Calibração
-      </a>
-      <a href="#" onclick="navigate('relatorios',this)" data-page="relatorios">
-        <span class="nav-icon">📋</span> Relatórios
-      </a>
-      <a href="#" id="navAdmin" onclick="navigate('admin',this)" data-page="admin" style="display:none">
-        <span class="nav-icon">⚙️</span> Admin
-      </a>
+<div id="app" style="display:none;flex-direction:column;min-height:100vh">
+  <div class="app-body">
+    <!-- SIDEBAR NAV -->
+    <nav class="sidebar-nav" id="sidebar">
+      <div class="snav-section-label">Principal</div>
+      <div class="snav-item active" onclick="navigate('dashboard',this)" data-page="dashboard">🏠 <span class="snav-label">Dashboard</span></div>
+      <div class="snav-section-label">Kits</div>
+      <div class="snav-item" onclick="navigate('kitcampo',this)" data-page="kitcampo">🚜 <span class="snav-label">Kit de Campo</span></div>
+      <div class="snav-item" onclick="navigate('kitoficina',this)" data-page="kitoficina">🧰 <span class="snav-label">Kit de Oficina</span></div>
+      <div class="snav-section-label">Ferramentaria</div>
+      <div class="snav-item" onclick="navigate('ferramentaria',this)" data-page="ferramentaria">🏭 <span class="snav-label">Ferramentaria</span></div>
+      <div class="snav-item" onclick="navigate('oficina_coletiva',this)" data-page="oficina_coletiva">🔨 <span class="snav-label">Oficina</span></div>
+      <div class="snav-item" onclick="navigate('catalogo',this)" data-page="catalogo">📒 <span class="snav-label">Catálogo</span></div>
+      <div class="snav-item" onclick="navigate('ferramentas',this)" data-page="ferramentas">🔧 <span class="snav-label">Ferramentas</span></div>
+      <div class="snav-item" onclick="navigate('movimentacoes',this)" data-page="movimentacoes">↔️ <span class="snav-label">Movimentações</span></div>
+      <div class="snav-item" onclick="navigate('calibracao',this)" data-page="calibracao">📐 <span class="snav-label">Calibração</span></div>
+      <div class="snav-section-label">Análise</div>
+      <div class="snav-item" onclick="navigate('relatorios',this)" data-page="relatorios">📋 <span class="snav-label">Relatórios</span></div>
+      <div class="snav-item" id="navAdmin" onclick="navigate('admin',this)" data-page="admin" style="display:none">⚙️ <span class="snav-label">Admin</span></div>
+      <!-- Footer usuário -->
+      <div class="snav-footer">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px">
+          <div class="snav-footer-avatar" id="snav-footer-avatar">RF</div>
+          <div style="display:flex;flex-direction:column;gap:2px;overflow:hidden;flex:1">
+            <span class="snav-footer-name" id="sidebarUserName">—</span>
+            <span class="snav-footer-role" id="sidebarUserPerfil">—</span>
+          </div>
+        </div>
+      </div>
     </nav>
-    <div class="sidebar-footer">
-      <div>v1.0.0</div>
-      <button class="btn-logout" onclick="doLogout()">Sair</button>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <div class="main">
-    <div class="topbar">
-      <div style="display:flex;align-items:center;gap:12px">
-        <button class="hamburger" onclick="toggleSidebar()">☰</button>
-        <h3 id="topbarTitle">Dashboard</h3>
-      </div>
-      <div class="topbar-right">
-        <span id="topbarSync" style="font-size:0.75rem;color:var(--text-muted)"></span>
-        <button class="btn btn-sm btn-outline" onclick="syncAll()">↻ Sincronizar</button>
-      </div>
-    </div>
-
-    <div class="content" id="mainContent">
+    <!-- MAIN CONTENT -->
+    <div class="app-main" id="mainContent">
       <div class="loading"><span class="spinner"></span>Carregando...</div>
     </div>
   </div>
@@ -906,19 +888,29 @@ async function doLogin() {
 
 async function startApp() {
   document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app-header').style.display='flex';
   document.getElementById('app').style.display='flex';
-  document.getElementById('sidebarUserName').textContent = STATE.usuario.nome||STATE.usuario.login;
-  document.getElementById('sidebarUserPerfil').textContent = (STATE.usuario.perfil||'operador').charAt(0).toUpperCase()+(STATE.usuario.perfil||'operador').slice(1);
+  const nome = STATE.usuario.nome||STATE.usuario.login;
+  const perfil = (STATE.usuario.perfil||'operador').charAt(0).toUpperCase()+(STATE.usuario.perfil||'operador').slice(1);
+  // Header top
+  document.getElementById('hdr-user-name').textContent = nome;
+  document.getElementById('hdr-user-role').textContent = perfil;
+  // Sidebar footer
+  document.getElementById('sidebarUserName').textContent = nome;
+  document.getElementById('sidebarUserPerfil').textContent = perfil;
+  const iniciais = nome.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('snav-footer-avatar').textContent = iniciais;
   if(['master','admin'].includes(STATE.usuario.perfil||'')){
     const na=document.getElementById('navAdmin');if(na)na.style.display='';
   }
   await syncAll();
-  navigate('dashboard', document.querySelector('nav a[data-page="dashboard"]'));
+  navigate('dashboard', document.querySelector('.snav-item[data-page="dashboard"]'));
 }
 
 function doLogout() {
   LS.del('sessao');
   STATE.usuario=null;
+  document.getElementById('app-header').style.display='none';
   document.getElementById('app').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('loginUser').value='';
@@ -927,9 +919,6 @@ function doLogout() {
 
 // ===================== SYNC =====================
 async function syncAll() {
-  const syncEl = document.getElementById('topbarSync');
-  syncEl.textContent='Sincronizando...';
-
   try {
     const [ferrs, movs] = await Promise.all([fbGet('ferramentas'), fbGet('movimentacoes')]);
     if (ferrs) { STATE.ferramentas = ferrs; LS.set('ferramentas', ferrs); }
@@ -940,13 +929,9 @@ async function syncAll() {
     // Atualizar lista de usuários
     const usrsCache = LS.get('usuarios_lista');
     if (usrsCache) STATE.usuarios = usrsCache;
-
-    const now = new Date();
-    syncEl.textContent = `Atualizado: ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
   } catch(e) {
     STATE.ferramentas = LS.get('ferramentas')||{};
     STATE.movimentacoes = LS.get('movimentacoes')||{};
-    syncEl.textContent = 'Offline (cache local)';
   }
 
   // Reatualizar página atual
@@ -956,10 +941,8 @@ async function syncAll() {
 // ===================== NAVIGATE =====================
 function navigate(page, el) {
   STATE.currentPage = page;
-  document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+  document.querySelectorAll('.snav-item').forEach(a=>a.classList.remove('active'));
   if (el) el.classList.add('active');
-  const titles = {dashboard:'Dashboard',ferramentas:'Ferramentas',ferramentaria:'Ferramentaria',oficina_coletiva:'Ferramentas de Oficina',catalogo:'Catálogo de Ferramentas',kitcampo:'Kit de Campo',kitoficina:'Kit de Oficina',movimentacoes:'Movimentações',calibracao:'Calibração',relatorios:'Relatórios',admin:'Administração'};
-  document.getElementById('topbarTitle').textContent = titles[page]||page;
   closeSidebar();
   renderPage(page);
 }
@@ -972,11 +955,9 @@ function renderPage(page) {
 // ===================== SIDEBAR MOBILE =====================
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebarOverlay').classList.toggle('open');
 }
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebarOverlay').classList.remove('open');
 }
 
 // ===================== HELPERS =====================
