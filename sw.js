@@ -1,4 +1,4 @@
-// SW v47 — RCD: lead time médio, tempos por fase, badge de dias nos cards
+// SW v48 — SOL: motivo cancelamento, máquina reserva, filtros, aba tabela+PDF
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

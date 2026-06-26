@@ -15063,15 +15063,138 @@ async function solRcdCarregar(){
 }
 
 function solRcdAba(aba, sfx) {
-  const isKanban = aba === 'kanban';
   const kw = document.getElementById('sol-kanban'+sfx+'-wrap');
   const hw = document.getElementById('sol-hist'+sfx+'-wrap');
-  if (kw) kw.style.display = isKanban ? '' : 'none';
-  if (hw) hw.style.display = isKanban ? 'none' : '';
-  const tk = document.getElementById('sol-tab-kanban'+sfx);
-  const th = document.getElementById('sol-tab-historico'+sfx);
-  if (tk) { tk.style.color = isKanban?'#F37021':'#94a3b8'; tk.style.borderBottom = isKanban?'2px solid #F37021':'2px solid transparent'; }
-  if (th) { th.style.color = isKanban?'#94a3b8':'#F37021'; th.style.borderBottom = isKanban?'2px solid transparent':'2px solid #F37021'; }
+  const tw = document.getElementById('sol-tabela'+sfx+'-wrap');
+  if (kw) kw.style.display = aba==='kanban' ? '' : 'none';
+  if (hw) hw.style.display = aba==='historico' ? '' : 'none';
+  if (tw) { tw.style.display = aba==='tabela' ? '' : 'none'; if(aba==='tabela') solRcdRenderTabela(sfx); }
+  const tabs = ['kanban','historico','tabela'];
+  tabs.forEach(t => {
+    const el = document.getElementById('sol-tab-'+t+sfx);
+    if (!el) return;
+    const active = t === aba;
+    el.style.color = active ? '#F37021' : '#94a3b8';
+    el.style.borderBottom = active ? '2px solid #F37021' : '2px solid transparent';
+  });
+}
+
+function solRcdRenderTabela(sfx='') {
+  const el = document.getElementById('sol-tabela'+sfx+'-content'); if (!el) return;
+  const regs = solRcdFiltrarRegs(Object.values(_solRegistros));
+  const fmt = v => 'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const STATUS_LABEL = {em_aprovacao:'Em Aprovação',aguardando_orcamento:'Ag. Orçamento',aguardando_cliente:'Ag. Cliente',aguardando_execucao:'Ag. Execução',aguardando_faturamento:'Ag. Faturamento',concluido:'Concluído',cancelado:'Cancelado'};
+  const MOTIVO_LABEL = {improcedencia:'Improcedência',falta_evidencia:'Falta de Evidência',cliente:'Pelo Cliente'};
+  if (!regs.length) { el.innerHTML = '<div style="padding:40px;text-align:center;color:#94a3b8">Nenhum registro encontrado com os filtros aplicados.</div>'; return; }
+  el.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead>
+        <tr style="background:#1A2E35;color:#fff">
+          <th style="padding:8px 10px;text-align:left;white-space:nowrap">Nº Orç.</th>
+          <th style="padding:8px 10px;text-align:left;white-space:nowrap">Equipamento</th>
+          <th style="padding:8px 10px;text-align:left">Cliente</th>
+          <th style="padding:8px 10px;text-align:left">Planta/Obra</th>
+          <th style="padding:8px 10px;text-align:left;white-space:nowrap">O.M.</th>
+          <th style="padding:8px 10px;text-align:left">Tipo RCD</th>
+          <th style="padding:8px 10px;text-align:left;white-space:nowrap">Máq. Reserva</th>
+          <th style="padding:8px 10px;text-align:left">Status</th>
+          <th style="padding:8px 10px;text-align:right;white-space:nowrap">Valor Orç.</th>
+          <th style="padding:8px 10px;text-align:left;white-space:nowrap">Data</th>
+          <th style="padding:8px 10px;text-align:left">Motivo Cancelamento</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${regs.map((r,i) => `<tr style="background:${i%2===0?'#fff':'#f8fafc'};border-bottom:1px solid #e2e8f0">
+          <td style="padding:7px 10px;font-family:monospace;font-size:11px;color:#6366f1">${r.orc_numero||'—'}</td>
+          <td style="padding:7px 10px"><div style="font-weight:700;color:#1A2E35">${r.equip_id||'—'}</div><div style="font-size:10px;color:#8FA4AE">${r.equip_nome||''}</div></td>
+          <td style="padding:7px 10px;color:#1e293b">${r.equip_cliente||r.cliente||'—'}</td>
+          <td style="padding:7px 10px;font-size:11px;color:#5A7280">${r.equip_planta||'—'}</td>
+          <td style="padding:7px 10px;font-size:11px">${r.om||'—'}</td>
+          <td style="padding:7px 10px;font-size:11px">${r.tipo_rcd||'—'}</td>
+          <td style="padding:7px 10px;text-align:center">${r.maquina_reserva==='sim'?'✅ Sim':r.maquina_reserva==='nao'?'❌ Não':'—'}</td>
+          <td style="padding:7px 10px"><span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:${r.status==='concluido'?'#dcfce7':r.status==='cancelado'?'#fee2e2':'#f1f5f9'};color:${r.status==='concluido'?'#16a34a':r.status==='cancelado'?'#dc2626':'#475569'}">${STATUS_LABEL[r.status]||r.status}</span></td>
+          <td style="padding:7px 10px;text-align:right;font-weight:700;color:${r.orc_valor?'#1E8A4C':'#94a3b8'}">${r.orc_valor?fmt(r.orc_valor):'—'}</td>
+          <td style="padding:7px 10px;font-size:11px;white-space:nowrap">${r.data?new Date(r.data+'T00:00').toLocaleDateString('pt-BR'):'—'}</td>
+          <td style="padding:7px 10px;font-size:11px;color:#64748b">${r.motivo_cancelamento?(MOTIVO_LABEL[r.motivo_cancelamento]||r.motivo_cancelamento):'—'}</td>
+        </tr>`).join('')}
+      </tbody>
+      <tfoot>
+        <tr style="background:#f0f4f6;font-weight:700">
+          <td colspan="8" style="padding:8px 10px;font-size:12px;color:#1A2E35">${regs.length} registros</td>
+          <td style="padding:8px 10px;text-align:right;color:#1E8A4C">${fmt(regs.reduce((s,r)=>s+(parseFloat(r.orc_valor)||0),0))}</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>`;
+}
+
+function solRcdGerarPDF(sfx='') {
+  const regs = solRcdFiltrarRegs(Object.values(_solRegistros));
+  const fmt = v => 'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const STATUS_LABEL = {em_aprovacao:'Em Aprovação',aguardando_orcamento:'Ag. Orçamento',aguardando_cliente:'Ag. Cliente',aguardando_execucao:'Ag. Execução',aguardando_faturamento:'Ag. Faturamento',concluido:'Concluído',cancelado:'Cancelado'};
+  const MOTIVO_LABEL = {improcedencia:'Improcedência',falta_evidencia:'Falta de Evidência',cliente:'Pelo Cliente'};
+  const clienteFiltro = _solFiltros.cliente || '';
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Relatório SOL RCD</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:11px;color:#1A2E35;margin:0;padding:20px}
+    .hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #E8630A;padding-bottom:12px;margin-bottom:16px}
+    .hdr h1{font-size:18px;font-weight:900;color:#1A2E35;margin:0}
+    .hdr .sub{font-size:11px;color:#5A7280;margin-top:4px}
+    .meta{display:flex;gap:24px;margin-bottom:16px;background:#f8fafc;padding:10px 14px;border-radius:6px;font-size:11px}
+    .meta span{color:#5A7280} .meta strong{color:#1A2E35}
+    table{width:100%;border-collapse:collapse;font-size:10px}
+    thead th{background:#1A2E35;color:#fff;padding:6px 8px;text-align:left;white-space:nowrap}
+    tbody tr:nth-child(even){background:#f8fafc}
+    tbody td{padding:5px 8px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+    tfoot td{background:#f0f4f6;font-weight:700;padding:6px 8px}
+    .badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px}
+    .ok{background:#dcfce7;color:#16a34a} .err{background:#fee2e2;color:#dc2626} .neu{background:#f1f5f9;color:#475569}
+    @media print{body{padding:10px}}
+  </style></head><body>
+  <div class="hdr">
+    <div>
+      <h1>📋 Relatório SOL RCD${clienteFiltro?' — '+clienteFiltro:''}</h1>
+      <div class="sub">mills — Gestão de Solicitações de Reparo e Cobrança de Danos</div>
+    </div>
+    <div style="text-align:right;font-size:10px;color:#5A7280">Gerado em ${new Date().toLocaleString('pt-BR')}</div>
+  </div>
+  <div class="meta">
+    <span>Total: <strong>${regs.length} registros</strong></span>
+    <span>Valor total: <strong>${fmt(regs.reduce((s,r)=>s+(parseFloat(r.orc_valor)||0),0))}</strong></span>
+    ${clienteFiltro?`<span>Cliente: <strong>${clienteFiltro}</strong></span>`:''}
+    ${_solFiltros.status?`<span>Status: <strong>${STATUS_LABEL[_solFiltros.status]||_solFiltros.status}</strong></span>`:''}
+  </div>
+  <table>
+    <thead><tr>
+      <th>Nº Orç.</th><th>Equipamento</th><th>Cliente</th><th>Planta/Obra</th>
+      <th>O.M.</th><th>Tipo RCD</th><th>Máq. Reserva</th><th>Status</th>
+      <th style="text-align:right">Valor</th><th>Data</th><th>Motivo Canc.</th>
+    </tr></thead>
+    <tbody>
+      ${regs.map((r,i)=>`<tr>
+        <td style="font-family:monospace;color:#6366f1">${r.orc_numero||'—'}</td>
+        <td><strong>${r.equip_id||'—'}</strong><br><span style="color:#8FA4AE">${r.equip_nome||''}</span></td>
+        <td>${r.equip_cliente||r.cliente||'—'}</td>
+        <td>${r.equip_planta||'—'}</td>
+        <td>${r.om||'—'}</td>
+        <td>${r.tipo_rcd||'—'}</td>
+        <td>${r.maquina_reserva==='sim'?'Sim':r.maquina_reserva==='nao'?'Não':'—'}</td>
+        <td><span class="badge ${r.status==='concluido'?'ok':r.status==='cancelado'?'err':'neu'}">${STATUS_LABEL[r.status]||r.status}</span></td>
+        <td style="text-align:right;font-weight:700">${r.orc_valor?fmt(r.orc_valor):'—'}</td>
+        <td>${r.data?new Date(r.data+'T00:00').toLocaleDateString('pt-BR'):'—'}</td>
+        <td>${r.motivo_cancelamento?(MOTIVO_LABEL[r.motivo_cancelamento]||r.motivo_cancelamento):'—'}</td>
+      </tr>`).join('')}
+    </tbody>
+    <tfoot><tr>
+      <td colspan="8">${regs.length} registros</td>
+      <td style="text-align:right">${fmt(regs.reduce((s,r)=>s+(parseFloat(r.orc_valor)||0),0))}</td>
+      <td colspan="2"></td>
+    </tr></tfoot>
+  </table>
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`);
+  w.document.close();
 }
 
 function solRcdRenderTodos(){
@@ -15150,7 +15273,9 @@ function solRcdRender(sfx=''){
       kpiCard('Ag. Orçamento',filtAtivos.filter(r=>r.status==='aguardando_orcamento').length,'#B45309',filtAtivos.filter(r=>r.status==='em_aprovacao').length+' em aprovação','#f59e0b');
     const hdrStats=document.getElementById('rcd-header-stats');
     if(hdrStats){
-      const taxaConv=concluidos.length&&filtRegs.filter(r=>['concluido','nao_elegivel'].includes(r.status)).length?Math.round(concluidos.length/filtRegs.filter(r=>['concluido','nao_elegivel'].includes(r.status)).length*100):0;
+      const _cancelContamKpi=filtRegs.filter(r=>r.status==='cancelado'&&r.motivo_cancelamento==='falta_evidencia');
+      const _fechadosKpi=concluidos.length+_cancelContamKpi.length;
+      const taxaConv=_fechadosKpi?Math.round(concluidos.length/_fechadosKpi*100):0;
       hdrStats.innerHTML=`<div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#E8630A">${filtAtivos.length}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Em aberto</div></div><div style="width:1px;height:32px;background:#E2E8ED"></div><div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#1E8A4C">${fmt(valFaturado)}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Faturado</div></div><div style="width:1px;height:32px;background:#E2E8ED"></div><div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#1A2E35">${taxaConv}%</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Conversão</div></div>`;
     }
   }
@@ -15282,7 +15407,7 @@ function solRcdRender(sfx=''){
 }
 
 const _solCharts = {};
-const _solFiltros = { equip:'', cliente:'', responsavel:'', de:'', ate:'' };
+const _solFiltros = { equip:'', cliente:'', responsavel:'', de:'', ate:'', orc_numero:'', status:'' };
 
 function solRcdFiltrarRegs(regs) {
   return regs.filter(r => {
@@ -15292,6 +15417,8 @@ function solRcdFiltrarRegs(regs) {
     if (f.responsavel && !(r.responsavel||'').toLowerCase().includes(f.responsavel.toLowerCase())) return false;
     if (f.de) { const ts = r.ts_criacao||0; if (ts < new Date(f.de+'T00:00:00').getTime()) return false; }
     if (f.ate) { const ts = r.ts_criacao||0; if (ts > new Date(f.ate+'T23:59:59').getTime()) return false; }
+    if (f.orc_numero && !(r.orc_numero||'').toLowerCase().includes(f.orc_numero.toLowerCase())) return false;
+    if (f.status && r.status !== f.status) return false;
     return true;
   });
 }
@@ -15320,10 +15447,23 @@ function solRcdFiltrosRender(sfx, regs) {
   const dat = (id,key,ph) => `<input id="${id}" type="date" value="${f[key]}" title="${ph}"
     onchange="_solFiltros['${key}']=this.value;solRcdAtualizarResultados()"
     style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b">`;
+  const selStatus = `<select id="sf-status${sfx}" onchange="_solFiltros['status']=this.value;solRcdAtualizarResultados()"
+    style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b;background:#fff">
+    <option value="">Status — Todos</option>
+    <option value="em_aprovacao"${f.status==='em_aprovacao'?' selected':''}>Em Aprovação</option>
+    <option value="aguardando_orcamento"${f.status==='aguardando_orcamento'?' selected':''}>Ag. Orçamento</option>
+    <option value="aguardando_cliente"${f.status==='aguardando_cliente'?' selected':''}>Ag. Cliente</option>
+    <option value="aguardando_execucao"${f.status==='aguardando_execucao'?' selected':''}>Ag. Execução</option>
+    <option value="aguardando_faturamento"${f.status==='aguardando_faturamento'?' selected':''}>Ag. Faturamento</option>
+    <option value="concluido"${f.status==='concluido'?' selected':''}>Concluído</option>
+    <option value="cancelado"${f.status==='cancelado'?' selected':''}>Cancelado</option>
+  </select>`;
   el.innerHTML = `<span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Filtros:</span>
     ${inpH('sf-equip'+sfx,'Equipamento','equip','120px')}
     ${inpH('sf-cli'+sfx,'Cliente','cliente','150px')}
     ${inpH('sf-resp'+sfx,'Responsável','responsavel','120px')}
+    ${inpH('sf-orc'+sfx,'Nº Orçamento','orc_numero','120px')}
+    ${selStatus}
     <span style="display:flex;align-items:center;gap:4px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">De:</span>${dat('sf-de'+sfx,'de','Data início')}</span>
     <span style="display:flex;align-items:center;gap:4px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">Até:</span>${dat('sf-ate'+sfx,'ate','Data fim')}</span>
     <button data-sol-limpar onclick="Object.keys(_solFiltros).forEach(k=>_solFiltros[k]='');solRcdRenderTodos()"
@@ -15341,13 +15481,19 @@ function solRcdGraficos(sfx, regs) {
 
   const concluidos = regs.filter(r => r.status === 'concluido');
   const cancelados = regs.filter(r => r.status === 'cancelado');
-  // Taxa de conversão: faturados / (faturados + cancelados) — apenas orçamentos fechados
-  const fechados = concluidos.length + cancelados.length;
+  // Cancelados que contam: apenas "falta_evidencia"
+  // "improcedencia" e "cliente" não entram nos indicadores
+  const canceladosContam = cancelados.filter(r => r.motivo_cancelamento === 'falta_evidencia');
+  const fechados = concluidos.length + canceladosContam.length;
   const taxaConv = fechados ? Math.round((concluidos.length / fechados) * 100) : 0;
 
-  const leadTimes = concluidos.filter(r => r.ts_envio_orcamento && r.ts_concluido && r.ts_concluido > r.ts_envio_orcamento)
-    .map(r => Math.round((r.ts_concluido - r.ts_envio_orcamento) / 86400000));
-  const leadMedio = leadTimes.length ? Math.round(leadTimes.reduce((a,b)=>a+b,0)/leadTimes.length) : 0;
+  const leadTempos = [
+    ...concluidos.filter(r => r.ts_envio_orcamento && r.ts_concluido && r.ts_concluido > r.ts_envio_orcamento)
+      .map(r => Math.round((r.ts_concluido - r.ts_envio_orcamento) / 86400000)),
+    ...canceladosContam.filter(r => r.ts_envio_orcamento && r.ts_cancelado && r.ts_cancelado > r.ts_envio_orcamento)
+      .map(r => Math.round((r.ts_cancelado - r.ts_envio_orcamento) / 86400000)),
+  ];
+  const leadMedio = leadTempos.length ? Math.round(leadTempos.reduce((a,b)=>a+b,0)/leadTempos.length) : 0;
 
   const agora = new Date();
   const meses = Array.from({length:12},(_,i)=>{
@@ -15562,12 +15708,22 @@ async function solRcdReverterConcluido(id){
   showToast('↩ Revertido para Ag. Faturamento');
 }
 
-async function solRcdCancelar(id){
-  if(!confirm('Cancelar esta solicitação? Esta ação não pode ser desfeita.'))return;
+function solRcdCancelar(id){
   const reg=_solRegistros[id];if(!reg)return;
-  reg.status='cancelado';reg.ts_cancelado=Date.now();
-  await solRcdSalvarReg(reg);solRcdRenderTodos();
-  showToast('✖ Solicitação cancelada');
+  document.getElementById('sol-cancel-id').value=id;
+  document.querySelectorAll('input[name="sol-cancel-motivo"]').forEach(r=>r.checked=false);
+  document.getElementById('sol-cancel-modal').style.display='flex';
+}
+async function solRcdCancelarConfirmar(){
+  const id=document.getElementById('sol-cancel-id').value;
+  const radio=[...document.querySelectorAll('input[name="sol-cancel-motivo"]')].find(r=>r.checked);
+  if(!radio){showToast('⚠ Selecione o motivo');return;}
+  const reg=_solRegistros[id];if(!reg)return;
+  reg.status='cancelado';reg.ts_cancelado=Date.now();reg.motivo_cancelamento=radio.value;
+  await solRcdSalvarReg(reg);
+  document.getElementById('sol-cancel-modal').style.display='none';
+  solRcdRenderTodos();
+  showToast('✖ Cancelado: '+radio.dataset.label);
 }
 
 function solRcdNovaAbrir(){
@@ -15619,6 +15775,7 @@ function solRcdEditarAbrir(id){
   inp('sol-contato-tel',   reg.contato_tel);
   inp('sol-contato-email', reg.contato_email);
   const _trEl2=document.getElementById('sol-tipo-rcd');if(_trEl2)_trEl2.value=reg.tipo_rcd||'';
+  const _mrEl=document.getElementById('sol-maquina-reserva');if(_mrEl)_mrEl.value=reg.maquina_reserva||'';
   orcFotosCarregar('sol', reg.orc_fotos||[]);
   const tbody=document.getElementById('sol-itens-body');if(tbody)tbody.innerHTML='';
   (reg.orc_itens||[]).forEach(it=>solRcdAddLinha(it));
@@ -15736,6 +15893,7 @@ async function solRcdSalvar(){
   reg.descricao=document.getElementById('sol-descricao')?.value.trim()||'';
   reg.tipo_rcd=document.getElementById('sol-tipo-rcd')?.value||'';
   if(!reg.tipo_rcd){showToast('⚠️ Selecione o Tipo RCD');document.getElementById('sol-tipo-rcd')?.focus();return;}
+  reg.maquina_reserva=document.getElementById('sol-maquina-reserva')?.value||'';
   const _solItens=solRcdLerLinhas().filter(i=>i.qtd||i.pn||i.desc||i.vunit);
   if(_solItens.length&&_solItens.some(i=>!i.vunit)){showToast('⚠️ Todos os itens precisam ter Valor Unitário');return;}
   reg.orc_itens=_solItens;
@@ -17034,10 +17192,11 @@ if ('serviceWorker' in navigator) {
       <div id="sol-filtros-inline" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:12px 16px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.04)"></div>
       <!-- Gráficos analíticos -->
       <div id="sol-graficos-inline" style="display:grid;grid-template-columns:1fr 2fr 2fr 1fr;gap:14px;margin-bottom:24px;align-items:start"></div>
-      <!-- Sub-abas Kanban / Histórico -->
+      <!-- Sub-abas Kanban / Histórico / Tabela -->
       <div style="display:flex;gap:0;border-bottom:2px solid #E2E8ED;margin-bottom:20px">
         <button id="sol-tab-kanban-inline" onclick="solRcdAba('kanban','-inline')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#E8630A;border-bottom:2px solid #E8630A;margin-bottom:-2px">Kanban</button>
         <button id="sol-tab-historico-inline" onclick="solRcdAba('historico','-inline')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#8FA4AE;border-bottom:2px solid transparent;margin-bottom:-2px">Histórico / Concluídos</button>
+        <button id="sol-tab-tabela-inline" onclick="solRcdAba('tabela','-inline')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#8FA4AE;border-bottom:2px solid transparent;margin-bottom:-2px">📊 Tabela</button>
       </div>
       <!-- Kanban -->
       <div id="sol-kanban-inline-wrap">
@@ -17068,6 +17227,13 @@ if ('serviceWorker' in navigator) {
       <div id="sol-hist-inline-wrap" style="display:none">
         <div id="sol-historico-inline" style="display:flex;flex-direction:column;gap:8px"></div>
       </div>
+      <!-- Tabela -->
+      <div id="sol-tabela-inline-wrap" style="display:none">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+          <button onclick="solRcdGerarPDF('-inline')" style="padding:7px 16px;background:#1A2E35;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px">📄 Gerar Relatório PDF</button>
+        </div>
+        <div id="sol-tabela-inline-content" style="overflow-x:auto;border-radius:8px;border:1px solid #e2e8f0"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -17090,10 +17256,11 @@ if ('serviceWorker' in navigator) {
     </div>
     <!-- Gráficos analíticos -->
     <div id="sol-graficos" style="display:grid;grid-template-columns:1fr 2fr 2fr 1fr;gap:14px;margin-bottom:24px;align-items:start"></div>
-    <!-- Sub-abas Kanban / Histórico -->
+    <!-- Sub-abas Kanban / Histórico / Tabela -->
     <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:20px">
       <button id="sol-tab-kanban" onclick="solRcdAba('kanban','')" style="padding:9px 18px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:none;color:#F37021;border-bottom:2px solid #F37021;margin-bottom:-2px">Kanban</button>
       <button id="sol-tab-historico" onclick="solRcdAba('historico','')" style="padding:9px 18px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:none;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px">Histórico / Concluídos</button>
+      <button id="sol-tab-tabela" onclick="solRcdAba('tabela','')" style="padding:9px 18px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:none;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px">📊 Tabela</button>
     </div>
     <!-- Kanban -->
     <div id="sol-kanban-wrap">
@@ -17123,6 +17290,49 @@ if ('serviceWorker' in navigator) {
     <!-- Histórico / Relatório -->
     <div id="sol-hist-wrap" style="display:none">
       <div id="sol-historico" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+    <!-- Tabela -->
+    <div id="sol-tabela-wrap" style="display:none">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button onclick="solRcdGerarPDF('')" style="padding:7px 16px;background:#1A2E35;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px">📄 Gerar Relatório PDF</button>
+      </div>
+      <div id="sol-tabela-content" style="overflow-x:auto;border-radius:8px;border:1px solid #e2e8f0"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CANCELAMENTO SOL -->
+<div id="sol-cancel-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:4000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;width:440px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.25);padding:28px">
+    <input type="hidden" id="sol-cancel-id">
+    <div style="font-size:16px;font-weight:800;color:#dc2626;margin-bottom:6px">✖ Cancelar Solicitação</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:20px">Selecione o motivo do cancelamento. O motivo define se o registro será contabilizado nos indicadores.</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
+      <label style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer" onmouseover="this.style.borderColor='#E8630A'" onmouseout="this.style.borderColor=document.querySelector('input[name=sol-cancel-motivo]:checked')?.value===this.querySelector('input').value?'#E8630A':'#e2e8f0'">
+        <input type="radio" name="sol-cancel-motivo" value="improcedencia" data-label="Improcedência de Cobrança" style="margin-top:2px;accent-color:#E8630A">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#1A2E35">Improcedência de Cobrança</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:2px">Não contabilizado em nenhum indicador</div>
+        </div>
+      </label>
+      <label style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer" onmouseover="this.style.borderColor='#E8630A'" onmouseout="this.style.borderColor=document.querySelector('input[name=sol-cancel-motivo]:checked')?.value===this.querySelector('input').value?'#E8630A':'#e2e8f0'">
+        <input type="radio" name="sol-cancel-motivo" value="falta_evidencia" data-label="Falta de Evidência" style="margin-top:2px;accent-color:#E8630A">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#1A2E35">Falta de Evidência</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:2px">Contabilizado na taxa de conversão e lead time</div>
+        </div>
+      </label>
+      <label style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer" onmouseover="this.style.borderColor='#E8630A'" onmouseout="this.style.borderColor=document.querySelector('input[name=sol-cancel-motivo]:checked')?.value===this.querySelector('input').value?'#E8630A':'#e2e8f0'">
+        <input type="radio" name="sol-cancel-motivo" value="cliente" data-label="Cancelado pelo Cliente" style="margin-top:2px;accent-color:#E8630A">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#1A2E35">Cancelado pelo Cliente</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:2px">Não contabilizado em nenhum indicador</div>
+        </div>
+      </label>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="document.getElementById('sol-cancel-modal').style.display='none'" style="padding:8px 18px;background:#f1f5f9;color:#64748b;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer">Voltar</button>
+      <button onclick="solRcdCancelarConfirmar()" style="padding:8px 18px;background:#dc2626;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer">Confirmar Cancelamento</button>
     </div>
   </div>
 </div>
@@ -17183,6 +17393,14 @@ if ('serviceWorker' in navigator) {
             <option value="Contrato">Contrato</option>
             <option value="Frete">Frete</option>
             <option value="Venda de Peças">Venda de Peças</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Máquina Reserva cobrindo</label>
+          <select id="sol-maquina-reserva" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;background:#fff">
+            <option value="">Não informado</option>
+            <option value="sim">Sim</option>
+            <option value="nao">Não</option>
           </select>
         </div>
         <div style="grid-column:1/-1">
