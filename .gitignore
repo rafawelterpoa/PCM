@@ -13,6 +13,12 @@
 !sw.js
 !sw19.js
 
+!.github/
+.github/*
+!.github/workflows/
+.github/workflows/*
+!.github/workflows/pages.yml
+
 # Subpastas do projeto (se houver)
 !ferramentaria/
 ferramentaria/*
