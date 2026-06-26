@@ -1,4 +1,4 @@
-// SW v49 — SOL: criticidade badge nos cards, coluna na tabela, filtro por criticidade
+// SW v50 — SOL: modal faturamento (integral/parcelado/fracionado) ao mover Ag.Cliente→Ag.Execução
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
