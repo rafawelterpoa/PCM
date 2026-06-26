@@ -1,4 +1,4 @@
-// SW v48 — SOL: motivo cancelamento, máquina reserva, filtros, aba tabela+PDF
+// SW v49 — SOL: criticidade badge nos cards, coluna na tabela, filtro por criticidade
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

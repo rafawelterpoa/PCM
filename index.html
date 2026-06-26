@@ -15101,10 +15101,11 @@ function solRcdRenderTabela(sfx='') {
           <th style="padding:8px 10px;text-align:right;white-space:nowrap">Valor Orç.</th>
           <th style="padding:8px 10px;text-align:left;white-space:nowrap">Data</th>
           <th style="padding:8px 10px;text-align:left">Motivo Cancelamento</th>
+          <th style="padding:8px 10px;text-align:center;white-space:nowrap">Criticidade</th>
         </tr>
       </thead>
       <tbody>
-        ${regs.map((r,i) => `<tr style="background:${i%2===0?'#fff':'#f8fafc'};border-bottom:1px solid #e2e8f0">
+        ${regs.map((r,i) => { const crit=solRcdCriticidade(r); return `<tr style="background:${i%2===0?'#fff':'#f8fafc'};border-bottom:1px solid #e2e8f0">
           <td style="padding:7px 10px;font-family:monospace;font-size:11px;color:#6366f1">${r.orc_numero||'—'}</td>
           <td style="padding:7px 10px"><div style="font-weight:700;color:#1A2E35">${r.equip_id||'—'}</div><div style="font-size:10px;color:#8FA4AE">${r.equip_nome||''}</div></td>
           <td style="padding:7px 10px;color:#1e293b">${r.equip_cliente||r.cliente||'—'}</td>
@@ -15116,13 +15117,14 @@ function solRcdRenderTabela(sfx='') {
           <td style="padding:7px 10px;text-align:right;font-weight:700;color:${r.orc_valor?'#1E8A4C':'#94a3b8'}">${r.orc_valor?fmt(r.orc_valor):'—'}</td>
           <td style="padding:7px 10px;font-size:11px;white-space:nowrap">${r.data?new Date(r.data+'T00:00').toLocaleDateString('pt-BR'):'—'}</td>
           <td style="padding:7px 10px;font-size:11px;color:#64748b">${r.motivo_cancelamento?(MOTIVO_LABEL[r.motivo_cancelamento]||r.motivo_cancelamento):'—'}</td>
-        </tr>`).join('')}
+          <td style="padding:7px 10px;text-align:center"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:${crit.bg};color:${crit.cor};white-space:nowrap">${crit.emoji} ${crit.dias}d</span></td>
+        </tr>`; }).join('')}
       </tbody>
       <tfoot>
         <tr style="background:#f0f4f6;font-weight:700">
           <td colspan="8" style="padding:8px 10px;font-size:12px;color:#1A2E35">${regs.length} registros</td>
           <td style="padding:8px 10px;text-align:right;color:#1E8A4C">${fmt(regs.reduce((s,r)=>s+(parseFloat(r.orc_valor)||0),0))}</td>
-          <td colspan="2"></td>
+          <td colspan="3"></td>
         </tr>
       </tfoot>
     </table>`;
@@ -15293,6 +15295,7 @@ function solRcdRender(sfx=''){
     const cor=CORES[status];
     col.innerHTML=rList.map(r=>{
       const dias=solRcdDiasNaFase(r,status);
+      const crit=solRcdCriticidade(r);
       const prox=PROX[status];
       const proxLbl=PROX_LBL[status];
       const isAprov=status==='em_aprovacao';
@@ -15316,17 +15319,20 @@ function solRcdRender(sfx=''){
         </div>
         ${r.om?`<div style="font-size:10px;color:#6366f1;margin-bottom:4px">O.M.: ${r.om}</div>`:''}
         ${temOrc?`<div style="font-size:10px;color:#10b981;margin-bottom:6px;font-weight:600">Orç: R$ ${(r.orc_valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>`:''}
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
-          <button onclick="solRcdEditarAbrir('${r.id}')" style="padding:3px 7px;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✏ Editar</button>
-          ${isAprov&&isAprovador?`<button onclick="solRcdAvancar('${r.id}','aguardando_orcamento')" style="padding:3px 7px;background:#ede9fe;color:#6366f1;border:1px solid #c4b5fd;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✓ Aprovar</button>`:''}
-          ${isAprov&&!isAprovador?`<span style="padding:3px 7px;font-size:9px;color:#94a3b8;font-style:italic">Aguardando aprovação</span>`:''}
-          ${isOrc&&isAprovador?`<button onclick="solRcdGerarOrcamento('${r.id}')" style="padding:3px 7px;background:#fef3c7;color:#b45309;border:1px solid #fde68a;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">📄 Gerar Orçamento</button>`:''}
-          ${isOrc?`<button onclick="solRcdAvancar('${r.id}','aguardando_cliente')" ${temOrc?'':'disabled title="Preencha o orçamento primeiro"'} style="padding:3px 7px;background:${temOrc?'#fffbeb':'#f1f5f9'};color:${temOrc?'#d97706':'#94a3b8'};border:1px solid ${temOrc?'#fde68a':'#e2e8f0'};border-radius:4px;font-size:9px;font-weight:600;cursor:${temOrc?'pointer':'not-allowed'}">→ Ag. Cliente</button>`:''}
-          ${isCliente?`<button onclick="solRcdAvancar('${r.id}','aguardando_execucao')" style="padding:3px 7px;background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">→ Ag. Execução</button>`:''}
-          ${isExec?`<button onclick="solRcdAvancar('${r.id}','aguardando_faturamento')" style="padding:3px 7px;background:#f0f9ff;color:#0284c7;border:1px solid #7dd3fc;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">→ Ag. Faturamento</button>`:''}
-          ${isExec?`<button onclick="solRcdVoltarCliente('${r.id}')" style="padding:3px 7px;background:#fffbeb;color:#b45309;border:1px solid #fde68a;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">↩ Ag. PC</button>`:''}
-          ${status==='aguardando_faturamento'?`<button onclick="solRcdConcluir('${r.id}')" style="padding:3px 7px;background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✓ Faturar</button>`:''}
-          <button onclick="solRcdCancelar('${r.id}')" style="padding:3px 7px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✖ Cancelar</button>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:6px;gap:4px">
+          <div style="display:flex;flex-wrap:wrap;gap:4px">
+            <button onclick="solRcdEditarAbrir('${r.id}')" style="padding:3px 7px;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✏ Editar</button>
+            ${isAprov&&isAprovador?`<button onclick="solRcdAvancar('${r.id}','aguardando_orcamento')" style="padding:3px 7px;background:#ede9fe;color:#6366f1;border:1px solid #c4b5fd;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✓ Aprovar</button>`:''}
+            ${isAprov&&!isAprovador?`<span style="padding:3px 7px;font-size:9px;color:#94a3b8;font-style:italic">Aguardando aprovação</span>`:''}
+            ${isOrc&&isAprovador?`<button onclick="solRcdGerarOrcamento('${r.id}')" style="padding:3px 7px;background:#fef3c7;color:#b45309;border:1px solid #fde68a;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">📄 Gerar Orçamento</button>`:''}
+            ${isOrc?`<button onclick="solRcdAvancar('${r.id}','aguardando_cliente')" ${temOrc?'':'disabled title="Preencha o orçamento primeiro"'} style="padding:3px 7px;background:${temOrc?'#fffbeb':'#f1f5f9'};color:${temOrc?'#d97706':'#94a3b8'};border:1px solid ${temOrc?'#fde68a':'#e2e8f0'};border-radius:4px;font-size:9px;font-weight:600;cursor:${temOrc?'pointer':'not-allowed'}">→ Ag. Cliente</button>`:''}
+            ${isCliente?`<button onclick="solRcdAvancar('${r.id}','aguardando_execucao')" style="padding:3px 7px;background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">→ Ag. Execução</button>`:''}
+            ${isExec?`<button onclick="solRcdAvancar('${r.id}','aguardando_faturamento')" style="padding:3px 7px;background:#f0f9ff;color:#0284c7;border:1px solid #7dd3fc;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">→ Ag. Faturamento</button>`:''}
+            ${isExec?`<button onclick="solRcdVoltarCliente('${r.id}')" style="padding:3px 7px;background:#fffbeb;color:#b45309;border:1px solid #fde68a;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">↩ Ag. PC</button>`:''}
+            ${status==='aguardando_faturamento'?`<button onclick="solRcdConcluir('${r.id}')" style="padding:3px 7px;background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✓ Faturar</button>`:''}
+            <button onclick="solRcdCancelar('${r.id}')" style="padding:3px 7px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✖ Cancelar</button>
+          </div>
+          <span title="Meta: 30 dias — Total: ${crit.dias}d no processo" style="flex-shrink:0;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:${crit.bg};color:${crit.cor};white-space:nowrap">${crit.emoji} ${crit.dias}d</span>
         </div>
       </div>`;
     }).join('');
@@ -15407,7 +15413,16 @@ function solRcdRender(sfx=''){
 }
 
 const _solCharts = {};
-const _solFiltros = { equip:'', cliente:'', responsavel:'', de:'', ate:'', orc_numero:'', status:'' };
+const _solFiltros = { equip:'', cliente:'', responsavel:'', de:'', ate:'', orc_numero:'', status:'', criticidade:'' };
+
+function solRcdCriticidade(r) {
+  const ts = r.ts_criacao || r.ts_em_aprovacao || 0;
+  const dias = ts ? Math.floor((Date.now() - ts) / 86400000) : 0;
+  if (dias <= 10) return { dias, faixa:'verde',   cor:'#16a34a', bg:'#dcfce7', emoji:'🟢', label:'0–10d' };
+  if (dias <= 20) return { dias, faixa:'amarelo',  cor:'#b45309', bg:'#fef3c7', emoji:'🟡', label:'11–20d' };
+  if (dias <= 30) return { dias, faixa:'laranja',  cor:'#c2410c', bg:'#ffedd5', emoji:'🟠', label:'21–30d' };
+  return               { dias, faixa:'vermelho', cor:'#dc2626', bg:'#fee2e2', emoji:'🔴', label:'+30d' };
+}
 
 function solRcdFiltrarRegs(regs) {
   return regs.filter(r => {
@@ -15419,6 +15434,7 @@ function solRcdFiltrarRegs(regs) {
     if (f.ate) { const ts = r.ts_criacao||0; if (ts > new Date(f.ate+'T23:59:59').getTime()) return false; }
     if (f.orc_numero && !(r.orc_numero||'').toLowerCase().includes(f.orc_numero.toLowerCase())) return false;
     if (f.status && r.status !== f.status) return false;
+    if (f.criticidade && solRcdCriticidade(r).faixa !== f.criticidade) return false;
     return true;
   });
 }
@@ -15458,12 +15474,21 @@ function solRcdFiltrosRender(sfx, regs) {
     <option value="concluido"${f.status==='concluido'?' selected':''}>Concluído</option>
     <option value="cancelado"${f.status==='cancelado'?' selected':''}>Cancelado</option>
   </select>`;
+  const selCrit = `<select id="sf-crit${sfx}" onchange="_solFiltros['criticidade']=this.value;solRcdAtualizarResultados()"
+    style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b;background:#fff">
+    <option value="">Criticidade — Todas</option>
+    <option value="verde"${f.criticidade==='verde'?' selected':''}>🟢 0–10 dias</option>
+    <option value="amarelo"${f.criticidade==='amarelo'?' selected':''}>🟡 11–20 dias</option>
+    <option value="laranja"${f.criticidade==='laranja'?' selected':''}>🟠 21–30 dias</option>
+    <option value="vermelho"${f.criticidade==='vermelho'?' selected':''}>🔴 +30 dias</option>
+  </select>`;
   el.innerHTML = `<span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Filtros:</span>
     ${inpH('sf-equip'+sfx,'Equipamento','equip','120px')}
     ${inpH('sf-cli'+sfx,'Cliente','cliente','150px')}
     ${inpH('sf-resp'+sfx,'Responsável','responsavel','120px')}
     ${inpH('sf-orc'+sfx,'Nº Orçamento','orc_numero','120px')}
     ${selStatus}
+    ${selCrit}
     <span style="display:flex;align-items:center;gap:4px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">De:</span>${dat('sf-de'+sfx,'de','Data início')}</span>
     <span style="display:flex;align-items:center;gap:4px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">Até:</span>${dat('sf-ate'+sfx,'ate','Data fim')}</span>
     <button data-sol-limpar onclick="Object.keys(_solFiltros).forEach(k=>_solFiltros[k]='');solRcdRenderTodos()"
