@@ -13009,10 +13009,10 @@ function rcdRenderIndicadores() {
   const leadTimeMedio = _ltDias.length > 0 ? Math.round(_ltDias.reduce((s,x)=>s+x,0)/_ltDias.length) : null;
 
   function kpi(label, valor, cor, sub, clique) {
-    return `<div onclick="${clique||''}" style="background:#fff;border-radius:12px;border:1px solid #E2E8ED;padding:16px 18px;cursor:${clique?'pointer':'default'};box-shadow:0 1px 3px rgba(0,0,0,.06);transition:box-shadow 120ms" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)'" onmouseleave="this.style.boxShadow='0 1px 3px rgba(0,0,0,.06)'">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;margin-bottom:8px">${label}</div>
-      <div style="font-size:28px;font-weight:700;color:${cor};line-height:1;margin-bottom:4px">${valor}</div>
-      ${sub ? `<div style="font-size:11px;color:#8FA4AE">${sub}</div>` : ''}
+    return `<div onclick="${clique||''}" style="background:#fff;border-radius:8px;border:1px solid #E2E8ED;padding:10px 12px;cursor:${clique?'pointer':'default'};box-shadow:0 1px 3px rgba(0,0,0,.06);transition:box-shadow 120ms;min-width:0" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)'" onmouseleave="this.style.boxShadow='0 1px 3px rgba(0,0,0,.06)'">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label}</div>
+      <div style="font-size:20px;font-weight:700;color:${cor};line-height:1;margin-bottom:2px">${valor}</div>
+      ${sub ? `<div style="font-size:10px;color:#8FA4AE;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sub}</div>` : ''}
     </div>`;
   }
 
@@ -15464,7 +15464,7 @@ function solRcdFiltrosRender(sfx, regs) {
     onchange="_solFiltros['${key}']=this.value;solRcdAtualizarResultados()"
     style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b">`;
   const selStatus = `<select id="sf-status${sfx}" onchange="_solFiltros['status']=this.value;solRcdAtualizarResultados()"
-    style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b;background:#fff">
+    style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b;background:#fff;max-width:130px">
     <option value="">Status — Todos</option>
     <option value="em_aprovacao"${f.status==='em_aprovacao'?' selected':''}>Em Aprovação</option>
     <option value="aguardando_orcamento"${f.status==='aguardando_orcamento'?' selected':''}>Ag. Orçamento</option>
@@ -15475,7 +15475,7 @@ function solRcdFiltrosRender(sfx, regs) {
     <option value="cancelado"${f.status==='cancelado'?' selected':''}>Cancelado</option>
   </select>`;
   const selCrit = `<select id="sf-crit${sfx}" onchange="_solFiltros['criticidade']=this.value;solRcdAtualizarResultados()"
-    style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b;background:#fff">
+    style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b;background:#fff;max-width:130px">
     <option value="">Criticidade — Todas</option>
     <option value="verde"${f.criticidade==='verde'?' selected':''}>🟢 0–10 dias</option>
     <option value="amarelo"${f.criticidade==='amarelo'?' selected':''}>🟡 11–20 dias</option>
@@ -15483,17 +15483,17 @@ function solRcdFiltrosRender(sfx, regs) {
     <option value="vermelho"${f.criticidade==='vermelho'?' selected':''}>🔴 +30 dias</option>
   </select>`;
   el.innerHTML = `<span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Filtros:</span>
-    ${inpH('sf-equip'+sfx,'Equipamento','equip','120px')}
-    ${inpH('sf-cli'+sfx,'Cliente','cliente','150px')}
-    ${inpH('sf-resp'+sfx,'Responsável','responsavel','120px')}
-    ${inpH('sf-orc'+sfx,'Nº Orçamento','orc_numero','120px')}
+    ${inpH('sf-equip'+sfx,'Equipamento','equip','90px')}
+    ${inpH('sf-cli'+sfx,'Cliente','cliente','100px')}
+    ${inpH('sf-resp'+sfx,'Responsável','responsavel','90px')}
+    ${inpH('sf-orc'+sfx,'Nº Orçamento','orc_numero','90px')}
     ${selStatus}
     ${selCrit}
-    <span style="display:flex;align-items:center;gap:4px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">De:</span>${dat('sf-de'+sfx,'de','Data início')}</span>
-    <span style="display:flex;align-items:center;gap:4px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">Até:</span>${dat('sf-ate'+sfx,'ate','Data fim')}</span>
+    <span style="display:flex;align-items:center;gap:3px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">De:</span>${dat('sf-de'+sfx,'de','Data início')}</span>
+    <span style="display:flex;align-items:center;gap:3px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">Até:</span>${dat('sf-ate'+sfx,'ate','Data fim')}</span>
     <button data-sol-limpar onclick="Object.keys(_solFiltros).forEach(k=>_solFiltros[k]='');solRcdRenderTodos()"
-      style="padding:5px 10px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;display:${Object.values(f).some(v=>v)?'':'none'}">✕ Limpar</button>
-    <span data-sol-badge>${badgeTxt}</span>`;
+      style="padding:5px 8px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:${Object.values(f).some(v=>v)?'':'none'}">✕</button>
+    <span data-sol-badge style="white-space:nowrap">${badgeTxt}</span>`;
 }
 
 function solRcdAtualizarResultados() {
@@ -15600,9 +15600,9 @@ function solRcdGraficos(sfx, regs) {
     </div>
     <div style="background:#fff;border:1px solid #E2E8ED;border-top:3px solid #E8630A;border-radius:10px;padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.06)">
       <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;margin-bottom:10px">Lead Time Médio</div>
-      <div style="font-size:52px;font-weight:900;color:${leadTimes.length?'#E8630A':'#C8D4DA'};line-height:1">${leadTimes.length?leadMedio:'—'}</div>
-      <div style="font-size:13px;font-weight:600;color:#5A7280;margin-top:6px">${leadTimes.length?'dias':'sem dados'}</div>
-      <div style="font-size:11px;color:#8FA4AE;margin-top:8px;text-align:center">Envio → Faturamento<br>${leadTimes.length} registros</div>
+      <div style="font-size:52px;font-weight:900;color:${leadTempos.length?'#E8630A':'#C8D4DA'};line-height:1">${leadTempos.length?leadMedio:'—'}</div>
+      <div style="font-size:13px;font-weight:600;color:#5A7280;margin-top:6px">${leadTempos.length?'dias':'sem dados'}</div>
+      <div style="font-size:11px;color:#8FA4AE;margin-top:8px;text-align:center">Envio → Faturamento<br>${leadTempos.length} registros</div>
     </div>`;
 
   ['conv','mes','fat'].forEach(k => {
@@ -17324,7 +17324,7 @@ if ('serviceWorker' in navigator) {
         <button onclick="solRcdNovaAbrir()" style="padding:10px 16px;background:#F37021;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;margin-top:0">+ Nova Solicitação</button>
       </div>
       <!-- Filtros -->
-      <div id="sol-filtros-inline" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:12px 16px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.04)"></div>
+      <div id="sol-filtros-inline" style="display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:16px;background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:10px 14px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.04)"></div>
       <!-- Gráficos analíticos -->
       <div id="sol-graficos-inline" style="display:grid;grid-template-columns:1fr 2fr 2fr 1fr;gap:14px;margin-bottom:24px;align-items:start"></div>
       <!-- Sub-abas Kanban / Histórico / Tabela -->
@@ -17387,7 +17387,7 @@ if ('serviceWorker' in navigator) {
       <!-- KPIs -->
       <div id="sol-kpis" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:14px"></div>
       <!-- Filtros -->
-      <div id="sol-filtros" style="display:flex;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;align-items:center;margin-bottom:0"></div>
+      <div id="sol-filtros" style="display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;align-items:center;margin-bottom:0"></div>
     </div>
     <!-- Gráficos analíticos -->
     <div id="sol-graficos" style="display:grid;grid-template-columns:1fr 2fr 2fr 1fr;gap:14px;margin-bottom:24px;align-items:start"></div>

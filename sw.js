@@ -1,4 +1,4 @@
-// SW v50 — SOL: modal faturamento (integral/parcelado/fracionado) ao mover Ag.Cliente→Ag.Execução
+// SW v51 — fix: gráficos SOL (leadTimes→leadTempos), KPIs Desmob compactos, filtros em linha
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
