@@ -1,4 +1,4 @@
-// SW v63 — filtros estilo Excel na tabela de equipamentos do detalhe de contrato
+// SW v64 — fix filtros tabela contrato: sort direção explícita, parseHor BR, busca correta
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

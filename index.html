@@ -16734,19 +16734,35 @@ function opRender(){
 window._opDtEquips=[];
 window._opDtFiltro={col:'',dir:'asc',busca:''};
 
+function _opDtParseHor(v){
+  // suporta "1.234" (BR milhar) e "1234" e "1.234,5"
+  const s=(v||'').toString().trim().replace(/\./g,'').replace(',','.');
+  const n=parseFloat(s);return isNaN(n)?-1:n;
+}
+
 function opDtRenderTabela(){
   const {col,dir,busca}=window._opDtFiltro;
   let rows=[...window._opDtEquips];
-  if(busca){const b=busca.toLowerCase();rows=rows.filter(e=>(e.id||'').toLowerCase().includes(b)||(e.grupo||e.familia||'').toLowerCase().includes(b)||(e.modelo||'').toLowerCase().includes(b)||(e._hor||'').toString().includes(b));}
-  if(col){rows.sort((a,b_)=>{const va=col==='hor'?parseFloat(a._hor||0):((col==='id'?a.id:col==='equip'?(a.grupo||a.familia):a.modelo)||'').toLowerCase();const vb=col==='hor'?parseFloat(b_._hor||0):((col==='id'?b_.id:col==='equip'?(b_.grupo||b_.familia):b_.modelo)||'').toLowerCase();if(va<vb)return dir==='asc'?-1:1;if(va>vb)return dir==='asc'?1:-1;return 0;});}
+  if(busca){
+    const b=busca.toLowerCase();
+    rows=rows.filter(e=>(e.id||'').toLowerCase().includes(b)||(e.grupo||e.familia||'').toLowerCase().includes(b)||(e.modelo||'').toLowerCase().includes(b)||(e._hor||'').toString().includes(b));
+  }
+  if(col){
+    rows.sort((a,b_)=>{
+      let va,vb;
+      if(col==='hor'){va=_opDtParseHor(a._hor);vb=_opDtParseHor(b_._hor);}
+      else{va=((col==='id'?a.id:col==='equip'?(a.grupo||a.familia||''):a.modelo)||'').toLowerCase();vb=((col==='id'?b_.id:col==='equip'?(b_.grupo||b_.familia||''):b_.modelo)||'').toLowerCase();}
+      if(va<vb)return dir==='asc'?-1:1;if(va>vb)return dir==='asc'?1:-1;return 0;
+    });
+  }
   const tbody=document.getElementById('op-dt-tbody');if(!tbody)return;
   const cnt=document.getElementById('op-dt-cnt');if(cnt)cnt.textContent=`Todos os Equipamentos (${rows.length}${rows.length!==window._opDtEquips.length?' de '+window._opDtEquips.length:''})`;
   tbody.innerHTML=rows.map((e,ki)=>`<tr style="background:${ki%2?'#fff':'#f8fafc'}"><td style="padding:6px 12px;font-family:monospace;font-weight:700;font-size:11px">${e.id}</td><td style="padding:6px 12px;font-weight:600">${e.grupo||e.familia||'—'}</td><td style="padding:6px 12px;color:#64748b;font-size:11px">${e.modelo||'—'}</td><td style="padding:6px 12px;text-align:right">${e._hor?`<span style="font-size:10px;font-weight:600;color:#1A2E35">${e._hor}</span> <span style="font-size:9px;color:#8FA4AE">h</span>`:'<span style="color:#C8D4DA">—</span>'}</td></tr>`).join('');
 }
 
-function opDtSort(col){
-  const f=window._opDtFiltro;
-  if(f.col===col){f.dir=f.dir==='asc'?'desc':'asc';}else{f.col=col;f.dir='asc';}
+function opDtSort(col,dir){
+  window._opDtFiltro.col=col;
+  window._opDtFiltro.dir=dir||'asc';
   opDtCloseDropdown();opDtRenderTabela();opDtUpdateHeaders();
 }
 
@@ -16765,21 +16781,27 @@ function opDtCloseDropdown(){const d=document.getElementById('op-dt-drop');if(d)
 function opDtOpenDropdown(col,el){
   opDtCloseDropdown();
   const rect=el.getBoundingClientRect();
-  const {col:sc,dir,busca}=window._opDtFiltro;
+  const f=window._opDtFiltro;
   const drop=document.createElement('div');
   drop.id='op-dt-drop';
-  drop.style.cssText=`position:fixed;top:${rect.bottom+2}px;left:${rect.left}px;min-width:200px;background:#fff;border:1px solid #E2E8ED;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:900;padding:10px;font-size:13px`;
+  drop.style.cssText=`position:fixed;top:${rect.bottom+2}px;left:${Math.min(rect.left,window.innerWidth-220)}px;min-width:210px;background:#fff;border:1px solid #E2E8ED;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:900;padding:10px;font-size:13px`;
   const colLabel={'id':'ID','equip':'Equipamento','modelo':'Modelo','hor':'Horímetro'}[col];
+  const isAsc=f.col===col&&f.dir==='asc';
+  const isDesc=f.col===col&&f.dir==='desc';
+  const hasFilter=f.col||f.busca;
   drop.innerHTML=`
     <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8FA4AE;margin-bottom:8px">${colLabel}</div>
-    <input id="op-dt-drop-search" type="text" placeholder="Buscar..." value="${busca}" oninput="window._opDtFiltro.busca=this.value;opDtRenderTabela()" style="width:100%;box-sizing:border-box;border:1px solid #E2E8ED;border-radius:6px;padding:6px 10px;font-size:12px;outline:none;margin-bottom:8px">
+    <input id="op-dt-drop-search" type="text" placeholder="Buscar em todas as colunas..." oninput="window._opDtFiltro.busca=this.value;opDtRenderTabela()" style="width:100%;box-sizing:border-box;border:1px solid #E2E8ED;border-radius:6px;padding:6px 10px;font-size:12px;outline:none;margin-bottom:8px">
     <div style="display:flex;flex-direction:column;gap:4px">
-      <button onclick="opDtSort('${col}')" style="display:flex;align-items:center;gap:8px;background:${sc===col&&dir==='asc'?'#EFF6FF':'#F8FAFC'};border:1px solid ${sc===col&&dir==='asc'?'#BFDBFE':'#E2E8ED'};border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;color:${sc===col&&dir==='asc'?'#1D4ED8':'#1A2E35'}"><span style="font-size:14px">↑</span> Ordenar A→Z</button>
-      <button onclick="window._opDtFiltro.col='${col}';window._opDtFiltro.dir='desc';opDtCloseDropdown();opDtRenderTabela();opDtUpdateHeaders()" style="display:flex;align-items:center;gap:8px;background:${sc===col&&dir==='desc'?'#EFF6FF':'#F8FAFC'};border:1px solid ${sc===col&&dir==='desc'?'#BFDBFE':'#E2E8ED'};border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;color:${sc===col&&dir==='desc'?'#1D4ED8':'#1A2E35'}"><span style="font-size:14px">↓</span> Ordenar Z→A</button>
-      ${sc===col||busca?`<button onclick="window._opDtFiltro={col:'',dir:'asc',busca:''};opDtCloseDropdown();opDtRenderTabela();opDtUpdateHeaders()" style="display:flex;align-items:center;gap:8px;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;color:#DC2626"><span>✕</span> Limpar filtro</button>`:''}
+      <button onclick="opDtSort('${col}','asc')" style="display:flex;align-items:center;gap:8px;background:${isAsc?'#EFF6FF':'#F8FAFC'};border:1px solid ${isAsc?'#BFDBFE':'#E2E8ED'};border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;color:${isAsc?'#1D4ED8':'#1A2E35'}"><span>↑</span> ${col==='hor'?'Menor → Maior':'A → Z'}</button>
+      <button onclick="opDtSort('${col}','desc')" style="display:flex;align-items:center;gap:8px;background:${isDesc?'#EFF6FF':'#F8FAFC'};border:1px solid ${isDesc?'#BFDBFE':'#E2E8ED'};border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;color:${isDesc?'#1D4ED8':'#1A2E35'}"><span>↓</span> ${col==='hor'?'Maior → Menor':'Z → A'}</button>
+      ${hasFilter?`<button onclick="window._opDtFiltro={col:'',dir:'asc',busca:''};opDtCloseDropdown();opDtRenderTabela();opDtUpdateHeaders()" style="display:flex;align-items:center;gap:8px;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;color:#DC2626"><span>✕</span> Limpar tudo</button>`:''}
     </div>`;
   document.body.appendChild(drop);
-  setTimeout(()=>document.getElementById('op-dt-drop-search')?.focus(),50);
+  // Preencher busca atual e focar
+  const inp=drop.querySelector('#op-dt-drop-search');
+  if(inp){inp.value=f.busca;setTimeout(()=>inp.focus(),30);}
+  // Fechar ao clicar fora
   setTimeout(()=>{const fn=ev=>{if(!drop.contains(ev.target)&&!ev.target.closest('[data-op-dt-th]')){opDtCloseDropdown();document.removeEventListener('mousedown',fn);}};document.addEventListener('mousedown',fn);},10);
 }
 
