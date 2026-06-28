@@ -15530,7 +15530,7 @@ function solRcdFiltrarRegs(regs) {
     if (f.responsavel && !(r.responsavel||'').toLowerCase().includes(f.responsavel.toLowerCase())) return false;
     if (f.de) { const ts = r.ts_criacao||0; if (ts < new Date(f.de+'T00:00:00').getTime()) return false; }
     if (f.ate) { const ts = r.ts_criacao||0; if (ts > new Date(f.ate+'T23:59:59').getTime()) return false; }
-    if (f.orc_numero && !(r.orc_numero||'').toLowerCase().includes(f.orc_numero.toLowerCase())) return false;
+    if (f.orc_numero && !(r.orc_numero||'').toLowerCase().includes(f.orc_numero.toLowerCase()) && !(r.numero||'').toString().toLowerCase().includes(f.orc_numero.toLowerCase())) return false;
     if (f.status && r.status !== f.status) return false;
     if (f.criticidade && solRcdCriticidade(r).faixa !== f.criticidade) return false;
     return true;

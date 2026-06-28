@@ -1,4 +1,4 @@
-// SW v58 — filtros RCD Operações: badge contagem por coluna, limpar sincroniza inputs
+// SW v59 — filtro Nº Orçamento busca também em r.numero (#xxxxxxx)
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
