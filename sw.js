@@ -1,4 +1,4 @@
-// SW v53 — validação de equipamento contra base CSV em SOL e Vale Peças
+// SW v54 — fix timing: init() aguarda DOMContentLoaded para garantir rgUpdateHomeKpis definido
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
