@@ -1,4 +1,4 @@
-// SW v54 — fix timing: init() aguarda DOMContentLoaded para garantir rgUpdateHomeKpis definido
+// SW v55 — força atualização: guard rgUpdateHomeKpis + DOMContentLoaded fix
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
