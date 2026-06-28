@@ -1,4 +1,4 @@
-// SW v64 — fix filtros tabela contrato: sort direção explícita, parseHor BR, busca correta
+// SW v65 — KPIs Programação corrigidos: reparados/em manut/sem prog/média semana
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
