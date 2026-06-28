@@ -1,4 +1,4 @@
-// SW v60 — fix opVerDetalhe: indexOf em cópia spread sempre retornava -1
+// SW v61 — horímetro nos cards kanban, detalhe de contrato e raio-x
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

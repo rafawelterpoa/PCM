@@ -3641,6 +3641,7 @@ function renderBoard(sid,visao){
         ${hasBadges?`<div class="card-divider"></div><div class="card-row">${prioPill}${semAtualBadge}${semPill}${reservaBadge}${novoBadge}${baixadoBadge}${destHTMLK}${tipoManutHTML}${complexHTML}${localHTML}${ciclosHTML}</div>`:''}
         ${osHTML}
         ${eq.retrabalho>0?`<div style="font-size:9px;color:#DC2626;margin-top:3px;font-weight:600">↻ Retrabalho ${eq.retrabalho}x</div>`:''}
+        ${eq.horimetro?`<div style="font-size:9px;color:#5A7280;margin-top:2px;font-weight:500">⏱ ${eq.horimetro} h</div>`:''}
         ${histHTML}`;
 
       card.addEventListener('click',ev=>{if(!ev.defaultPrevented)openCardModal(eq.id,visao);});
@@ -14705,6 +14706,7 @@ function histVerDetalhe(eqId){
         ${tagItem('Local Mapa',st?.localMap)}
         ${tagItem('Retrabalho',st?.retrabalho>0?st.retrabalho+'x':'',st?.retrabalho>0?'#dc2626':'')}
         ${tagItem('Ciclos Operação',st?.ciclos_operacao>0?st.ciclos_operacao+'x':'')}
+        ${tagItem('Horímetro',st?.horimetro?(st.horimetro+' h'):'')}
       </div>
 
       <!-- Ordens de Serviço -->
@@ -16742,7 +16744,7 @@ function opVerDetalhe(idx){
 
   const famRows=Object.entries(famMap).sort((a,b)=>b[1]-a[1]).map(([f,n],ki)=>`<tr style="background:${ki%2?'#fff':'#f8fafc'}"><td style="padding:7px 12px;font-weight:600">${f}</td><td style="padding:7px 12px;text-align:center;font-weight:700;color:#2563eb">${n}</td><td style="padding:7px 12px"><div style="background:#dbeafe;border-radius:4px;height:8px;width:${Math.round(n/op.equips.length*100)}%"></div></td></tr>`).join('');
   const grupoRows=Object.entries(grupoMap).sort((a,b)=>b[1]-a[1]).slice(0,15).map(([g,n],ki)=>`<tr style="background:${ki%2?'#fff':'#f8fafc'}"><td style="padding:7px 12px;font-weight:600">${g}</td><td style="padding:7px 12px;text-align:center;font-weight:700;color:#0f766e">${n}</td></tr>`).join('');
-  const equipRows=op.equips.map((e,ki)=>`<tr style="background:${ki%2?'#fff':'#f8fafc'}"><td style="padding:6px 12px;font-family:monospace;font-weight:700;font-size:11px">${e.id}</td><td style="padding:6px 12px;font-weight:600">${e.grupo||e.familia||'—'}</td><td style="padding:6px 12px;color:#64748b;font-size:11px">${e.modelo||'—'}</td></tr>`).join('');
+  const equipRows=op.equips.map((e,ki)=>{const hor=(state[e.id]?.horimetro)||(EQUIPAMENTOS_ORIG&&EQUIPAMENTOS_ORIG.find(x=>x.id===e.id)?.horimetro)||'';return`<tr style="background:${ki%2?'#fff':'#f8fafc'}"><td style="padding:6px 12px;font-family:monospace;font-weight:700;font-size:11px">${e.id}</td><td style="padding:6px 12px;font-weight:600">${e.grupo||e.familia||'—'}</td><td style="padding:6px 12px;color:#64748b;font-size:11px">${e.modelo||'—'}</td><td style="padding:6px 12px;color:#5A7280;font-size:11px;text-align:right">${hor?`<span style="font-size:10px;font-weight:600;color:#1A2E35">${hor}</span> <span style="font-size:9px;color:#8FA4AE">h</span>`:'—'}</td></tr>`;}).join('');
 
   detalhe.innerHTML=`
     <div style="margin-bottom:16px">
@@ -16775,7 +16777,7 @@ function opVerDetalhe(idx){
     </div>
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:8px">Todos os Equipamentos (${op.equips.length})</div>
     <table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
-      <thead><tr style="background:#0f172a;color:#fff"><th style="padding:7px 12px;text-align:left">ID</th><th style="padding:7px 12px;text-align:left">Equipamento</th><th style="padding:7px 12px;text-align:left">Modelo</th></tr></thead>
+      <thead><tr style="background:#0f172a;color:#fff"><th style="padding:7px 12px;text-align:left">ID</th><th style="padding:7px 12px;text-align:left">Equipamento</th><th style="padding:7px 12px;text-align:left">Modelo</th><th style="padding:7px 12px;text-align:right">Horímetro</th></tr></thead>
       <tbody>${equipRows}</tbody>
     </table>
   `;
