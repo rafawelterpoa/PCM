@@ -1,4 +1,4 @@
-// SW v51 — fix: gráficos SOL (leadTimes→leadTempos), KPIs Desmob compactos, filtros em linha
+// SW v52 — SOL: revisão automática no orçamento + botão Gerar Orçamento em todos os estágios
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
