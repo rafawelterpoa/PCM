@@ -15945,7 +15945,7 @@ function solRcdBuscarEquip(force){
   const g=(a,b)=>a||b||'—';
   const s=id=>document.getElementById(id);
   const txt=(id,v)=>{const el=s(id);if(el)el.textContent=v;};
-  const inp=(id,v)=>{const el=s(id);if(el)el.value=v==='—'?'':v;};
+  const setVal=(id,v)=>{const el=s(id);if(el)el.value=v==='—'?'':v;};
   txt('sol-eq-nome',   g(e.equipamento,  orig.equipamento));
   txt('sol-eq-fab',    g(e.fabricante,   orig.fabricante));
   txt('sol-eq-modelo', g(e.modelo,       orig.modelo));
@@ -15958,10 +15958,10 @@ function solRcdBuscarEquip(force){
   txt('sol-eq-cliente',cliente);
   const planta=[e.planta||orig.planta,e.municipio||orig.municipio,e.estado||orig.estado].filter(Boolean).join(' — ')||'—';
   txt('sol-eq-planta', planta);
-  inp('sol-eq-placa',  g(e.placa,        orig.placa));
+  setVal('sol-eq-placa',  g(e.placa,        orig.placa));
   const _hor = e.horimetro || orig.horimetro || (EQUIPAMENTOS_ORIG||[]).find(x=>x.frota===e.frota||x.frota===orig.frota)?.horimetro || '';
-  inp('sol-eq-hor', _hor||'');
-  inp('sol-eq-cnpj',   e.cnpj||orig.cnpj||'');
+  setVal('sol-eq-hor', _hor||'');
+  setVal('sol-eq-cnpj',   e.cnpj||orig.cnpj||'');
   if(s('sol-equip-busca'))s('sol-equip-busca').value=e.id||val;
 }
 
