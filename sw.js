@@ -1,4 +1,4 @@
-// SW v52 — SOL: revisão automática no orçamento + botão Gerar Orçamento em todos os estágios
+// SW v53 — validação de equipamento contra base CSV em SOL e Vale Peças
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

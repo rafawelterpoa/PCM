@@ -13829,6 +13829,9 @@ function vpSalvar(){
   const obs=(document.getElementById('vp-obs')?.value||'').trim();
   const itens=_vpItens.filter(it=>it.pn||it.desc);
   if(!equipRet)return alert('Informe o equipamento de retirada.');
+  const _vpEqCheck=id=>state[id]||(Object.values(state).find(e=>(e.id||'').toUpperCase()===id))||((EQUIPAMENTOS_ORIG||[]).find(e=>(e.id||'').toUpperCase()===id));
+  if(!_vpEqCheck(equipRet)){alert('Equipamento de retirada "'+equipRet+'" não encontrado na base de dados.\nDigite o Nº Interno correto conforme o cadastro.');const el=document.getElementById('vp-equip-ret');if(el)el.focus();return;}
+  if(equipDest&&!_vpEqCheck(equipDest)){alert('Equipamento destino "'+equipDest+'" não encontrado na base de dados.\nDigite o Nº Interno correto conforme o cadastro ou deixe em branco.');const el=document.getElementById('vp-equip-dest');if(el)el.focus();return;}
   if(!oficina)return alert('Selecione a oficina.');
   if(!itens.length)return alert('Adicione ao menos um item com P.N. ou descrição.');
   const obj={data,equipRet,oficina,solicitante,equipDest,operacao,om,rc,itens,dataPrevDev,gestor,obs,devolvido:false,dataDevolucao:'',obsDev:''};
@@ -15921,11 +15924,17 @@ function solRcdEditarAbrir(id){
 function solRcdFechar(){const el=document.getElementById('sol-modal');if(el)el.style.display='none';}
 
 function solRcdBuscarEquip(force){
-  const val=(document.getElementById('sol-equip-busca')?.value||'').trim().toUpperCase();
-  if(!val)return;
+  const inp=document.getElementById('sol-equip-busca');
+  const val=(inp?.value||'').trim().toUpperCase();
+  if(!val){if(inp)inp.style.borderColor='';return;}
   const eq=state[val]||(Object.values(state).find(e=>(e.id||'').toUpperCase()===val));
   const orig=(EQUIPAMENTOS_ORIG||[]).find(e=>(e.id||'').toUpperCase()===val)||{};
-  if(!eq&&!orig.id){if(force)showToast('⚠️ Equipamento não encontrado: '+val);return;}
+  if(!eq&&!orig.id){
+    if(inp){inp.style.borderColor='#dc2626';inp.title='Equipamento não encontrado na base';}
+    if(force)showToast('⚠️ Equipamento não encontrado na base de dados: '+val);
+    return;
+  }
+  if(inp){inp.style.borderColor='#16a34a';inp.title='Equipamento encontrado';}
   const e=eq||orig;
   const g=(a,b)=>a||b||'—';
   const s=id=>document.getElementById(id);
@@ -16000,6 +16009,13 @@ async function solRcdSalvar(){
   if(!om){showToast('⚠️ Informe o Nº da O.M.');document.getElementById('sol-om')?.focus();return;}
   const equipId=(document.getElementById('sol-equip-busca')?.value||'').trim().toUpperCase();
   if(!equipId){showToast('⚠️ Informe o Nº Interno do equipamento');return;}
+  // Valida equipamento contra a base antes de salvar
+  const _eqCheck=state[equipId]||(Object.values(state).find(e=>(e.id||'').toUpperCase()===equipId))||((EQUIPAMENTOS_ORIG||[]).find(e=>(e.id||'').toUpperCase()===equipId));
+  if(!_eqCheck){
+    showToast('⚠️ Equipamento "'+equipId+'" não encontrado na base de dados. Use a busca para localizar.');
+    const inp=document.getElementById('sol-equip-busca');if(inp){inp.style.borderColor='#dc2626';inp.focus();}
+    return;
+  }
   const idExist=document.getElementById('sol-id')?.value;
   const isEdit=!!(idExist&&_solRegistros[idExist]);
   const reg=idExist?(_solRegistros[idExist]||{id:idExist}):{id:'sol_'+Date.now(),status:'em_aprovacao',ts_em_aprovacao:Date.now(),dias:{},ts_criacao:Date.now(),criado_por:currentUser?.nome||''};
