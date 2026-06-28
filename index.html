@@ -3481,6 +3481,8 @@ function renderBiEtapas(){
     return`<div class="etapa-bi"><div class="etapa-bi-strip" style="background:${cor}"></div><div class="etapa-bi-body"><div class="etapa-bi-label">${et.label}</div><div class="etapa-bi-total">${n}</div><div class="etapa-bi-sub">${sub}</div><div class="etapa-bi-barra"><div class="etapa-bi-barra-fill" style="width:${bw}%;background:${cor}"></div></div></div></div>`;
   }).join('');
 }
+// Stub — substituído pela definição real no bloco RG (linha ~16691). Evita ReferenceError em chamadas precoces.
+function rgUpdateHomeKpis(){}
 function updateKpisDinamicos(){
   const todos=Object.values(state).filter(e=>e.etapa!=='alugado'),total=todos.length||1;
   const ativos=todos.filter(e=>!e.baixado);
