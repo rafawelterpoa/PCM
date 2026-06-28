@@ -1,4 +1,4 @@
-// SW v62 — horimetro persistido no Firebase (save + load)
+// SW v63 — filtros estilo Excel na tabela de equipamentos do detalhe de contrato
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

@@ -16730,6 +16730,59 @@ function opRender(){
   </table></div>`;
 }
 
+// Estado dos filtros da tabela de equipamentos do detalhe de contrato
+window._opDtEquips=[];
+window._opDtFiltro={col:'',dir:'asc',busca:''};
+
+function opDtRenderTabela(){
+  const {col,dir,busca}=window._opDtFiltro;
+  let rows=[...window._opDtEquips];
+  if(busca){const b=busca.toLowerCase();rows=rows.filter(e=>(e.id||'').toLowerCase().includes(b)||(e.grupo||e.familia||'').toLowerCase().includes(b)||(e.modelo||'').toLowerCase().includes(b)||(e._hor||'').toString().includes(b));}
+  if(col){rows.sort((a,b_)=>{const va=col==='hor'?parseFloat(a._hor||0):((col==='id'?a.id:col==='equip'?(a.grupo||a.familia):a.modelo)||'').toLowerCase();const vb=col==='hor'?parseFloat(b_._hor||0):((col==='id'?b_.id:col==='equip'?(b_.grupo||b_.familia):b_.modelo)||'').toLowerCase();if(va<vb)return dir==='asc'?-1:1;if(va>vb)return dir==='asc'?1:-1;return 0;});}
+  const tbody=document.getElementById('op-dt-tbody');if(!tbody)return;
+  const cnt=document.getElementById('op-dt-cnt');if(cnt)cnt.textContent=`Todos os Equipamentos (${rows.length}${rows.length!==window._opDtEquips.length?' de '+window._opDtEquips.length:''})`;
+  tbody.innerHTML=rows.map((e,ki)=>`<tr style="background:${ki%2?'#fff':'#f8fafc'}"><td style="padding:6px 12px;font-family:monospace;font-weight:700;font-size:11px">${e.id}</td><td style="padding:6px 12px;font-weight:600">${e.grupo||e.familia||'—'}</td><td style="padding:6px 12px;color:#64748b;font-size:11px">${e.modelo||'—'}</td><td style="padding:6px 12px;text-align:right">${e._hor?`<span style="font-size:10px;font-weight:600;color:#1A2E35">${e._hor}</span> <span style="font-size:9px;color:#8FA4AE">h</span>`:'<span style="color:#C8D4DA">—</span>'}</td></tr>`).join('');
+}
+
+function opDtSort(col){
+  const f=window._opDtFiltro;
+  if(f.col===col){f.dir=f.dir==='asc'?'desc':'asc';}else{f.col=col;f.dir='asc';}
+  opDtCloseDropdown();opDtRenderTabela();opDtUpdateHeaders();
+}
+
+function opDtUpdateHeaders(){
+  const {col,dir}=window._opDtFiltro;
+  ['id','equip','modelo','hor'].forEach(c=>{
+    const el=document.getElementById('op-dt-th-'+c);if(!el)return;
+    const arrow=el.querySelector('.op-dt-arrow');
+    if(arrow)arrow.textContent=col===c?(dir==='asc'?' ↑':' ↓'):'';
+    el.style.background=col===c?'#1e3a5f':'#0f172a';
+  });
+}
+
+function opDtCloseDropdown(){const d=document.getElementById('op-dt-drop');if(d)d.remove();}
+
+function opDtOpenDropdown(col,el){
+  opDtCloseDropdown();
+  const rect=el.getBoundingClientRect();
+  const {col:sc,dir,busca}=window._opDtFiltro;
+  const drop=document.createElement('div');
+  drop.id='op-dt-drop';
+  drop.style.cssText=`position:fixed;top:${rect.bottom+2}px;left:${rect.left}px;min-width:200px;background:#fff;border:1px solid #E2E8ED;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:900;padding:10px;font-size:13px`;
+  const colLabel={'id':'ID','equip':'Equipamento','modelo':'Modelo','hor':'Horímetro'}[col];
+  drop.innerHTML=`
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8FA4AE;margin-bottom:8px">${colLabel}</div>
+    <input id="op-dt-drop-search" type="text" placeholder="Buscar..." value="${busca}" oninput="window._opDtFiltro.busca=this.value;opDtRenderTabela()" style="width:100%;box-sizing:border-box;border:1px solid #E2E8ED;border-radius:6px;padding:6px 10px;font-size:12px;outline:none;margin-bottom:8px">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <button onclick="opDtSort('${col}')" style="display:flex;align-items:center;gap:8px;background:${sc===col&&dir==='asc'?'#EFF6FF':'#F8FAFC'};border:1px solid ${sc===col&&dir==='asc'?'#BFDBFE':'#E2E8ED'};border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;color:${sc===col&&dir==='asc'?'#1D4ED8':'#1A2E35'}"><span style="font-size:14px">↑</span> Ordenar A→Z</button>
+      <button onclick="window._opDtFiltro.col='${col}';window._opDtFiltro.dir='desc';opDtCloseDropdown();opDtRenderTabela();opDtUpdateHeaders()" style="display:flex;align-items:center;gap:8px;background:${sc===col&&dir==='desc'?'#EFF6FF':'#F8FAFC'};border:1px solid ${sc===col&&dir==='desc'?'#BFDBFE':'#E2E8ED'};border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;color:${sc===col&&dir==='desc'?'#1D4ED8':'#1A2E35'}"><span style="font-size:14px">↓</span> Ordenar Z→A</button>
+      ${sc===col||busca?`<button onclick="window._opDtFiltro={col:'',dir:'asc',busca:''};opDtCloseDropdown();opDtRenderTabela();opDtUpdateHeaders()" style="display:flex;align-items:center;gap:8px;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;color:#DC2626"><span>✕</span> Limpar filtro</button>`:''}
+    </div>`;
+  document.body.appendChild(drop);
+  setTimeout(()=>document.getElementById('op-dt-drop-search')?.focus(),50);
+  setTimeout(()=>{const fn=ev=>{if(!drop.contains(ev.target)&&!ev.target.closest('[data-op-dt-th]')){opDtCloseDropdown();document.removeEventListener('mousedown',fn);}};document.addEventListener('mousedown',fn);},10);
+}
+
 function opVerDetalhe(idx){
   const op=OPERACOES_DATA[idx];if(!op)return;
   const lista=document.getElementById('op-lista');
@@ -16737,14 +16790,18 @@ function opVerDetalhe(idx){
   if(lista)lista.style.display='none';
   if(!detalhe)return;
   detalhe.style.display='block';
+  window._opDtFiltro={col:'',dir:'asc',busca:''};
 
-  // Contagens por família
+  // Enriquecer equips com horímetro
+  window._opDtEquips=op.equips.map(e=>({...e,_hor:(state[e.id]?.horimetro)||(EQUIPAMENTOS_ORIG&&EQUIPAMENTOS_ORIG.find(x=>x.id===e.id)?.horimetro)||''}));
+
   const famMap=Counter_js(op.equips.map(e=>e.familia||'Outros'));
   const grupoMap=Counter_js(op.equips.map(e=>e.grupo||'Outros'));
-
   const famRows=Object.entries(famMap).sort((a,b)=>b[1]-a[1]).map(([f,n],ki)=>`<tr style="background:${ki%2?'#fff':'#f8fafc'}"><td style="padding:7px 12px;font-weight:600">${f}</td><td style="padding:7px 12px;text-align:center;font-weight:700;color:#2563eb">${n}</td><td style="padding:7px 12px"><div style="background:#dbeafe;border-radius:4px;height:8px;width:${Math.round(n/op.equips.length*100)}%"></div></td></tr>`).join('');
   const grupoRows=Object.entries(grupoMap).sort((a,b)=>b[1]-a[1]).slice(0,15).map(([g,n],ki)=>`<tr style="background:${ki%2?'#fff':'#f8fafc'}"><td style="padding:7px 12px;font-weight:600">${g}</td><td style="padding:7px 12px;text-align:center;font-weight:700;color:#0f766e">${n}</td></tr>`).join('');
-  const equipRows=op.equips.map((e,ki)=>{const hor=(state[e.id]?.horimetro)||(EQUIPAMENTOS_ORIG&&EQUIPAMENTOS_ORIG.find(x=>x.id===e.id)?.horimetro)||'';return`<tr style="background:${ki%2?'#fff':'#f8fafc'}"><td style="padding:6px 12px;font-family:monospace;font-weight:700;font-size:11px">${e.id}</td><td style="padding:6px 12px;font-weight:600">${e.grupo||e.familia||'—'}</td><td style="padding:6px 12px;color:#64748b;font-size:11px">${e.modelo||'—'}</td><td style="padding:6px 12px;color:#5A7280;font-size:11px;text-align:right">${hor?`<span style="font-size:10px;font-weight:600;color:#1A2E35">${hor}</span> <span style="font-size:9px;color:#8FA4AE">h</span>`:'—'}</td></tr>`;}).join('');
+
+  const thStyle='padding:9px 12px;cursor:pointer;user-select:none;white-space:nowrap;transition:background 120ms';
+  const thInner=(label,col,align)=>`<th id="op-dt-th-${col}" data-op-dt-th style="${thStyle};text-align:${align||'left'}" onclick="opDtOpenDropdown('${col}',this)"><span style="display:inline-flex;align-items:center;gap:4px">${label}<span style="font-size:10px;opacity:.6">▾</span><span class="op-dt-arrow" style="font-size:10px;color:#93C5FD"></span></span></th>`;
 
   detalhe.innerHTML=`
     <div style="margin-bottom:16px">
@@ -16775,12 +16832,13 @@ function opVerDetalhe(idx){
         </table>
       </div>
     </div>
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:8px">Todos os Equipamentos (${op.equips.length})</div>
+    <div id="op-dt-cnt" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:8px">Todos os Equipamentos (${op.equips.length})</div>
     <table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
-      <thead><tr style="background:#0f172a;color:#fff"><th style="padding:7px 12px;text-align:left">ID</th><th style="padding:7px 12px;text-align:left">Equipamento</th><th style="padding:7px 12px;text-align:left">Modelo</th><th style="padding:7px 12px;text-align:right">Horímetro</th></tr></thead>
-      <tbody>${equipRows}</tbody>
+      <thead><tr style="background:#0f172a;color:#fff">${thInner('ID','id')}${thInner('Equipamento','equip')}${thInner('Modelo','modelo')}${thInner('Horímetro','hor','right')}</tr></thead>
+      <tbody id="op-dt-tbody"></tbody>
     </table>
   `;
+  opDtRenderTabela();
 }
 
 // Atualizar cards da home com links corretos
