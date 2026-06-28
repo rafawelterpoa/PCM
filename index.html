@@ -16677,7 +16677,7 @@ function opRender(){
   if(lista)lista.style.display='block';
 
   // Aplica filtro de tipo nos equipamentos de cada operação
-  let ops=OPERACOES_DATA.map(o=>({...o,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
+  let ops=OPERACOES_DATA.map((o,i)=>({...o,_origIdx:i,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
   if(filtEstado)ops=ops.filter(o=>o.estado===filtEstado);
   if(filtFam)ops=ops.filter(o=>o.equips.some(e=>e.familia===filtFam));
   if(buscaId)ops=ops.map(o=>({...o,equips:o.equips.filter(e=>(e.id||'').toLowerCase().includes(buscaId))})).filter(o=>o.equips.length>0);
@@ -16705,7 +16705,7 @@ function opRender(){
         const ct=op.equips[0]?opContratoEquip(op.equips[0]):'';
         const cc=_CTcor[ct]||['#F4F6F8','#5A7280'];
         const ctBadge=ct?`<span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;background:${cc[0]};color:${cc[1]}">${ct}</span>`:'<span style="color:#C8D4DA;font-size:11px">—</span>';
-        const idx=OPERACOES_DATA.indexOf(op);
+        const idx=op._origIdx;
         const initials=(op.nome||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
         const avatarColors=['#E8630A','#1D4ED8','#065F46','#5B4DB5','#B45309','#0F766E'];
         const ac=avatarColors[rank%avatarColors.length];

@@ -1,4 +1,4 @@
-// SW v59 — filtro Nº Orçamento busca também em r.numero (#xxxxxxx)
+// SW v60 — fix opVerDetalhe: indexOf em cópia spread sempre retornava -1
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
