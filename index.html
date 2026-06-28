@@ -340,6 +340,11 @@ input.filter-sel{padding:5px 10px;height:32px}
 .card-modelo{font-size:11px;color:#8FA4AE;margin-bottom:6px}
 .card-tipo{display:none}
 .card-divider{height:1px;background:#F0F4F6;margin:6px 0}
+.card-historico{margin-top:6px;border-top:1px solid #F0F4F6;padding-top:5px;display:flex;flex-direction:column;gap:3px}
+.card-hist-item{display:flex;flex-direction:column;gap:1px;padding:3px 6px;background:#F8FAFB;border-radius:5px;border-left:2px solid #C8D4DA}
+.card-hist-time{font-size:8px;color:#8FA4AE}
+.card-hist-move{font-size:9px;font-weight:600;color:#1A2E35}
+.card-hist-user{font-size:8px;color:#E8630A;font-weight:500}
 .card-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .card-badge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px}
 .badge-baixado{background:#F0F4F6;color:#8FA4AE}
@@ -3358,7 +3363,7 @@ function switchTab(tabId){
   else if(tabId==='mapa')renderMapa();
   else if(tabId==='admin')renderAdminPage();
   else if(tabId==='home')renderHome();
-  else if(tabId!=='bi'){renderBoard(tabId,'geral');renderLogAtividades(tabId);}
+  else if(tabId!=='bi'){renderBoard(tabId,'geral');}
   else{renderBiEtapas();updateKpisDinamicos();}
 }
 function switchToAdmin(){
@@ -3622,6 +3627,7 @@ function renderBoard(sid,visao){
       const ciclosHTML=eq.ciclos_operacao>0?`<span style="font-size:9px;color:#2563EB;font-weight:600;padding:2px 7px;border-radius:20px;background:rgba(37,99,235,.08)">${eq.ciclos_operacao}x operação</span>`:'';
       const osHTML=(eq.ordens&&eq.ordens.length)?`<div style="font-size:9px;color:#7F77DD;margin-top:3px;font-weight:500">${eq.ordens.length} OS</div>`:'';
       const hasBadges=prioPill||semAtualBadge||semPill||reservaBadge||novoBadge||baixadoBadge||destHTMLK||tipoManutHTML||complexHTML||localHTML||ciclosHTML;
+      const histHTML=(eq.historico&&eq.historico.length)?`<div class="card-historico">${[...eq.historico].reverse().slice(0,8).map(h=>`<div class="card-hist-item"><span class="card-hist-time">${h.data||''} ${h.hora||''}</span><span class="card-hist-move">${h.from||''} → ${h.to||''}</span>${h.perfil?`<span class="card-hist-user">${h.perfil}</span>`:''}</div>`).join('')}</div>`:'';
 
       card.innerHTML=`
         <div class="card-top">
@@ -3634,7 +3640,8 @@ function renderBoard(sid,visao){
         ${prevLibHTML}
         ${hasBadges?`<div class="card-divider"></div><div class="card-row">${prioPill}${semAtualBadge}${semPill}${reservaBadge}${novoBadge}${baixadoBadge}${destHTMLK}${tipoManutHTML}${complexHTML}${localHTML}${ciclosHTML}</div>`:''}
         ${osHTML}
-        ${eq.retrabalho>0?`<div style="font-size:9px;color:#DC2626;margin-top:3px;font-weight:600">↻ Retrabalho ${eq.retrabalho}x</div>`:''}`;
+        ${eq.retrabalho>0?`<div style="font-size:9px;color:#DC2626;margin-top:3px;font-weight:600">↻ Retrabalho ${eq.retrabalho}x</div>`:''}
+        ${histHTML}`;
 
       card.addEventListener('click',ev=>{if(!ev.defaultPrevented)openCardModal(eq.id,visao);});
       if(!eq.baixado){

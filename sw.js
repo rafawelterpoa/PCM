@@ -1,4 +1,4 @@
-// SW v55 — força atualização: guard rgUpdateHomeKpis + DOMContentLoaded fix
+// SW v56 — histórico acumulado nos cards kanban, remove LOG DE ATIVIDADES externo
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
