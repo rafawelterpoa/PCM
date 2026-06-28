@@ -1,4 +1,4 @@
-// SW v61 — horímetro nos cards kanban, detalhe de contrato e raio-x
+// SW v62 — horimetro persistido no Firebase (save + load)
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

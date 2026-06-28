@@ -2252,7 +2252,7 @@ async function loadFromFirebase(){
             ciclos_operacao:d.ciclos_operacao||0,novo:d.novo||false,
             linhaProduto:d.linhaProduto||'',planta:d.planta||'',estado:d.estado||'',
             municipio:d.municipio||'',tipoContrato:d.tipoContrato||'',frota:d.frota||'',
-            serie:d.serie||'',placa:d.placa||'',fabricante:d.fabricante||'',grupo:d.grupo||'',
+            serie:d.serie||'',placa:d.placa||'',fabricante:d.fabricante||'',grupo:d.grupo||'',horimetro:d.horimetro||'',
           };
         }
       });
@@ -2297,7 +2297,7 @@ async function saveToFirebase(eqIds){
           baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
           frota:eq.frota||'',ciclos_operacao:eq.ciclos_operacao||0,novo:eq.novo||false,
           dataEmbarque:eq.dataEmbarque||'',prevLiberacao:eq.prevLiberacao||'',prevLiberacaoOriginal:eq.prevLiberacaoOriginal||'',reprogramacoes:eq.reprogramacoes||[],nReprog:eq.nReprog||0,destinacao:eq.destinacao||'',localMap:eq.localMap||'',historico:eq.historico||[],
-          planta:eq.planta||'',estado:eq.estado||'',municipio:eq.municipio||'',linhaProduto:eq.linhaProduto||'',tipoContrato:eq.tipoContrato||'',serie:eq.serie||'',placa:eq.placa||'',fabricante:eq.fabricante||'',grupo:eq.grupo||'',
+          planta:eq.planta||'',estado:eq.estado||'',municipio:eq.municipio||'',linhaProduto:eq.linhaProduto||'',tipoContrato:eq.tipoContrato||'',serie:eq.serie||'',placa:eq.placa||'',fabricante:eq.fabricante||'',grupo:eq.grupo||'',horimetro:eq.horimetro||'',
         ordens:eq.ordens||[],reqCompra:eq.reqCompra||'',tipoManut:eq.tipoManut||'',
         };
       });
@@ -2317,7 +2317,7 @@ async function saveToFirebase(eqIds){
           baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
           frota:eq.frota||'',ciclos_operacao:eq.ciclos_operacao||0,novo:eq.novo||false,
           dataEmbarque:eq.dataEmbarque||'',prevLiberacao:eq.prevLiberacao||'',prevLiberacaoOriginal:eq.prevLiberacaoOriginal||'',reprogramacoes:eq.reprogramacoes||[],nReprog:eq.nReprog||0,destinacao:eq.destinacao||'',localMap:eq.localMap||'',historico:eq.historico||[],
-          planta:eq.planta||'',estado:eq.estado||'',municipio:eq.municipio||'',linhaProduto:eq.linhaProduto||'',tipoContrato:eq.tipoContrato||'',serie:eq.serie||'',placa:eq.placa||'',fabricante:eq.fabricante||'',grupo:eq.grupo||'',
+          planta:eq.planta||'',estado:eq.estado||'',municipio:eq.municipio||'',linhaProduto:eq.linhaProduto||'',tipoContrato:eq.tipoContrato||'',serie:eq.serie||'',placa:eq.placa||'',fabricante:eq.fabricante||'',grupo:eq.grupo||'',horimetro:eq.horimetro||'',
           ordens:eq.ordens||[],reqCompra:eq.reqCompra||'',tipoManut:eq.tipoManut||'',
         });
       }
