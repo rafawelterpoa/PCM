@@ -16827,14 +16827,12 @@ function rgRenderVisaoGeral(ativos,emOperacao){
   const patioTotal=disponiveis.length;
 
   const manutLoc=manutencao.filter(e=>getFr(e)==='locação').length;
-  const manutVen=manutencao.filter(e=>getFr(e)==='venda').length;
-  const manutSby=manutencao.filter(e=>getFr(e)==='standby').length;
-  const manutSD=manutTotal-manutLoc-manutVen-manutSby;
+  const manutVen=manutencao.filter(e=>getFr(e)==='venda'||getFr(e)==='standby').length;
+  const manutSD=manutTotal-manutLoc-manutVen;
 
   const patioLoc=disponiveis.filter(e=>getFr(e)==='locação').length;
-  const patioVen=disponiveis.filter(e=>getFr(e)==='venda').length;
-  const patioSby=disponiveis.filter(e=>getFr(e)==='standby').length;
-  const patioSD=patioTotal-patioLoc-patioVen-patioSby;
+  const patioVen=disponiveis.filter(e=>getFr(e)==='venda'||getFr(e)==='standby').length;
+  const patioSD=patioTotal-patioLoc-patioVen;
 
   const pctM=n=>manutTotal>0?Math.round(n/manutTotal*100):0;
   const pctP=n=>patioTotal>0?Math.round(n/patioTotal*100):0;
@@ -16883,7 +16881,7 @@ function rgRenderVisaoGeral(ativos,emOperacao){
         <span style="font-size:20px;font-weight:800;color:#0f172a">${fmt(paraLocacao)}</span>
       </div>
       ${nVendaStandby>0?`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f1f5f9">
-        <span style="font-size:11px;color:#94a3b8;font-weight:500">Venda + Standby</span>
+        <span style="font-size:11px;color:#94a3b8;font-weight:500">Venda</span>
         <span style="font-size:13px;font-weight:700;color:#94a3b8">${fmt(nVendaStandby)}</span>
       </div>`:''}
       <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f5f9">
@@ -16919,9 +16917,7 @@ function rgRenderVisaoGeral(ativos,emOperacao){
       <div class="vg-breakdown-row"><div class="vg-breakdown-dot" style="background:#F37021"></div><span class="vg-breakdown-label">Locação</span><span class="vg-breakdown-val">${manutLoc}</span><span class="vg-breakdown-pct">${pctM(manutLoc)}%</span></div>
       <div style="margin:2px 0 4px 15px"><div class="vg-progress-bar" style="height:4px"><div class="vg-progress-fill" style="width:${pctM(manutLoc)}%;background:#F37021"></div></div></div>
       <div class="vg-breakdown-row"><div class="vg-breakdown-dot" style="background:#fbbf24"></div><span class="vg-breakdown-label">Venda</span><span class="vg-breakdown-val">${manutVen}</span><span class="vg-breakdown-pct">${pctM(manutVen)}%</span></div>
-      <div style="margin:2px 0 4px 15px"><div class="vg-progress-bar" style="height:4px"><div class="vg-progress-fill" style="width:${pctM(manutVen)}%;background:#fbbf24"></div></div></div>
-      <div class="vg-breakdown-row"><div class="vg-breakdown-dot" style="background:#94a3b8"></div><span class="vg-breakdown-label">Standby</span><span class="vg-breakdown-val">${manutSby}</span><span class="vg-breakdown-pct">${pctM(manutSby)}%</span></div>
-      ${manutSD>0?`<div style="margin:2px 0 4px 15px"><div class="vg-progress-bar" style="height:4px"><div class="vg-progress-fill" style="width:${pctM(manutSby)}%;background:#94a3b8"></div></div></div>
+      ${manutSD>0?`<div style="margin:2px 0 4px 15px"><div class="vg-progress-bar" style="height:4px"><div class="vg-progress-fill" style="width:${pctM(manutVen)}%;background:#fbbf24"></div></div></div>
       <div class="vg-breakdown-row"><div class="vg-breakdown-dot" style="background:#cbd5e1"></div><span class="vg-breakdown-label">Sem dado</span><span class="vg-breakdown-val">${manutSD}</span><span class="vg-breakdown-pct">${pctM(manutSD)}%</span></div>`:''}
       `:`<div style="font-size:11px;color:#94a3b8;font-style:italic;margin-top:4px">Distribuição disponível após próximo CSV</div>`}
     </div>
@@ -16935,9 +16931,7 @@ function rgRenderVisaoGeral(ativos,emOperacao){
       <div class="vg-breakdown-row"><div class="vg-breakdown-dot" style="background:#2563eb"></div><span class="vg-breakdown-label">Locação</span><span class="vg-breakdown-val">${patioLoc}</span><span class="vg-breakdown-pct">${pctP(patioLoc)}%</span></div>
       <div style="margin:2px 0 4px 15px"><div class="vg-progress-bar" style="height:4px"><div class="vg-progress-fill" style="width:${pctP(patioLoc)}%;background:#2563eb"></div></div></div>
       <div class="vg-breakdown-row"><div class="vg-breakdown-dot" style="background:#16a34a"></div><span class="vg-breakdown-label">Venda</span><span class="vg-breakdown-val">${patioVen}</span><span class="vg-breakdown-pct">${pctP(patioVen)}%</span></div>
-      <div style="margin:2px 0 4px 15px"><div class="vg-progress-bar" style="height:4px"><div class="vg-progress-fill" style="width:${pctP(patioVen)}%;background:#16a34a"></div></div></div>
-      <div class="vg-breakdown-row"><div class="vg-breakdown-dot" style="background:#7c3aed"></div><span class="vg-breakdown-label">Standby</span><span class="vg-breakdown-val">${patioSby}</span><span class="vg-breakdown-pct">${pctP(patioSby)}%</span></div>
-      ${patioSD>0?`<div style="margin:2px 0 4px 15px"><div class="vg-progress-bar" style="height:4px"><div class="vg-progress-fill" style="width:${pctP(patioSby)}%;background:#7c3aed"></div></div></div>
+      ${patioSD>0?`<div style="margin:2px 0 4px 15px"><div class="vg-progress-bar" style="height:4px"><div class="vg-progress-fill" style="width:${pctP(patioVen)}%;background:#16a34a"></div></div></div>
       <div class="vg-breakdown-row"><div class="vg-breakdown-dot" style="background:#cbd5e1"></div><span class="vg-breakdown-label">Sem dado</span><span class="vg-breakdown-val">${patioSD}</span><span class="vg-breakdown-pct">${pctP(patioSD)}%</span></div>`:''}
       `:`<div style="font-size:11px;color:#94a3b8;font-style:italic;margin-top:4px">Distribuição disponível após próximo CSV</div>`}
     </div>
