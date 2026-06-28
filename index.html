@@ -3281,6 +3281,7 @@ function semanaPassada(v){return v<semanaAtual();}
 
 function init(){
   let saved=null;try{saved=JSON.parse(localStorage.getItem('mills_v4'));}catch(e){}
+  EQUIPAMENTOS_ORIG.forEach(e=>{if((e.tipoFrota||'').toLowerCase()==='standby')e.tipoFrota='venda';});
   EQUIPAMENTOS_ORIG.forEach(e=>{
     const sv=saved&&saved[e.id];
     let ed=Date.now();
@@ -5328,18 +5329,19 @@ function parseCSVToEquipamentos(csvText){
     {const _sk=(status||'(vazio)').trim();_dbgStatusMap[_sk]=(_dbgStatusMap[_sk]||0)+1;}
     // Contar TODOS os válidos (inclui venda e comodato) para Card 1 — Total Frota
     {const _t=frotaClassificar(familia);_csvParseStats.totalAll++;if(_t==='equipamento')_csvParseStats.nEq++;else if(_t==='implemento')_csvParseStats.nImp++;else if(_t==='acessorio')_csvParseStats.nAc++;
-     const _fL=(frota||'').toLowerCase();if(_fL.includes('loca'))_csvParseStats.nLocacao++;else if(_fL.includes('venda'))_csvParseStats.nVenda++;else if(_fL.includes('standby'))_csvParseStats.nStandby++;
+     const _fL=(frota||'').toLowerCase();if(_fL.includes('loca'))_csvParseStats.nLocacao++;else if(_fL.includes('venda')||_fL.includes('standby'))_csvParseStats.nVenda++;
      // Contar alugados aqui — gerencial=sim já filtrado, antes de excluir venda/comodato/emFilial
      if((status||'').trim().toLowerCase()==='alugado'){_csvParseStats.nAlugado=(_csvParseStats.nAlugado||0)+1;if(_t==='equipamento')_csvParseStats.nAlugEq=(_csvParseStats.nAlugEq||0)+1;else if(_t==='implemento')_csvParseStats.nAlugImp=(_csvParseStats.nAlugImp||0)+1;else if(_t==='acessorio')_csvParseStats.nAlugAc=(_csvParseStats.nAlugAc||0)+1;}
     }
-    if(frota&&frota.toLowerCase()==='venda'){if((status||'').toLowerCase()==='alugado')_csvParseStats.nVendaAlugado=(_csvParseStats.nVendaAlugado||0)+1;continue;} // Excluir venda do board
+    if(frota&&(frota.toLowerCase()==='venda'||frota.toLowerCase()==='standby')){if((status||'').toLowerCase()==='alugado')_csvParseStats.nVendaAlugado=(_csvParseStats.nVendaAlugado||0)+1;}
     const sl=status.toLowerCase();
     if(sl==='comodato')continue;                               // Comodato = Frota Venda: conta no total, fora do board
     let sn=sl.includes('manutenç')||sl.includes('manutenc')?'Manutenção':sl==='alugado'?'Alugado':'Disponível';
     // Regra: Alugado mas fisicamente na oficina (alugaradoFilial=sim) → entra no Kanban como Manutenção
     const emFilial=alugaradoFilial.toLowerCase()==='sim';
     if(sn==='Alugado'&&emFilial)sn='Manutenção';
-    equips.push({id,equipamento:grupo||familia,modelo:`${fabric||''} ${modelo||''}`.trim(),tipo:familia,linhaProduto:linhaProduto||'',oficina:(oficina||'').trim(),status:sn,alugaradoFilial:emFilial,cliente:(clienteRes||'').trim(),reservado:!!(clienteRes||'').trim(),planta:(planta||'').trim(),estado:(estado||'').trim(),municipio:(municipio||'').trim(),tipoContrato:(tipoContrato||'').trim(),clienteNfe:(clienteNfe||'').trim(),frota:(frota||'').trim(),serie:(serie||'').trim(),placa:(placa||'').trim(),fabricante:(fabric||'').trim(),grupo:(grupo||familia||'').trim(),horimetro:(horimetro||'').trim(),gerencial:(gerencial||'').trim()});
+    const _fL2=(frota||'').toLowerCase();const _tf=_fL2.includes('loca')?'locação':(_fL2.includes('venda')||_fL2.includes('standby'))?'venda':'';
+    equips.push({id,equipamento:grupo||familia,modelo:`${fabric||''} ${modelo||''}`.trim(),tipo:familia,linhaProduto:linhaProduto||'',oficina:(oficina||'').trim(),status:sn,alugaradoFilial:emFilial,cliente:(clienteRes||'').trim(),reservado:!!(clienteRes||'').trim(),planta:(planta||'').trim(),estado:(estado||'').trim(),municipio:(municipio||'').trim(),tipoContrato:(tipoContrato||'').trim(),clienteNfe:(clienteNfe||'').trim(),frota:(frota||'').trim(),tipoFrota:_tf,serie:(serie||'').trim(),placa:(placa||'').trim(),fabricante:(fabric||'').trim(),grupo:(grupo||familia||'').trim(),horimetro:(horimetro||'').trim(),gerencial:(gerencial||'').trim()});
   }
   console.log('[CSV-DIAG] totalAll='+_csvParseStats.totalAll+' | frota values:',_dbgFrotaMap,'| status values:',_dbgStatusMap);
   return equips;
@@ -5714,11 +5716,12 @@ function renderMapa(){
   const VEND_X=5;                                // Vendas à ESQUERDA
   const Y_VEND=Y_FILH+FILA_H+8;
   // Implementos: mesma faixa Y, preenche o espaço à direita de Vendas
-  const IMPL_EQ_W=PATIO_W-(VEND_X+VEND_BLK_W)-10;  // à direita de Vendas
-  const IMPL_EQ_H=VEND_BLK_H;
-  const Y_IMPL_EQ=Y_VEND;
+  const IMPL_COLS=14;  // 14 colunas × 2 linhas = 28 posições I01–I28
+  const IMPL_EQ_W=IMPL_COLS*(CARD_W+GAP)+GAP+32;  // espelha VEND_BLK_W
+  const IMPL_EQ_H=VEND_BLK_H;                     // mesma altura que Vendas
+  const Y_IMPL_EQ=Y_VEND+VEND_BLK_H+8;            // linha abaixo de Vendas
 
-  const TOTAL_H=Y_VEND+VEND_BLK_H+30;
+  const TOTAL_H=Y_IMPL_EQ+IMPL_EQ_H+30;
   // Boxes precisam de altura suficiente para 22 boxes
   const BOX_TOTAL_H=22*(BOX_H+3)+40;
   const TOTAL_H_FINAL=Math.max(TOTAL_H, Y_OFICINA-18+BOX_TOTAL_H+10);
@@ -5960,25 +5963,32 @@ function renderMapa(){
     }
   }
 
-  // ── IMPLEMENTOS — mesmo nível Y, lado DIREITO (após Vendas) ──
-  const IMPL_X=VEND_X+VEND_BLK_W+10;
-  svg+=`<rect x="${IMPL_X}" y="${Y_IMPL_EQ}" width="${IMPL_EQ_W}" height="${IMPL_EQ_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5" onmouseup="mapaSlotDrop(event,'Implementos')"/>`;
-  svg+=`<text x="${IMPL_X+5}" y="${Y_IMPL_EQ+11}" font-size="9" fill="#3730A3" font-weight="700" style="pointer-events:none">IMPLEMENTOS</text>`;
+  // ── IMPLEMENTOS — linha abaixo de Vendas, 28 posições nomeadas I01–I28 ──
+  const IMPL_X=VEND_X;
+  svg+=`<rect x="${IMPL_X}" y="${Y_IMPL_EQ}" width="${IMPL_EQ_W}" height="${IMPL_EQ_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5"/>`;
+  svg+=`<text x="${IMPL_X+5}" y="${Y_IMPL_EQ+11}" font-size="9" fill="#3730A3" font-weight="700" style="pointer-events:none">IMPLEMENTOS  I01–I28</text>`;
   {
     const eqsImpl=porZona['implementos']||[];
-    const maxImpl=Math.max(1,Math.floor((IMPL_EQ_W-16)/(CARD_W+GAP)));
-    eqsImpl.forEach((eq,i)=>{
-      const linha=Math.floor(i/maxImpl), col=i%maxImpl;
+    // Itens sem posição nomeada (legado localMap='Implementos') — auto-atribui I01..
+    const semPosicao=eqsImpl.filter(e=>!e.localMap||!/^I\d+$/i.test(e.localMap));
+    let autoIdx=0;
+    for(let iNum=1;iNum<=28;iNum++){
+      const linha=(iNum<=14)?0:1;
+      const col=(iNum<=14)?iNum-1:iNum-15;
       const vx=IMPL_X+8+col*(CARD_W+GAP);
       const vy=Y_IMPL_EQ+14+linha*(CARD_H+GAP+2);
-      if(vy+CARD_H>Y_IMPL_EQ+IMPL_EQ_H-4)return;
-      const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
-      svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'Implementos')" onclick="mapaCardClick('${eq.id}')"/>`;
-      svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
-      svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eq.equipamento.substring(0,9)}</text>`;
-    });
-    if(!eqsImpl.length){
-      svg+=`<text x="${IMPL_X+IMPL_EQ_W/2}" y="${Y_IMPL_EQ+IMPL_EQ_H/2+4}" text-anchor="middle" font-size="9" fill="rgba(79,70,229,.3)" style="pointer-events:none">área vazia</text>`;
+      const iLoc=`I${String(iNum).padStart(2,'0')}`;
+      let eq=eqsImpl.find(e=>{const m=e.localMap&&e.localMap.match(/^I(\d+)$/i);return m&&parseInt(m[1])===iNum;});
+      if(!eq&&autoIdx<semPosicao.length){eq=semPosicao[autoIdx++];}
+      if(eq){
+        const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${iLoc}')" onclick="mapaCardClick('${eq.id}')"/>`;
+        svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
+        svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eq.equipamento.substring(0,9)}</text>`;
+      } else {
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.04)" rx="2" stroke="rgba(99,102,241,.3)" stroke-width="0.5" onmouseup="mapaSlotDrop(event,'${iLoc}')"/>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(99,102,241,.5)" style="pointer-events:none">${iLoc}</text>`;
+      }
     }
   }
 
@@ -16310,12 +16320,11 @@ function patioRender(){
   const kpisEl=document.getElementById('patio-kpis');
   if(kpisEl){
     const por_tipo=Counter_js(equips.map(e=>getTipoFrota(e.id)||'outros'));
-    const semClassif=equips.length-(por_tipo['locação']||0)-(por_tipo['venda']||0)-(por_tipo['standby']||0);
+    const semClassif=equips.length-(por_tipo['locação']||0)-(por_tipo['venda']||0);
     kpisEl.innerHTML=[
       {l:'Total',v:equips.length,c:'#0f766e'},
       {l:'Locação',v:por_tipo['locação']||0,c:'#2563eb'},
       {l:'Venda',v:por_tipo['venda']||0,c:'#16a34a'},
-      {l:'Standby',v:por_tipo['standby']||0,c:'#7c3aed'},
       ...(semClassif>0?[{l:'Sem Classif.',v:semClassif,c:'#94a3b8'}]:[]),
     ].map(k=>`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;padding:20px 24px;border-left:4px solid ${k.c};box-shadow:0 1px 4px rgba(0,0,0,.06)"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8FA4AE;margin-bottom:10px">${k.l}</div><div style="font-size:36px;font-weight:900;color:${k.c};line-height:1;margin-bottom:6px">${k.v}</div><div style="font-size:11px;color:#8FA4AE">prontos no pátio</div></div>`).join('');
   }
