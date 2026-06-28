@@ -3507,7 +3507,7 @@ function updateKpisDinamicos(){
   // Atualizar KPIs principais
   if(el('kpi-total'))el('kpi-total').textContent=ativos.filter(e=>e.etapa!=='alugado').length;
   // Atualizar cards da home
-  rgUpdateHomeKpis(ativos);
+  if(typeof rgUpdateHomeKpis==='function')rgUpdateHomeKpis(ativos);
   if(el('kpi-disp'))el('kpi-disp').textContent=disp;
   if(el('kpi-manut'))el('kpi-manut').textContent=manut;
   const dpct=Math.round(disp/ativos.length*100)||0,mpct=Math.round(manut/ativos.length*100)||0;
