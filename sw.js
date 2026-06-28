@@ -1,4 +1,4 @@
-// SW v57 — raio-x completo do ativo no Histórico: OS, embarque, reprogramações, assinaturas
+// SW v58 — filtros RCD Operações: badge contagem por coluna, limpar sincroniza inputs
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {

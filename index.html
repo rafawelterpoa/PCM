@@ -15386,6 +15386,9 @@ function solRcdRender(sfx=''){
   Object.entries(COLS).forEach(([status,colId])=>{
     const col=document.getElementById(colId);if(!col)return;
     const rList=filtAtivos.filter(r=>r.status===status);
+    // Atualiza badge de contagem no cabeçalho da coluna
+    const hdrEl=document.getElementById(`sol-col-hdr-${status}${sfx}`);
+    if(hdrEl){let cntEl=hdrEl.querySelector('[data-col-cnt]');if(!cntEl){cntEl=document.createElement('span');cntEl.dataset.colCnt='';cntEl.style.cssText='font-size:10px;font-weight:700;background:rgba(0,0,0,.1);color:inherit;padding:2px 8px;border-radius:20px;min-width:22px;text-align:center;display:inline-block';hdrEl.appendChild(cntEl);}cntEl.textContent=rList.length;}
     if(!rList.length){col.innerHTML='<div style="padding:12px;text-align:center;color:#cbd5e1;font-size:11px">Nenhuma</div>';return;}
     const cor=CORES[status];
     col.innerHTML=rList.map(r=>{
@@ -15545,6 +15548,9 @@ function solRcdFiltrosRender(sfx, regs) {
     : `<span style="font-size:10px;color:#94a3b8">${total} registros</span>`;
   // Se inputs já existem, só atualiza badge e botão limpar — não recria o DOM
   if (document.getElementById('sf-equip'+sfx)) {
+    // Sincroniza selects com _solFiltros (evita dessincronismo após reset externo)
+    const selS=document.getElementById('sf-status'+sfx);if(selS&&selS.value!==(f.status||''))selS.value=f.status||'';
+    const selC=document.getElementById('sf-crit'+sfx);if(selC&&selC.value!==(f.criticidade||''))selC.value=f.criticidade||'';
     const badgeEl = el.querySelector('[data-sol-badge]');
     if (badgeEl) badgeEl.innerHTML = badgeTxt;
     const limparEl = el.querySelector('[data-sol-limpar]');
@@ -15586,7 +15592,7 @@ function solRcdFiltrosRender(sfx, regs) {
     ${selCrit}
     <span style="display:flex;align-items:center;gap:3px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">De:</span>${dat('sf-de'+sfx,'de','Data início')}</span>
     <span style="display:flex;align-items:center;gap:3px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">Até:</span>${dat('sf-ate'+sfx,'ate','Data fim')}</span>
-    <button data-sol-limpar onclick="Object.keys(_solFiltros).forEach(k=>_solFiltros[k]='');solRcdRenderTodos()"
+    <button data-sol-limpar onclick="Object.keys(_solFiltros).forEach(k=>_solFiltros[k]='');['sf-equip${sfx}','sf-cli${sfx}','sf-resp${sfx}','sf-orc${sfx}','sf-de${sfx}','sf-ate${sfx}'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const _ss=document.getElementById('sf-status${sfx}');if(_ss)_ss.value='';const _sc=document.getElementById('sf-crit${sfx}');if(_sc)_sc.value='';solRcdRenderTodos()"
       style="padding:5px 8px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:${Object.values(f).some(v=>v)?'':'none'}">✕</button>
     <span data-sol-badge style="white-space:nowrap">${badgeTxt}</span>`;
 }
