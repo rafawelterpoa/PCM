@@ -14600,28 +14600,74 @@ function histVerDetalhe(eqId){
   const detalhe = document.getElementById('hist-detalhe');
   const eq = _histEquipsFiltrados.find(e=>e.id===eqId) || {id:eqId,nome:'',oficina:'',logs:[]};
   const st = state[eqId];
-  const logs = eq.logs.sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const fbLogs = (eq.logs||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
 
   const ETAPA_LABELS = {chegada:'Aguard. Movimentação',cl_entrada:'Check List Entrada',manutencao:'Manutenção',cl_saida:'Check List Saída',pronto:'Pronto / Estoque',lavagem:'Lavagem',catalogacao:'Catalogação',solda:'Solda',borracharia:'Borracharia',funilaria:'Funilaria',suprimentos:'Suprimentos',ag_baia:'Ag. Baia',manut_int:'Manutenção Int.',alugado:'Alugado'};
   const labelEtapa = e => ETAPA_LABELS[e] || e || '—';
 
-  // Calcular tempo em cada etapa
+  // Calcular tempo em cada etapa a partir dos logs Firebase
   const tempos = {};
-  for(let i=0; i<logs.length; i++){
-    const log = logs[i];
-    const prox = logs[i+1];
-    const etapa = log.to;
-    if(!etapa) continue;
-    const de = log.ts || 0;
-    const ate = prox ? (prox.ts||de) : Date.now();
-    const dias = Math.round((ate - de) / 86400000);
-    if(!tempos[etapa]) tempos[etapa] = 0;
-    tempos[etapa] += dias;
+  const logsAsc = fbLogs.slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
+  for(let i=0;i<logsAsc.length;i++){
+    const log=logsAsc[i];const prox=logsAsc[i+1];const etapa=log.to;if(!etapa)continue;
+    const de=log.ts||0;const ate=prox?(prox.ts||de):Date.now();
+    const dias=Math.round((ate-de)/86400000);
+    if(!tempos[etapa])tempos[etapa]=0;tempos[etapa]+=dias;
   }
+
+  // Construir linha do tempo unificada
+  const eventos = [];
+
+  // 1. Movimentações do Firebase
+  fbLogs.forEach(log => {
+    eventos.push({ts:log.ts||0,tipo:'movimento',from:log.from||'',to:log.to||'',data:log.data||'',hora:log.hora||'',perfil:log.perfil||'',oficina:log.oficina||'',obs:log.obs||'',visao:log.visao||'',planta_obra:log.planta_obra||'',ciclo:log.ciclo});
+  });
+
+  // 2. Assinaturas de etapas (aprovações)
+  if(st&&st.assinaturas){
+    Object.entries(st.assinaturas).forEach(([etapa,sig])=>{
+      // evita duplicata com log exato do mesmo ts
+      const dup=eventos.some(e=>e.tipo==='movimento'&&e.ts&&sig.ts&&Math.abs(e.ts-sig.ts)<2000);
+      if(!dup) eventos.push({ts:sig.ts||0,tipo:'assinatura',etapa,data:sig.data||'',hora:sig.hora||'',perfil:sig.perfil||'',nivel:sig.nivel||''});
+    });
+  }
+
+  // 3. Reprogramações de data prevista
+  if(st&&st.reprogramacoes&&st.reprogramacoes.length){
+    st.reprogramacoes.forEach(rep=>{
+      eventos.push({ts:rep.ts||0,tipo:'reprogramacao',de:rep.de||rep.dataAnterior||'',para:rep.para||rep.novaData||'',data:rep.data||'',hora:rep.hora||'',perfil:rep.perfil||''});
+    });
+  }
+
+  // Ordenar mais recente primeiro
+  eventos.sort((a,b)=>(b.ts||0)-(a.ts||0));
 
   // Estado atual
   const etapaAtual = st ? labelEtapa(st.etapa) : '—';
   const ativo = st && !st.baixado && st.etapa !== 'alugado';
+
+  // Helpers para metadados
+  const tagItem=(label,valor,cor)=>valor?`<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8">${label}</span><span style="font-size:12px;font-weight:600;color:${cor||'#1e293b'}">${valor}</span></div>`:'';
+  const chipOS=(os,i)=>`<span onclick="abrirManusis('${os}')" style="display:inline-flex;align-items:center;gap:4px;background:#EDE9FF;color:#5B4DB5;border:1px solid #C4BAFF;border-radius:5px;padding:3px 9px;font-size:11px;font-weight:600;cursor:pointer" title="Abrir OS no Manusis4">#${os}</span>`;
+
+  // Data embarque formatada
+  let embFmt='';
+  if(st&&st.dataEmbarque){try{embFmt=new Date(st.dataEmbarque+'T12:00:00').toLocaleDateString('pt-BR');}catch(e){embFmt=st.dataEmbarque;}}
+
+  // Prevista de liberação
+  let prevFmt='';
+  if(st&&st.prevLiberacao){try{const d=new Date(st.prevLiberacao+'T12:00:00');const orig=st.prevLiberacaoOriginal?new Date(st.prevLiberacaoOriginal+'T12:00:00'):null;const atraso=orig?Math.round((d-orig)/86400000):0;prevFmt=d.toLocaleDateString('pt-BR')+(atraso>0?' (+'+atraso+'d)':'')+(st.nReprog>0?' ↻'+st.nReprog+'x':'');}catch(e){prevFmt=st.prevLiberacao;}}
+
+  // Cor do ícone por tipo de evento
+  const eventoCor={movimento:'#6366f1',assinatura:'#16a34a',reprogramacao:'#d97706'};
+  const eventoIcone={movimento:'🔄',assinatura:'✅',reprogramacao:'📅'};
+  const eventoLabel={movimento:(ev)=>{
+    const fr=ev.from?labelEtapa(ev.from)+' → ':'';const to=labelEtapa(ev.to);
+    let label=`<span style="font-size:11px;color:#64748b">${fr}</span><span style="font-size:13px;font-weight:700;color:#1e293b">${to}</span>`;
+    if(ev.visao==='retorno_operacao')label+=' <span style="font-size:10px;background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:4px">Retorno de operação</span>';
+    if(ev.visao==='mudanca_oficina')label+=' <span style="font-size:10px;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px">Mudança de oficina</span>';
+    return label;
+  },assinatura:(ev)=>`<span style="font-size:13px;font-weight:700;color:#16a34a">Aprovação: ${labelEtapa(ev.etapa)}</span>`,reprogramacao:(ev)=>`<span style="font-size:13px;font-weight:700;color:#d97706">Reprogramação</span><span style="font-size:11px;color:#64748b;margin-left:6px">${ev.de} → ${ev.para}</span>`};
 
   detalhe.style.display = 'block';
   lista.style.display = 'none';
@@ -14642,14 +14688,35 @@ function histVerDetalhe(eqId){
         <div style="text-align:right">
           <div style="font-size:11px;color:#94a3b8">Oficina</div>
           <div style="font-size:14px;font-weight:600;color:#1e293b">${st?.oficina||eq.oficina||'—'}</div>
-          <div style="margin-top:6px"><span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:5px;${ativo?'background:#dcfce7;color:#16a34a':'background:#f1f5f9;color:#64748b'}">${ativo?'✅ No kanban agora: '+etapaAtual:'⬜ Fora do kanban'}</span></div>
+          <div style="margin-top:6px"><span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:5px;${ativo?'background:#dcfce7;color:#16a34a':'background:#f1f5f9;color:#64748b'}">${ativo?'✅ No kanban: '+etapaAtual:'⬜ Fora do kanban'}</span></div>
           ${st?.reservado?`<div style="margin-top:4px"><span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:5px;background:#dbeafe;color:#1e40af">🔒 Reservado: ${st.cliente||''}</span></div>`:''}
         </div>
       </div>
 
+      <!-- Metadados operacionais -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f1f5f9;display:flex;flex-wrap:wrap;gap:16px">
+        ${tagItem('Destinação',st?.destinacao,st?.destinacao==='Venda'?'#dc2626':st?.destinacao==='Locação'?'#1d9e75':'#6366f1')}
+        ${tagItem('Semana Programada',st?.semana?'Sem. '+st.semana:'')}
+        ${tagItem('Embarque',embFmt,'#1d4ed8')}
+        ${tagItem('Prev. Liberação',prevFmt,prevFmt.includes('+')?'#dc2626':'#16a34a')}
+        ${tagItem('Req. Compra',st?.reqCompra,'#7f77dd')}
+        ${tagItem('Tipo Manutenção',st?.tipoManut)}
+        ${tagItem('Complexidade',st?.complexidade?({facil:'Fácil',medio:'Médio',dificil:'Difícil'}[st.complexidade]||st.complexidade):'')}
+        ${tagItem('Local Mapa',st?.localMap)}
+        ${tagItem('Retrabalho',st?.retrabalho>0?st.retrabalho+'x':'',st?.retrabalho>0?'#dc2626':'')}
+        ${tagItem('Ciclos Operação',st?.ciclos_operacao>0?st.ciclos_operacao+'x':'')}
+      </div>
+
+      <!-- Ordens de Serviço -->
+      ${st?.ordens&&st.ordens.length?`
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:8px">Ordens de Serviço (${st.ordens.length})</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${st.ordens.map(chipOS).join('')}</div>
+      </div>`:''}
+
       <!-- Tempo em cada etapa -->
       ${Object.keys(tempos).length ? `
-      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #f1f5f9">
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:8px">Tempo em cada etapa</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px">
           ${Object.entries(tempos).map(([e,d])=>`<span style="font-size:11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:4px 10px"><strong>${labelEtapa(e)}</strong> · ${d} dia${d!==1?'s':''}</span>`).join('')}
@@ -14657,28 +14724,31 @@ function histVerDetalhe(eqId){
       </div>` : ''}
     </div>
 
-    <!-- Linha do tempo -->
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:10px">${logs.length} movimentação(ões) registrada(s)</div>
+    <!-- Linha do tempo unificada -->
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:10px">${eventos.length} evento(s) registrado(s)</div>
 
-    ${logs.length === 0 ? '<div style="padding:20px;text-align:center;color:#94a3b8;background:#fff;border:1px solid #e2e8f0;border-radius:8px">Nenhuma movimentação registrada para este equipamento.</div>' : ''}
+    ${!eventos.length ? '<div style="padding:20px;text-align:center;color:#94a3b8;background:#fff;border:1px solid #e2e8f0;border-radius:8px">Nenhum evento registrado para este equipamento.</div>' : ''}
 
     <div style="position:relative;padding-left:24px">
       <div style="position:absolute;left:8px;top:0;bottom:0;width:2px;background:#e2e8f0"></div>
-      ${logs.map((log,i)=>`
-        <div style="position:relative;margin-bottom:14px">
-          <div style="position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;background:${i===0?'#6366f1':'#94a3b8'};border:2px solid #fff;box-shadow:0 0 0 2px ${i===0?'#6366f1':'#e2e8f0'}"></div>
-          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-              <div>
-                <span style="font-size:11px;color:#94a3b8">${log.from?labelEtapa(log.from)+' →':''}</span>
-                <span style="font-size:13px;font-weight:700;color:#1e293b"> ${labelEtapa(log.to)}</span>
-              </div>
-              <div style="font-size:11px;color:#94a3b8">${log.data||''} ${log.hora||''}</div>
+      ${eventos.map((ev,i)=>{
+        const cor=eventoCor[ev.tipo]||'#94a3b8';
+        const icone=eventoIcone[ev.tipo]||'•';
+        const labelHtml=eventoLabel[ev.tipo]?eventoLabel[ev.tipo](ev):'';
+        return `<div style="position:relative;margin-bottom:14px">
+          <div style="position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;background:${i===0?cor:'#94a3b8'};border:2px solid #fff;box-shadow:0 0 0 2px ${i===0?cor:'#e2e8f0'}"></div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;${i===0?'border-color:'+cor+';box-shadow:0 0 0 1px '+cor+'22':''}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+              <div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px">${icone}</span><span>${labelHtml}</span></div>
+              <div style="font-size:11px;color:#94a3b8;white-space:nowrap">${ev.data||''} ${ev.hora||''}</div>
             </div>
-            ${log.oficina?`<div style="font-size:11px;color:#64748b;margin-top:2px">📍 ${log.oficina}</div>`:''}
-            ${log.perfil?`<div style="font-size:10px;color:#94a3b8;margin-top:2px">👤 ${log.perfil}</div>`:''}
+            ${ev.oficina?`<div style="font-size:11px;color:#64748b;margin-top:3px">📍 ${ev.oficina}</div>`:''}
+            ${ev.planta_obra?`<div style="font-size:11px;color:#1d4ed8;margin-top:2px">🏗 ${ev.planta_obra}</div>`:''}
+            ${ev.perfil?`<div style="font-size:10px;color:#94a3b8;margin-top:2px">👤 ${ev.perfil}${ev.nivel?' · '+ev.nivel:''}</div>`:''}
+            ${ev.obs?`<div style="font-size:11px;color:#64748b;font-style:italic;margin-top:3px;padding:4px 8px;background:#f8fafc;border-radius:4px">"${ev.obs}"</div>`:''}
           </div>
-        </div>`).join('')}
+        </div>`;
+      }).join('')}
     </div>
   `;
 }

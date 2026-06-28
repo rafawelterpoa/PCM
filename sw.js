@@ -1,4 +1,4 @@
-// SW v56 — histórico acumulado nos cards kanban, remove LOG DE ATIVIDADES externo
+// SW v57 — raio-x completo do ativo no Histórico: OS, embarque, reprogramações, assinaturas
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
