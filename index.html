@@ -4603,9 +4603,12 @@ function renderProgramacao(){
       const emManutencao=Object.values(state).filter(e=>!e.baixado&&e.semana&&e.semana>=sa&&e.etapa!=='pronto'&&e.etapa!=='alugado').length;
       // Sem programação: na oficina mas sem semana futura definida
       const semProg=Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.etapa!=='pronto'&&(!e.semana||e.semana<sa)).length;
-      // Média/semana: reparados / nº de semanas distintas com conclusões
-      const semanasComPronto=new Set(Object.values(state).filter(e=>!e.baixado&&(e.etapa==='pronto'||(e.ciclos_operacao||0)>0)&&e.semana).map(e=>e.semana)).size;
-      const mediaLib=semanasComPronto>0?Math.round(reparados/semanasComPronto):0;
+      // Média/semana: reparados / semanas decorridas desde a 1ª semana do sistema até hoje
+      const _semParse=s=>{const[y,w]=s.split('-W').map(Number);return y*53+w;};
+      const _semTodasPassadas=Object.values(state).filter(e=>e.semana&&e.semana<=sa).map(e=>e.semana);
+      const _semMin=_semTodasPassadas.length?_semTodasPassadas.sort()[0]:sa;
+      const _nSemanas=Math.max(1,_semParse(sa)-_semParse(_semMin)+1);
+      const mediaLib=Math.round(reparados/_nSemanas);
       const sep=`<div style="width:1px;height:36px;background:#E2E8ED"></div>`;
       const kpi=(val,label,cor)=>`<div style="text-align:center"><div style="font-size:22px;font-weight:800;color:${cor};line-height:1">${val}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em;margin-top:3px">${label}</div></div>`;
       hdrStats.innerHTML=kpi(reparados,'Reparados','#1E8A4C')+sep+kpi(emManutencao,'Em Manutenção','#E8630A')+sep+kpi(semProg,'Sem Programação','#5A7280')+sep+kpi(mediaLib,'Média/Semana','#1D4ED8');

@@ -1,4 +1,4 @@
-// SW v69 — reservado: cor azul céu (#0284C7)
+// SW v70 — média/semana: denominador corrigido para semanas decorridas desde início
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
