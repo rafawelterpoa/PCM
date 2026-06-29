@@ -325,7 +325,7 @@ input.filter-sel{padding:5px 10px;height:32px}
 .card.dragging{opacity:.35;border-style:dashed;transform:none}
 .card.semana-atual{background:#FFFDF5;border-left-color:#D4A020}
 .card.baixado{opacity:.45}
-.card.reservado{border-left-color:#1D9E75}
+.card.reservado{border-left-color:#0284C7}
 /* Prioridade define a borda esquerda */
 .card.prio-critica-card{border-left-color:#DC2626}
 .card.prio-alta-card{border-left-color:#E8630A}
@@ -348,7 +348,7 @@ input.filter-sel{padding:5px 10px;height:32px}
 .card-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .card-badge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px}
 .badge-baixado{background:#F0F4F6;color:#8FA4AE}
-.badge-reservado{background:rgba(29,158,117,.1);color:#1D9E75;border:1px solid rgba(29,158,117,.2)}
+.badge-reservado{background:rgba(2,132,199,.1);color:#0284C7;border:1px solid rgba(2,132,199,.2)}
 .badge-novo{background:rgba(37,99,235,.08);color:#2563EB;border:1px solid rgba(37,99,235,.2)}
 .prio-pill{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:9px;font-weight:700}
 .prio-critica{background:rgba(220,38,38,.1);color:#DC2626}
@@ -4776,7 +4776,7 @@ function renderProgramacao(){
           :'';
       const assP=eq.assinaturas?.programacao;
       const assH=assP?`<div style="font-size:9px;color:var(--verde2);margin-top:2px">📅 ${assP.perfil} · ${assP.data}</div>`:'';
-      const cliH=eq.reservado&&eq.cliente?`<div style="font-size:9px;color:var(--laranja);margin-top:2px;font-weight:600">◈ ${eq.cliente}</div>`:'';
+      const cliH=eq.reservado&&eq.cliente?`<div style="font-size:9px;color:#0284C7;margin-top:2px;font-weight:600">◈ ${eq.cliente}</div>`:'';
       let embH='';
       if(eq.dataEmbarque){
         const dtEmb=new Date(eq.dataEmbarque+'T12:00:00');
@@ -4790,8 +4790,8 @@ function renderProgramacao(){
         (eq.reservado&&!isConc)?'reservado':'',
         eq._reprog?'reprogramado':'',
       ].filter(Boolean).join(' ');
-      // Cabeçalho: verde=concluído, laranja=reservado em andamento, dark=sem reserva/estoque
-      const hdrBg=isConc?'#1E8A4C':eq.reservado?'#E8630A':'#1A2E35';
+      // Cabeçalho: verde=concluído, azul=reservado em andamento, dark=sem reserva/estoque
+      const hdrBg=isConc?'#1E8A4C':eq.reservado?'#0284C7':'#1A2E35';
       const hdrTxt=eq.reservado&&eq.cliente?`◈ ${eq.cliente}`:'Estoque';
       const cliHeader=`<div style="background:${hdrBg};color:#fff;font-size:10px;font-weight:700;padding:3px 8px;margin:-8px -10px 6px -10px;border-radius:5px 5px 0 0;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hdrTxt}</div>`;
       return`<div class="prog-card ${cardCls}${eq._dimmed?' card-dimmed':''}" onclick="openCardModal('${eq.id}','geral')" style="${eq._reprog?'opacity:.75':eq._dimmed?'opacity:.35;filter:grayscale(.6)':''}">
@@ -5506,7 +5506,7 @@ function renderDisponiveis(){
 
   grid.innerHTML=equips.map(eq=>{
     const etLbl=ETAPAS_GERAL.find(e=>e.id===eq.etapa)?.label||eq.etapa;
-    const cliH=eq.reservado&&eq.cliente?`<div style="font-size:10px;color:var(--laranja);font-weight:600;margin-top:3px">◈ ${eq.cliente}</div>`:'';
+    const cliH=eq.reservado&&eq.cliente?`<div style="font-size:10px;color:#0284C7;font-weight:600;margin-top:3px">◈ ${eq.cliente}</div>`:'';
     const embH=eq.dataEmbarque?`<div style="font-size:10px;color:#7F77DD;margin-top:2px;font-weight:500">🚢 ${new Date(eq.dataEmbarque+'T12:00:00').toLocaleDateString('pt-BR')}</div>`:'';
     const tmH=eq.tipoManut?`<div style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;margin-top:3px;display:inline-block;background:#FFF8E6;color:#7A5500;border:1px solid #EFD87A">⚙ ${eq.tipoManut}</div>`:'';
     const destCor=eq.destinacao==='Venda'?'#C24003':eq.destinacao==='Locação'?'#1D9E75':'#7F77DD';

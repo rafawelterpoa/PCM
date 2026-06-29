@@ -1,4 +1,4 @@
-// SW v68 — programação: grid 8 colunas, cards dark minimal
+// SW v69 — reservado: cor azul céu (#0284C7)
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
