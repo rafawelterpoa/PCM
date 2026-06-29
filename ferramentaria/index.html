@@ -63,91 +63,76 @@ a{text-decoration:none;color:inherit}
 
 }
 
-/* ===================== LOGIN ===================== */
-/* ── LOGIN SPLIT LAYOUT ─────────────────────────────── */
+/* ===================== LOGIN — INDUSTRIAL ===================== */
 #loginScreen{
   display:flex;min-height:100vh;
-  background:url('bg-login.jpg') center center/cover no-repeat;
-  position:relative;font-family:'Segoe UI',system-ui,sans-serif;
+  font-family:'Segoe UI',system-ui,sans-serif;
+  background:#1A2E35;
 }
+/* accent strip */
+.login-strip{width:5px;background:#E8630A;flex-shrink:0}
 /* LEFT PANEL */
 .login-left{
-  flex:1;display:flex;flex-direction:column;justify-content:space-between;
-  padding:48px 52px;position:relative;z-index:1;
-  background:linear-gradient(135deg,rgba(8,12,20,0.88) 0%,rgba(20,30,48,0.75) 100%);
-  backdrop-filter:blur(1px);
+  flex:1;display:flex;flex-direction:column;justify-content:center;
+  padding:56px 64px;background:#1A2E35;
 }
-.login-brand{display:flex;flex-direction:column;gap:6px}
-.login-brand-logo{display:flex;align-items:center;gap:14px;margin-bottom:8px}
-.login-brand-logo svg{width:54px;height:54px;flex-shrink:0}
-.login-brand-name{font-size:2rem;font-weight:900;color:#fff;letter-spacing:.01em;line-height:1}
+.login-brand{display:flex;flex-direction:column;gap:4px;margin-bottom:40px}
+.login-brand-name{font-size:2.2rem;font-weight:900;color:#fff;line-height:1}
 .login-brand-name span{color:#E8630A}
-.login-brand-sub{font-size:.75rem;font-weight:600;letter-spacing:.18em;color:rgba(255,255,255,.45);text-transform:uppercase;margin-top:2px}
-.login-hero-text{margin-top:48px}
-.login-hero-text h2{font-size:2.4rem;font-weight:800;color:#fff;line-height:1.2;margin-bottom:12px}
+.login-brand-sub{font-size:.68rem;font-weight:700;letter-spacing:.22em;color:#5A7280;text-transform:uppercase;margin-top:4px}
+.login-divider{width:36px;height:2px;background:#E8630A;border-radius:1px;margin:20px 0}
+.login-hero-text h2{font-size:2rem;font-weight:800;color:#fff;line-height:1.25;margin-bottom:10px}
 .login-hero-text h2 span{color:#E8630A}
-.login-hero-text p{font-size:1rem;color:rgba(255,255,255,.6);line-height:1.6;max-width:380px}
-.login-features{display:flex;gap:32px;flex-wrap:wrap}
-.login-feat{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
-.login-feat-icon{width:44px;height:44px;border:2px solid rgba(232,99,10,.5);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#E8630A;font-size:18px}
-.login-feat span{font-size:.75rem;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.06em}
-.login-feat small{font-size:.68rem;color:rgba(255,255,255,.4);margin-top:-4px}
+.login-hero-text p{font-size:.92rem;color:#5A7280;line-height:1.6;max-width:340px}
+.login-features{display:flex;flex-direction:column;gap:12px;margin-top:36px}
+.login-feat{display:flex;align-items:center;gap:10px}
+.login-feat-dot{width:6px;height:6px;background:#E8630A;border-radius:50%;flex-shrink:0}
+.login-feat-text{font-size:.82rem;color:#8FA4AE}
+.login-feat-text strong{color:#C8D4DA;font-weight:600}
 /* RIGHT PANEL */
 .login-right{
-  width:420px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
-  padding:32px 28px;
-  background:rgba(14,18,28,0.93);
-  backdrop-filter:blur(8px);
+  width:400px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  padding:48px 40px;
+  background:#223540;
+  border-left:1px solid #2E4A55;
 }
-.login-box{
-  width:100%;max-width:360px;
-}
-.login-box-avatar{
-  width:64px;height:64px;border-radius:50%;
-  background:rgba(232,99,10,.15);border:2px solid rgba(232,99,10,.4);
-  display:flex;align-items:center;justify-content:center;
-  margin:0 auto 20px;font-size:28px;color:#E8630A;
-}
-.login-box h2{color:#fff;text-align:center;font-size:1.6rem;font-weight:800;margin-bottom:4px}
-.login-box .login-sub{color:rgba(255,255,255,.45);text-align:center;font-size:.85rem;margin-bottom:28px}
-.login-field{
-  position:relative;margin-bottom:14px;
-}
+.login-box{width:100%;max-width:320px}
+.login-box-logo{margin-bottom:28px}
+.login-box-logo img{height:32px;opacity:.9}
+.login-box h2{color:#fff;font-size:1.35rem;font-weight:700;margin-bottom:4px}
+.login-box .login-sub{color:#5A7280;font-size:.82rem;margin-bottom:28px}
+.login-field{position:relative;margin-bottom:12px}
 .login-field input{
-  width:100%;padding:13px 14px 13px 42px;
-  background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);
-  border-radius:9px;font-size:.95rem;color:#fff;
+  width:100%;padding:12px 14px 12px 40px;
+  background:#1A2E35;border:1px solid #2E4A55;
+  border-radius:6px;font-size:.9rem;color:#fff;
   transition:border .2s,background .2s;box-sizing:border-box;
 }
-.login-field input::placeholder{color:rgba(255,255,255,.35)}
-.login-field input:focus{outline:none;border-color:#E8630A;background:rgba(232,99,10,.06)}
+.login-field input::placeholder{color:#4A6370}
+.login-field input:focus{outline:none;border-color:#E8630A;background:#1E3540}
 .login-field-icon{
   position:absolute;left:13px;top:50%;transform:translateY(-50%);
-  color:rgba(255,255,255,.35);font-size:16px;pointer-events:none;
+  color:#4A6370;font-size:15px;pointer-events:none;
 }
-.login-error{
-  color:#ff6b6b;font-size:.82rem;text-align:center;min-height:18px;margin-bottom:8px;font-weight:600;
-}
+.login-error{color:#ff6b6b;font-size:.8rem;text-align:center;min-height:18px;margin-bottom:8px;font-weight:600}
 .btn-login{
-  width:100%;padding:14px;border:none;border-radius:9px;cursor:pointer;
-  font-size:1rem;font-weight:700;letter-spacing:.04em;
-  background:linear-gradient(135deg,#E8630A 0%,#C85508 100%);
-  color:#fff;box-shadow:0 4px 20px rgba(232,99,10,.35);
-  transition:opacity .2s,transform .1s;
+  width:100%;padding:13px;border:none;border-radius:6px;cursor:pointer;
+  font-size:.95rem;font-weight:700;letter-spacing:.04em;
+  background:#E8630A;color:#fff;
+  transition:background .18s,transform .1s;margin-top:4px;
 }
-.btn-login:hover{opacity:.9;transform:translateY(-1px)}
-.btn-login:active{transform:translateY(0)}
-/* Responsive */
+.btn-login:hover{background:#C85508}
+.btn-login:active{transform:scale(.99)}
 @media(max-width:768px){
   #loginScreen{flex-direction:column}
-  .login-left{padding:32px 24px;flex:none}
-  .login-right{width:100%;padding:24px}
-  .login-hero-text h2{font-size:1.6rem}
+  .login-strip{width:100%;height:4px}
+  .login-left{padding:36px 28px}
+  .login-right{width:100%;border-left:none;border-top:1px solid #2E4A55;padding:36px 28px}
+  .login-hero-text h2{font-size:1.5rem}
 }
 .login-logo{text-align:center;margin-bottom:28px}
 .login-logo h1{color:var(--mills-dark);font-size:1.6rem;font-weight:700}
 .login-logo p{color:var(--text-muted);font-size:0.85rem;margin-top:4px}
-.login-error{color:#ff6b6b;font-size:0.82rem;margin-top:8px;text-align:center;display:none}
 
 /* ===================== APP LAYOUT — PCM ===================== */
 #app{display:none;flex-direction:column;min-height:100vh}
@@ -371,38 +356,36 @@ tr:hover td{background:#F8FAFB}
 <!-- ==================== LOGIN ==================== -->
 <div id="loginScreen">
 
-  <!-- ESQUERDA: branding -->
+  <!-- FAIXA LATERAL LARANJA -->
+  <div class="login-strip"></div>
+
+  <!-- ESQUERDA: branding industrial -->
   <div class="login-left">
     <div class="login-brand">
-      <div class="login-brand-logo" style="flex-direction:column;align-items:flex-start;gap:8px">
-        <img src="logo_nova_mills-removebg-preview.png" alt="MILLS" style="height:48px">
-        <div>
-          <div class="login-brand-name"><span>Ferramentaria</span></div>
-          <div class="login-brand-sub">Gestão de Ferramentas</div>
-        </div>
-      </div>
+      <img src="logo_nova_mills-removebg-preview.png" alt="MILLS" style="height:36px;margin-bottom:10px;opacity:.9">
+      <div class="login-brand-name"><span>Ferramentaria</span></div>
+      <div class="login-brand-sub">Gestão de Ferramentas</div>
     </div>
 
+    <div class="login-divider"></div>
+
     <div class="login-hero-text">
-      <h2>Controle total de <span>Ferramentas.</span></h2>
-      <p>Gerenciamento de Ferramentas de campo, dedicadas e compartilhadas.</p>
+      <h2>Controle total de<br><span>Ferramentas.</span></h2>
+      <p>Gerenciamento de ferramentas de campo, dedicadas e compartilhadas.</p>
     </div>
 
     <div class="login-features">
       <div class="login-feat">
-        <div class="login-feat-icon">🔧</div>
-        <span>Kits de Campo</span>
-        <small>Inventário completo</small>
+        <div class="login-feat-dot"></div>
+        <div class="login-feat-text"><strong>Kits de campo e oficina</strong> — inventário completo</div>
       </div>
       <div class="login-feat">
-        <div class="login-feat-icon">📋</div>
-        <span>Empréstimos</span>
-        <small>Com assinatura digital</small>
+        <div class="login-feat-dot"></div>
+        <div class="login-feat-text"><strong>Empréstimos</strong> — com assinatura digital</div>
       </div>
       <div class="login-feat">
-        <div class="login-feat-icon">🎯</div>
-        <span>Calibração</span>
-        <small>Alertas automáticos</small>
+        <div class="login-feat-dot"></div>
+        <div class="login-feat-text"><strong>Calibração</strong> — alertas automáticos de vencimento</div>
       </div>
     </div>
   </div>
@@ -410,17 +393,19 @@ tr:hover td{background:#F8FAFB}
   <!-- DIREITA: formulário -->
   <div class="login-right">
     <div class="login-box">
-      <div class="login-box-avatar">👤</div>
-      <h2>Bem-vindo!</h2>
-      <p class="login-sub">Faça login para acessar o sistema</p>
+      <div class="login-box-logo">
+        <img src="logo_nova_mills-removebg-preview.png" alt="MILLS" style="height:28px;opacity:.7">
+      </div>
+      <h2>Login</h2>
+      <p class="login-sub">Acesse o sistema de gestão de ferramentas</p>
 
       <div class="login-field">
-        <span class="login-field-icon">👤</span>
-        <input type="text" id="loginUser" placeholder="Seu login" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
+        <span class="login-field-icon">&#9786;</span>
+        <input type="text" id="loginUser" placeholder="Usuário" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
       </div>
       <div class="login-field">
-        <span class="login-field-icon">🔒</span>
-        <input type="password" id="loginPass" placeholder="Sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <span class="login-field-icon">&#128274;</span>
+        <input type="password" id="loginPass" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
 
       <div class="login-error" id="loginError"></div>
