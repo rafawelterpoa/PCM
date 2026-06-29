@@ -15413,7 +15413,9 @@ function solRcdRender(sfx=''){
       const isAprovador=currentUser&&(currentUser.perfil==='master'||currentUser.perfil==='rcd');
       const temOrc=(r.orc_valor||0)>0;
       const pcTag=r.aguardando_pc?`<span style="font-size:9px;background:#fef3c7;color:#b45309;border-radius:3px;padding:1px 5px;font-weight:700">PC pendente</span>`:'';
+      const paradaBadge=r.maquina_parada==='sim'&&!r.data_retorno?`<span style="font-size:9px;background:#fee2e2;color:#dc2626;border-radius:3px;padding:1px 5px;font-weight:700">🔴 PARADA</span>`:'';
       return `<div style="background:#fff;border:1px solid #e2e8f0;border-left:3px solid ${cor};border-radius:8px;padding:10px 12px">
+        <div onclick="solRcdDetalheAbrir('${r.id}')" style="cursor:pointer">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
           <div>
             <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id||'—'}${r.numero?` <span style="font-size:10px;font-weight:400;color:#94a3b8">#${r.numero}</span>`:''}</div>
@@ -15423,10 +15425,12 @@ function solRcdRender(sfx=''){
           <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px">
             <span style="font-size:10px;color:#94a3b8">${solRcdFmtDias(dias)}</span>
             ${pcTag}
+            ${paradaBadge}
           </div>
         </div>
         ${r.om?`<div style="font-size:10px;color:#6366f1;margin-bottom:4px">O.M.: ${r.om}</div>`:''}
         ${temOrc?`<div style="font-size:10px;color:#10b981;margin-bottom:6px;font-weight:600">Orç: R$ ${(r.orc_valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>`:''}
+        </div>
         <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:6px;gap:4px">
           <div style="display:flex;flex-wrap:wrap;gap:4px">
             <button onclick="solRcdEditarAbrir('${r.id}')" style="padding:3px 7px;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✏ Editar</button>
@@ -15901,6 +15905,9 @@ async function solRcdAvancar(id, novoStatus){
   const diasNaFase=Math.max(0,Math.round((agora-tsEntrada)/86400000));
   reg.dias[antigo]=(reg.dias[antigo]||0)+diasNaFase;
   reg['ts_saida_'+antigo]=agora;
+  // Registra no histórico de movimentação
+  if(!reg.historico_mov)reg.historico_mov=[];
+  reg.historico_mov.push({de:antigo,para:novoStatus,ts:agora,usuario:currentUser?.nome||'—',diasFase:diasNaFase});
   // Nova fase
   reg.status=novoStatus;
   reg['ts_'+novoStatus]=agora;
@@ -15942,6 +15949,100 @@ async function solRcdConcluir(id){
   await solRcdSalvarReg(reg);
   solRcdRenderTodos();
   showToast('💰 Faturado — Fatura: '+fatura.trim());
+}
+
+function solRcdDetalheAbrir(id){
+  const reg=_solRegistros[id];if(!reg)return;
+  const modal=document.getElementById('sol-det-modal');
+  modal.dataset.id=id;
+  const STATUS_LABEL={em_aprovacao:'Em Aprovação',aguardando_orcamento:'Ag. Orçamento',aguardando_cliente:'Ag. Cliente',aguardando_execucao:'Ag. Execução',aguardando_faturamento:'Ag. Faturamento',concluido:'Concluído',cancelado:'Cancelado'};
+  const STATUS_COR={em_aprovacao:{bg:'#ede9fe',c:'#6366f1'},aguardando_orcamento:{bg:'#fef3c7',c:'#b45309'},aguardando_cliente:{bg:'#dcfce7',c:'#15803d'},aguardando_execucao:{bg:'#e0f2fe',c:'#0284c7'},aguardando_faturamento:{bg:'#f3e8ff',c:'#7c3aed'},concluido:{bg:'#dcfce7',c:'#15803d'},cancelado:{bg:'#fee2e2',c:'#dc2626'}};
+  const fmtDt=s=>s?new Date(s+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+  const fmtTs=ts=>ts?new Date(ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+  const fmt=v=>'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  // Header
+  document.getElementById('sol-det-equip-id').textContent=reg.equip_id||'—';
+  document.getElementById('sol-det-equip-nome').textContent=reg.equip_nome||'';
+  const sc=STATUS_COR[reg.status]||{bg:'#f1f5f9',c:'#64748b'};
+  const sb=document.getElementById('sol-det-status-badge');
+  sb.textContent=STATUS_LABEL[reg.status]||reg.status||'—';
+  sb.style.background=sc.bg;sb.style.color=sc.c;
+  // Dados principais
+  document.getElementById('sol-det-om').textContent=reg.om||'—';
+  document.getElementById('sol-det-tipo').textContent=reg.tipo_rcd||'—';
+  document.getElementById('sol-det-resp').textContent=reg.responsavel||'—';
+  document.getElementById('sol-det-cliente').textContent=reg.equip_cliente||reg.cliente||'—';
+  document.getElementById('sol-det-filial').textContent=[reg.equip_filial,reg.equip_planta].filter(Boolean).join(' / ')||'—';
+  document.getElementById('sol-det-abertura').textContent=reg.data?fmtDt(reg.data):'—';
+  // Descrição
+  const descWrap=document.getElementById('sol-det-desc-wrap');
+  if(reg.descricao){descWrap.style.display='';document.getElementById('sol-det-desc').textContent=reg.descricao;}
+  else descWrap.style.display='none';
+  // Máquina parada
+  const pWrap=document.getElementById('sol-det-parada-wrap');
+  if(reg.maquina_parada==='sim'){
+    pWrap.style.display='';
+    document.getElementById('sol-det-data-parada').textContent=fmtDt(reg.data_parada);
+    const dp=reg.data_parada?new Date(reg.data_parada+'T12:00:00'):null;
+    const fim=reg.data_retorno?new Date(reg.data_retorno+'T12:00:00'):hoje;
+    const dias=dp?Math.max(0,Math.round((fim-dp)/86400000)):0;
+    const dEl=document.getElementById('sol-det-dias-parado');
+    dEl.textContent=dias+'d';
+    dEl.style.color=reg.data_retorno?'#15803d':dias>=10?'#dc2626':dias>=5?'#b45309':'#15803d';
+    document.getElementById('sol-det-reserva').innerHTML=reg.maquina_reserva==='sim'?'<span style="color:#15803d;font-weight:700">✔ Sim</span>':'<span style="color:#dc2626;font-weight:700">✖ Não</span>';
+    document.getElementById('sol-det-id-reserva').textContent=reg.id_maquina_reserva||'—';
+    const rWrap=document.getElementById('sol-det-retorno-wrap');
+    if(reg.data_retorno){rWrap.style.display='';document.getElementById('sol-det-retorno').textContent=fmtDt(reg.data_retorno);}
+    else rWrap.style.display='none';
+  } else pWrap.style.display='none';
+  // Orçamento
+  const oWrap=document.getElementById('sol-det-orc-wrap');
+  const itens=(reg.orc_itens||[]).filter(i=>i.qtd||i.pn||i.desc||i.vunit);
+  if(itens.length||(reg.orc_valor||0)>0){
+    oWrap.style.display='';
+    const bdi=parseFloat(reg.orc_bdi)||0;
+    const sub=itens.reduce((s,i)=>s+(parseFloat(i.total)||0),0);
+    document.getElementById('sol-det-orc-itens').innerHTML=itens.length?`<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#f8fafc"><th style="padding:5px 8px;text-align:center;color:#64748b;border-bottom:1px solid #e2e8f0;width:40px">Qtd</th><th style="padding:5px 8px;text-align:left;color:#64748b;border-bottom:1px solid #e2e8f0;width:90px">PN</th><th style="padding:5px 8px;text-align:left;color:#64748b;border-bottom:1px solid #e2e8f0">Descrição</th><th style="padding:5px 8px;text-align:right;color:#64748b;border-bottom:1px solid #e2e8f0">Unit.</th><th style="padding:5px 8px;text-align:right;color:#64748b;border-bottom:1px solid #e2e8f0">Total</th></tr></thead><tbody>${itens.map(i=>`<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:5px 8px;text-align:center">${i.qtd||1}</td><td style="padding:5px 8px;color:#64748b">${i.pn||'—'}</td><td style="padding:5px 8px">${i.desc||'—'}</td><td style="padding:5px 8px;text-align:right">${fmt(i.vunit)}</td><td style="padding:5px 8px;text-align:right;font-weight:600">${fmt(i.total)}</td></tr>`).join('')}</tbody></table>`:'';
+    document.getElementById('sol-det-orc-total').innerHTML=`Subtotal: ${fmt(sub)} &nbsp;|&nbsp; BDI ${bdi}%: ${fmt(sub*bdi/100)} &nbsp;|&nbsp; <span style="color:#F37021">Total: ${fmt(reg.orc_valor||sub+sub*bdi/100)}</span>${reg.orc_numero?` &nbsp;<span style="font-size:11px;color:#94a3b8">Nº ${reg.orc_numero}</span>`:''}${reg.fatura?` &nbsp;<span style="font-size:11px;color:#15803d">Fatura: ${reg.fatura}</span>`:''}`;
+  } else oWrap.style.display='none';
+  // Timeline
+  const FASE_LBL={em_aprovacao:'Em Aprovação',aguardando_orcamento:'Ag. Orçamento',aguardando_cliente:'Ag. Cliente',aguardando_execucao:'Ag. Execução',aguardando_faturamento:'Ag. Faturamento',concluido:'Concluído',cancelado:'Cancelado'};
+  const FASE_COR={em_aprovacao:'#6366f1',aguardando_orcamento:'#f59e0b',aguardando_cliente:'#10b981',aguardando_execucao:'#0ea5e9',aguardando_faturamento:'#8b5cf6',concluido:'#15803d',cancelado:'#dc2626'};
+  const FASES=['em_aprovacao','aguardando_orcamento','aguardando_cliente','aguardando_execucao','aguardando_faturamento','concluido'];
+  // Constrói timeline a partir do historico_mov (preferencial) + fallback nos timestamps
+  const movs=reg.historico_mov||[];
+  // Gera eventos: criação + cada mov
+  const eventos=[];
+  if(reg.ts_criacao) eventos.push({label:'Criação',ts:reg.ts_criacao,usuario:reg.responsavel||'—',cor:'#64748b',icon:'📋'});
+  movs.forEach(m=>{
+    eventos.push({label:(FASE_LBL[m.para]||m.para)+(m.diasFase!=null?` (${m.diasFase}d em ${FASE_LBL[m.de]||m.de})`:''),ts:m.ts,usuario:m.usuario||'—',cor:FASE_COR[m.para]||'#64748b',icon:'→'});
+  });
+  // Fallback se sem historico_mov: usa timestamps salvos
+  if(!movs.length){
+    FASES.forEach(f=>{const ts=reg['ts_'+f];if(ts)eventos.push({label:FASE_LBL[f]||f,ts,usuario:f==='em_aprovacao'?reg.responsavel||'—':'—',cor:FASE_COR[f]||'#64748b',icon:'→'});});
+    if(reg.ts_concluido)eventos.push({label:'Concluído',ts:reg.ts_concluido,usuario:'—',cor:'#15803d',icon:'✓'});
+  }
+  eventos.sort((a,b)=>a.ts-b.ts);
+  const tlEl=document.getElementById('sol-det-timeline');
+  if(!eventos.length){tlEl.innerHTML='<div style="font-size:12px;color:#94a3b8;padding:8px 0">Nenhuma movimentação registrada.</div>';}
+  else{
+    tlEl.innerHTML=eventos.map((e,i)=>`
+      <div style="display:flex;gap:12px;align-items:flex-start;padding-bottom:${i<eventos.length-1?'16px':'0'}">
+        <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+          <div style="width:28px;height:28px;border-radius:50%;background:${e.cor}20;border:2px solid ${e.cor};display:flex;align-items:center;justify-content:center;font-size:11px">${e.icon}</div>
+          ${i<eventos.length-1?`<div style="width:2px;flex:1;min-height:16px;background:#e2e8f0;margin-top:4px"></div>`:''}
+        </div>
+        <div style="flex:1;min-width:0;padding-top:4px">
+          <div style="font-size:12px;font-weight:700;color:#1e293b">${e.label}</div>
+          <div style="display:flex;gap:12px;margin-top:2px">
+            <span style="font-size:11px;color:#64748b">🕐 ${fmtTs(e.ts)}</span>
+            <span style="font-size:11px;color:#64748b">👤 ${e.usuario}</span>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+  modal.style.display='flex';
 }
 
 function solRcdToggleParada(){
@@ -17760,6 +17861,89 @@ if ('serviceWorker' in navigator) {
     <!-- Máquinas Paradas -->
     <div id="sol-paradas-wrap" style="display:none">
       <div id="sol-paradas-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALHE RCD -->
+<div id="sol-det-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:3900;align-items:flex-start;justify-content:center;overflow-y:auto;padding:32px 16px">
+  <div style="background:#f8fafc;border-radius:14px;width:100%;max-width:780px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden">
+    <!-- Header -->
+    <div id="sol-det-header" style="background:#1A2E35;color:#fff;padding:20px 24px;display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div id="sol-det-equip-id" style="font-size:20px;font-weight:800;line-height:1"></div>
+        <div id="sol-det-equip-nome" style="font-size:12px;color:#8FA4AE;margin-top:3px"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="sol-det-status-badge" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px"></span>
+        <button onclick="document.getElementById('sol-det-modal').style.display='none'" style="background:rgba(255,255,255,.1);border:none;color:#fff;font-size:18px;width:32px;height:32px;border-radius:6px;cursor:pointer;line-height:1">×</button>
+      </div>
+    </div>
+    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:20px">
+      <!-- Dados principais -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">O.M.</div>
+          <div id="sol-det-om" style="font-size:14px;font-weight:600;color:#1e293b"></div>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Tipo RCD</div>
+          <div id="sol-det-tipo" style="font-size:14px;font-weight:600;color:#1e293b"></div>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Solicitante</div>
+          <div id="sol-det-resp" style="font-size:14px;font-weight:600;color:#1e293b"></div>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Cliente</div>
+          <div id="sol-det-cliente" style="font-size:13px;font-weight:600;color:#1D4ED8"></div>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Filial / Planta</div>
+          <div id="sol-det-filial" style="font-size:13px;font-weight:600;color:#1e293b"></div>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Abertura</div>
+          <div id="sol-det-abertura" style="font-size:14px;font-weight:600;color:#1e293b"></div>
+        </div>
+      </div>
+
+      <!-- Descrição -->
+      <div id="sol-det-desc-wrap" style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:14px;display:none">
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Descrição da Ocorrência</div>
+        <div id="sol-det-desc" style="font-size:13px;color:#334155;line-height:1.6"></div>
+      </div>
+
+      <!-- Máquina Parada -->
+      <div id="sol-det-parada-wrap" style="background:#fff;border:1px solid #fecaca;border-radius:8px;padding:14px;display:none">
+        <div style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">🔴 Máquina Parada</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+          <div><div style="font-size:10px;color:#94a3b8;font-weight:600;margin-bottom:2px">Parada em</div><div id="sol-det-data-parada" style="font-size:13px;font-weight:700;color:#dc2626"></div></div>
+          <div><div style="font-size:10px;color:#94a3b8;font-weight:600;margin-bottom:2px">Dias Parado</div><div id="sol-det-dias-parado" style="font-size:13px;font-weight:700;color:#dc2626"></div></div>
+          <div><div style="font-size:10px;color:#94a3b8;font-weight:600;margin-bottom:2px">Reserva Cobrindo</div><div id="sol-det-reserva" style="font-size:13px;font-weight:600"></div></div>
+          <div><div style="font-size:10px;color:#94a3b8;font-weight:600;margin-bottom:2px">ID Reserva</div><div id="sol-det-id-reserva" style="font-size:13px;font-weight:600;color:#1e293b"></div></div>
+        </div>
+        <div id="sol-det-retorno-wrap" style="margin-top:10px;padding-top:10px;border-top:1px solid #fecaca;display:none">
+          <span style="font-size:11px;font-weight:700;color:#15803d">✔ Reestabelecido em: </span><span id="sol-det-retorno" style="font-size:12px;font-weight:600;color:#15803d"></span>
+        </div>
+      </div>
+
+      <!-- Orçamento -->
+      <div id="sol-det-orc-wrap" style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:14px;display:none">
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Orçamento</div>
+        <div id="sol-det-orc-itens" style="font-size:12px"></div>
+        <div id="sol-det-orc-total" style="text-align:right;font-size:14px;font-weight:800;color:#1e293b;margin-top:8px;padding-top:8px;border-top:1px solid #f1f5f9"></div>
+      </div>
+
+      <!-- Timeline de Movimentação -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:14px">
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:14px">Histórico de Movimentação</div>
+        <div id="sol-det-timeline" style="display:flex;flex-direction:column;gap:0"></div>
+      </div>
+    </div>
+    <div style="padding:12px 24px 20px;display:flex;justify-content:flex-end;gap:8px">
+      <button onclick="solRcdEditarAbrir(document.getElementById('sol-det-modal').dataset.id);document.getElementById('sol-det-modal').style.display='none'" style="padding:9px 18px;background:#f59e0b;color:#fff;border:none;border-radius:7px;font-weight:700;font-size:13px;cursor:pointer">✏ Editar</button>
+      <button onclick="document.getElementById('sol-det-modal').style.display='none'" style="padding:9px 18px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">Fechar</button>
     </div>
   </div>
 </div>
