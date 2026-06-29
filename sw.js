@@ -1,4 +1,4 @@
-// SW v66 — movimentação de cards sem senha: qualquer usuário logado pode mover
+// SW v67 — botão Cancelar nos cards de desmob RCD
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
