@@ -379,23 +379,23 @@ input.filter-sel{padding:5px 10px;height:32px}
 .prog-sem-hd.tem-atraso{border-left:3px solid var(--terra);background:linear-gradient(90deg,#fff5f0,#f7f9fc)}
 .prog-sem-label{color:var(--text);font-weight:600;font-size:12px}
 .prog-sem-total{background:var(--laranja);color:#fff;border-radius:8px;padding:1px 7px;font-size:10px;font-weight:700}
-.prog-sem-body{padding:10px 12px;display:flex;flex-wrap:wrap;gap:7px;align-items:stretch}
-.prog-card{background:#ffffff;border-radius:7px;border:1px solid var(--borda);border-top:3px solid #cbd5e0;padding:8px 10px;min-width:155px;max-width:200px;height:210px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;box-shadow:0 1px 3px rgba(0,0,0,.05);overflow:hidden}
+.prog-sem-body{padding:10px 12px;display:grid;grid-template-columns:repeat(8,1fr);gap:7px;align-items:stretch}
+.prog-card{background:#fff;border-radius:7px;border:1px solid #E2E8F0;border-top:3px solid #CBD5E1;padding:8px 10px;height:210px;cursor:pointer;transition:border-color .15s,box-shadow .15s;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.04);overflow:hidden}
 .prog-card-body{flex:1;overflow:hidden;-webkit-mask-image:linear-gradient(to bottom,#000 70%,transparent 100%);mask-image:linear-gradient(to bottom,#000 70%,transparent 100%)}
-.prog-card-footer{flex-shrink:0;padding-top:5px;border-top:1px dashed var(--borda)}
-.prog-card:hover{border-color:var(--laranja);box-shadow:0 2px 10px rgba(0,0,0,.4)}
-.prog-card.concluido{border-top-color:var(--verde2);background:#f0fff8}
-.prog-card.atrasado{border-top-color:var(--terra);background:#fff5f0}
-.prog-card.reservado{border-top-color:#E8630A;background:#FDF3EC}
-.prog-card.reprogramado{border-top-color:#B45309;background:#FEF3C7}
-.reprogramado-badge{display:inline-flex;align-items:center;gap:2px;background:rgba(180,83,9,.1);color:#B45309;border-radius:3px;padding:1px 6px;font-size:9px;font-weight:700;border:1px solid rgba(180,83,9,.2)}
-.prog-card-id{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase}
-.prog-card-equip{font-size:11px;font-weight:600;color:var(--text);line-height:1.3;margin:2px 0}
-.prog-card-modelo{font-size:10px;color:var(--text3)}
+.prog-card-footer{flex-shrink:0;padding-top:5px;border-top:1px solid #F1F5F9}
+.prog-card:hover{border-color:#94A3B8;border-top-color:#475569;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.prog-card.concluido{border-top-color:#0F172A;background:#fff}
+.prog-card.atrasado{border-top-color:#DC2626;background:#FFF5F5}
+.prog-card.reservado{border-top-color:#475569;background:#F8FAFC}
+.prog-card.reprogramado{border-top-color:#94A3B8;background:#F8FAFC}
+.reprogramado-badge{display:inline-flex;align-items:center;gap:2px;background:#F1F5F9;color:#475569;border-radius:3px;padding:1px 6px;font-size:9px;font-weight:700;border:1px solid #E2E8F0}
+.prog-card-id{font-size:9px;font-weight:600;color:#94A3B8;text-transform:uppercase}
+.prog-card-equip{font-size:11px;font-weight:600;color:#0F172A;line-height:1.3;margin:2px 0}
+.prog-card-modelo{font-size:10px;color:#64748B}
 .prog-card-row{display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap}
-.prog-etapa{font-size:9px;padding:1px 5px;border-radius:3px;background:#e2e8f0;color:#718096;font-weight:500}
-.atraso-badge{background:rgba(200,50,50,.1);color:#ff7070;border-radius:3px;padding:1px 6px;font-size:9px;font-weight:700}
-.concluido-badge{background:rgba(18,196,126,.1);color:var(--verde2);border-radius:3px;padding:1px 6px;font-size:9px;font-weight:700}
+.prog-etapa{font-size:9px;padding:1px 5px;border-radius:3px;background:#F1F5F9;color:#475569;font-weight:500}
+.atraso-badge{background:rgba(220,38,38,.08);color:#DC2626;border-radius:3px;padding:1px 6px;font-size:9px;font-weight:700}
+.concluido-badge{background:#F1F5F9;color:#334155;border-radius:3px;padding:1px 6px;font-size:9px;font-weight:700}
 .prog-remove-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:2px;line-height:1;margin-left:auto;transition:color .15s}
 .prog-remove-btn:hover{color:var(--terra)}
 

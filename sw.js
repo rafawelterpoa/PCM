@@ -1,4 +1,4 @@
-// SW v67 — botão Cancelar nos cards de desmob RCD
+// SW v68 — programação: grid 8 colunas, cards dark minimal
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
