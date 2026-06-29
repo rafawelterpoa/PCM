@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -3662,19 +3662,11 @@ function renderBoard(sid,visao){
       if(visao==='geral'){
         if(eq.etapa===etapa.id){dragId=null;return;}
         const ctx={oficina:eq.oficina,eq};
-        const nv=currentUser?currentUser.perfil:'';
-        const setor=currentUser?(currentUser.setor||''):'';
-        // Master e Sistemas: acesso total sem restrição
-        const isMasterSistemas=nv==='master'||nv==='sistemas';
-        // Gestor ou Usuário de Oficinas: acesso total dentro da sua oficina
-        const isOficina=(nv==='gestor'||nv==='usuario')&&setor==='Oficinas';
-        if(isMasterSistemas||isOficina){
-          const _p={perfil:currentUser.nome,nivel:nv};
-          if(etapa.id==='pronto'){pendingProntoMove={eq,fromEtapa:eq.etapa,toId:etapa.id,sid,visao:'geral',perfil:_p};document.getElementById('modal-pronto-confirm').style.display='flex';}
-          else{applyMove(eq,eq.etapa,etapa.id,sid,'geral',_p);}
-        }else{
-          requestSenha('🔐 Aprovação necessária',`Mover "${eq.id}" requer aprovação de Oficinas, Gestor ou Master.`,'mover_geral',ctx,p=>{if(etapa.id==='pronto'){pendingProntoMove={eq,fromEtapa:eq.etapa,toId:etapa.id,sid,visao:'geral',perfil:p};document.getElementById('modal-pronto-confirm').style.display='flex';}else{applyMove(eq,eq.etapa,etapa.id,sid,'geral',p);}});
-        }
+        // Qualquer usuário logado pode movimentar — sem restrição de perfil
+        const nv=currentUser?currentUser.perfil:'usuario';
+        const _p=currentUser?{perfil:currentUser.nome,nivel:nv}:{perfil:'operador',nivel:'usuario'};
+        if(etapa.id==='pronto'){pendingProntoMove={eq,fromEtapa:eq.etapa,toId:etapa.id,sid,visao:'geral',perfil:_p};document.getElementById('modal-pronto-confirm').style.display='flex';}
+        else{applyMove(eq,eq.etapa,etapa.id,sid,'geral',_p);}
       }else{
         const fe=eq.etapa_interna||'lavagem';
         if(fe===etapa.id){dragId=null;return;}

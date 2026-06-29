@@ -1,4 +1,4 @@
-// SW v65 — KPIs Programação corrigidos: reparados/em manut/sem prog/média semana
+// SW v66 — movimentação de cards sem senha: qualquer usuário logado pode mover
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
