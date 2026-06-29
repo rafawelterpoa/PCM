@@ -15169,16 +15169,18 @@ function solRcdAba(aba, sfx) {
   const kw = document.getElementById('sol-kanban'+sfx+'-wrap');
   const hw = document.getElementById('sol-hist'+sfx+'-wrap');
   const tw = document.getElementById('sol-tabela'+sfx+'-wrap');
+  const pw = document.getElementById('sol-paradas'+sfx+'-wrap');
   if (kw) kw.style.display = aba==='kanban' ? '' : 'none';
   if (hw) hw.style.display = aba==='historico' ? '' : 'none';
   if (tw) { tw.style.display = aba==='tabela' ? '' : 'none'; if(aba==='tabela') solRcdRenderTabela(sfx); }
-  const tabs = ['kanban','historico','tabela'];
+  if (pw) { pw.style.display = aba==='paradas' ? '' : 'none'; if(aba==='paradas') solRcdRenderParadas(sfx); }
+  const tabs = ['kanban','historico','tabela','paradas'];
   tabs.forEach(t => {
     const el = document.getElementById('sol-tab-'+t+sfx);
     if (!el) return;
     const active = t === aba;
-    el.style.color = active ? '#F37021' : '#94a3b8';
-    el.style.borderBottom = active ? '2px solid #F37021' : '2px solid transparent';
+    el.style.color = active ? (t==='paradas'?'#dc2626':'#F37021') : '#94a3b8';
+    el.style.borderBottom = active ? ('2px solid '+(t==='paradas'?'#dc2626':'#F37021')) : '2px solid transparent';
   });
 }
 
@@ -15906,6 +15908,7 @@ async function solRcdAvancar(id, novoStatus){
   await solRcdSalvarReg(reg);
   solRcdRenderTodos();
   showToast('→ '+novoStatus.replace(/_/g,' '));
+  if(reg.maquina_parada==='sim'&&!reg.data_retorno) solReestAbrir(id);
 }
 
 async function solRcdVoltarCliente(id){
@@ -15939,6 +15942,108 @@ async function solRcdConcluir(id){
   await solRcdSalvarReg(reg);
   solRcdRenderTodos();
   showToast('💰 Faturado — Fatura: '+fatura.trim());
+}
+
+function solRcdToggleParada(){
+  const v=document.getElementById('sol-maquina-parada')?.value;
+  const w=document.getElementById('sol-data-parada-wrap');
+  if(w)w.style.display=v==='sim'?'':'none';
+}
+function solRcdToggleReserva(){
+  // ID da reserva sempre visível — sem hide logic por ora
+}
+
+function solReestAbrir(id){
+  const reg=_solRegistros[id];if(!reg||reg.maquina_parada!=='sim'||reg.data_retorno)return;
+  document.getElementById('sol-reest-id').value=id;
+  document.getElementById('sol-reest-equip').textContent=reg.equip_id||'—';
+  document.getElementById('sol-reest-resp').value='';
+  document.getElementById('sol-reest-data-wrap').style.display='none';
+  document.getElementById('sol-reest-data').value=new Date().toISOString().slice(0,10);
+  document.getElementById('sol-reest-modal').style.display='flex';
+}
+function solReestFechar(){document.getElementById('sol-reest-modal').style.display='none';}
+async function solReestConfirmar(){
+  const id=document.getElementById('sol-reest-id').value;
+  const resp=document.getElementById('sol-reest-resp').value;
+  const data=document.getElementById('sol-reest-data').value;
+  if(!resp){showToast('⚠️ Selecione se o equipamento foi reestabelecido');return;}
+  if(resp==='sim'&&!data){showToast('⚠️ Informe a data de retorno');return;}
+  if(resp==='sim'){
+    const reg=_solRegistros[id];if(!reg)return;
+    reg.data_retorno=data;
+    await solRcdSalvarReg(reg);
+    solRcdRenderTodos();
+    showToast('✅ Equipamento reestabelecido em '+data.split('-').reverse().join('/'));
+  }
+  solReestFechar();
+}
+
+function solRcdRenderParadas(sfx=''){
+  const el=document.getElementById('sol-paradas'+sfx+'-content');if(!el)return;
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const paradas=Object.values(_solRegistros).filter(r=>r.maquina_parada==='sim');
+  const ativas=paradas.filter(r=>!r.data_retorno).sort((a,b)=>(a.data_parada||'')>(b.data_parada||'')?1:-1);
+  const reest=paradas.filter(r=>r.data_retorno).sort((a,b)=>(b.data_retorno||'')>(a.data_retorno||'')?1:-1);
+  const fmtData=s=>s?new Date(s+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+  const diasParado=dp=>{if(!dp)return 0;const d=new Date(dp+'T12:00:00');return Math.max(0,Math.round((hoje-d)/86400000));};
+  const diasRow=(dp,dr)=>{
+    if(!dp)return 0;
+    const ini=new Date(dp+'T12:00:00');
+    const fim=dr?new Date(dr+'T12:00:00'):hoje;
+    return Math.max(0,Math.round((fim-ini)/86400000));
+  };
+  const badgeReserva=r=>r.maquina_reserva==='sim'?`<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700">✔ Sim${r.id_maquina_reserva?' — '+r.id_maquina_reserva:''}</span>`:`<span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700">✖ Não</span>`;
+  const STATUS_LABEL={em_aprovacao:'Em Aprovação',aguardando_orcamento:'Ag. Orçamento',aguardando_cliente:'Ag. Cliente',aguardando_execucao:'Ag. Execução',aguardando_faturamento:'Ag. Faturamento',concluido:'Concluído',cancelado:'Cancelado'};
+  const tblHead=`<tr style="background:#f8fafc"><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;white-space:nowrap">Equipamento</th><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0">Cliente / Operação</th><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;white-space:nowrap">Parada em</th><th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;white-space:nowrap">Dias Parado</th><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0">Reserva</th><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0">Status RCD</th><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0">Ação</th></tr>`;
+  const ativasRows=ativas.map(r=>{
+    const d=diasParado(r.data_parada);
+    const cor=d>=10?'#dc2626':d>=5?'#b45309':'#15803d';
+    const bg=d>=10?'#fee2e2':d>=5?'#fef3c7':'#dcfce7';
+    return `<tr style="border-bottom:1px solid #f1f5f9">
+      <td style="padding:8px 10px;font-size:12px;font-weight:700;color:#1e293b;white-space:nowrap">${r.equip_id||'—'}<div style="font-size:10px;font-weight:400;color:#64748b">${r.equip_nome||''}</div></td>
+      <td style="padding:8px 10px;font-size:12px;color:#1D4ED8">${r.equip_cliente||'—'}<div style="font-size:10px;color:#64748b">${r.equip_filial||''}</div></td>
+      <td style="padding:8px 10px;font-size:12px;color:#1e293b;white-space:nowrap">${fmtData(r.data_parada)}</td>
+      <td style="padding:8px 10px;text-align:center"><span style="font-size:13px;font-weight:800;background:${bg};color:${cor};padding:3px 10px;border-radius:99px">${d}d</span></td>
+      <td style="padding:8px 10px">${badgeReserva(r)}</td>
+      <td style="padding:8px 10px;font-size:11px;color:#64748b">${STATUS_LABEL[r.status]||r.status||'—'}</td>
+      <td style="padding:8px 10px"><button onclick="solReestAbrir('${r.id}')" style="padding:4px 10px;background:#15803d;color:#fff;border:none;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer">✓ Reestabelecer</button></td>
+    </tr>`;
+  }).join('');
+  const reestRows=reest.map(r=>{
+    const d=diasRow(r.data_parada,r.data_retorno);
+    return `<tr style="border-bottom:1px solid #f1f5f9;opacity:.75">
+      <td style="padding:8px 10px;font-size:12px;font-weight:700;color:#64748b;white-space:nowrap">${r.equip_id||'—'}<div style="font-size:10px;font-weight:400">${r.equip_nome||''}</div></td>
+      <td style="padding:8px 10px;font-size:12px;color:#64748b">${r.equip_cliente||'—'}</td>
+      <td style="padding:8px 10px;font-size:12px;color:#64748b;white-space:nowrap">${fmtData(r.data_parada)}</td>
+      <td style="padding:8px 10px;text-align:center"><span style="font-size:12px;font-weight:700;color:#64748b">${d}d</span></td>
+      <td style="padding:8px 10px">${badgeReserva(r)}</td>
+      <td style="padding:8px 10px;font-size:11px;color:#64748b">${STATUS_LABEL[r.status]||r.status||'—'}</td>
+      <td style="padding:8px 10px;font-size:11px;color:#15803d;font-weight:600">✔ ${fmtData(r.data_retorno)}</td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+      <div style="background:#fee2e2;border:1px solid #fecaca;border-radius:10px;padding:16px">
+        <div style="font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Paradas Agora</div>
+        <div style="font-size:32px;font-weight:800;color:#dc2626">${ativas.length}</div>
+      </div>
+      <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:16px">
+        <div style="font-size:11px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Sem Reserva</div>
+        <div style="font-size:32px;font-weight:800;color:#b45309">${ativas.filter(r=>r.maquina_reserva!=='sim').length}</div>
+      </div>
+      <div style="background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:16px">
+        <div style="font-size:11px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Reestabelecidas</div>
+        <div style="font-size:32px;font-weight:800;color:#15803d">${reest.length}</div>
+      </div>
+    </div>
+    ${ativas.length?`<div style="font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">🔴 Em Parada (${ativas.length})</div>
+    <div style="overflow-x:auto;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px"><table style="width:100%;border-collapse:collapse">${tblHead}<tbody>${ativasRows}</tbody></table></div>`
+    :'<div style="padding:24px;text-align:center;color:#94a3b8;font-size:13px">Nenhuma máquina parada no momento ✅</div>'}
+    ${reest.length?`<div style="font-size:11px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">✔ Reestabelecidas (${reest.length})</div>
+    <div style="overflow-x:auto;border-radius:8px;border:1px solid #e2e8f0"><table style="width:100%;border-collapse:collapse">${tblHead}<tbody>${reestRows}</tbody></table></div>`:''}
+  `;
 }
 
 async function solRcdReverterConcluido(id){
@@ -15979,6 +16084,11 @@ function solRcdNovaAbrir(){
   document.getElementById('sol-responsavel').value=currentUser?.nome||'';
   document.getElementById('sol-descricao').value='';
   const _trEl=document.getElementById('sol-tipo-rcd');if(_trEl)_trEl.value='';
+  const _mpEl=document.getElementById('sol-maquina-parada');if(_mpEl)_mpEl.value='';
+  const _dpEl=document.getElementById('sol-data-parada');if(_dpEl)_dpEl.value='';
+  const _mrEl0=document.getElementById('sol-maquina-reserva');if(_mrEl0)_mrEl0.value='';
+  const _irEl=document.getElementById('sol-id-reserva');if(_irEl)_irEl.value='';
+  const _dpW=document.getElementById('sol-data-parada-wrap');if(_dpW)_dpW.style.display='none';
   document.getElementById('sol-bdi').value='';
   document.getElementById('sol-valor').value='';
   ['sol-eq-nome','sol-eq-fab','sol-eq-modelo','sol-eq-serie'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='—';});
@@ -16019,7 +16129,11 @@ function solRcdEditarAbrir(id){
   inp('sol-contato-tel',   reg.contato_tel);
   inp('sol-contato-email', reg.contato_email);
   const _trEl2=document.getElementById('sol-tipo-rcd');if(_trEl2)_trEl2.value=reg.tipo_rcd||'';
+  const _mpEl2=document.getElementById('sol-maquina-parada');if(_mpEl2)_mpEl2.value=reg.maquina_parada||'';
+  const _dpEl2=document.getElementById('sol-data-parada');if(_dpEl2)_dpEl2.value=reg.data_parada||'';
+  const _dpW2=document.getElementById('sol-data-parada-wrap');if(_dpW2)_dpW2.style.display=reg.maquina_parada==='sim'?'':'none';
   const _mrEl=document.getElementById('sol-maquina-reserva');if(_mrEl)_mrEl.value=reg.maquina_reserva||'';
+  const _irEl2=document.getElementById('sol-id-reserva');if(_irEl2)_irEl2.value=reg.id_maquina_reserva||'';
   orcFotosCarregar('sol', reg.orc_fotos||[]);
   const tbody=document.getElementById('sol-itens-body');if(tbody)tbody.innerHTML='';
   (reg.orc_itens||[]).forEach(it=>solRcdAddLinha(it));
@@ -16152,7 +16266,12 @@ async function solRcdSalvar(){
   reg.descricao=document.getElementById('sol-descricao')?.value.trim()||'';
   reg.tipo_rcd=document.getElementById('sol-tipo-rcd')?.value||'';
   if(!reg.tipo_rcd){showToast('⚠️ Selecione o Tipo RCD');document.getElementById('sol-tipo-rcd')?.focus();return;}
+  reg.maquina_parada=document.getElementById('sol-maquina-parada')?.value||'';
+  if(!reg.maquina_parada){showToast('⚠️ Informe se a máquina está parada');document.getElementById('sol-maquina-parada')?.focus();return;}
+  reg.data_parada=reg.maquina_parada==='sim'?(document.getElementById('sol-data-parada')?.value||''):'';
+  if(reg.maquina_parada==='sim'&&!reg.data_parada){showToast('⚠️ Informe a data de parada');document.getElementById('sol-data-parada')?.focus();return;}
   reg.maquina_reserva=document.getElementById('sol-maquina-reserva')?.value||'';
+  reg.id_maquina_reserva=document.getElementById('sol-id-reserva')?.value.trim()||'';
   const _solItens=solRcdLerLinhas().filter(i=>i.qtd||i.pn||i.desc||i.vunit);
   if(_solItens.length&&_solItens.some(i=>!i.vunit)){showToast('⚠️ Todos os itens precisam ter Valor Unitário');return;}
   reg.orc_itens=_solItens;
@@ -17531,6 +17650,7 @@ if ('serviceWorker' in navigator) {
         <button id="sol-tab-kanban-inline" onclick="solRcdAba('kanban','-inline')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#E8630A;border-bottom:2px solid #E8630A;margin-bottom:-2px">Kanban</button>
         <button id="sol-tab-historico-inline" onclick="solRcdAba('historico','-inline')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#8FA4AE;border-bottom:2px solid transparent;margin-bottom:-2px">Histórico / Concluídos</button>
         <button id="sol-tab-tabela-inline" onclick="solRcdAba('tabela','-inline')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#8FA4AE;border-bottom:2px solid transparent;margin-bottom:-2px">📊 Tabela</button>
+        <button id="sol-tab-paradas-inline" onclick="solRcdAba('paradas','-inline')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px">🔴 Máquinas Paradas</button>
       </div>
       <!-- Kanban -->
       <div id="sol-kanban-inline-wrap">
@@ -17560,6 +17680,10 @@ if ('serviceWorker' in navigator) {
       <!-- Histórico -->
       <div id="sol-hist-inline-wrap" style="display:none">
         <div id="sol-historico-inline" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+      <!-- Máquinas Paradas -->
+      <div id="sol-paradas-inline-wrap" style="display:none">
+        <div id="sol-paradas-inline-content"></div>
       </div>
       <!-- Tabela -->
       <div id="sol-tabela-inline-wrap" style="display:none">
@@ -17595,6 +17719,7 @@ if ('serviceWorker' in navigator) {
       <button id="sol-tab-kanban" onclick="solRcdAba('kanban','')" style="padding:9px 18px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:none;color:#F37021;border-bottom:2px solid #F37021;margin-bottom:-2px">Kanban</button>
       <button id="sol-tab-historico" onclick="solRcdAba('historico','')" style="padding:9px 18px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:none;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px">Histórico / Concluídos</button>
       <button id="sol-tab-tabela" onclick="solRcdAba('tabela','')" style="padding:9px 18px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:none;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px">📊 Tabela</button>
+      <button id="sol-tab-paradas" onclick="solRcdAba('paradas','')" style="padding:9px 18px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:none;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px">🔴 Máquinas Paradas</button>
     </div>
     <!-- Kanban -->
     <div id="sol-kanban-wrap">
@@ -17631,6 +17756,37 @@ if ('serviceWorker' in navigator) {
         <button onclick="solRcdGerarPDF('')" style="padding:7px 16px;background:#1A2E35;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px">📄 Gerar Relatório PDF</button>
       </div>
       <div id="sol-tabela-content" style="overflow-x:auto;border-radius:8px;border:1px solid #e2e8f0"></div>
+    </div>
+    <!-- Máquinas Paradas -->
+    <div id="sol-paradas-wrap" style="display:none">
+      <div id="sol-paradas-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REESTABELECIMENTO EQUIPAMENTO -->
+<div id="sol-reest-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:4000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;width:420px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.25);padding:28px">
+    <input type="hidden" id="sol-reest-id">
+    <div style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:4px">⚙️ Equipamento Reestabelecido?</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:20px">Equipamento <strong id="sol-reest-equip" style="color:#1e293b"></strong> está marcado como parado. Informe se foi reestabelecido neste movimento.</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Equipamento reestabelecido?</label>
+        <select id="sol-reest-resp" onchange="document.getElementById('sol-reest-data-wrap').style.display=this.value==='sim'?'':'none'" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box;background:#fff">
+          <option value="">Selecione...</option>
+          <option value="sim">Sim — retornou à operação</option>
+          <option value="nao">Não — ainda parada</option>
+        </select>
+      </div>
+      <div id="sol-reest-data-wrap" style="display:none">
+        <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Data de retorno <span style="color:#ef4444">*</span></label>
+        <input id="sol-reest-data" type="date" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="solReestFechar()" style="padding:9px 18px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer">Pular</button>
+      <button onclick="solReestConfirmar()" style="padding:9px 18px;background:#15803d;color:#fff;border:none;border-radius:7px;font-weight:700;font-size:13px;cursor:pointer">✓ Confirmar</button>
     </div>
   </div>
 </div>
@@ -17780,12 +17936,28 @@ if ('serviceWorker' in navigator) {
           </select>
         </div>
         <div>
+          <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Máquina Parada? <span style="color:#ef4444">*</span></label>
+          <select id="sol-maquina-parada" onchange="solRcdToggleParada()" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;background:#fff">
+            <option value="">Selecione...</option>
+            <option value="sim">Sim — parada</option>
+            <option value="nao">Não — em operação</option>
+          </select>
+        </div>
+        <div id="sol-data-parada-wrap" style="display:none">
+          <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Data da Parada <span style="color:#ef4444">*</span></label>
+          <input id="sol-data-parada" type="date" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+        </div>
+        <div>
           <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Máquina Reserva cobrindo</label>
-          <select id="sol-maquina-reserva" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;background:#fff">
+          <select id="sol-maquina-reserva" onchange="solRcdToggleReserva()" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;background:#fff">
             <option value="">Não informado</option>
             <option value="sim">Sim</option>
             <option value="nao">Não</option>
           </select>
+        </div>
+        <div id="sol-id-reserva-wrap">
+          <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">ID da Máquina Reserva</label>
+          <input id="sol-id-reserva" type="text" placeholder="ex: PCP01200" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
         </div>
         <div style="grid-column:1/-1">
           <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Descrição da ocorrência</label>
