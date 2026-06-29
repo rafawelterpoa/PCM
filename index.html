@@ -14057,6 +14057,26 @@ function mtAutoFillFamilia(){
   const el=document.getElementById('mt-familia');if(el)el.value=fam;
 }
 
+function pcmValidarEquipId(el){
+  const val=(el.value||'').trim().toUpperCase();
+  el.value=val;
+  // Remove hint anterior
+  let hint=document.getElementById(el.id+'-hint');
+  if(!hint){hint=document.createElement('div');hint.id=el.id+'-hint';hint.style.cssText='font-size:11px;margin-top:3px;';el.parentNode.appendChild(hint);}
+  if(!val){el.style.borderColor='';hint.textContent='';return;}
+  const eq=(state&&state[val])||(EQUIPAMENTOS_ORIG&&EQUIPAMENTOS_ORIG.find(e=>(e.id||'').toUpperCase()===val));
+  if(eq){
+    el.style.borderColor='#16a34a';
+    hint.style.color='#16a34a';
+    hint.textContent='✔ '+(eq.equipamento||eq.tipo||'Equipamento encontrado');
+  } else {
+    el.style.borderColor='#dc2626';
+    hint.style.color='#dc2626';
+    hint.innerHTML='⚠ ID não encontrado na base. Use o número <strong>completo</strong> (ex: PCP01142).';
+    showToast('⚠️ ID de equipamento incompleto ou inválido: '+val);
+  }
+}
+
 function mtSalvar(){
   const equipId=(document.getElementById('mt-equip-id')?.value||'').trim().toUpperCase();
   if(!equipId)return alert('Informe o ID do equipamento.');
@@ -17475,7 +17495,7 @@ if ('serviceWorker' in navigator) {
       </div>
       <!-- Linha 1 -->
       <div class="gi-form-row" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:10px">
-        <div><label class="gi-label">ID Equipamento</label><input class="gi-input" id="mt-equip-id" placeholder="Ex: MCP04741" maxlength="8" oninput="this.value=this.value.toUpperCase();mtAutoFillFamilia()"></div>
+        <div><label class="gi-label">ID Equipamento</label><input class="gi-input" id="mt-equip-id" placeholder="Ex: MCP04741" maxlength="8" oninput="this.value=this.value.toUpperCase();mtAutoFillFamilia()" onblur="pcmValidarEquipId(this)"></div>
         <div><label class="gi-label">Família</label><input class="gi-input" id="mt-familia" placeholder="Auto-preenchido" readonly style="background:#f8fafc"></div>
         <div><label class="gi-label">Tipo de Manutenção</label>
           <select class="gi-select" id="mt-tipo">
@@ -18141,7 +18161,7 @@ if ('serviceWorker' in navigator) {
         </div>
         <div id="sol-id-reserva-wrap">
           <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">ID da Máquina Reserva</label>
-          <input id="sol-id-reserva" type="text" placeholder="ex: PCP01200" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+          <input id="sol-id-reserva" type="text" placeholder="ex: PCP01200" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box" oninput="this.value=this.value.toUpperCase()" onblur="pcmValidarEquipId(this)">
         </div>
         <div style="grid-column:1/-1">
           <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Descrição da ocorrência</label>
@@ -18211,7 +18231,7 @@ if ('serviceWorker' in navigator) {
       <div class="gi-form-row" style="grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:10px">
         <div><label class="gi-label">Data</label><input class="gi-input" type="date" id="vp-data"></div>
         <div><label class="gi-label">Equip. Retirada (origem)</label>
-          <input class="gi-input" id="vp-equip-ret" placeholder="Digite ID completo..." list="vp-dl-equips" autocomplete="off" oninput="vpAutoFill(this,'ret')"></div>
+          <input class="gi-input" id="vp-equip-ret" placeholder="Digite ID completo..." list="vp-dl-equips" autocomplete="off" oninput="this.value=this.value.toUpperCase();vpAutoFill(this,'ret')" onblur="pcmValidarEquipId(this)"></div>
         <div><label class="gi-label">Oficina</label>
           <select class="gi-select" id="vp-oficina">
             <option value="">— Selecione —</option>
@@ -18228,7 +18248,7 @@ if ('serviceWorker' in navigator) {
       <!-- Linha 2: Destino e documentação -->
       <div class="gi-form-row" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:10px">
         <div><label class="gi-label">Equip. Destino</label>
-          <input class="gi-input" id="vp-equip-dest" placeholder="Digite ID completo..." list="vp-dl-equips" autocomplete="off"></div>
+          <input class="gi-input" id="vp-equip-dest" placeholder="Digite ID completo..." list="vp-dl-equips" autocomplete="off" oninput="this.value=this.value.toUpperCase()" onblur="pcmValidarEquipId(this)"></div>
         <div><label class="gi-label">Operação / Contrato</label>
           <input class="gi-input" id="vp-operacao" placeholder="Digite operação..." list="vp-dl-operacoes" autocomplete="off"></div>
         <div><label class="gi-label">O.M.</label><input class="gi-input" id="vp-om" placeholder="Nº da O.M."></div>
