@@ -16881,24 +16881,16 @@ function opRenderKpis(opsFiltradas){
   const _base=opBuildDinamico();
   const ops=opsFiltradas||_base.map(o=>({...o,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
   const totalOps=ops.length;
-  // Em campo: usa EQUIPAMENTOS_ORIG como fonte de verdade para os totais por tipo
-  const _origAlug=opAlugadosBase();
+  // Em campo: se há filtro de tipo ou contrato, contar das ops filtradas (fonte consistente)
   const _cs=window._csvStats||{};
   const _hasBreakdown=_cs.locadosEq!=null;
   let totalEquips;
-  if(_opContratoFiltros.size){
-    const _allAlug=opAlugadosBase();
-    const _filtCT=_allAlug.filter(e=>_opContratoFiltros.has(opContratoEquip(e)));
-    totalEquips=_opTipoFiltro?_filtCT.filter(e=>opTipoEquip(e)===_opTipoFiltro).length:_filtCT.length;
-  }else if(_opTipoFiltro==='equipamento'){
-    totalEquips=_hasBreakdown?(_cs.locadosEq||0):_origAlug.filter(e=>frotaClassificar(e.tipo)==='equipamento').length;
-  }else if(_opTipoFiltro==='implemento'){
-    totalEquips=_hasBreakdown?(_cs.locadosImp||0):_origAlug.filter(e=>frotaClassificar(e.tipo)==='implemento').length;
-  }else if(_opTipoFiltro==='acessorio'){
-    totalEquips=_hasBreakdown?(_cs.locadosAc||0):_origAlug.filter(e=>frotaClassificar(e.tipo)==='acessorio').length;
+  if(_opTipoFiltro||_opContratoFiltros.size){
+    // Sempre contar das operações já filtradas — evita divergências entre CSV e state
+    totalEquips=ops.reduce((s,o)=>s+o.equips.length,0);
   }else{
     const total=_hasBreakdown?(_cs.locadosEq+(_cs.locadosImp||0)+(_cs.locadosAc||0)):0;
-    totalEquips=total||_origAlug.length;
+    totalEquips=total||opAlugadosBase().length;
   }
   const estados=[...new Set(ops.map(o=>o.estado).filter(Boolean))].length;
   const tipoLabel=_opTipoFiltro?({equipamento:'Equipamentos',implemento:'Implementos',acessorio:'Acessórios'}[_opTipoFiltro]):'unidades locadas';
