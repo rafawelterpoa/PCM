@@ -5996,7 +5996,7 @@ function renderMapa(){
         svg+=`<text x="${vx+CARD_W/2}" y="${vy+10}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(0,3)}</text>`;
         svg+=`<text x="${vx+CARD_W/2}" y="${vy+21}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(3)}</text>`;
       } else {
-        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.04)" rx="2" stroke="rgba(5,150,105,.3)" stroke-width="0.5" onmouseup="mapaSlotDrop(event,'${vLoc}')"/>`;
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.04)" rx="2" stroke="rgba(5,150,105,.3)" stroke-width="0.5" style="cursor:pointer" data-vaga="${vLoc}" onmouseup="mapaSlotDrop(event,'${vLoc}')"/>`;
         svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(5,150,105,.5)" style="pointer-events:none">${vLoc}</text>`;
       }
     }
@@ -6024,7 +6024,7 @@ function renderMapa(){
         svg+=`<text x="${vx+CARD_W/2}" y="${vy+10}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(0,3)}</text>`;
         svg+=`<text x="${vx+CARD_W/2}" y="${vy+21}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(3)}</text>`;
       } else {
-        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.04)" rx="2" stroke="rgba(99,102,241,.3)" stroke-width="0.5" onmouseup="mapaSlotDrop(event,'${iLoc}')"/>`;
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.04)" rx="2" stroke="rgba(99,102,241,.3)" stroke-width="0.5" style="cursor:pointer" data-vaga="${iLoc}" onmouseup="mapaSlotDrop(event,'${iLoc}')"/>`;
         svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(99,102,241,.5)" style="pointer-events:none">${iLoc}</text>`;
       }
     }
@@ -16862,9 +16862,15 @@ function opRenderKpis(opsFiltradas){
   const _cs=window._csvStats||{};
   const _hasBreakdown=_cs.locadosEq!=null;
   let totalEquips;
-  if(_opTipoFiltro||_opContratoFiltros.size){
-    // Sempre contar das operações já filtradas — evita divergências entre CSV e state
+  if(_opContratoFiltros.size){
+    // Com filtro de contrato: contar das ops filtradas (OPERACOES_DATA não cobre todos)
     totalEquips=ops.reduce((s,o)=>s+o.equips.length,0);
+  }else if(_opTipoFiltro&&_hasBreakdown){
+    // Filtro de tipo sem contrato: usar totais do CSV (fonte completa)
+    if(_opTipoFiltro==='equipamento') totalEquips=_cs.locadosEq||0;
+    else if(_opTipoFiltro==='implemento') totalEquips=_cs.locadosImp||0;
+    else if(_opTipoFiltro==='acessorio') totalEquips=_cs.locadosAc||0;
+    else totalEquips=ops.reduce((s,o)=>s+o.equips.length,0);
   }else{
     const total=_hasBreakdown?(_cs.locadosEq+(_cs.locadosImp||0)+(_cs.locadosAc||0)):0;
     totalEquips=total||opAlugadosBase().length;
