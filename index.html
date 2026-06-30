@@ -16867,14 +16867,22 @@ function opRenderKpis(opsFiltradas){
   }
   const estados=[...new Set(ops.map(o=>o.estado).filter(Boolean))].length;
   const tipoLabel=_opTipoFiltro?({equipamento:'Equipamentos',implemento:'Implementos',acessorio:'Acessórios'}[_opTipoFiltro]):'unidades locadas';
+  // Órfãos: alugados sem operação registrada
+  const _allAlugKpi=opAlugadosBase();
+  const _alugFiltKpi=(_opContratoFiltro?_allAlugKpi.filter(e=>opContratoEquip(e)===_opContratoFiltro):_allAlugKpi)
+    .filter(e=>!_opTipoFiltro||opTipoEquip(e)===_opTipoFiltro);
+  const _idsComOp=new Set(ops.flatMap(o=>o.equips.map(e=>e.id)));
+  const _orfaos=_alugFiltKpi.filter(e=>!_idsComOp.has(e.id));
+  window._opOrfaos=_orfaos;
   el.innerHTML=[
     {l:'Operações Ativas',v:totalOps,c:'#E8630A',sub:'contratos ativos'},
-    {l:'Em Campo',v:totalEquips,c:'#1A2E35',sub:tipoLabel},
+    {l:'Em Campo',v:totalEquips,c:'#1A2E35',sub:tipoLabel,note:_orfaos.length?`*${_orfaos.length} sem operação`:null},
     {l:'Estados Atendidos',v:estados,c:'#1D4ED8',sub:'UFs com operação'},
   ].map(k=>`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
     <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;margin-bottom:8px">${k.l}</div>
     <div style="font-size:32px;font-weight:700;color:${k.c};line-height:1;margin-bottom:4px">${k.v?.toLocaleString('pt-BR')}</div>
     <div style="font-size:11px;color:#8FA4AE">${k.sub}</div>
+    ${k.note?`<div style="font-size:10px;color:#F59E0B;font-weight:600;margin-top:5px">${k.note}</div>`:''}
   </div>`).join('');
 }
 function opRenderChart(ops){
@@ -17022,6 +17030,46 @@ function opRender(){
         </tr>`;}).join('')}
     </tbody>
   </table></div>`;
+
+  // ── Órfãos: alugados sem operação registrada ──
+  const orfaos=window._opOrfaos||[];
+  if(orfaos.length){
+    const _CTcor2={'Gestão de frota':['#EDE9FF','#5B4DB5'],'Locação':['#DBEAFE','#1D4ED8'],'Locação + Operação':['#D1FAE5','#065F46'],'Venda':['#FEE2E2','#B91C1C']};
+    lista.innerHTML+=`
+    <div style="margin-top:16px">
+      <div style="font-size:11px;color:#F59E0B;font-weight:700;letter-spacing:.03em;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+        <span style="width:8px;height:8px;border-radius:50%;background:#F59E0B;display:inline-block"></span>
+        ${orfaos.length} equipamento${orfaos.length>1?'s':''} locado${orfaos.length>1?'s':''} sem operação registrada
+      </div>
+      <div style="background:#fff;border:1px solid #FDE68A;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:#FFFBEB">
+            <th style="padding:8px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;border-bottom:1px solid #FDE68A">ID</th>
+            <th style="padding:8px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;border-bottom:1px solid #FDE68A">Equipamento</th>
+            <th style="padding:8px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;border-bottom:1px solid #FDE68A">Cliente</th>
+            <th style="padding:8px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;border-bottom:1px solid #FDE68A">Município</th>
+            <th style="padding:8px 16px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;border-bottom:1px solid #FDE68A">UF</th>
+            <th style="padding:8px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;border-bottom:1px solid #FDE68A">Contrato</th>
+          </tr></thead>
+          <tbody>
+            ${orfaos.map((e,i)=>{
+              const ct=opContratoEquip(e);
+              const cc=_CTcor2[ct]||['#F4F6F8','#5A7280'];
+              const ctBadge=ct?`<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:${cc[0]};color:${cc[1]}">${ct}</span>`:'—';
+              return `<tr style="border-bottom:1px solid #FEF3C7;background:${i%2?'#FFFDF5':'#fff'}">
+                <td style="padding:9px 16px;font-weight:700;color:#1A2E35;font-family:monospace">${e.id}</td>
+                <td style="padding:9px 16px;color:#5A7280">${e.familia||e.equipamento||'—'}</td>
+                <td style="padding:9px 16px;color:#5A7280">${e.cliente||e.clienteNfe||'—'}</td>
+                <td style="padding:9px 16px;color:#5A7280">${e.municipio||'—'}</td>
+                <td style="padding:9px 16px;text-align:center">${e.estado?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:#F4F6F8;color:#5A7280;border:1px solid #E2E8ED">${e.estado}</span>`:'—'}</td>
+                <td style="padding:9px 16px">${ctBadge}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }
 }
 
 // Estado dos filtros da tabela de equipamentos do detalhe de contrato
