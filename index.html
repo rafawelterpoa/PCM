@@ -1167,15 +1167,12 @@ input.filter-sel{padding:5px 10px;height:32px}
   <div class="home-greeting" id="home-greeting">Bem-vindo, Rafael 👋</div>
   <div class="home-sub" id="home-sub">Selecione uma área abaixo para navegar</div>
 
-  <!-- VISÃO GERAL -->
+  <!-- VISÃO GERAL + OFICINA + PÁTIO (linha única 4-col) -->
   <div class="home-section-label">Visão Geral da Frota</div>
-  <div id="home-visao-geral" class="vg-grid" style="margin-bottom:32px"></div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;align-items:start">
+    <div id="home-visao-geral" style="display:contents"></div>
 
-  <!-- 7 GRANDES ÁREAS -->
-  <div class="home-section-label">Grandes Áreas</div>
-  <div class="areas-grid-7">
-
-    <!-- OFICINA -->
+    <!-- OFICINA (movido da linha Grandes Áreas) -->
     <div class="area-card-new" style="border-top:3px solid #E8630A;cursor:default">
       <div onclick="navegarPara('oficinas')" style="cursor:pointer;display:flex;flex-direction:column;gap:8px;flex:1">
         <div style="display:flex;align-items:center;gap:10px">
@@ -1198,6 +1195,37 @@ input.filter-sel{padding:5px 10px;height:32px}
       </div>
     </div>
 
+    <!-- GESTÃO DE PÁTIOS (movido da linha Grandes Áreas) -->
+    <div class="area-card-new" onclick="navegarPara('patio')" style="border-top:3px solid #1D9E75">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:#E1F5EE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🏠</div>
+        <div><div class="ac-title">Gestão de Pátios</div><div class="ac-desc">Prontos para locação ou venda</div></div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <div id="home-kpi-patio" style="font-size:28px;font-weight:700;color:#1D9E75;line-height:1">—</div>
+        <div style="font-size:12px;color:#8FA4AE">prontos</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Locação</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-pat-bar-loc" style="height:100%;background:#2563eb;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-pat-loc" style="font-weight:600;color:#2563eb;width:24px;text-align:right;flex-shrink:0">—</span></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Venda</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-pat-bar-venda" style="height:100%;background:#1D9E75;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-pat-venda" style="font-weight:600;color:#1D9E75;width:24px;text-align:right;flex-shrink:0">—</span></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Sem classif.</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-pat-bar-sem" style="height:100%;background:#94a3b8;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-pat-sem" style="font-weight:600;color:#94a3b8;width:24px;text-align:right;flex-shrink:0">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRANDES ÁREAS -->
+  <div class="home-section-label">Grandes Áreas</div>
+  <div class="areas-grid-7">
+
+    <!-- PLANEJAMENTO E PROGRAMAÇÃO PMP (novo) -->
+    <div class="area-card-new" style="border-top:3px solid #0369a1;opacity:.75;cursor:default">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:#E0F2FE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">📋</div>
+        <div><div class="ac-title">Planej. e Prog. PMP</div><div class="ac-desc">Planejamento e programação de manutenção</div></div>
+      </div>
+      <div style="font-size:11px;color:#0369a1;font-weight:600;text-align:center;padding:4px 0;background:#E0F2FE;border-radius:6px;margin-top:auto">Em desenvolvimento</div>
+    </div>
+
     <!-- PROGRAMAÇÃO -->
     <div class="area-card-new" onclick="switchTab('programacao')" style="border-top:3px solid #7c3aed">
       <div style="display:flex;align-items:center;gap:10px">
@@ -1212,23 +1240,6 @@ input.filter-sel{padding:5px 10px;height:32px}
         <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Reservados</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-res" style="height:100%;background:#7c3aed;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-res" style="font-weight:600;color:#7c3aed;width:24px;text-align:right;flex-shrink:0">—</span></div>
         <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Concluídos</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-conc" style="height:100%;background:#1D9E75;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-conc" style="font-weight:600;color:#1D9E75;width:24px;text-align:right;flex-shrink:0">—</span></div>
         <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Atrasados</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-atras" style="height:100%;background:#B91C1C;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-atras" style="font-weight:600;color:#B91C1C;width:24px;text-align:right;flex-shrink:0">—</span></div>
-      </div>
-    </div>
-
-    <!-- PÁTIO -->
-    <div class="area-card-new" onclick="navegarPara('patio')" style="border-top:3px solid #1D9E75">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;background:#E1F5EE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🏠</div>
-        <div><div class="ac-title">Gestão de Pátios</div><div class="ac-desc">Prontos para locação ou venda</div></div>
-      </div>
-      <div style="display:flex;align-items:baseline;gap:6px">
-        <div id="home-kpi-patio" style="font-size:28px;font-weight:700;color:#1D9E75;line-height:1">—</div>
-        <div style="font-size:12px;color:#8FA4AE">prontos</div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Locação</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-pat-bar-loc" style="height:100%;background:#2563eb;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-pat-loc" style="font-weight:600;color:#2563eb;width:24px;text-align:right;flex-shrink:0">—</span></div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Venda</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-pat-bar-venda" style="height:100%;background:#1D9E75;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-pat-venda" style="font-weight:600;color:#1D9E75;width:24px;text-align:right;flex-shrink:0">—</span></div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Sem classif.</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-pat-bar-sem" style="height:100%;background:#94a3b8;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-pat-sem" style="font-weight:600;color:#94a3b8;width:24px;text-align:right;flex-shrink:0">—</span></div>
       </div>
     </div>
 
@@ -17498,33 +17509,7 @@ function rgRenderVisaoGeral(ativos,emOperacao){
     </div>
   </div>
 
-  <div class="vg-card manut">
-    <div class="vg-label">Manutenção</div>
-    <div class="vg-num" style="color:#dc2626">${fmt(manutTotal)}</div>
-    <div class="vg-breakdown" style="margin-top:10px">
-      ${hasFrotaData?`
-      <div class="vg-breakdown-row"><div class="vg-breakdown-dot" style="background:#F37021"></div><span class="vg-breakdown-label">Locação</span><span class="vg-breakdown-val">${manutLoc}</span><span class="vg-breakdown-pct">${pctM(manutLoc)}%</span></div>
-      <div style="margin:2px 0 4px 15px"><div class="vg-progress-bar" style="height:4px"><div class="vg-progress-fill" style="width:${pctM(manutLoc)}%;background:#F37021"></div></div></div>
-      <div class="vg-breakdown-row"><div class="vg-breakdown-dot" style="background:#fbbf24"></div><span class="vg-breakdown-label">Venda</span><span class="vg-breakdown-val">${manutVen}</span><span class="vg-breakdown-pct">${pctM(manutVen)}%</span></div>
-      ${manutSD>0?`<div style="margin:2px 0 4px 15px"><div class="vg-progress-bar" style="height:4px"><div class="vg-progress-fill" style="width:${pctM(manutVen)}%;background:#fbbf24"></div></div></div>
-      <div class="vg-breakdown-row"><div class="vg-breakdown-dot" style="background:#cbd5e1"></div><span class="vg-breakdown-label">Sem dado</span><span class="vg-breakdown-val">${manutSD}</span><span class="vg-breakdown-pct">${pctM(manutSD)}%</span></div>`:''}
-      `:`<div style="font-size:11px;color:#94a3b8;font-style:italic;margin-top:4px">Distribuição disponível após próximo CSV</div>`}
-    </div>
-  </div>
-
-  <div class="vg-card patio">
-    <div class="vg-label">Pátio Disponível</div>
-    <div class="vg-num" style="color:#16a34a">${fmt(patioTotal)}</div>
-    <div class="vg-breakdown" style="margin-top:10px">
-      ${hasFrotaData?`
-      <div class="vg-breakdown-row"><div class="vg-breakdown-dot" style="background:#2563eb"></div><span class="vg-breakdown-label">Locação</span><span class="vg-breakdown-val">${patioLoc}</span><span class="vg-breakdown-pct">${pctP(patioLoc)}%</span></div>
-      <div style="margin:2px 0 4px 15px"><div class="vg-progress-bar" style="height:4px"><div class="vg-progress-fill" style="width:${pctP(patioLoc)}%;background:#2563eb"></div></div></div>
-      <div class="vg-breakdown-row"><div class="vg-breakdown-dot" style="background:#16a34a"></div><span class="vg-breakdown-label">Venda</span><span class="vg-breakdown-val">${patioVen}</span><span class="vg-breakdown-pct">${pctP(patioVen)}%</span></div>
-      ${patioSD>0?`<div style="margin:2px 0 4px 15px"><div class="vg-progress-bar" style="height:4px"><div class="vg-progress-fill" style="width:${pctP(patioVen)}%;background:#16a34a"></div></div></div>
-      <div class="vg-breakdown-row"><div class="vg-breakdown-dot" style="background:#cbd5e1"></div><span class="vg-breakdown-label">Sem dado</span><span class="vg-breakdown-val">${patioSD}</span><span class="vg-breakdown-pct">${pctP(patioSD)}%</span></div>`:''}
-      `:`<div style="font-size:11px;color:#94a3b8;font-style:italic;margin-top:4px">Distribuição disponível após próximo CSV</div>`}
-    </div>
-  </div>`;
+  `;
 }
 // ═════════════════════════════════════════════════════════════════════════════
 
