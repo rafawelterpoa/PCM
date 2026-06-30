@@ -1169,7 +1169,7 @@ input.filter-sel{padding:5px 10px;height:32px}
 
   <!-- VISÃO GERAL + OFICINA + PÁTIO (linha única 4-col) -->
   <div class="home-section-label">Visão Geral da Frota</div>
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;align-items:start">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;align-items:stretch">
     <div id="home-visao-geral" style="display:contents"></div>
 
     <!-- OFICINA (movido da linha Grandes Áreas) -->
@@ -1180,7 +1180,7 @@ input.filter-sel{padding:5px 10px;height:32px}
           <div><div class="ac-title">Oficina</div><div class="ac-desc">Kanban de manutenção</div></div>
         </div>
         <div style="display:flex;align-items:baseline;gap:6px">
-          <div id="home-kpi-oficina" style="font-size:28px;font-weight:700;color:#E8630A;line-height:1">—</div>
+          <div id="home-kpi-oficina" style="font-size:38px;font-weight:300;color:#E8630A;line-height:1;letter-spacing:-.02em">—</div>
           <div style="font-size:12px;color:#8FA4AE">em processo</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:5px">
@@ -1202,7 +1202,7 @@ input.filter-sel{padding:5px 10px;height:32px}
         <div><div class="ac-title">Gestão de Pátios</div><div class="ac-desc">Prontos para locação ou venda</div></div>
       </div>
       <div style="display:flex;align-items:baseline;gap:6px">
-        <div id="home-kpi-patio" style="font-size:28px;font-weight:700;color:#1D9E75;line-height:1">—</div>
+        <div id="home-kpi-patio" style="font-size:38px;font-weight:300;color:#1D9E75;line-height:1;letter-spacing:-.02em">—</div>
         <div style="font-size:12px;color:#8FA4AE">prontos</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:5px">
@@ -1217,7 +1217,7 @@ input.filter-sel{padding:5px 10px;height:32px}
   <div class="home-section-label">Grandes Áreas</div>
   <div class="areas-grid-7">
 
-    <!-- PLANEJAMENTO E PROGRAMAÇÃO PMP (novo) -->
+    <!-- 5 — PLANEJAMENTO E PROGRAMAÇÃO PMP -->
     <div class="area-card-new" style="border-top:3px solid #0369a1;opacity:.75;cursor:default">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="width:32px;height:32px;border-radius:8px;background:#E0F2FE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">📋</div>
@@ -1226,24 +1226,7 @@ input.filter-sel{padding:5px 10px;height:32px}
       <div style="font-size:11px;color:#0369a1;font-weight:600;text-align:center;padding:4px 0;background:#E0F2FE;border-radius:6px;margin-top:auto">Em desenvolvimento</div>
     </div>
 
-    <!-- PROGRAMAÇÃO -->
-    <div class="area-card-new" onclick="switchTab('programacao')" style="border-top:3px solid #7c3aed">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">📅</div>
-        <div><div class="ac-title">Programação</div><div class="ac-desc">Semana atual — <span id="home-prog-semana" style="color:#7c3aed;font-weight:600">S—</span></div></div>
-      </div>
-      <div style="display:flex;align-items:baseline;gap:6px">
-        <div id="home-kpi-prog" style="font-size:28px;font-weight:700;color:#7c3aed;line-height:1">—</div>
-        <div style="font-size:12px;color:#8FA4AE">programados</div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Reservados</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-res" style="height:100%;background:#7c3aed;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-res" style="font-weight:600;color:#7c3aed;width:24px;text-align:right;flex-shrink:0">—</span></div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Concluídos</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-conc" style="height:100%;background:#1D9E75;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-conc" style="font-weight:600;color:#1D9E75;width:24px;text-align:right;flex-shrink:0">—</span></div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Atrasados</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-atras" style="height:100%;background:#B91C1C;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-atras" style="font-weight:600;color:#B91C1C;width:24px;text-align:right;flex-shrink:0">—</span></div>
-      </div>
-    </div>
-
-    <!-- OPERAÇÕES -->
+    <!-- 6 — OPERAÇÕES -->
     <div class="area-card-new" onclick="navegarPara('operacoes')" style="border-top:3px solid #2563eb">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="width:32px;height:32px;border-radius:8px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">⚡</div>
@@ -1260,41 +1243,7 @@ input.filter-sel{padding:5px 10px;height:32px}
       </div>
     </div>
 
-    <!-- GESTÃO INTEGRADA -->
-    <div class="area-card-new" onclick="abrirTodo()" style="border-top:3px solid #0f766e">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;background:#CCFBF1;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">✅</div>
-        <div><div class="ac-title">Gestão Integrada</div><div class="ac-desc">TO-DO, KPIs e reuniões</div></div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <div class="mini-todo-item"><div class="mini-todo-check done"></div><span class="mini-todo-text">Reunião semanal realizada</span></div>
-        <div class="mini-todo-item"><div class="mini-todo-check done"></div><span class="mini-todo-text">KPIs atualizados</span></div>
-        <div class="mini-todo-item"><div class="mini-todo-check pending"></div><span class="mini-todo-text">Relatório mensal pendente</span></div>
-        <div class="mini-todo-item"><div class="mini-todo-check pending"></div><span class="mini-todo-text">Alinhamento com operações</span></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;margin-top:4px;padding-top:8px;border-top:1px solid #F4F6F8">
-        <div style="flex:1;height:5px;background:#F4F6F8;border-radius:3px;overflow:hidden"><div style="width:50%;height:100%;background:#0f766e;border-radius:3px"></div></div>
-        <span style="font-size:11px;font-weight:600;color:#0f766e">2 / 4</span>
-      </div>
-    </div>
-
-    <!-- HISTÓRICO DE ATIVOS -->
-    <div class="area-card-new" onclick="abrirHistoricoAtivos()" style="border-top:3px solid #6366f1">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">⏱</div>
-        <div><div class="ac-title">Histórico de Ativos</div><div class="ac-desc">Linha do tempo de movimentações</div></div>
-      </div>
-      <div style="display:flex;align-items:baseline;gap:6px">
-        <div id="home-hist-total" style="font-size:28px;font-weight:700;color:#6366f1;line-height:1">—</div>
-        <div style="font-size:12px;color:#8FA4AE">ativos monitorados</div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Últ. 24h</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-hist-bar-24h" style="height:100%;background:#6366f1;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-hist-24h" style="font-weight:600;color:#6366f1;width:36px;text-align:right;flex-shrink:0">—</span></div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Esta semana</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-hist-bar-sem" style="height:100%;background:#6366f1;border-radius:2px;width:60%;transition:width .4s"></div></div><span id="home-hist-semana" style="font-weight:600;color:#6366f1;width:36px;text-align:right;flex-shrink:0">—</span></div>
-      </div>
-    </div>
-
-    <!-- RCD — AVARIAS -->
+    <!-- 7 — RCD — AVARIAS -->
     <div class="area-card-new" onclick="navegarPara('rcd')" style="border-top:3px solid #b45309">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="width:32px;height:32px;border-radius:8px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">⚠️</div>
@@ -1318,7 +1267,7 @@ input.filter-sel{padding:5px 10px;height:32px}
       </div>
     </div>
 
-    <!-- GARANTIAS -->
+    <!-- 8 — GARANTIAS -->
     <div class="area-card-new" onclick="navegarPara('garantias')" style="border-top:3px solid #0891b2">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="width:32px;height:32px;border-radius:8px;background:#E0F2FE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🛡️</div>
@@ -1341,6 +1290,57 @@ input.filter-sel{padding:5px 10px;height:32px}
         </div>
       </div>
       <div style="font-size:11px;color:#0891b2;font-weight:600;text-align:center;padding:4px 0;background:#E0F2FE;border-radius:6px">Em desenvolvimento</div>
+    </div>
+
+    <!-- 9 — PROGRAMAÇÃO -->
+    <div class="area-card-new" onclick="switchTab('programacao')" style="border-top:3px solid #7c3aed">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">📅</div>
+        <div><div class="ac-title">Programação</div><div class="ac-desc">Semana atual — <span id="home-prog-semana" style="color:#7c3aed;font-weight:600">S—</span></div></div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <div id="home-kpi-prog" style="font-size:28px;font-weight:700;color:#7c3aed;line-height:1">—</div>
+        <div style="font-size:12px;color:#8FA4AE">programados</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Reservados</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-res" style="height:100%;background:#7c3aed;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-res" style="font-weight:600;color:#7c3aed;width:24px;text-align:right;flex-shrink:0">—</span></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Concluídos</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-conc" style="height:100%;background:#1D9E75;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-conc" style="font-weight:600;color:#1D9E75;width:24px;text-align:right;flex-shrink:0">—</span></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Atrasados</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-atras" style="height:100%;background:#B91C1C;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-atras" style="font-weight:600;color:#B91C1C;width:24px;text-align:right;flex-shrink:0">—</span></div>
+      </div>
+    </div>
+
+    <!-- 10 — GESTÃO INTEGRADA -->
+    <div class="area-card-new" onclick="abrirTodo()" style="border-top:3px solid #0f766e">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:#CCFBF1;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">✅</div>
+        <div><div class="ac-title">Gestão Integrada</div><div class="ac-desc">TO-DO, KPIs e reuniões</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div class="mini-todo-item"><div class="mini-todo-check done"></div><span class="mini-todo-text">Reunião semanal realizada</span></div>
+        <div class="mini-todo-item"><div class="mini-todo-check done"></div><span class="mini-todo-text">KPIs atualizados</span></div>
+        <div class="mini-todo-item"><div class="mini-todo-check pending"></div><span class="mini-todo-text">Relatório mensal pendente</span></div>
+        <div class="mini-todo-item"><div class="mini-todo-check pending"></div><span class="mini-todo-text">Alinhamento com operações</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:4px;padding-top:8px;border-top:1px solid #F4F6F8">
+        <div style="flex:1;height:5px;background:#F4F6F8;border-radius:3px;overflow:hidden"><div style="width:50%;height:100%;background:#0f766e;border-radius:3px"></div></div>
+        <span style="font-size:11px;font-weight:600;color:#0f766e">2 / 4</span>
+      </div>
+    </div>
+
+    <!-- 11 — HISTÓRICO DE ATIVOS -->
+    <div class="area-card-new" onclick="abrirHistoricoAtivos()" style="border-top:3px solid #6366f1">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">⏱</div>
+        <div><div class="ac-title">Histórico de Ativos</div><div class="ac-desc">Linha do tempo de movimentações</div></div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <div id="home-hist-total" style="font-size:28px;font-weight:700;color:#6366f1;line-height:1">—</div>
+        <div style="font-size:12px;color:#8FA4AE">ativos monitorados</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Últ. 24h</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-hist-bar-24h" style="height:100%;background:#6366f1;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-hist-24h" style="font-weight:600;color:#6366f1;width:36px;text-align:right;flex-shrink:0">—</span></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Esta semana</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-hist-bar-sem" style="height:100%;background:#6366f1;border-radius:2px;width:60%;transition:width .4s"></div></div><span id="home-hist-semana" style="font-weight:600;color:#6366f1;width:36px;text-align:right;flex-shrink:0">—</span></div>
+      </div>
     </div>
 
   </div>
