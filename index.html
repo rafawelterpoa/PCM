@@ -13210,6 +13210,125 @@ async function rcdTriagem(equipId, chegadaTs, elegivel) {
   showToast(elegivel ? '✅ Encaminhado para tratamento' : '✘ Marcado como não elegível');
 }
 
+// ── IMPORTAR PLANILHA DESMOB ──────────────────────────────────────────────────
+function rcdImportarAbrir() {
+  document.getElementById('rcd-import-tsv').value = '';
+  document.getElementById('rcd-import-preview').innerHTML = '';
+  document.getElementById('rcd-import-btn').disabled = true;
+  document.getElementById('rcd-import-btn').style.opacity = '.4';
+  document.getElementById('rcd-import-modal').style.display = 'flex';
+}
+
+function _rcdMatchFrota(frotaRaw) {
+  const numStr = String(frotaRaw||'').trim().replace(/[^\d]/g,'');
+  if(!numStr) return null;
+  const padded = numStr.padStart(5,'0');
+  // 1) Tenta campo frota em EQUIPAMENTOS_ORIG
+  const orig = (EQUIPAMENTOS_ORIG||[]).find(e => {
+    const f = String(e.frota||'').trim().replace(/[^\d]/g,'');
+    return f === numStr || f === padded;
+  });
+  if(orig) return orig.id;
+  // 2) Tenta sufixo no state
+  return Object.keys(typeof state!=='undefined'?state:{}).find(id => id.replace(/[^\d]/g,'').slice(-5) === padded) || null;
+}
+
+let _rcdImportLote = [];
+
+function rcdImportarPreview() {
+  const raw = (document.getElementById('rcd-import-tsv').value||'').trim();
+  const prev = document.getElementById('rcd-import-preview');
+  const btn = document.getElementById('rcd-import-btn');
+  if(!raw) { prev.innerHTML=''; btn.disabled=true; btn.style.opacity='.4'; return; }
+
+  const linhas = raw.split('\n').map(l=>l.split('\t'));
+  // Detecta linha de cabeçalho: ignora linhas onde col B não seja numérico
+  const dados = linhas.filter(c => {
+    const v = String(c[1]||'').trim();
+    return /^\d+$/.test(v);
+  });
+
+  const idsAtivosRcd = new Set(Object.values(_rcdRegistros||{})
+    .filter(r=>!['concluido','nao_elegivel'].includes(r.status))
+    .map(r=>r.equip_id));
+
+  _rcdImportLote = [];
+  const semMatch = [];
+
+  dados.forEach(c => {
+    const frotaRaw = c[1];
+    const om       = (c[7]||'').trim();
+    const colI     = (c[8]||'').trim().toLowerCase();
+    const colL     = (c[11]||'').trim().toLowerCase();
+
+    let novoStatus = null;
+    if(colI === 'pendente') novoStatus = 'aguardando_inspecao';
+    else if((colI === 'concluído'||colI === 'concluido') && colL === 'elaborar') novoStatus = 'em_orcamento';
+    if(!novoStatus) return;
+
+    const eqId = _rcdMatchFrota(frotaRaw);
+    if(!eqId) { semMatch.push({frota: frotaRaw, status: novoStatus}); return; }
+    if(idsAtivosRcd.has(eqId)) return; // já existe registro ativo
+
+    _rcdImportLote.push({ eqId, novoStatus, om });
+  });
+
+  const nInsp = _rcdImportLote.filter(x=>x.novoStatus==='aguardando_inspecao').length;
+  const nOrc  = _rcdImportLote.filter(x=>x.novoStatus==='em_orcamento').length;
+  const nSem  = semMatch.length;
+
+  if(!_rcdImportLote.length && !semMatch.length) {
+    prev.innerHTML = '<span style="color:#B45309">Nenhuma linha elegível encontrada (verifique se colou a aba correta).</span>';
+    btn.disabled=true; btn.style.opacity='.4'; return;
+  }
+
+  let html = `<div style="background:#F0F4F6;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">`;
+  if(nInsp) html += `<div>🔵 <b>${nInsp}</b> equipamento(s) → <span style="color:#1D4ED8">Ag. Inspeção</span></div>`;
+  if(nOrc)  html += `<div>🟡 <b>${nOrc}</b> equipamento(s) → <span style="color:#B45309">Em Orçamento</span></div>`;
+  if(nSem)  html += `<div style="color:#B45309">⚠ <b>${nSem}</b> frota(s) sem correspondência no sistema: ${semMatch.map(x=>x.frota).join(', ')}</div>`;
+  html += `</div>`;
+  prev.innerHTML = html;
+
+  const ok = _rcdImportLote.length > 0;
+  btn.disabled = !ok; btn.style.opacity = ok ? '1' : '.4';
+}
+
+async function rcdImportarConfirmar() {
+  if(!_rcdImportLote.length) return;
+  const btn = document.getElementById('rcd-import-btn');
+  btn.disabled=true; btn.textContent='Importando…';
+  const agora = Date.now();
+  let n=0;
+  for(const item of _rcdImportLote) {
+    const eq  = (typeof state!=='undefined'&&state[item.eqId])||{};
+    const orig= (EQUIPAMENTOS_ORIG||[]).find(e=>e.id===item.eqId)||{};
+    const reg = {
+      id: 'rcd_' + (agora + n),
+      equip_id:        item.eqId,
+      equip_nome:      eq.equipamento || orig.equipamento || '',
+      equip_serie:     eq.serie       || orig.serie       || '',
+      equip_fabricante:eq.fabricante  || orig.fabricante  || '',
+      equip_modelo:    eq.modelo      || orig.modelo      || '',
+      equip_placa:     eq.placa       || orig.placa       || '',
+      equip_grupo:     eq.grupo       || orig.grupo       || eq.tipo || '',
+      equip_horimetro: eq.horimetro   || orig.horimetro   || '',
+      oficina:         eq.oficina     || 'Sumaré (SP)',
+      chegada_ts:      eq.etapa_desde || '',
+      status:          item.novoStatus,
+      ts_triagem:      agora + n,
+      numero:          item.om||'',
+      origem:          'importacao_planilha',
+    };
+    if(item.novoStatus === 'em_orcamento') reg.ts_em_orcamento = agora + n;
+    await rcdSalvarRegistro(reg);
+    n++;
+  }
+  document.getElementById('rcd-import-modal').style.display='none';
+  showToast('✅ ' + n + ' registro(s) importado(s)');
+  rcdDesmobSub('tratamento');
+  rcdRender();
+}
+
 function rcdRenderTratamento() {
   const fases = { aguardando_inspecao: 'rcd-col-inspecao', em_orcamento: 'rcd-col-orcamento', aguardando_cliente: 'rcd-col-cliente', aguardando_faturamento: 'rcd-col-faturamento' };
   const proxima = { aguardando_inspecao: 'em_orcamento', em_orcamento: 'aguardando_cliente', aguardando_cliente: 'aguardando_faturamento', aguardando_faturamento: null };
@@ -17647,7 +17766,8 @@ if ('serviceWorker' in navigator) {
         <button id="rcd-dsub-triagem" onclick="rcdDesmobSub('triagem')" style="padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #E8630A;cursor:pointer;background:#FDE8D8;color:#E8630A">Triagem</button>
         <button id="rcd-dsub-tratamento" onclick="rcdDesmobSub('tratamento')" style="padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #E2E8ED;cursor:pointer;background:#fff;color:#5A7280">Em Tratamento</button>
         <button id="rcd-dsub-historico" onclick="rcdDesmobSub('historico')" style="padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #E2E8ED;cursor:pointer;background:#fff;color:#5A7280">Histórico</button>
-        <button onclick="rcdCarregar()" style="margin-left:auto;padding:6px 14px;border-radius:7px;font-size:11px;font-weight:600;border:1px solid #E2E8ED;cursor:pointer;background:#fff;color:#5A7280">↻ Atualizar</button>
+        <button onclick="rcdImportarAbrir()" style="margin-left:auto;padding:6px 14px;border-radius:7px;font-size:11px;font-weight:600;border:1px solid #4F46E5;cursor:pointer;background:#EEF2FF;color:#4F46E5">⬆ Importar planilha</button>
+        <button onclick="rcdCarregar()" style="padding:6px 14px;border-radius:7px;font-size:11px;font-weight:600;border:1px solid #E2E8ED;cursor:pointer;background:#fff;color:#5A7280">↻ Atualizar</button>
       </div>
 
       <!-- TRIAGEM -->
@@ -17681,6 +17801,27 @@ if ('serviceWorker' in navigator) {
       <!-- HISTÓRICO -->
       <div id="rcd-panel-historico" style="display:none">
         <div id="rcd-historico-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
+
+    <!-- MODAL IMPORTAR DESMOB -->
+    <div id="rcd-import-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9300;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+      <div style="background:#fff;border-radius:14px;width:640px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.22);border-top:3px solid #4F46E5">
+        <div style="padding:20px 24px 16px;border-bottom:1px solid #E2E8ED;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#1A2E35">Importar Desmobilizações</div>
+            <div style="font-size:11px;color:#5A7280;margin-top:2px">Cole o conteúdo da aba <b>Desmobilizações</b> (Ctrl+A → Ctrl+C no Excel)</div>
+          </div>
+          <button onclick="document.getElementById('rcd-import-modal').style.display='none'" style="background:none;border:none;font-size:18px;cursor:pointer;color:#8FA4AE">✕</button>
+        </div>
+        <div style="padding:16px 24px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px">
+          <textarea id="rcd-import-tsv" rows="7" placeholder="Cole aqui os dados copiados da planilha Excel..." oninput="rcdImportarPreview()" style="width:100%;border:1px solid #C8D4DA;border-radius:8px;padding:10px 12px;font-size:12px;font-family:monospace;resize:vertical;box-sizing:border-box;outline:none"></textarea>
+          <div id="rcd-import-preview" style="font-size:12px;color:#5A7280"></div>
+        </div>
+        <div style="padding:14px 24px;border-top:1px solid #E2E8ED;display:flex;justify-content:flex-end;gap:8px">
+          <button onclick="document.getElementById('rcd-import-modal').style.display='none'" style="padding:8px 18px;border-radius:7px;font-size:12px;font-weight:600;border:1px solid #E2E8ED;background:#fff;color:#5A7280;cursor:pointer">Cancelar</button>
+          <button id="rcd-import-btn" onclick="rcdImportarConfirmar()" disabled style="padding:8px 18px;border-radius:7px;font-size:12px;font-weight:600;border:none;background:#4F46E5;color:#fff;cursor:pointer;opacity:.4">Importar registros</button>
+        </div>
       </div>
     </div>
 
