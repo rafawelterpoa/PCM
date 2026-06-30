@@ -16850,31 +16850,8 @@ function opEquipsFiltrados(equips){
   return r;
 }
 function opBuildDinamico(){
-  const alug=opAlugadosBase();
-  // Índice de enriquecimento pelo OPERACOES_DATA estático (estado, municipio, nome da planta)
-  const enrOp={};
-  OPERACOES_DATA.forEach(o=>o.equips.forEach(e=>{enrOp[e.id]=o;}));
-  // Agrupar por planta
-  const byPlanta={};
-  alug.forEach(e=>{
-    const planta=(e.planta||'').trim()||'(sem planta)';
-    if(!byPlanta[planta])byPlanta[planta]=[];
-    byPlanta[planta].push(e);
-  });
-  return Object.entries(byPlanta).map(([planta,equips])=>{
-    const enr=equips.map(e=>enrOp[e.id]).find(Boolean);
-    const eq0=equips[0];
-    return {
-      nome:planta,
-      cliente:(eq0.clienteRes||eq0.clienteNfe||enr?.cliente||'').trim(),
-      estado:(eq0.estado||enr?.estado||'').trim(),
-      municipio:(eq0.municipio||enr?.municipio||'').trim(),
-      equips:equips.map(e=>({
-        id:e.id,familia:e.familia||e.tipo||'',grupo:e.grupo||'',
-        modelo:e.modelo||'',tipoContrato:e.tipoContrato||opContratoEquip(e)
-      }))
-    };
-  }).sort((a,b)=>b.equips.length-a.equips.length);
+  // OPERACOES_DATA é a fonte curada das operações conhecidas
+  return OPERACOES_DATA;
 }
 function opRenderKpis(opsFiltradas){
   const el=document.getElementById('op-kpis');if(!el)return;
