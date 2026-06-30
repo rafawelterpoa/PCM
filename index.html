@@ -6090,6 +6090,14 @@ function mapaSlotDrop(evt,newLoc){
   if(!newLoc||newLoc===origLoc)return;
   // Pneus é área de estocagem — não permite equipamentos
   if(localMapParaZonaGlobal(newLoc)==='est_pneus'){showToast('⚠ Área de Pneus é só estocagem — não permite equipamentos');renderMapa();return;}
+  // Se o slot não tem sufixo A/B e está ocupado → tenta slot B antes de fazer swap
+  if(!newLoc.match(/[AB]$/i)){
+    const slotAOcup=Object.values(state).find(e=>!e.baixado&&(e.localMap===newLoc||e.localMap===newLoc+'A')&&e.id!==eqId&&e.oficina==='Sumaré (SP)');
+    if(slotAOcup){
+      const slotBOcup=Object.values(state).find(e=>!e.baixado&&e.localMap===newLoc+'B'&&e.id!==eqId&&e.oficina==='Sumaré (SP)');
+      if(!slotBOcup){newLoc=newLoc+'B';} // slot B livre → usa B sem swap
+    }
+  }
   // Se o slot destino tiver equip → swap
   const occupant=Object.values(state).find(e=>!e.baixado&&e.localMap===newLoc&&e.id!==eqId&&e.oficina==='Sumaré (SP)');
   state[eqId].localMap=newLoc;
@@ -6389,8 +6397,10 @@ function localMapParaZonaGlobal(localMap){
   if(boxM)return`box${String(parseInt(boxM[1])).padStart(2,'0')}`;
   if(v.startsWith('MOB'))return'mobilizacao';
   if(v.startsWith('DESM'))return'desmobilizacao';
-  const filaM=v.match(/^([A-H])(\d+)$/);
+  const filaM=v.match(/^([A-H])(\d+)[AB]?$/i);
   if(filaM)return'fila_'+filaM[1].toLowerCase();
+  if(v.match(/^I\d+$/))return'implementos';
+  if(v.match(/^V\d+$/))return'vendas';
   if(v.includes('BORRACHAR'))return'borracharia';
   if(v.includes('PNEU'))return'est_pneus';
   if(v.includes('LUBRIF'))return'lubrificacao';
