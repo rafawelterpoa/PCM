@@ -6037,6 +6037,7 @@ function renderMapa(){
   const nPronto=equips.filter(e=>e.etapa==='pronto').length;
   const nManut=equips.filter(e=>['chegada','cl_entrada','manutencao','cl_saida'].includes(e.etapa)).length;
   const nTotal=equips.length;
+  window._mapaState=state;
   const kpiBar=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
     <div style="display:flex;align-items:center;gap:6px;background:#F0FFF4;border:1px solid #1D9E75;border-radius:7px;padding:6px 14px">
       <span style="width:10px;height:10px;border-radius:50%;background:#1D9E75;display:inline-block"></span>
@@ -6052,6 +6053,9 @@ function renderMapa(){
     ${semLocal.length>0?`<div style="display:flex;align-items:center;gap:6px;background:#FFF8E6;border:1px solid #EFD87A;border-radius:7px;padding:6px 14px">
       <span style="font-size:12px;color:#7A5500">⚠ ${semLocal.length} sem localização definida</span>
     </div>`:''}
+    <button onclick="abrirRelatorioMapa()" style="margin-left:auto;display:flex;align-items:center;gap:6px;background:#1A2E35;color:#fff;border:none;border-radius:7px;padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer">
+      📊 Relatório
+    </button>
   </div>`;
 
   const SVG_H=Math.max(TOTAL_H, Y_OFICINA-18+BOX_TOTAL_H+10);
@@ -18373,5 +18377,221 @@ if ('serviceWorker' in navigator) {
     <div id="mvaga-lista" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;min-height:0;max-height:50vh"></div>
   </div>
 </div>
+
+<!-- ── RELATÓRIO DO MAPA ── -->
+<div id="mapa-relatorio-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9800;overflow-y:auto;padding:30px 16px" onclick="e=>{if(e.target===this)fecharRelatorioMapa()}">
+  <div style="background:#fff;border-radius:12px;max-width:960px;margin:0 auto;box-shadow:0 10px 40px rgba(0,0,0,.22);display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #E2E8ED">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:#1A2E35">Relatório de Movimentações</div>
+        <div style="font-size:12px;color:#8FA4AE;margin-top:2px">Pátio Sumaré — PCM</div>
+      </div>
+      <button onclick="fecharRelatorioMapa()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#8FA4AE;line-height:1">✕</button>
+    </div>
+    <!-- Filtros -->
+    <div style="padding:18px 22px;border-bottom:1px solid #E2E8ED;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end">
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:#5A7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Equipamento</label>
+        <input id="rel-filtro-eq" list="rel-eq-list" placeholder="Ex: PCP04828" style="width:100%;padding:8px 10px;border:1px solid #C8D4DA;border-radius:6px;font-size:13px;outline:none" oninput="relFiltroChange()">
+        <datalist id="rel-eq-list"></datalist>
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:#5A7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Semana (de)</label>
+        <input id="rel-filtro-de" type="date" style="width:100%;padding:8px 10px;border:1px solid #C8D4DA;border-radius:6px;font-size:13px;outline:none" oninput="relFiltroChange()">
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:#5A7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Até</label>
+        <input id="rel-filtro-ate" type="date" style="width:100%;padding:8px 10px;border:1px solid #C8D4DA;border-radius:6px;font-size:13px;outline:none" oninput="relFiltroChange()">
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:#5A7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Local</label>
+        <select id="rel-filtro-loc" style="width:100%;padding:8px 10px;border:1px solid #C8D4DA;border-radius:6px;font-size:13px;outline:none;background:#fff" onchange="relFiltroChange()">
+          <option value="">Todos</option>
+        </select>
+      </div>
+    </div>
+    <div style="padding:8px 22px;border-bottom:1px solid #E2E8ED;display:flex;gap:8px;align-items:center">
+      <button onclick="gerarRelatorioMapa()" style="background:#E8630A;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer">Gerar Relatório</button>
+      <button onclick="exportarRelatorioCSV()" style="background:#F4F6F8;color:#1A2E35;border:1px solid #C8D4DA;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer">⬇ CSV</button>
+      <span id="rel-resumo" style="font-size:12px;color:#8FA4AE;margin-left:8px"></span>
+    </div>
+    <div id="rel-corpo" style="padding:16px 22px;overflow-y:auto;max-height:60vh;min-height:120px">
+      <div style="text-align:center;color:#C8D4DA;font-size:13px;padding:40px 0">Selecione ao menos um filtro e clique em Gerar Relatório.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Relatório do Mapa ──────────────────────────────────────────────────────
+let _relDados=[];
+
+function abrirRelatorioMapa(){
+  const ov=document.getElementById('mapa-relatorio-overlay');
+  ov.style.display='block';
+  // Preenche datalist de equipamentos
+  const dl=document.getElementById('rel-eq-list');
+  dl.innerHTML='';
+  const equips=Object.values(window._mapaState||{}).filter(e=>!e.baixado&&e.oficina==='Sumaré (SP)');
+  equips.sort((a,b)=>a.id.localeCompare(b.id)).forEach(e=>{
+    const op=document.createElement('option');
+    op.value=e.id;
+    op.label=e.equipamento||'';
+    dl.appendChild(op);
+  });
+  // Preenche locais
+  const sel=document.getElementById('rel-filtro-loc');
+  sel.innerHTML='<option value="">Todos</option>';
+  const locs=[
+    ...Array.from({length:22},(_,i)=>`Box ${String(i+1).padStart(2,'0')}`),
+    'Lavagem','Box de Borracharia','Box de Lubrificação','Box Prep. e Pintura','Box Pintura','Box Solda 1','Box Solda 2','Box Usinagem',
+    ...['A','B','C','D','E','F','G','H'].map(f=>`Fileira ${f}`),
+    'VENDAS','IMPLEMENTOS','MOBILIZAÇÃO','DESMOBILIZAÇÃO'
+  ];
+  locs.forEach(l=>{const op=document.createElement('option');op.value=l;op.textContent=l;sel.appendChild(op);});
+  // Semana atual como padrão
+  const hoje=new Date();
+  const dom=new Date(hoje);dom.setDate(hoje.getDate()-hoje.getDay());
+  const sab=new Date(dom);sab.setDate(dom.getDate()+6);
+  document.getElementById('rel-filtro-de').value=dom.toISOString().slice(0,10);
+  document.getElementById('rel-filtro-ate').value=sab.toISOString().slice(0,10);
+  document.getElementById('rel-corpo').innerHTML='<div style="text-align:center;color:#C8D4DA;font-size:13px;padding:40px 0">Selecione ao menos um filtro e clique em Gerar Relatório.</div>';
+  document.getElementById('rel-resumo').textContent='';
+}
+
+function fecharRelatorioMapa(){
+  document.getElementById('mapa-relatorio-overlay').style.display='none';
+}
+
+function relFiltroChange(){}
+
+function gerarRelatorioMapa(){
+  const eqFiltro=(document.getElementById('rel-filtro-eq').value||'').trim().toUpperCase();
+  const deStr=document.getElementById('rel-filtro-de').value;
+  const ateStr=document.getElementById('rel-filtro-ate').value;
+  const locFiltro=document.getElementById('rel-filtro-loc').value;
+
+  const tsDE=deStr?new Date(deStr+'T00:00:00').getTime():null;
+  const tsATE=ateStr?new Date(ateStr+'T23:59:59').getTime():null;
+
+  const equips=Object.values(window._mapaState||{}).filter(e=>!e.baixado&&e.oficina==='Sumaré (SP)');
+
+  // Filtra equipamentos
+  let eqsFilt=equips;
+  if(eqFiltro) eqsFilt=eqsFilt.filter(e=>e.id.toUpperCase().includes(eqFiltro));
+
+  // Para cada equipamento, coleta entradas de histórico relevantes
+  const linhas=[];
+  eqsFilt.forEach(eq=>{
+    const hist=(eq.historico||[]).filter(h=>{
+      if(!h.ts)return false;
+      if(tsDE&&h.ts<tsDE)return false;
+      if(tsATE&&h.ts>tsATE)return false;
+      if(locFiltro){
+        const match=(h.from||'').includes(locFiltro)||(h.to||'').includes(locFiltro)||
+          _locMatchFileira(h.from,locFiltro)||_locMatchFileira(h.to,locFiltro);
+        if(!match)return false;
+      }
+      return true;
+    });
+    if(hist.length>0||(eqFiltro&&eq.id.toUpperCase()===eqFiltro)){
+      // Se filtro por eq específico, inclui histórico completo
+      const histBase=eqFiltro&&eq.id.toUpperCase()===eqFiltro?(eq.historico||[]):hist;
+      linhas.push({eq,hist:histBase.sort((a,b)=>(a.ts||0)-(b.ts||0))});
+    }
+  });
+
+  _relDados=linhas;
+
+  if(linhas.length===0){
+    document.getElementById('rel-corpo').innerHTML='<div style="text-align:center;color:#8FA4AE;font-size:13px;padding:40px 0">Nenhum registro encontrado com os filtros selecionados.</div>';
+    document.getElementById('rel-resumo').textContent='';
+    return;
+  }
+
+  document.getElementById('rel-resumo').textContent=`${linhas.length} equipamento(s) · ${linhas.reduce((n,l)=>n+l.hist.length,0)} movimentações`;
+
+  let html='';
+  linhas.forEach(({eq,hist})=>{
+    // Calcula dias por status
+    const diasPorStatus=_calcDiasPorStatus(eq,hist,tsDE,tsATE);
+
+    html+=`<div style="border:1px solid #E2E8ED;border-radius:8px;margin-bottom:12px;overflow:hidden">
+      <div style="background:#F4F6F8;padding:10px 14px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        <span style="font-size:13px;font-weight:700;color:#1A2E35">${eq.id}</span>
+        <span style="font-size:12px;color:#5A7280">${eq.equipamento||''}</span>
+        <span style="margin-left:auto;font-size:11px;color:#8FA4AE">${hist.length} mov. · clique para expandir</span>
+      </div>
+      <div style="display:none;padding:12px 14px">
+        ${diasPorStatus.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${diasPorStatus.map(d=>`<span style="background:${d.cor}22;border:1px solid ${d.cor}55;color:${d.cor};border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">${d.label}: ${d.dias}d</span>`).join('')}</div>`:''}
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="border-bottom:1px solid #E2E8ED">
+            <th style="text-align:left;padding:5px 8px;color:#5A7280;font-weight:600;width:110px">Data / Hora</th>
+            <th style="text-align:left;padding:5px 8px;color:#5A7280;font-weight:600">De</th>
+            <th style="text-align:left;padding:5px 8px;color:#5A7280;font-weight:600">Para</th>
+            <th style="text-align:left;padding:5px 8px;color:#5A7280;font-weight:600;width:120px">Usuário</th>
+          </tr></thead>
+          <tbody>${hist.map((h,i)=>`<tr style="border-bottom:1px solid #F4F6F8;background:${i%2?'#FAFBFC':'#fff'}">
+            <td style="padding:5px 8px;white-space:nowrap;color:#5A7280">${h.data||''} ${h.hora||''}</td>
+            <td style="padding:5px 8px;color:#1A2E35">${h.from||'—'}</td>
+            <td style="padding:5px 8px;color:#1A2E35;font-weight:600">${h.to||'—'}</td>
+            <td style="padding:5px 8px;color:#E8630A;font-size:11px">${h.perfil||''}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('rel-corpo').innerHTML=html;
+}
+
+function _locMatchFileira(str,loc){
+  if(!str)return false;
+  // "Fileira B" → match se localMap começa com B
+  const m=loc.match(/^Fileira ([A-H])$/i);
+  if(m) return str.toLowerCase().includes('fila '+m[1].toLowerCase())||str.match(new RegExp('^'+m[1]+'\\d','i'));
+  return str.toLowerCase().includes(loc.toLowerCase());
+}
+
+function _calcDiasPorStatus(eq,hist,tsDE,tsATE){
+  if(!hist.length)return[];
+  const ETAPA_COR={'chegada':'#888','cl_entrada':'#C24003','manutencao':'#C24003','cl_saida':'#1D9E75','pronto':'#1D9E75','alugado':'#1D4ED8'};
+  const ETAPA_LABEL={'chegada':'Aguardando','cl_entrada':'Avaliação','manutencao':'Manutenção','cl_saida':'Check-list Saída','pronto':'Pronto','alugado':'Em Operação'};
+  // Pontos de corte: ts de cada mov, mais estado atual
+  const pontos=[];
+  hist.forEach(h=>{if(h.ts)pontos.push({ts:h.ts,to:h.to});});
+  const agora=tsATE||Date.now();
+  const inicio=tsDE||pontos[0]?.ts||Date.now();
+  const dias={};
+  for(let i=0;i<pontos.length;i++){
+    const tsFim=(i+1<pontos.length)?pontos[i+1].ts:agora;
+    const dur=Math.max(0,Math.min(tsFim,agora)-Math.max(pontos[i].ts,inicio))/(86400000);
+    const label=pontos[i].to||'';
+    // Mapear label para etapa
+    let etaKey='';
+    if(label.includes('Aguardando')||label.includes('chegada'))etaKey='chegada';
+    else if(label.includes('Avaliação')||label.includes('cl_entrada'))etaKey='cl_entrada';
+    else if(label.includes('Manutenção')||label.includes('manutencao'))etaKey='manutencao';
+    else if(label.includes('Check-list')||label.includes('cl_saida'))etaKey='cl_saida';
+    else if(label.includes('Pátio')||label.includes('pronto'))etaKey='pronto';
+    else if(label.includes('Operação')||label.includes('alugado'))etaKey='alugado';
+    if(etaKey) dias[etaKey]=(dias[etaKey]||0)+dur;
+  }
+  return Object.entries(dias).map(([k,v])=>({label:ETAPA_LABEL[k]||k,dias:Math.round(v),cor:ETAPA_COR[k]||'#888'})).filter(d=>d.dias>0);
+}
+
+function exportarRelatorioCSV(){
+  if(!_relDados.length){alert('Gere o relatório primeiro.');return;}
+  const rows=[['Equipamento','Modelo','Data','Hora','De','Para','Usuário']];
+  _relDados.forEach(({eq,hist})=>{
+    hist.forEach(h=>rows.push([eq.id,eq.equipamento||'',h.data||'',h.hora||'',h.from||'',h.to||'',h.perfil||'']));
+  });
+  const csv=rows.map(r=>r.map(c=>'"'+(String(c).replace(/"/g,'""'))+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv);
+  a.download='relatorio-patio-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+</script>
+
 </body>
 </html>
