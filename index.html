@@ -5795,8 +5795,7 @@ function renderMapa(){
       const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
       const cardX=BX+46, cardW=BOX_W-50, cardCX=cardX+cardW/2;
       svg+=`<rect x="${cardX}" y="${by+2}" width="${cardW}" height="${BOX_H-4}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${boxLoc}')" onclick="mapaCardClick('${eq.id}')"/>`;
-      svg+=`<text x="${cardCX}" y="${by+11}" text-anchor="middle" font-size="10" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(0,3)}</text>`;
-      svg+=`<text x="${cardCX}" y="${by+23}" text-anchor="middle" font-size="10" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(3)}</text>`;
+      svg+=`<text x="${cardCX}" y="${by+BOX_H/2+4}" text-anchor="middle" font-size="11" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
       if(eqs.length>1) svg+=`<text x="${BX+BOX_W-2}" y="${by+BOX_H-3}" text-anchor="end" font-size="7" fill="#6BFAC7" font-weight="700">+${eqs.length-1}</text>`;
     }
   }
