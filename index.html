@@ -5860,8 +5860,7 @@ function renderMapa(){
         [[eqA,vy,slotLocA],[eqB,vy+HH+1,slotLocB]].forEach(([eq,cy,loc])=>{
           const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
           svg+=`<rect x="${vx}" y="${cy}" width="${CARD_W}" height="${HH}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${loc}')" onclick="mapaCardClick('${eq.id}')"/>`;
-          svg+=`<text x="${vx+CARD_W/2}" y="${cy+6}" text-anchor="middle" font-size="6" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(0,3)}</text>`;
-          svg+=`<text x="${vx+CARD_W/2}" y="${cy+HH-1}" text-anchor="middle" font-size="6" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(3)}</text>`;
+          svg+=`<text x="${vx+CARD_W/2}" y="${cy+HH/2+3}" text-anchor="middle" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
         });
       } else if(eqA){
         // ── Ocupação simples (posição A) — card inteiro ──
