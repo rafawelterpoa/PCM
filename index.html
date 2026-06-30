@@ -16851,8 +16851,10 @@ function opRenderKpis(opsFiltradas){
   const _hasBreakdown=_cs.locadosEq!=null;
   let totalEquips;
   if(_opContratoFiltro){
-    // Com filtro de contrato, usa ops filtrados (EQUIPAMENTOS_ORIG não tem tipoContrato)
-    totalEquips=ops.reduce((s,o)=>s+o.equips.length,0);
+    // Conta direto de EQUIPAMENTOS_ORIG para bater com o CSV
+    const _allAlug=opAlugadosBase();
+    const _filtCT=_allAlug.filter(e=>opContratoEquip(e)===_opContratoFiltro);
+    totalEquips=_opTipoFiltro?_filtCT.filter(e=>opTipoEquip(e)===_opTipoFiltro).length:_filtCT.length;
   }else if(_opTipoFiltro==='equipamento'){
     totalEquips=_hasBreakdown?(_cs.locadosEq||0):_origAlug.filter(e=>frotaClassificar(e.tipo)==='equipamento').length;
   }else if(_opTipoFiltro==='implemento'){
