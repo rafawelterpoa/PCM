@@ -17039,8 +17039,39 @@ function opEquipsFiltrados(equips){
   return r;
 }
 function opBuildDinamico(){
-  // OPERACOES_DATA é a fonte curada das operações conhecidas
-  return OPERACOES_DATA;
+  // Agrupamento dinâmico por planta — CSV é fonte de verdade
+  const alugados = opAlugadosBase();
+  const comPlanta = alugados.filter(e => (e.planta||'').trim());
+  if(!comPlanta.length) return OPERACOES_DATA; // fallback se CSV não tem campo planta
+
+  // Agrupa por planta
+  const byPlanta = {};
+  comPlanta.forEach(e => {
+    const key = e.planta.trim();
+    if(!byPlanta[key]) byPlanta[key] = [];
+    byPlanta[key].push(e);
+  });
+
+  // Lookup de metadados de OPERACOES_DATA por nome normalizado
+  const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+  const metaByNorm = {};
+  OPERACOES_DATA.forEach(o => { metaByNorm[norm(o.nome)] = o; });
+
+  return Object.entries(byPlanta).map(([planta, equips]) => {
+    const n = norm(planta);
+    const meta = metaByNorm[n] || OPERACOES_DATA.find(m => n.includes(norm(m.nome)) || norm(m.nome).includes(n)) || null;
+    return {
+      nome: meta ? meta.nome : planta,
+      cliente: meta ? meta.cliente : planta,
+      estado: equips[0].estado || (meta ? meta.estado : ''),
+      municipio: equips[0].municipio || (meta ? meta.municipio : ''),
+      equips: equips.map(e => ({
+        id: e.id, familia: e.familia||'', grupo: e.grupo||'',
+        modelo: (e.fabricante&&e.modelo) ? e.fabricante+' '+e.modelo : e.modelo||e.fabricante||'',
+        fabricante: e.fabricante||'', tipo: e.tipo||'',
+      }))
+    };
+  }).sort((a,b) => b.equips.length - a.equips.length);
 }
 function opRenderKpis(opsFiltradas){
   const el=document.getElementById('op-kpis');if(!el)return;
