@@ -13979,8 +13979,8 @@ function vpPreencherDataLists(){
   }
   // Operações
   const dlOp=document.getElementById('vp-dl-operacoes');
-  if(dlOp&&!dlOp.childElementCount&&typeof OPERACOES_DATA!=='undefined'){
-    dlOp.innerHTML=OPERACOES_DATA.map(o=>`<option value="${o.nome}">`).join('');
+  if(dlOp&&typeof OPERACOES_DATA!=='undefined'){
+    dlOp.innerHTML=opBuildDinamico().map(o=>`<option value="${o.nome}">`).join('');
   }
   // Colaboradores
   const dlCo=document.getElementById('vp-dl-colabs');
@@ -17331,7 +17331,7 @@ function opDtOpenDropdown(col,el){
 }
 
 function opVerDetalhe(idx){
-  const op=OPERACOES_DATA[idx];if(!op)return;
+  const op=opBuildDinamico()[idx];if(!op)return;
   const lista=document.getElementById('op-lista');
   const detalhe=document.getElementById('op-detalhe');
   if(lista)lista.style.display='none';
