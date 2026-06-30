@@ -16783,23 +16783,29 @@ function paginaOperacoes(){
 }
 
 function opInicializar(){
-  // Popular filtros
+  const din=opBuildDinamico();
   const selEstado=document.getElementById('op-filtro-estado');
-  if(selEstado&&selEstado.options.length<=1){
-    const estados=[...new Set(OPERACOES_DATA.map(o=>o.estado).filter(Boolean))].sort();
-    estados.forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;selEstado.appendChild(o);});
+  if(selEstado){
+    const cur=selEstado.value;
+    selEstado.innerHTML='<option value="">Estado — Todos</option>';
+    [...new Set(din.map(o=>o.estado).filter(Boolean))].sort()
+      .forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;selEstado.appendChild(o);});
+    selEstado.value=cur;
   }
   const selFam=document.getElementById('op-filtro-familia');
-  if(selFam&&selFam.options.length<=1){
-    const fams=[...new Set(OPERACOES_DATA.flatMap(o=>o.equips.map(e=>e.familia)).filter(Boolean))].sort();
-    fams.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;selFam.appendChild(o);});
+  if(selFam){
+    const cur=selFam.value;
+    selFam.innerHTML='<option value="">Família — Todas</option>';
+    [...new Set(din.flatMap(o=>o.equips.map(e=>e.familia)).filter(Boolean))].sort()
+      .forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;selFam.appendChild(o);});
+    selFam.value=cur;
   }
   opRenderKpis();
   opRender();
 }
 
 let _opTipoFiltro = '';
-let _opContratoFiltro = '';
+let _opContratoFiltros = new Set();
 function opSetTipo(v){
   _opTipoFiltro = v;
   document.querySelectorAll('#op-filtro-tipo-wrap button').forEach(b=>{
@@ -16811,9 +16817,11 @@ function opSetTipo(v){
   opRender();
 }
 function opSetContrato(v){
-  _opContratoFiltro = v;
+  if(!v){ _opContratoFiltros.clear(); }
+  else if(_opContratoFiltros.has(v)){ _opContratoFiltros.delete(v); }
+  else { _opContratoFiltros.add(v); }
   document.querySelectorAll('#op-filtro-contrato-wrap button').forEach(b=>{
-    const sel = b.dataset.contrato === v;
+    const sel = b.dataset.contrato===''?_opContratoFiltros.size===0:_opContratoFiltros.has(b.dataset.contrato);
     b.style.background = sel ? '#f5f3ff' : '#fff';
     b.style.color = sel ? '#7c3aed' : '#5A7280';
     b.style.borderColor = sel ? '#7c3aed' : '#E2E8ED';
@@ -16838,22 +16846,49 @@ function opContratoEquip(e){
 function opEquipsFiltrados(equips){
   let r=equips;
   if(_opTipoFiltro) r=r.filter(e=>opTipoEquip(e)===_opTipoFiltro);
-  if(_opContratoFiltro) r=r.filter(e=>opContratoEquip(e)===_opContratoFiltro);
+  if(_opContratoFiltros.size) r=r.filter(e=>_opContratoFiltros.has(opContratoEquip(e)));
   return r;
+}
+function opBuildDinamico(){
+  const alug=opAlugadosBase();
+  // Índice de enriquecimento pelo OPERACOES_DATA estático (estado, municipio, nome da planta)
+  const enrOp={};
+  OPERACOES_DATA.forEach(o=>o.equips.forEach(e=>{enrOp[e.id]=o;}));
+  // Agrupar por planta
+  const byPlanta={};
+  alug.forEach(e=>{
+    const planta=(e.planta||'').trim()||'(sem planta)';
+    if(!byPlanta[planta])byPlanta[planta]=[];
+    byPlanta[planta].push(e);
+  });
+  return Object.entries(byPlanta).map(([planta,equips])=>{
+    const enr=equips.map(e=>enrOp[e.id]).find(Boolean);
+    const eq0=equips[0];
+    return {
+      nome:planta,
+      cliente:(eq0.clienteRes||eq0.clienteNfe||enr?.cliente||'').trim(),
+      estado:(eq0.estado||enr?.estado||'').trim(),
+      municipio:(eq0.municipio||enr?.municipio||'').trim(),
+      equips:equips.map(e=>({
+        id:e.id,familia:e.familia||e.tipo||'',grupo:e.grupo||'',
+        modelo:e.modelo||'',tipoContrato:e.tipoContrato||opContratoEquip(e)
+      }))
+    };
+  }).sort((a,b)=>b.equips.length-a.equips.length);
 }
 function opRenderKpis(opsFiltradas){
   const el=document.getElementById('op-kpis');if(!el)return;
-  const ops=opsFiltradas||OPERACOES_DATA.map(o=>({...o,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
+  const _base=opBuildDinamico();
+  const ops=opsFiltradas||_base.map(o=>({...o,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
   const totalOps=ops.length;
   // Em campo: usa EQUIPAMENTOS_ORIG como fonte de verdade para os totais por tipo
   const _origAlug=opAlugadosBase();
   const _cs=window._csvStats||{};
   const _hasBreakdown=_cs.locadosEq!=null;
   let totalEquips;
-  if(_opContratoFiltro){
-    // Conta direto de EQUIPAMENTOS_ORIG para bater com o CSV
+  if(_opContratoFiltros.size){
     const _allAlug=opAlugadosBase();
-    const _filtCT=_allAlug.filter(e=>opContratoEquip(e)===_opContratoFiltro);
+    const _filtCT=_allAlug.filter(e=>_opContratoFiltros.has(opContratoEquip(e)));
     totalEquips=_opTipoFiltro?_filtCT.filter(e=>opTipoEquip(e)===_opTipoFiltro).length:_filtCT.length;
   }else if(_opTipoFiltro==='equipamento'){
     totalEquips=_hasBreakdown?(_cs.locadosEq||0):_origAlug.filter(e=>frotaClassificar(e.tipo)==='equipamento').length;
@@ -16867,26 +16902,18 @@ function opRenderKpis(opsFiltradas){
   }
   const estados=[...new Set(ops.map(o=>o.estado).filter(Boolean))].length;
   const tipoLabel=_opTipoFiltro?({equipamento:'Equipamentos',implemento:'Implementos',acessorio:'Acessórios'}[_opTipoFiltro]):'unidades locadas';
-  // Órfãos: alugados sem operação registrada
-  const _allAlugKpi=opAlugadosBase();
-  const _alugFiltKpi=(_opContratoFiltro?_allAlugKpi.filter(e=>opContratoEquip(e)===_opContratoFiltro):_allAlugKpi)
-    .filter(e=>!_opTipoFiltro||opTipoEquip(e)===_opTipoFiltro);
-  const _idsComOp=new Set(ops.flatMap(o=>o.equips.map(e=>e.id)));
-  const _orfaos=_alugFiltKpi.filter(e=>!_idsComOp.has(e.id));
-  window._opOrfaos=_orfaos;
   el.innerHTML=[
     {l:'Operações Ativas',v:totalOps,c:'#E8630A',sub:'contratos ativos'},
-    {l:'Em Campo',v:totalEquips,c:'#1A2E35',sub:tipoLabel,note:_orfaos.length?`*${_orfaos.length} sem operação`:null},
+    {l:'Em Campo',v:totalEquips,c:'#1A2E35',sub:tipoLabel},
     {l:'Estados Atendidos',v:estados,c:'#1D4ED8',sub:'UFs com operação'},
   ].map(k=>`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
     <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;margin-bottom:8px">${k.l}</div>
     <div style="font-size:32px;font-weight:700;color:${k.c};line-height:1;margin-bottom:4px">${k.v?.toLocaleString('pt-BR')}</div>
     <div style="font-size:11px;color:#8FA4AE">${k.sub}</div>
-    ${k.note?`<div style="font-size:10px;color:#F59E0B;font-weight:600;margin-top:5px">${k.note}</div>`:''}
   </div>`).join('');
 }
 function opRenderChart(ops){
-  const src=ops||OPERACOES_DATA;
+  const src=ops||opBuildDinamico();
 
   // ── Gráfico 1: Top Famílias — barras VERTICAIS ─────────────────────────────
   const el=document.getElementById('op-chart');
@@ -16980,8 +17007,8 @@ function opRender(){
   if(detalhe)detalhe.style.display='none';
   if(lista)lista.style.display='block';
 
-  // Aplica filtro de tipo nos equipamentos de cada operação
-  let ops=OPERACOES_DATA.map((o,i)=>({...o,_origIdx:i,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
+  // Aplica filtros nos equipamentos de cada operação (dados dinâmicos do CSV)
+  let ops=opBuildDinamico().map((o,i)=>({...o,_origIdx:i,equips:opEquipsFiltrados(o.equips)})).filter(o=>o.equips.length>0);
   if(filtEstado)ops=ops.filter(o=>o.estado===filtEstado);
   if(filtFam)ops=ops.filter(o=>o.equips.some(e=>e.familia===filtFam));
   if(buscaId)ops=ops.map(o=>({...o,equips:o.equips.filter(e=>(e.id||'').toLowerCase().includes(buscaId))})).filter(o=>o.equips.length>0);
@@ -17031,45 +17058,6 @@ function opRender(){
     </tbody>
   </table></div>`;
 
-  // ── Órfãos: alugados sem operação registrada ──
-  const orfaos=window._opOrfaos||[];
-  if(orfaos.length){
-    const _CTcor2={'Gestão de frota':['#EDE9FF','#5B4DB5'],'Locação':['#DBEAFE','#1D4ED8'],'Locação + Operação':['#D1FAE5','#065F46'],'Venda':['#FEE2E2','#B91C1C']};
-    lista.innerHTML+=`
-    <div style="margin-top:16px">
-      <div style="font-size:11px;color:#F59E0B;font-weight:700;letter-spacing:.03em;margin-bottom:8px;display:flex;align-items:center;gap:6px">
-        <span style="width:8px;height:8px;border-radius:50%;background:#F59E0B;display:inline-block"></span>
-        ${orfaos.length} equipamento${orfaos.length>1?'s':''} locado${orfaos.length>1?'s':''} sem operação registrada
-      </div>
-      <div style="background:#fff;border:1px solid #FDE68A;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)">
-        <table style="width:100%;border-collapse:collapse;font-size:12px">
-          <thead><tr style="background:#FFFBEB">
-            <th style="padding:8px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;border-bottom:1px solid #FDE68A">ID</th>
-            <th style="padding:8px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;border-bottom:1px solid #FDE68A">Equipamento</th>
-            <th style="padding:8px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;border-bottom:1px solid #FDE68A">Cliente</th>
-            <th style="padding:8px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;border-bottom:1px solid #FDE68A">Município</th>
-            <th style="padding:8px 16px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;border-bottom:1px solid #FDE68A">UF</th>
-            <th style="padding:8px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;border-bottom:1px solid #FDE68A">Contrato</th>
-          </tr></thead>
-          <tbody>
-            ${orfaos.map((e,i)=>{
-              const ct=opContratoEquip(e);
-              const cc=_CTcor2[ct]||['#F4F6F8','#5A7280'];
-              const ctBadge=ct?`<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:${cc[0]};color:${cc[1]}">${ct}</span>`:'—';
-              return `<tr style="border-bottom:1px solid #FEF3C7;background:${i%2?'#FFFDF5':'#fff'}">
-                <td style="padding:9px 16px;font-weight:700;color:#1A2E35;font-family:monospace">${e.id}</td>
-                <td style="padding:9px 16px;color:#5A7280">${e.familia||e.equipamento||'—'}</td>
-                <td style="padding:9px 16px;color:#5A7280">${e.cliente||e.clienteNfe||'—'}</td>
-                <td style="padding:9px 16px;color:#5A7280">${e.municipio||'—'}</td>
-                <td style="padding:9px 16px;text-align:center">${e.estado?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:#F4F6F8;color:#5A7280;border:1px solid #E2E8ED">${e.estado}</span>`:'—'}</td>
-                <td style="padding:9px 16px">${ctBadge}</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>`;
-  }
 }
 
 // Estado dos filtros da tabela de equipamentos do detalhe de contrato
