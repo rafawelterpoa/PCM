@@ -5860,14 +5860,15 @@ function renderMapa(){
         [[eqA,vy,slotLocA],[eqB,vy+HH+1,slotLocB]].forEach(([eq,cy,loc])=>{
           const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
           svg+=`<rect x="${vx}" y="${cy}" width="${CARD_W}" height="${HH}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${loc}')" onclick="mapaCardClick('${eq.id}')"/>`;
-          svg+=`<text x="${vx+2}" y="${cy+HH-2}" font-size="6" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
+          svg+=`<text x="${vx+CARD_W/2}" y="${cy+6}" text-anchor="middle" font-size="6" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(0,3)}</text>`;
+          svg+=`<text x="${vx+CARD_W/2}" y="${cy+HH-1}" text-anchor="middle" font-size="6" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(3)}</text>`;
         });
       } else if(eqA){
         // ── Ocupação simples (posição A) — card inteiro ──
         const cor=MAPA_COR_ETAPA[eqA.etapa]||'#888';
         svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eqA.id}',event)" onmouseup="mapaSlotDrop(event,'${slotLoc}')" onclick="mapaCardClick('${eqA.id}')"/>`;
-        svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eqA.id}</text>`;
-        svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eqA.equipamento.substring(0,9)}</text>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+10}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eqA.id.substring(0,3)}</text>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+21}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eqA.id.substring(3)}</text>`;
         // Metade inferior fica como drop-target para slot B
         svg+=`<rect x="${vx}" y="${vy+HH+1}" width="${CARD_W}" height="${HH}" fill="rgba(255,255,255,.08)" rx="0" stroke="rgba(0,0,0,.06)" stroke-width="0.5" style="cursor:pointer" onmouseup="mapaSlotDrop(event,'${slotLocB}')"/>`;
       } else {
@@ -5917,8 +5918,8 @@ function renderMapa(){
       if(eq){
         const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
         svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${loc}')" onclick="mapaCardClick('${eq.id}')"/>`;
-        svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
-        svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eq.equipamento.substring(0,9)}</text>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+10}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(0,3)}</text>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+21}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(3)}</text>`;
       } else {
         svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5" style="cursor:pointer" data-vaga="${loc}" onmouseup="mapaSlotDrop(event,'${loc}')"/>`;
         svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780" style="pointer-events:none" data-vaga="${loc}">${loc}</text>`;
@@ -5938,8 +5939,8 @@ function renderMapa(){
       if(eq){
         const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
         svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${loc}')" onclick="mapaCardClick('${eq.id}')"/>`;
-        svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
-        svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eq.equipamento.substring(0,9)}</text>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+10}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(0,3)}</text>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+21}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(3)}</text>`;
       } else {
         svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.03)" rx="2" stroke="#005550" stroke-width="0.5" style="cursor:pointer" data-vaga="${loc}" onmouseup="mapaSlotDrop(event,'${loc}')"/>`;
         svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="#888780" style="pointer-events:none" data-vaga="${loc}">${loc}</text>`;
@@ -5981,8 +5982,8 @@ function renderMapa(){
       if(eq){
         const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
         svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${vLoc}')" onclick="mapaCardClick('${eq.id}')"/>`;
-        svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
-        svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eq.equipamento.substring(0,9)}</text>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+10}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(0,3)}</text>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+21}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(3)}</text>`;
       } else {
         svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.04)" rx="2" stroke="rgba(5,150,105,.3)" stroke-width="0.5" onmouseup="mapaSlotDrop(event,'${vLoc}')"/>`;
         svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(5,150,105,.5)" style="pointer-events:none">${vLoc}</text>`;
@@ -6009,8 +6010,8 @@ function renderMapa(){
       if(eq){
         const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
         svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${iLoc}')" onclick="mapaCardClick('${eq.id}')"/>`;
-        svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
-        svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eq.equipamento.substring(0,9)}</text>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+10}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(0,3)}</text>`;
+        svg+=`<text x="${vx+CARD_W/2}" y="${vy+21}" text-anchor="middle" font-size="8" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id.substring(3)}</text>`;
       } else {
         svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.04)" rx="2" stroke="rgba(99,102,241,.3)" stroke-width="0.5" onmouseup="mapaSlotDrop(event,'${iLoc}')"/>`;
         svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(99,102,241,.5)" style="pointer-events:none">${iLoc}</text>`;
