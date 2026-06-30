@@ -5640,8 +5640,8 @@ function renderMapa(){
     // Desmobilização: DESM-01 a DESM-11
     if(v.startsWith('DESM'))return 'desmobilizacao';
     if(v.includes('DESMOBIL'))return 'desmobilizacao';
-    // Fileiras do pátio: A1-A30, B1-B26, C1, D1...
-    const filaM=v.match(/^([A-H]'?)(\d+)$/);
+    // Fileiras do pátio: A1-A30, B1-B26, C1, D1... (aceita sufixo A/B para meias-vagas)
+    const filaM=v.match(/^([A-H]'?)(\d+)[AB]?$/i);
     if(filaM){
       const letra=filaM[1];
       const mapa={'A':'fila_A','B':'fila_B','C':'fila_C','D':'fila_D',
@@ -5652,7 +5652,8 @@ function renderMapa(){
     // Vendas: V01-V27
     if(v.match(/^V\d+$/))return 'vendas';
     if(v.includes('VENDAS'))return 'vendas';
-    // Implementos
+    // Implementos: I01-I28 (formato de slot) ou texto livre
+    if(v.match(/^I\d+$/))return 'implementos';
     if(v.includes('IMPLEMENT'))return 'implementos';
     // Oficina coberta — novos e antigos nomes
     if(v.includes('BORRACHARIA'))return 'borracharia';
@@ -5721,13 +5722,14 @@ function renderMapa(){
   const VEND_BLK_H=2*(CARD_H+GAP)+16;           // 2 linhas de vagas + label
   const VEND_X=5;                                // Vendas à ESQUERDA
   const Y_VEND=Y_FILH+FILA_H+8;
-  // Implementos: mesma faixa Y, preenche o espaço à direita de Vendas
+  // Implementos: MESMA LINHA que Vendas, à DIREITA
   const IMPL_COLS=14;  // 14 colunas × 2 linhas = 28 posições I01–I28
   const IMPL_EQ_W=IMPL_COLS*(CARD_W+GAP)+GAP+32;  // espelha VEND_BLK_W
   const IMPL_EQ_H=VEND_BLK_H;                     // mesma altura que Vendas
-  const Y_IMPL_EQ=Y_VEND+VEND_BLK_H+8;            // linha abaixo de Vendas
+  const IMPL_X=VEND_X+VEND_BLK_W+10;              // à direita de Vendas
+  const Y_IMPL_EQ=Y_VEND;                          // mesma linha que Vendas
 
-  const TOTAL_H=Y_IMPL_EQ+IMPL_EQ_H+30;
+  const TOTAL_H=Y_VEND+VEND_BLK_H+30;
   // Boxes precisam de altura suficiente para 22 boxes
   const BOX_TOTAL_H=22*(BOX_H+3)+40;
   const TOTAL_H_FINAL=Math.max(TOTAL_H, Y_OFICINA-18+BOX_TOTAL_H+10);
@@ -5810,18 +5812,21 @@ function renderMapa(){
     svg+=`<text x="10" y="${yx+11}" font-size="9" fill="#3a3a38" font-weight="700">${label}${rotulo_extra?'  '+rotulo_extra:''}</text>`;
 
     // Vagas — posicionar pelo localMap exato (ex: B5 → vaga 5 da fileira B)
-    // Equipamentos sem vaga específica vão nas primeiras vagas livres
-    const vagaOcupada={}; // numero da vaga → eq
+    // vagaSlots[num] = {A: eq|null, B: eq|null} — suporta 2 equipamentos por vaga (A=topo, B=base)
+    const vagaSlots={}; // num → {A, B}
     const semVaga=[];
+    const HH=Math.floor((CARD_H-1)/2); // meia-altura para dupla: ~14px
 
     eqs.forEach(eq=>{
       if(eq.localMap){
-        // Extrair número da vaga do localMap (ex: "B5" → 5, "G'12" → 12)
-        const m=eq.localMap.match(/\d+$/);
-        const num=m?parseInt(m[0]):null;
+        // Extrai número e sub-slot (ex: "B5" → num=5 sub='A'; "B5B" → num=5 sub='B')
+        const m=eq.localMap.match(/(\d+)([AB]?)$/i);
+        const num=m?parseInt(m[1]):null;
+        const sub=(m&&m[2])?m[2].toUpperCase():'A';
         if(num&&num>=1&&num<=vagas){
-          if(!vagaOcupada[num])vagaOcupada[num]=eq;
-          else semVaga.push(eq); // conflito — 2 equips na mesma vaga
+          if(!vagaSlots[num])vagaSlots[num]={A:null,B:null};
+          if(!vagaSlots[num][sub])vagaSlots[num][sub]=eq;
+          else semVaga.push(eq);
         } else {
           semVaga.push(eq);
         }
@@ -5830,35 +5835,51 @@ function renderMapa(){
       }
     });
 
-    // Distribuir sem vaga nas posições livres
-    let proxLivre=1;
+    // Distribuir sem vaga: primeiro slot A livre, depois slot B livre
     semVaga.forEach(eq=>{
-      while(vagaOcupada[proxLivre]&&proxLivre<=vagas)proxLivre++;
-      if(proxLivre<=vagas){vagaOcupada[proxLivre]=eq;proxLivre++;}
+      let placed=false;
+      for(let v=1;v<=vagas&&!placed;v++){
+        if(!vagaSlots[v])vagaSlots[v]={A:null,B:null};
+        if(!vagaSlots[v].A){vagaSlots[v].A=eq;placed=true;}
+        else if(!vagaSlots[v].B){vagaSlots[v].B=eq;placed=true;}
+      }
     });
 
     // Renderizar cada vaga
     for(let v=1;v<=vagas;v++){
       const vx=8+((v-1)*(CARD_W+GAP))+28;
       const vy=yx+14;
-      const eq=vagaOcupada[v]||null;
-
+      const slot=vagaSlots[v]||{A:null,B:null};
+      const eqA=slot.A, eqB=slot.B;
       const slotLoc=`${label}${v}`;
-      if(eq){
-        const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
-        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${slotLoc}')" onclick="mapaCardClick('${eq.id}')"/>`;
-        svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
-        const desc=eq.equipamento.substring(0,9);
-        svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${desc}</text>`;
+      const slotLocA=`${label}${v}A`;
+      const slotLocB=`${label}${v}B`;
+
+      if(eqA&&eqB){
+        // ── Dupla ocupação: dois meios-cards empilhados ──
+        [[eqA,vy,slotLocA],[eqB,vy+HH+1,slotLocB]].forEach(([eq,cy,loc])=>{
+          const cor=MAPA_COR_ETAPA[eq.etapa]||'#888';
+          svg+=`<rect x="${vx}" y="${cy}" width="${CARD_W}" height="${HH}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eq.id}',event)" onmouseup="mapaSlotDrop(event,'${loc}')" onclick="mapaCardClick('${eq.id}')"/>`;
+          svg+=`<text x="${vx+2}" y="${cy+HH-2}" font-size="6" fill="#fff" font-weight="700" style="pointer-events:none">${eq.id}</text>`;
+        });
+      } else if(eqA){
+        // ── Ocupação simples (posição A) — card inteiro ──
+        const cor=MAPA_COR_ETAPA[eqA.etapa]||'#888';
+        svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="${cor}" rx="2" style="cursor:grab" onmousedown="mapaCardDrag('${eqA.id}',event)" onmouseup="mapaSlotDrop(event,'${slotLoc}')" onclick="mapaCardClick('${eqA.id}')"/>`;
+        svg+=`<text x="${vx+2}" y="${vy+9}" font-size="6.5" fill="#fff" font-weight="700" style="pointer-events:none">${eqA.id}</text>`;
+        svg+=`<text x="${vx+2}" y="${vy+18}" font-size="6" fill="rgba(255,255,255,.85)" style="pointer-events:none">${eqA.equipamento.substring(0,9)}</text>`;
+        // Metade inferior fica como drop-target para slot B
+        svg+=`<rect x="${vx}" y="${vy+HH+1}" width="${CARD_W}" height="${HH}" fill="rgba(255,255,255,.08)" rx="0" stroke="rgba(0,0,0,.06)" stroke-width="0.5" style="cursor:pointer" onmouseup="mapaSlotDrop(event,'${slotLocB}')"/>`;
       } else {
-        // Vaga vazia — drop target + click para selecionar
+        // ── Vaga vazia — drop target completo ──
         svg+=`<rect x="${vx}" y="${vy}" width="${CARD_W}" height="${CARD_H}" fill="rgba(255,255,255,.5)" rx="2" stroke="rgba(0,0,0,.1)" stroke-width="0.5" style="cursor:pointer" data-vaga="${slotLoc}" onmouseup="mapaSlotDrop(event,'${slotLoc}')"/>`;
         svg+=`<text x="${vx+CARD_W/2}" y="${vy+CARD_H/2+3}" text-anchor="middle" font-size="7" fill="rgba(0,0,0,.2)" style="pointer-events:none" data-vaga="${slotLoc}">${slotLoc}</text>`;
       }
     }
 
-    // Excedentes que não couberam
-    const excedentes=eqs.length-Object.keys(vagaOcupada).length;
+    // Excedentes que não couberam (mais de 2 por vaga)
+    const totalSlots=Object.values(vagaSlots).reduce((n,s)=>(s.A?n+1:n)+(s.B?n+1:n),0);
+    const excedentes=eqs.length-totalSlots;
     if(excedentes>0){
       svg+=`<text x="${8+vagas*(CARD_W+GAP)+32}" y="${yx+FILA_H/2+4}" font-size="8" fill="#6BFAC7" font-weight="700">+${excedentes}</text>`;
     }
@@ -5969,8 +5990,7 @@ function renderMapa(){
     }
   }
 
-  // ── IMPLEMENTOS — linha abaixo de Vendas, 28 posições nomeadas I01–I28 ──
-  const IMPL_X=VEND_X;
+  // ── IMPLEMENTOS — mesma linha que Vendas, à direita ──
   svg+=`<rect x="${IMPL_X}" y="${Y_IMPL_EQ}" width="${IMPL_EQ_W}" height="${IMPL_EQ_H}" fill="rgba(99,102,241,.06)" rx="3" stroke="#4F46E5" stroke-width="1.5"/>`;
   svg+=`<text x="${IMPL_X+5}" y="${Y_IMPL_EQ+11}" font-size="9" fill="#3730A3" font-weight="700" style="pointer-events:none">IMPLEMENTOS  I01–I28</text>`;
   {
