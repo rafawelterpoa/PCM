@@ -13408,6 +13408,7 @@ function rcdRenderTratamento() {
           ${status!=='aguardando_inspecao' ? `<button onclick="rcdConcluir('${r.id}')" style="flex:1;padding:5px 8px;background:#F4F6F8;color:#5A7280;border:1px solid #E2E8ED;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer">Concluir</button>` : ''}
           <button onclick="rcdCancelarRegistro('${r.id}','${r.equip_id}')" style="padding:5px 8px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer">✕ Cancelar</button>
         </div>
+        ${(() => { const nObs = r.observacoes ? Object.keys(r.observacoes).length : 0; return `<div style="margin-top:6px;border-top:1px solid #F4F6F8;padding-top:6px"><button onclick="rcdObsAbrir('${r.id}')" style="width:100%;padding:4px 8px;background:${nObs?'#EFF6FF':'#F8FAFC'};color:${nObs?'#1D4ED8':'#94A3B8'};border:1px solid ${nObs?'#BFDBFE':'#E2E8ED'};border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;text-align:left">💬 ${nObs ? `${nObs} observaç${nObs===1?'ão':'ões'}` : 'Adicionar observação'}</button></div>`; })()}
       </div>`;
     }).join('');
   });
@@ -13423,6 +13424,64 @@ function rcdRenderTratamento() {
     const el = document.getElementById(id); if(!el) return;
     el.innerHTML = `<span style="width:7px;height:7px;border-radius:50%;background:${cor};flex-shrink:0"></span>${label}${avg!==null?`<span style="margin-left:auto;font-size:9px;font-weight:500;opacity:.75;background:rgba(0,0,0,.07);padding:2px 6px;border-radius:99px">méd. ${avg}d</span>`:''}`;
   });
+}
+
+// ── OBSERVAÇÕES / FOLLOW-UP ──────────────────────────────────────────────────
+let _rcdObsRegId = null;
+
+function rcdObsAbrir(id) {
+  _rcdObsRegId = id;
+  const reg = _rcdRegistros[id]; if(!reg) return;
+  document.getElementById('rcd-obs-titulo').textContent = reg.equip_id + (reg.equip_nome ? ' — ' + reg.equip_nome : '');
+  document.getElementById('rcd-obs-texto').value = '';
+  rcdObsRenderLista();
+  document.getElementById('rcd-obs-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('rcd-obs-texto').focus(), 120);
+}
+
+function rcdObsFechar() {
+  document.getElementById('rcd-obs-modal').style.display = 'none';
+  _rcdObsRegId = null;
+}
+
+function rcdObsRenderLista() {
+  const reg = _rcdRegistros[_rcdObsRegId];
+  const el = document.getElementById('rcd-obs-lista');
+  const obs = reg && reg.observacoes ? Object.values(reg.observacoes).sort((a,b) => a.ts - b.ts) : [];
+  if (!obs.length) {
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:#94A3B8;font-size:12px">Nenhuma observação registrada</div>';
+    return;
+  }
+  el.innerHTML = obs.map(o => {
+    const d = new Date(o.ts);
+    const dtStr = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    return `<div style="padding:10px 14px;border-bottom:1px solid #F4F6F8">
+      <div style="font-size:10px;color:#94A3B8;margin-bottom:4px">${dtStr}</div>
+      <div style="font-size:13px;color:#1A2E35;white-space:pre-wrap;line-height:1.5">${o.texto.replace(/</g,'&lt;')}</div>
+    </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function rcdObsAdicionar() {
+  const texto = (document.getElementById('rcd-obs-texto').value || '').trim();
+  if (!texto || !_rcdObsRegId) return;
+  const ts = Date.now();
+  const entry = { ts, texto };
+  const btn = document.getElementById('rcd-obs-btn');
+  btn.disabled = true;
+  try {
+    await fetch(`${RCD_FB}/${_rcdObsRegId}/observacoes/${ts}.json`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(entry)
+    });
+    if (!_rcdRegistros[_rcdObsRegId].observacoes) _rcdRegistros[_rcdObsRegId].observacoes = {};
+    _rcdRegistros[_rcdObsRegId].observacoes[ts] = entry;
+    document.getElementById('rcd-obs-texto').value = '';
+    rcdObsRenderLista();
+    rcdRenderTratamento();
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function rcdOrcAbrir(id) {
@@ -17806,6 +17865,30 @@ if ('serviceWorker' in navigator) {
         <div style="padding:14px 24px;border-top:1px solid #E2E8ED;display:flex;justify-content:flex-end;gap:8px">
           <button onclick="document.getElementById('rcd-import-modal').style.display='none'" style="padding:8px 18px;border-radius:7px;font-size:12px;font-weight:600;border:1px solid #E2E8ED;background:#fff;color:#5A7280;cursor:pointer">Cancelar</button>
           <button id="rcd-import-btn" onclick="rcdImportarConfirmar()" disabled style="padding:8px 18px;border-radius:7px;font-size:12px;font-weight:600;border:none;background:#4F46E5;color:#fff;cursor:pointer;opacity:.4">Importar registros</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL OBSERVAÇÕES / FOLLOW-UP -->
+    <div id="rcd-obs-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9400;align-items:center;justify-content:center" onclick="if(event.target===this)rcdObsFechar()">
+      <div style="background:#fff;border-radius:14px;width:520px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.22)">
+        <!-- header -->
+        <div style="padding:18px 22px 14px;border-bottom:1px solid #F0F4F6;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-shrink:0">
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#94A3B8;margin-bottom:3px">Observações &amp; Follow-up</div>
+            <div id="rcd-obs-titulo" style="font-size:15px;font-weight:700;color:#1A2E35"></div>
+          </div>
+          <button onclick="rcdObsFechar()" style="background:none;border:none;font-size:18px;color:#94A3B8;cursor:pointer;line-height:1;padding:2px 4px;flex-shrink:0">✕</button>
+        </div>
+        <!-- lista -->
+        <div id="rcd-obs-lista" style="flex:1;overflow-y:auto;min-height:80px;max-height:360px"></div>
+        <!-- input -->
+        <div style="padding:14px 18px 18px;border-top:1px solid #F0F4F6;flex-shrink:0">
+          <textarea id="rcd-obs-texto" placeholder="Registre aqui o follow-up: reunião, contato com cliente, prazo, etc." onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey))rcdObsAdicionar()" style="width:100%;height:80px;padding:10px 12px;border:1px solid #D1D5DB;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;color:#1A2E35;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#E8630A'" onblur="this.style.borderColor='#D1D5DB'"></textarea>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+            <span style="font-size:11px;color:#94A3B8">Ctrl+Enter para salvar</span>
+            <button id="rcd-obs-btn" onclick="rcdObsAdicionar()" style="padding:7px 18px;background:#1A2E35;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Adicionar</button>
+          </div>
         </div>
       </div>
     </div>
