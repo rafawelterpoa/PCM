@@ -17432,7 +17432,17 @@ function pmpMontarEquips(){
   if(!EQUIPAMENTOS_ORIG||!EQUIPAMENTOS_ORIG.length) return [];
   // índice responsáveis por unidade (lowercase)
   const _respIdx={};
-  (window.BD_RESPONSAVEIS||[]).forEach(r=>{if(r.unidade)_respIdx[r.unidade.toLowerCase().trim()]=r;});
+  const _normStr=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+  (window.BD_RESPONSAVEIS||[]).forEach(r=>{if(r.unidade)_respIdx[_normStr(r.unidade)]=r;});
+  const _findResp=planta=>{
+    const p=_normStr(planta||''); if(!p) return {};
+    if(_respIdx[p]) return _respIdx[p];
+    const pw=(p.split(' ').filter(w=>w.length>3));
+    if(!pw.length) return {};
+    let best=null,bestScore=0;
+    for(const[k,v]of Object.entries(_respIdx)){const kw=new Set(k.split(' ').filter(w=>w.length>3));let sc=0;pw.forEach(w=>{if(kw.has(w))sc++;});if(sc>bestScore){bestScore=sc;best=v;}}
+    return bestScore>=2?best:{};
+  };
   const _manus=window.BD_MANUSIS||{};
   return EQUIPAMENTOS_ORIG.filter(e=>e.status==='Alugado').map(e=>{
     const fid=String(e.frota||e.id||'');
@@ -17455,7 +17465,7 @@ function pmpMontarEquips(){
       else status='Em Dia';
     }
     // Responsáveis pelo lookup por unidade/planta
-    const resp=_respIdx[(e.planta||'').toLowerCase().trim()]||{};
+    const resp=_findResp(e.planta)||{};
     // Manusis: OM, status OM, requisições, PTEs
     const omNum=String(fb.om||'');
     const omData=omNum?(_manus.omPorNum||{})[omNum]:null;
