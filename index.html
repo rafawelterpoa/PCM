@@ -17414,12 +17414,12 @@ function pmpSetSubAba(sub){
 
 function pmpMontarEquips(){
   if(!EQUIPAMENTOS_ORIG||!EQUIPAMENTOS_ORIG.length) return [];
-  // DIAG: mostra os 3 primeiros Alugados no console
-  const _diag=EQUIPAMENTOS_ORIG.filter(e=>e.status==='Alugado').slice(0,3);
-  if(_diag.length) console.log('[PMP-DIAG] Amostra Alugados:',JSON.stringify(_diag.map(e=>({id:e.id,frota:e.frota,tipo:e.tipo,familia:e.familia,planta:e.planta,municipio:e.municipio,horimetro:e.horimetro,status:e.status}))));
+  // índice responsáveis por unidade (lowercase)
+  const _respIdx={};
+  (window.BD_RESPONSAVEIS||[]).forEach(r=>{if(r.unidade)_respIdx[r.unidade.toLowerCase().trim()]=r;});
+  const _manus=window.BD_MANUSIS||{};
   return EQUIPAMENTOS_ORIG.filter(e=>e.status==='Alugado').map(e=>{
     const fid=String(e.frota||e.id||'');
-    // Tenta o id, o frota, e o sufixo numérico do id (ex: "PCP02553" → "2553")
     const _numSuf=String(e.id||'').replace(/^[A-Za-z]+0*/,'');
     const _bp=window.BD_PLANOS_FROTA||{};
     const plano=_bp[e.id]||_bp[fid]||(_numSuf&&_bp[_numSuf])||null;
@@ -17438,12 +17438,30 @@ function pmpMontarEquips(){
       else if(hParaPmp<=50) status='Atenção';
       else status='Em Dia';
     }
-    return {frota:e.id||fid,serie:e.serie||'',modelo:(e.fabricante&&e.modelo)?e.fabricante+' '+e.modelo:(e.modelo||e.fabricante||''),
-      operacao:e.planta||'',cidade:e.municipio||'',familia:e.tipo||e.familia||'',
-      plano_desc:plano?(plano.plano_desc||plano.mascara||''):'',period,
-      hor_atual:horAtual,data_ult_rev:fb.data_ultima_revisao||'',
-      hor_ult_rev:horUltRev||'',hor_prox:horProx||'',h_para_pmp:hParaPmp,
-      status,semana_plan:fb.semana_planejada||'',om:fb.om||''};
+    // Responsáveis pelo lookup por unidade/planta
+    const resp=_respIdx[(e.planta||'').toLowerCase().trim()]||{};
+    // Manusis: OM, status OM, requisições, PTEs
+    const omNum=String(fb.om||'');
+    const omData=omNum?(_manus.omPorNum||{})[omNum]:null;
+    const statusOm=omData?(omData['Status do sistema']||omData['Status do sistema']||omData['Status']||''):'';
+    const rqs=omNum?((_manus.rqPorOM||{})[omNum]||[]):[];
+    const ptes=omNum?((_manus.ptePorOM||{})[omNum]||[]):[];
+    const requisicao=rqs.map(r=>r['Número da requisição']||'').filter(Boolean).join(' / ');
+    const pte=ptes.map(r=>r['Número da requisição']||'').filter(Boolean).join(' / ');
+    return {
+      frota:e.id||fid, serie:e.serie||'',
+      modelo:(e.fabricante&&e.modelo)?e.fabricante+' '+e.modelo:(e.modelo||e.fabricante||''),
+      operacao:e.planta||'', cidade:e.municipio||'', familia:e.tipo||e.familia||'',
+      encarregado:resp.encarregado||'', programador:resp.programador||'',
+      plano_desc:plano?(plano.plano_desc||plano.mascara||''):'', period,
+      hor_atual:horAtual, data_ult_rev:fb.data_ultima_revisao||'',
+      hor_ult_rev:horUltRev||'', hor_prox:horProx||'', h_para_pmp:hParaPmp,
+      status, semana_plan:fb.semana_planejada||'', om:omNum,
+      status_om:statusOm, requisicao, pte,
+      status_v:fb.status_v||'', status_prog:fb.status_prog||'',
+      data_conclusao:fb.data_conclusao||'', mantenedor:fb.mantenedor||'',
+      data_req:fb.data_req||'', status_material:fb.status_material||''
+    };
   }).sort((a,b)=>{
     const o={'Vencida':0,'Atenção':1,'Sem Revisão':2,'Programado':3,'Em Dia':4,'Sem Plano':5};
     return (o[a.status]||5)-(o[b.status]||5);
@@ -17526,27 +17544,43 @@ function pmpRenderGerencial(equips){
 function pmpRenderAnalitica(equips){
   const el=document.getElementById('pmp-plan-analitica'); if(!el) return;
   if(!equips.length){el.innerHTML='<div style="padding:40px;text-align:center;color:#8FA4AE">Nenhum equipamento encontrado</div>';return;}
+  const _ed=(e,campo,val,label)=>`<td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','${campo}','${String(val).replace(/'/g,"&#39;")}')" style="background:#FFFBEB;font-size:12px">${val||`<span style="color:#C8D4DA;font-size:11px">${label||'—'}</span>`}</td>`;
   el.innerHTML=`<div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>
-    <th>FROTA</th><th>SÉRIE</th><th>MODELO</th><th>FAMÍLIA</th><th>OPERAÇÃO</th><th>CIDADE</th>
-    <th>PLANO</th><th>PERIOD.(h)</th><th>HOR.ATUAL</th>
-    <th style="background:#FFFBEB">DATA ÚLT.REV. ✏</th><th style="background:#FFFBEB">HOR.ÚLT.REV. ✏</th>
-    <th>HOR.PRÓX.PLANO</th><th>H/PMP</th><th>STATUS</th>
-    <th style="background:#FFFBEB">SEM.PLAN. ✏</th><th style="background:#FFFBEB">OM ✏</th><th></th>
+    <th>SEM.PLAN</th><th>FROTA</th><th>SÉRIE</th><th>MODELO</th><th>UNIDADE</th>
+    <th>ENCARREGADO</th><th>PROGRAMADOR</th><th>CIDADE</th>
+    <th>OM</th><th>PLANO (h)</th><th>STATUS OM</th>
+    <th>HOR.ATUAL</th><th>H/PMP</th><th>STATUS PLANO</th>
+    <th style="background:#FFFBEB">STATUS ✏</th>
+    <th style="background:#FFFBEB">STATUS PROG. ✏</th>
+    <th style="background:#FFFBEB">DT CONCLUSÃO ✏</th>
+    <th style="background:#FFFBEB">MANTENEDOR ✏</th>
+    <th>REQUISIÇÃO</th><th>PTE</th>
+    <th style="background:#FFFBEB">DT REQUISIÇÃO ✏</th>
+    <th style="background:#FFFBEB">STATUS MAT. ✏</th>
+    <th></th>
   </tr></thead><tbody>${equips.map(e=>`<tr>
-    <td><strong>${e.frota}</strong></td>
+    <td style="text-align:center;font-weight:600">${e.semana_plan||'—'}</td>
+    <td><strong style="font-size:12px">${e.frota}</strong>${e.serie?`<div style="font-size:10px;color:#8FA4AE">${e.serie}</div>`:''}</td>
     <td style="font-size:11px;color:#5A7280">${e.serie||'—'}</td>
-    <td>${e.modelo||'—'}</td><td style="font-size:11px">${e.familia||'—'}</td>
-    <td style="font-size:12px">${e.operacao||'—'}</td><td style="font-size:12px">${e.cidade||'—'}</td>
-    <td style="font-size:11px">${e.plano_desc||'—'}</td>
+    <td style="font-size:12px">${e.modelo||'—'}</td>
+    <td style="font-size:11px">${e.operacao||'—'}</td>
+    <td style="font-size:11px">${e.encarregado||'—'}</td>
+    <td style="font-size:11px">${e.programador||'—'}</td>
+    <td style="font-size:11px">${e.cidade||'—'}</td>
+    <td style="font-size:12px">${e.om||'—'}</td>
     <td style="text-align:right">${e.period||'—'}</td>
+    <td style="font-size:11px">${e.status_om||'—'}</td>
     <td style="text-align:right">${e.hor_atual||'—'}</td>
-    <td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','data_ultima_revisao','${e.data_ult_rev}')" style="background:#FFFBEB">${e.data_ult_rev||'<span style="color:#C8D4DA;font-size:11px">clique p/ editar</span>'}</td>
-    <td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','horimetro_ultima_revisao','${e.hor_ult_rev}')" style="background:#FFFBEB">${e.hor_ult_rev||'<span style="color:#C8D4DA;font-size:11px">—</span>'}</td>
-    <td style="text-align:right;font-weight:500">${e.hor_prox||'—'}</td>
     <td style="text-align:right;font-weight:700;color:${_pmpHCor(e.h_para_pmp)}">${_pmpHFmt(e.h_para_pmp)}</td>
     <td>${pmpBadge(e.status)}</td>
-    <td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','semana_planejada','${e.semana_plan}')" style="background:#FFFBEB;text-align:center">${e.semana_plan||'<span style="color:#C8D4DA;font-size:11px">—</span>'}</td>
-    <td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','om','${e.om}')" style="background:#FFFBEB">${e.om||'<span style="color:#C8D4DA;font-size:11px">—</span>'}</td>
+    ${_ed(e,'status_v',e.status_v,'')}
+    ${_ed(e,'status_prog',e.status_prog,'')}
+    ${_ed(e,'data_conclusao',e.data_conclusao,'')}
+    ${_ed(e,'mantenedor',e.mantenedor,'')}
+    <td style="font-size:11px">${e.requisicao||'—'}</td>
+    <td style="font-size:11px">${e.pte||'—'}</td>
+    ${_ed(e,'data_req',e.data_req,'')}
+    ${_ed(e,'status_material',e.status_material,'')}
     <td><button onclick="pmpAbrirModal('${e.frota}')" style="padding:3px 8px;font-size:11px;background:#F4F6F8;border:1px solid #E2E8ED;border-radius:5px;cursor:pointer">✏</button></td>
   </tr>`).join('')}</tbody></table></div>`;
 }
@@ -17582,12 +17616,18 @@ function pmpAbrirModal(frota){
   const fb=(window.PMP_EQUIP||{})[fid]||{};
   const all=pmpMontarEquips();
   const eq=all.find(e=>e.frota===fid)||{};
-  document.getElementById('pmp-modal-titulo').textContent=`Frota ${fid}${eq.modelo?' — '+eq.modelo:''}`;
+  document.getElementById('pmp-modal-titulo').textContent=`${fid}${eq.modelo?' — '+eq.modelo:''}`;
   document.getElementById('pmp-modal-frota').value=fid;
   document.getElementById('pmp-modal-data').value=fb.data_ultima_revisao||'';
   document.getElementById('pmp-modal-hor').value=fb.horimetro_ultima_revisao||'';
   document.getElementById('pmp-modal-semana').value=fb.semana_planejada||'';
   document.getElementById('pmp-modal-om').value=fb.om||'';
+  document.getElementById('pmp-modal-status-v').value=fb.status_v||'';
+  document.getElementById('pmp-modal-status-prog').value=fb.status_prog||'';
+  document.getElementById('pmp-modal-data-conclusao').value=fb.data_conclusao||'';
+  document.getElementById('pmp-modal-mantenedor').value=fb.mantenedor||'';
+  document.getElementById('pmp-modal-data-req').value=fb.data_req||'';
+  document.getElementById('pmp-modal-status-material').value=fb.status_material||'';
   document.getElementById('pmp-modal').style.display='flex';
 }
 function pmpFecharModal(){document.getElementById('pmp-modal').style.display='none';}
@@ -17597,7 +17637,13 @@ async function pmpSalvarModal(){
     data_ultima_revisao:document.getElementById('pmp-modal-data').value,
     horimetro_ultima_revisao:document.getElementById('pmp-modal-hor').value,
     semana_planejada:document.getElementById('pmp-modal-semana').value,
-    om:document.getElementById('pmp-modal-om').value
+    om:document.getElementById('pmp-modal-om').value,
+    status_v:document.getElementById('pmp-modal-status-v').value,
+    status_prog:document.getElementById('pmp-modal-status-prog').value,
+    data_conclusao:document.getElementById('pmp-modal-data-conclusao').value,
+    mantenedor:document.getElementById('pmp-modal-mantenedor').value,
+    data_req:document.getElementById('pmp-modal-data-req').value,
+    status_material:document.getElementById('pmp-modal-status-material').value
   };
   if(!window.PMP_EQUIP[fid]) window.PMP_EQUIP[fid]={};
   Object.assign(window.PMP_EQUIP[fid],dados);
@@ -19003,26 +19049,52 @@ if ('serviceWorker' in navigator) {
       <span id="pmp-modal-titulo" style="font-size:15px;font-weight:700;color:#1A2E35"></span>
       <button onclick="pmpFecharModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#8FA4AE;padding:0 4px">✕</button>
     </div>
-    <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
+    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;max-height:70vh;overflow-y:auto">
       <input type="hidden" id="pmp-modal-frota">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <div style="display:flex;flex-direction:column;gap:5px">
+      <div style="font-size:11px;font-weight:700;color:#8FA4AE;text-transform:uppercase;letter-spacing:.06em;padding-bottom:2px;border-bottom:1px solid #E2E8ED">Planejamento</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="display:flex;flex-direction:column;gap:4px">
           <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Data Última Revisão</label>
-          <input type="date" id="pmp-modal-data" style="padding:8px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;color:#1A2E35;outline:none">
+          <input type="date" id="pmp-modal-data" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;color:#1A2E35;outline:none">
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;flex-direction:column;gap:4px">
           <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Horímetro Última Revisão</label>
-          <input type="number" id="pmp-modal-hor" placeholder="ex: 12500" style="padding:8px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;color:#1A2E35;outline:none">
+          <input type="number" id="pmp-modal-hor" placeholder="ex: 12500" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;color:#1A2E35;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Semana Planejada</label>
+          <input type="number" id="pmp-modal-semana" placeholder="ex: 28" min="1" max="53" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;color:#1A2E35;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Ordem de Manutenção (OM)</label>
+          <input type="text" id="pmp-modal-om" placeholder="ex: 4014586" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;color:#1A2E35;outline:none">
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <div style="display:flex;flex-direction:column;gap:5px">
-          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Semana Planejada</label>
-          <input type="number" id="pmp-modal-semana" placeholder="ex: 28" min="1" max="53" style="padding:8px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;color:#1A2E35;outline:none">
+      <div style="font-size:11px;font-weight:700;color:#8FA4AE;text-transform:uppercase;letter-spacing:.06em;padding-bottom:2px;border-bottom:1px solid #E2E8ED;margin-top:4px">Programação</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Status (V)</label>
+          <input type="text" id="pmp-modal-status-v" placeholder="ex: Programado" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;color:#1A2E35;outline:none">
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px">
-          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Ordem de Manutenção</label>
-          <input type="text" id="pmp-modal-om" placeholder="ex: OM 000004012457" style="padding:8px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;color:#1A2E35;outline:none">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Status Programação (Z)</label>
+          <input type="text" id="pmp-modal-status-prog" placeholder="ex: Concluído" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;color:#1A2E35;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Data Conclusão (AA)</label>
+          <input type="date" id="pmp-modal-data-conclusao" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;color:#1A2E35;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Mantenedor (AB)</label>
+          <input type="text" id="pmp-modal-mantenedor" placeholder="Nome do técnico" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;color:#1A2E35;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Data Requisição (AF)</label>
+          <input type="date" id="pmp-modal-data-req" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;color:#1A2E35;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Status Material (AH)</label>
+          <input type="text" id="pmp-modal-status-material" placeholder="ex: Disponível" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;color:#1A2E35;outline:none">
         </div>
       </div>
     </div>
