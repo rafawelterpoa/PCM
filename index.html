@@ -17425,7 +17425,8 @@ function pmpMontarEquips(){
     const plano=_bp[e.id]||_bp[fid]||(_numSuf&&_bp[_numSuf])||null;
     const fb=(window.PMP_EQUIP||{})[fid]||(window.PMP_EQUIP||{})[e.id]||{};
     const period=plano?parseFloat(plano.period||plano.periodicidade||0):0;
-    const horAtual=parseFloat(e.horimetro)||0;
+    const _hStr=String(e.horimetro||'').trim();
+    const horAtual=_hStr?(_hStr.includes(',')?parseFloat(_hStr.replace(/\./g,'').replace(',','.')):parseFloat(_hStr.replace(/\./g,'')))||0:0;
     const horUltRev=parseFloat(fb.horimetro_ultima_revisao)||0;
     const horProx=period>0?(horUltRev+period):0;
     const hParaPmp=horProx>0?(horProx-horAtual):null;
