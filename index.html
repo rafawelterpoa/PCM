@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -15291,7 +15291,7 @@ function snavSetActive(id){
 
 function fecharPaginasFixed(){
   // Páginas com position:fixed precisam ser fechadas explicitamente
-  ['page-rcd','page-solrcd'].forEach(id=>{
+  ['page-rcd','page-solrcd','page-bd'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.style.display='none';
   });
 }
@@ -18193,127 +18193,6 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════
-         PÁGINA — BASE DE DADOS
-    ══════════════════════════════════════════════════════════ -->
-    <div id="page-bd" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#F4F6F8;z-index:100">
-      <div style="padding:28px 32px;max-width:1100px">
-
-        <!-- cabeçalho -->
-        <div style="margin-bottom:28px">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
-            <div style="width:38px;height:38px;border-radius:10px;background:#1A2E35;display:flex;align-items:center;justify-content:center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4.03 3-9 3S3 13.66 3 12"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/></svg>
-            </div>
-            <div>
-              <div style="font-size:20px;font-weight:700;color:#1A2E35">Base de Dados</div>
-              <div style="font-size:12px;color:#8FA4AE">Bases semi-estáticas que alimentam os módulos do PCM · Acesso restrito a administradores</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- grid de painéis 2×2 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-
-          <!-- ── PAINEL 1: Planos de PM ── -->
-          <div style="background:#fff;border:1px solid #E2E8ED;border-radius:14px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px">
-              <div style="display:flex;align-items:center;gap:12px">
-                <div style="width:44px;height:44px;border-radius:10px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                </div>
-                <div>
-                  <div style="font-size:15px;font-weight:700;color:#1A2E35">Planos de PM</div>
-                  <div style="font-size:11px;color:#8FA4AE;margin-top:2px">Frota → máscara → intervalos de manutenção</div>
-                </div>
-              </div>
-              <span id="bd-badge-planos" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:#F4F6F8;color:#8FA4AE;white-space:nowrap;flex-shrink:0">Não carregado</span>
-            </div>
-            <div style="background:#F8FAFC;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#5A7280;line-height:1.7">
-              <strong>Arquivo:</strong> Consulta_Pecas_MILLS.xlsx<br>
-              <strong>Abas:</strong> <code style="background:#EEF2F7;padding:1px 5px;border-radius:4px">Frota</code> (equip → plano) + <code style="background:#EEF2F7;padding:1px 5px;border-radius:4px">Dados</code> (plano → intervalos)
-            </div>
-            <div id="bd-info-planos" style="font-size:11px;color:#8FA4AE;margin-bottom:14px;min-height:16px"></div>
-            <div id="bd-preview-planos" style="display:none;max-height:220px;overflow-y:auto;border:1px solid #E2E8ED;border-radius:8px;margin-bottom:14px;font-size:11px"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button onclick="document.getElementById('bd-file-planos').click()" style="flex:1;padding:8px 14px;background:#1D4ED8;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">⬆ Carregar arquivo</button>
-              <button id="bd-btn-prev-planos" onclick="bdTogglePreview('planos')" disabled style="padding:8px 14px;background:#F4F6F8;color:#8FA4AE;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;font-weight:600;cursor:not-allowed">Prévia</button>
-              <input type="file" id="bd-file-planos" accept=".xlsx,.xls" style="display:none" onchange="bdUploadPlanos(this.files[0]);this.value=''">
-            </div>
-          </div>
-
-          <!-- ── PAINEL 2: Responsáveis ── -->
-          <div style="background:#fff;border:1px solid #E2E8ED;border-radius:14px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px">
-              <div style="display:flex;align-items:center;gap:12px">
-                <div style="width:44px;height:44px;border-radius:10px;background:#D1FAE5;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#065F46" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                </div>
-                <div>
-                  <div style="font-size:15px;font-weight:700;color:#1A2E35">Responsáveis</div>
-                  <div style="font-size:11px;color:#8FA4AE;margin-top:2px">Unidade → Programador → Encarregado</div>
-                </div>
-              </div>
-              <span id="bd-badge-resp" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:#F4F6F8;color:#8FA4AE;white-space:nowrap;flex-shrink:0">Não carregado</span>
-            </div>
-            <div style="background:#F8FAFC;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#5A7280;line-height:1.7">
-              <strong>Arquivo:</strong> Unidade X Programador X Encarregado.xlsx<br>
-              <strong>Colunas:</strong> UNIDADE · Gerente · Coordenador · Supervisor · ENCARREGADO · Programador
-            </div>
-            <div id="bd-info-resp" style="font-size:11px;color:#8FA4AE;margin-bottom:14px;min-height:16px"></div>
-            <div id="bd-preview-resp" style="display:none;max-height:220px;overflow-y:auto;border:1px solid #E2E8ED;border-radius:8px;margin-bottom:14px;font-size:11px"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button onclick="document.getElementById('bd-file-resp').click()" style="flex:1;padding:8px 14px;background:#065F46;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">⬆ Carregar arquivo</button>
-              <button id="bd-btn-prev-resp" onclick="bdTogglePreview('resp')" disabled style="padding:8px 14px;background:#F4F6F8;color:#8FA4AE;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;font-weight:600;cursor:not-allowed">Prévia</button>
-              <input type="file" id="bd-file-resp" accept=".xlsx,.xls,.csv" style="display:none" onchange="bdUploadResponsaveis(this.files[0]);this.value=''">
-            </div>
-          </div>
-
-          <!-- ── PAINEL 3: Histórico de PMs ── -->
-          <div style="background:#fff;border:1px solid #E2E8ED;border-radius:14px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px">
-              <div style="display:flex;align-items:center;gap:12px">
-                <div style="width:44px;height:44px;border-radius:10px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                </div>
-                <div>
-                  <div style="font-size:15px;font-weight:700;color:#1A2E35">Histórico de PMs</div>
-                  <div style="font-size:11px;color:#8FA4AE;margin-top:2px">Última execução por equipamento × intervalo</div>
-                </div>
-              </div>
-              <span id="bd-badge-hist" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:#F4F6F8;color:#8FA4AE;white-space:nowrap;flex-shrink:0">Não carregado</span>
-            </div>
-            <div style="background:#F8FAFC;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#5A7280;line-height:1.7">
-              <strong>Colunas esperadas:</strong> N° Interno · Intervalo (h) · Data execução · Horímetro execução · N° OS<br>
-              <strong>Formato:</strong> .xlsx ou .csv
-            </div>
-            <div id="bd-info-hist" style="font-size:11px;color:#8FA4AE;margin-bottom:14px;min-height:16px"></div>
-            <div id="bd-preview-hist" style="display:none;max-height:220px;overflow-y:auto;border:1px solid #E2E8ED;border-radius:8px;margin-bottom:14px;font-size:11px"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button onclick="document.getElementById('bd-file-hist').click()" style="flex:1;padding:8px 14px;background:#B45309;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">⬆ Carregar arquivo</button>
-              <button id="bd-btn-prev-hist" onclick="bdTogglePreview('hist')" disabled style="padding:8px 14px;background:#F4F6F8;color:#8FA4AE;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;font-weight:600;cursor:not-allowed">Prévia</button>
-              <input type="file" id="bd-file-hist" accept=".xlsx,.xls,.csv" style="display:none" onchange="bdUploadHistorico(this.files[0]);this.value=''">
-            </div>
-          </div>
-
-          <!-- ── PAINEL 4: Slot futuro ── -->
-          <div style="background:#fff;border:1px dashed #D1D5DB;border-radius:14px;padding:24px;box-shadow:none;opacity:.6">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-              <div style="width:44px;height:44px;border-radius:10px;background:#F4F6F8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C8D4DA" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-              </div>
-              <div>
-                <div style="font-size:15px;font-weight:700;color:#8FA4AE">Base futura</div>
-                <div style="font-size:11px;color:#C8D4DA;margin-top:2px">Slot reservado para próximas bases</div>
-              </div>
-            </div>
-            <div style="font-size:12px;color:#C8D4DA;text-align:center;padding:20px 0">A definir conforme necessidade do módulo PMP</div>
-          </div>
-
-        </div><!-- /grid -->
-      </div>
-    </div>
-    <!-- ══════════════════════════════════════════════════════════ -->
 
     <!-- MODAL OBSERVAÇÕES / FOLLOW-UP -->
     <div id="rcd-obs-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9400;align-items:center;justify-content:center" onclick="if(event.target===this)rcdObsFechar()">
@@ -18530,6 +18409,128 @@ if ('serviceWorker' in navigator) {
     </div>
   </div>
 </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         PÁGINA — BASE DE DADOS
+    ══════════════════════════════════════════════════════════ -->
+    <div id="page-bd" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#F4F6F8;z-index:100">
+      <div style="padding:28px 32px;max-width:1100px">
+
+        <!-- cabeçalho -->
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+            <div style="width:38px;height:38px;border-radius:10px;background:#1A2E35;display:flex;align-items:center;justify-content:center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4.03 3-9 3S3 13.66 3 12"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/></svg>
+            </div>
+            <div>
+              <div style="font-size:20px;font-weight:700;color:#1A2E35">Base de Dados</div>
+              <div style="font-size:12px;color:#8FA4AE">Bases semi-estáticas que alimentam os módulos do PCM · Acesso restrito a administradores</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- grid de painéis 2×2 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+          <!-- ── PAINEL 1: Planos de PM ── -->
+          <div style="background:#fff;border:1px solid #E2E8ED;border-radius:14px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:44px;height:44px;border-radius:10px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:15px;font-weight:700;color:#1A2E35">Planos de PM</div>
+                  <div style="font-size:11px;color:#8FA4AE;margin-top:2px">Frota → máscara → intervalos de manutenção</div>
+                </div>
+              </div>
+              <span id="bd-badge-planos" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:#F4F6F8;color:#8FA4AE;white-space:nowrap;flex-shrink:0">Não carregado</span>
+            </div>
+            <div style="background:#F8FAFC;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#5A7280;line-height:1.7">
+              <strong>Arquivo:</strong> Consulta_Pecas_MILLS.xlsx<br>
+              <strong>Abas:</strong> <code style="background:#EEF2F7;padding:1px 5px;border-radius:4px">Frota</code> (equip → plano) + <code style="background:#EEF2F7;padding:1px 5px;border-radius:4px">Dados</code> (plano → intervalos)
+            </div>
+            <div id="bd-info-planos" style="font-size:11px;color:#8FA4AE;margin-bottom:14px;min-height:16px"></div>
+            <div id="bd-preview-planos" style="display:none;max-height:220px;overflow-y:auto;border:1px solid #E2E8ED;border-radius:8px;margin-bottom:14px;font-size:11px"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="document.getElementById('bd-file-planos').click()" style="flex:1;padding:8px 14px;background:#1D4ED8;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">⬆ Carregar arquivo</button>
+              <button id="bd-btn-prev-planos" onclick="bdTogglePreview('planos')" disabled style="padding:8px 14px;background:#F4F6F8;color:#8FA4AE;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;font-weight:600;cursor:not-allowed">Prévia</button>
+              <input type="file" id="bd-file-planos" accept=".xlsx,.xls" style="display:none" onchange="bdUploadPlanos(this.files[0]);this.value=''">
+            </div>
+          </div>
+
+          <!-- ── PAINEL 2: Responsáveis ── -->
+          <div style="background:#fff;border:1px solid #E2E8ED;border-radius:14px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:44px;height:44px;border-radius:10px;background:#D1FAE5;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#065F46" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:15px;font-weight:700;color:#1A2E35">Responsáveis</div>
+                  <div style="font-size:11px;color:#8FA4AE;margin-top:2px">Unidade → Programador → Encarregado</div>
+                </div>
+              </div>
+              <span id="bd-badge-resp" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:#F4F6F8;color:#8FA4AE;white-space:nowrap;flex-shrink:0">Não carregado</span>
+            </div>
+            <div style="background:#F8FAFC;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#5A7280;line-height:1.7">
+              <strong>Arquivo:</strong> Unidade X Programador X Encarregado.xlsx<br>
+              <strong>Colunas:</strong> UNIDADE · Gerente · Coordenador · Supervisor · ENCARREGADO · Programador
+            </div>
+            <div id="bd-info-resp" style="font-size:11px;color:#8FA4AE;margin-bottom:14px;min-height:16px"></div>
+            <div id="bd-preview-resp" style="display:none;max-height:220px;overflow-y:auto;border:1px solid #E2E8ED;border-radius:8px;margin-bottom:14px;font-size:11px"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="document.getElementById('bd-file-resp').click()" style="flex:1;padding:8px 14px;background:#065F46;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">⬆ Carregar arquivo</button>
+              <button id="bd-btn-prev-resp" onclick="bdTogglePreview('resp')" disabled style="padding:8px 14px;background:#F4F6F8;color:#8FA4AE;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;font-weight:600;cursor:not-allowed">Prévia</button>
+              <input type="file" id="bd-file-resp" accept=".xlsx,.xls,.csv" style="display:none" onchange="bdUploadResponsaveis(this.files[0]);this.value=''">
+            </div>
+          </div>
+
+          <!-- ── PAINEL 3: Histórico de PMs ── -->
+          <div style="background:#fff;border:1px solid #E2E8ED;border-radius:14px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:44px;height:44px;border-radius:10px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:15px;font-weight:700;color:#1A2E35">Histórico de PMs</div>
+                  <div style="font-size:11px;color:#8FA4AE;margin-top:2px">Última execução por equipamento × intervalo</div>
+                </div>
+              </div>
+              <span id="bd-badge-hist" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:#F4F6F8;color:#8FA4AE;white-space:nowrap;flex-shrink:0">Não carregado</span>
+            </div>
+            <div style="background:#F8FAFC;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#5A7280;line-height:1.7">
+              <strong>Colunas esperadas:</strong> N° Interno · Intervalo (h) · Data execução · Horímetro execução · N° OS<br>
+              <strong>Formato:</strong> .xlsx ou .csv
+            </div>
+            <div id="bd-info-hist" style="font-size:11px;color:#8FA4AE;margin-bottom:14px;min-height:16px"></div>
+            <div id="bd-preview-hist" style="display:none;max-height:220px;overflow-y:auto;border:1px solid #E2E8ED;border-radius:8px;margin-bottom:14px;font-size:11px"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="document.getElementById('bd-file-hist').click()" style="flex:1;padding:8px 14px;background:#B45309;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">⬆ Carregar arquivo</button>
+              <button id="bd-btn-prev-hist" onclick="bdTogglePreview('hist')" disabled style="padding:8px 14px;background:#F4F6F8;color:#8FA4AE;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;font-weight:600;cursor:not-allowed">Prévia</button>
+              <input type="file" id="bd-file-hist" accept=".xlsx,.xls,.csv" style="display:none" onchange="bdUploadHistorico(this.files[0]);this.value=''">
+            </div>
+          </div>
+
+          <!-- ── PAINEL 4: Slot futuro ── -->
+          <div style="background:#fff;border:1px dashed #D1D5DB;border-radius:14px;padding:24px;box-shadow:none;opacity:.6">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+              <div style="width:44px;height:44px;border-radius:10px;background:#F4F6F8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C8D4DA" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              </div>
+              <div>
+                <div style="font-size:15px;font-weight:700;color:#8FA4AE">Base futura</div>
+                <div style="font-size:11px;color:#C8D4DA;margin-top:2px">Slot reservado para próximas bases</div>
+              </div>
+            </div>
+            <div style="font-size:12px;color:#C8D4DA;text-align:center;padding:20px 0">A definir conforme necessidade do módulo PMP</div>
+          </div>
+
+        </div><!-- /grid -->
+      </div>
+    </div>
+    <!-- ══════════════════════════════════════════════════════════ -->
 
 <!-- SOLICITAÇÕES RCD -->
 <div id="page-solrcd" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#eef1f6;z-index:100">
