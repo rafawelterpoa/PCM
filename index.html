@@ -2195,7 +2195,14 @@ async function loadFromFirebase(){
             origMap[id].status=b.status||origMap[id].status;
             // base_atual é fonte de verdade para oficina — propagar mudanças de filial
             if(b.oficina)origMap[id].oficina=b.oficina;
-          } else if(b.status){EQUIPAMENTOS_ORIG.push({id,status:b.status,oficina:b.oficina||''});}
+            if(b.planta)origMap[id].planta=b.planta;
+            if(b.municipio)origMap[id].municipio=b.municipio;
+            if(b.serie)origMap[id].serie=b.serie;
+            if(b.fabricante)origMap[id].fabricante=b.fabricante;
+            if(b.horimetro)origMap[id].horimetro=b.horimetro;
+            if(b.frota)origMap[id].frota=b.frota;
+            if(b.tipoFrota)origMap[id].tipoFrota=b.tipoFrota;
+          } else if(b.status){EQUIPAMENTOS_ORIG.push({id,status:b.status,oficina:b.oficina||'',planta:b.planta||'',municipio:b.municipio||'',serie:b.serie||'',fabricante:b.fabricante||'',horimetro:b.horimetro||'',frota:b.frota||'',tipoFrota:b.tipoFrota||''});}
         });
       }
     }
@@ -5275,7 +5282,7 @@ async function doBaseUpdate(){
   const fbOk=await saveToFirebase(Object.keys(state));
   // Salvar base atual no Firebase para referência dinâmica
   try{
-    const baseObj={};novos.forEach(n=>{baseObj[n.id]={id:n.id,status:n.status,oficina:n.oficina,ts:agora};});
+    const baseObj={};novos.forEach(n=>{baseObj[n.id]={id:n.id,status:n.status,oficina:n.oficina,ts:agora,planta:n.planta||'',municipio:n.municipio||'',serie:n.serie||'',fabricante:n.fabricante||'',horimetro:n.horimetro||'',frota:n.frota||'',tipoFrota:n.tipoFrota||''};});
     await fetch(FB_BASE+'/base_atual.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(baseObj)});
   }catch(e){console.warn('base_atual save:',e);}
   if(!fbOk){
