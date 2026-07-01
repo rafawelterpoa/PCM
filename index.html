@@ -17381,10 +17381,10 @@ let _pmpFiltroStatus='', _pmpFiltroOp='', _pmpBusca='';
 
 function paginaPmp(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  fecharPaginasFixed();
+  document.querySelectorAll('[style*="position:fixed"][id^="page-"]').forEach(p=>{if(p.id!=='page-pmp')p.style.display='none';});
   const pg=document.getElementById('page-pmp');
   if(pg) pg.style.display='flex';
-  pmpSetAba('planejamento');
+  pmpSetAba(_pmpAba||'planejamento');
 }
 
 function pmpSetAba(aba){
