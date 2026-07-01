@@ -988,6 +988,13 @@ input.filter-sel{padding:5px 10px;height:32px}
     <span class="snav-label">Vale Peças</span>
   </div>
 
+  <div class="snav-divider"></div>
+  <div class="snav-section-label">PMP</div>
+  <div class="snav-item" id="snav-pmp" onclick="navegarPara('pmp')" title="Planejamento e Programação PMP">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+    <span class="snav-label">PMP</span>
+  </div>
+
   <div class="snav-section-label">Análise</div>
 
   <div class="snav-item" onclick="abrirTodo()" title="Gestão Integrada" id="snav-gi">
@@ -2286,14 +2293,14 @@ async function loadFromFirebase(){
     // Não escrever no Firebase na migração — campos serão salvos na próxima operação normal
     console.log("[FB Load] CCB02905 etapa final:", state["CCB02905"]?state["CCB02905"].etapa:"nao encontrado");
     reRenderAtivo();setSyncStatus('ok');fbListen();
-    rcdCarregar();solRcdCarregar();bdCarregar();
+    rcdCarregar();solRcdCarregar();bdCarregar();pmpCarregar();
   }catch(e){
     console.error('[Firebase erro]',e.message||e);
     setSyncStatus('error');
     showToast('⚠ Modo offline — usando dados locais');
     reRenderAtivo();
     fbListen();
-    rcdCarregar();solRcdCarregar();bdCarregar();
+    rcdCarregar();solRcdCarregar();bdCarregar();pmpCarregar();
   }
 }
 
@@ -15291,7 +15298,7 @@ function snavSetActive(id){
 
 function fecharPaginasFixed(){
   // Páginas com position:fixed precisam ser fechadas explicitamente
-  ['page-rcd','page-solrcd','page-bd'].forEach(id=>{
+  ['page-rcd','page-solrcd','page-bd','page-pmp'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.style.display='none';
   });
 }
@@ -15309,6 +15316,7 @@ function navegarPara(destino){
   if(destino==='rcd'){paginaRcd();snavSetActive('snav-rcd');return;}
   if(destino==='solrcd'){paginaSolRcd();snavSetActive('snav-solrcd');return;}
   if(destino==='bd'){paginaBd();snavSetActive('snav-bd');return;}
+  if(destino==='pmp'){paginaPmp();snavSetActive('snav-pmp');return;}
 }
 
 // ── FOTOS DE ORÇAMENTO (compartilhado entre RCD Desmob e Sol. RCD) ───────────
@@ -16982,6 +16990,10 @@ window.BD_HISTORICO_PM      = {}; // equip_id → { [intervalo_h]: {data,horimet
 window.BD_MANUSIS           = []; // array de registros diários do Manusis (upload diário)
 window.BD_META              = {}; // timestamps e contagens
 
+// ── PMP globals ───────────────────────────────────────────────────────────────
+const PMP_FB = FB_BASE + '/pmp';
+window.PMP_EQUIP = {}; // frota_id → {data_ultima_revisao, horimetro_ultima_revisao, semana_planejada, om}
+
 function paginaBd() {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('[style*="position:fixed"][id^="page-"]').forEach(p => { if(p.id!=='page-bd') p.style.display='none'; });
@@ -17355,6 +17367,271 @@ function bdRenderPreviewManusis() {
     <thead><tr>${cols.map(c=>`<th style="padding:6px 10px;background:#F8FAFC;border-bottom:1px solid #E2E8ED;font-size:10px;font-weight:700;color:#5A7280;text-align:left;white-space:nowrap">${c}</th>`).join('')}</tr></thead>
     <tbody>${oms.map(r=>`<tr>${cols.map(c=>`<td style="padding:5px 10px;border-bottom:1px solid #F0F4F6;font-size:11px;color:#1A2E35;white-space:nowrap">${r[c]??''}</td>`).join('')}</tr>`).join('')}</tbody>
   </table>`;
+}
+
+// ── PMP — PLANEJAMENTO E PROGRAMAÇÃO ─────────────────────────────────────────
+async function pmpCarregar() {
+  try {
+    const r = await fetch(`${PMP_FB}/equip.json`);
+    if(r.ok){ const d=await r.json(); if(d) window.PMP_EQUIP=d; }
+  } catch(e){}
+}
+
+let _pmpAba='planejamento', _pmpSubAba='gerencial';
+let _pmpFiltroStatus='', _pmpFiltroOp='', _pmpBusca='';
+
+function paginaPmp(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  fecharPaginasFixed();
+  const pg=document.getElementById('page-pmp');
+  if(pg) pg.style.display='flex';
+  pmpSetAba('planejamento');
+}
+
+function pmpSetAba(aba){
+  _pmpAba=aba;
+  ['planejamento','programacao'].forEach(a=>{
+    const tab=document.getElementById('pmp-tab-'+a);
+    const cont=document.getElementById('pmp-content-'+a);
+    if(tab){tab.style.color=a===aba?'#E8630A':'rgba(255,255,255,.55)';tab.style.borderBottomColor=a===aba?'#E8630A':'transparent';}
+    if(cont) cont.style.display=a===aba?'flex':'none';
+  });
+  if(aba==='planejamento') pmpRenderPlanejamento();
+  else pmpRenderProgramacao();
+}
+
+function pmpSetSubAba(sub){
+  _pmpSubAba=sub;
+  ['gerencial','analitica'].forEach(a=>{
+    const tab=document.getElementById('pmp-sub-'+a);
+    const cont=document.getElementById('pmp-plan-'+a);
+    if(tab){tab.style.color=a===sub?'#E8630A':'#5A7280';tab.style.borderBottomColor=a===sub?'#E8630A':'transparent';}
+    if(cont) cont.style.display=a===sub?'block':'none';
+  });
+  const equips=pmpFiltrarEquips(pmpMontarEquips());
+  if(sub==='gerencial') pmpRenderGerencial(equips);
+  else pmpRenderAnalitica(equips);
+}
+
+function pmpMontarEquips(){
+  if(!EQUIPAMENTOS_ORIG||!EQUIPAMENTOS_ORIG.length) return [];
+  return EQUIPAMENTOS_ORIG.filter(e=>e.status==='Alugado').map(e=>{
+    const fid=String(e.frota||e.id||'');
+    const plano=(window.BD_PLANOS_FROTA||{})[fid]||(window.BD_PLANOS_FROTA||{})[e.id]||null;
+    const fb=(window.PMP_EQUIP||{})[fid]||{};
+    const period=plano?parseFloat(plano.period||plano.periodicidade||0):0;
+    const horAtual=parseFloat(e.horimetro)||0;
+    const horUltRev=parseFloat(fb.horimetro_ultima_revisao)||0;
+    const horProx=period>0?(horUltRev+period):0;
+    const hParaPmp=horProx>0?(horProx-horAtual):null;
+    let status='Sem Plano';
+    if(plano&&period>0){
+      if(fb.semana_planejada) status='Programado';
+      else if(!horUltRev) status='Sem Revisão';
+      else if(hParaPmp<0) status='Vencida';
+      else if(hParaPmp<=50) status='Atenção';
+      else status='Em Dia';
+    }
+    return {frota:fid,serie:e.serie||'',modelo:(e.fabricante&&e.modelo)?e.fabricante+' '+e.modelo:(e.modelo||e.fabricante||''),
+      operacao:e.planta||'',cidade:e.municipio||'',familia:e.familia||'',
+      plano_desc:plano?(plano.plano_desc||plano.mascara||''):'',period,
+      hor_atual:horAtual,data_ult_rev:fb.data_ultima_revisao||'',
+      hor_ult_rev:horUltRev||'',hor_prox:horProx||'',h_para_pmp:hParaPmp,
+      status,semana_plan:fb.semana_planejada||'',om:fb.om||''};
+  }).sort((a,b)=>{
+    const o={'Vencida':0,'Atenção':1,'Sem Revisão':2,'Programado':3,'Em Dia':4,'Sem Plano':5};
+    return (o[a.status]||5)-(o[b.status]||5);
+  });
+}
+
+function pmpFiltrarEquips(list){
+  if(_pmpFiltroStatus) list=list.filter(e=>e.status===_pmpFiltroStatus);
+  if(_pmpFiltroOp) list=list.filter(e=>e.operacao===_pmpFiltroOp);
+  if(_pmpBusca){const q=_pmpBusca.toLowerCase();list=list.filter(e=>e.frota.toLowerCase().includes(q)||e.serie.toLowerCase().includes(q)||e.modelo.toLowerCase().includes(q));}
+  return list;
+}
+
+function pmpRenderPlanejamento(){
+  const all=pmpMontarEquips();
+  pmpRenderKPIs(all);
+  pmpRenderFiltros(all);
+  const equips=pmpFiltrarEquips(all);
+  if(_pmpSubAba==='gerencial') pmpRenderGerencial(equips);
+  else pmpRenderAnalitica(equips);
+}
+
+function pmpRenderKPIs(equips){
+  const el=document.getElementById('pmp-kpis'); if(!el) return;
+  const c={};equips.forEach(e=>{c[e.status]=(c[e.status]||0)+1;});
+  const total=equips.length;
+  el.innerHTML=`
+    <div class="pmp-kpi" style="border-top:3px solid #1A2E35"><div class="pmp-kpi-val">${total}</div><div class="pmp-kpi-lbl">Total Alugados</div></div>
+    <div class="pmp-kpi" style="border-top:3px solid #1E8A4C"><div class="pmp-kpi-val" style="color:#1E8A4C">${c['Em Dia']||0}</div><div class="pmp-kpi-lbl">Em Dia</div></div>
+    <div class="pmp-kpi" style="border-top:3px solid #B45309"><div class="pmp-kpi-val" style="color:#B45309">${c['Atenção']||0}</div><div class="pmp-kpi-lbl">Atenção &lt;50h</div></div>
+    <div class="pmp-kpi" style="border-top:3px solid #B91C1C"><div class="pmp-kpi-val" style="color:#B91C1C">${c['Vencida']||0}</div><div class="pmp-kpi-lbl">Vencidas</div></div>
+    <div class="pmp-kpi" style="border-top:3px solid #6366F1"><div class="pmp-kpi-val" style="color:#6366F1">${c['Programado']||0}</div><div class="pmp-kpi-lbl">Programadas</div></div>
+    <div class="pmp-kpi" style="border-top:3px solid #8FA4AE"><div class="pmp-kpi-val" style="color:#8FA4AE">${(c['Sem Revisão']||0)+(c['Sem Plano']||0)}</div><div class="pmp-kpi-lbl">Sem Dados</div></div>`;
+}
+
+function pmpRenderFiltros(equips){
+  const el=document.getElementById('pmp-filtros-wrap'); if(!el) return;
+  const ops=[...new Set(equips.map(e=>e.operacao).filter(Boolean))].sort();
+  el.innerHTML=`
+    <input type="search" placeholder="Buscar frota / série / modelo…" value="${_pmpBusca||''}"
+      oninput="_pmpBusca=this.value;pmpRenderPlanejamento()"
+      style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;width:220px;outline:none;color:#1A2E35">
+    <select onchange="_pmpFiltroStatus=this.value;pmpRenderPlanejamento()"
+      style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;color:#1A2E35;background:#fff;cursor:pointer">
+      <option value="">Todos os status</option>
+      ${['Vencida','Atenção','Em Dia','Programado','Sem Revisão','Sem Plano'].map(s=>`<option value="${s}"${_pmpFiltroStatus===s?' selected':''}>${s}</option>`).join('')}
+    </select>
+    <select onchange="_pmpFiltroOp=this.value;pmpRenderPlanejamento()"
+      style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;color:#1A2E35;background:#fff;cursor:pointer;max-width:220px">
+      <option value="">Todas as operações</option>
+      ${ops.map(o=>`<option value="${o}"${_pmpFiltroOp===o?' selected':''}>${o}</option>`).join('')}
+    </select>`;
+}
+
+const _pmpCor={'Vencida':{bg:'#FEE2E2',c:'#B91C1C'},'Atenção':{bg:'#FEF3C7',c:'#B45309'},'Em Dia':{bg:'#D1FAE5',c:'#065F46'},'Programado':{bg:'#EDE9FE',c:'#5B21B6'},'Sem Revisão':{bg:'#F0F4F6',c:'#5A7280'},'Sem Plano':{bg:'#F4F6F8',c:'#8FA4AE'}};
+function pmpBadge(s){const c=_pmpCor[s]||{bg:'#F4F6F8',c:'#8FA4AE'};return `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;background:${c.bg};color:${c.c}">${s}</span>`;}
+function _pmpHCor(h){return h===null?'#8FA4AE':h<0?'#B91C1C':h<=50?'#B45309':'#1E8A4C';}
+function _pmpHFmt(h){return h===null?'—':(h>0?'+':'')+Math.round(h);}
+
+function pmpRenderGerencial(equips){
+  const el=document.getElementById('pmp-plan-gerencial'); if(!el) return;
+  if(!equips.length){el.innerHTML='<div style="padding:40px;text-align:center;color:#8FA4AE">Nenhum equipamento encontrado</div>';return;}
+  el.innerHTML=`<div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>
+    <th>FROTA</th><th>MODELO</th><th>FAMÍLIA</th><th>OPERAÇÃO</th><th>CIDADE</th>
+    <th>PLANO</th><th>PERIOD.(h)</th><th>HOR.ATUAL</th><th>H/PMP</th><th>STATUS</th><th>SEM.PLAN.</th><th></th>
+  </tr></thead><tbody>${equips.map(e=>`<tr>
+    <td><strong>${e.frota}</strong>${e.serie?`<div style="font-size:10px;color:#8FA4AE">${e.serie}</div>`:''}</td>
+    <td>${e.modelo||'—'}</td><td style="font-size:11px">${e.familia||'—'}</td>
+    <td style="font-size:12px">${e.operacao||'—'}</td><td style="font-size:12px">${e.cidade||'—'}</td>
+    <td style="font-size:11px">${e.plano_desc||'—'}</td>
+    <td style="text-align:right">${e.period||'—'}</td>
+    <td style="text-align:right">${e.hor_atual||'—'}</td>
+    <td style="text-align:right;font-weight:700;color:${_pmpHCor(e.h_para_pmp)}">${_pmpHFmt(e.h_para_pmp)}</td>
+    <td>${pmpBadge(e.status)}</td>
+    <td style="text-align:center">${e.semana_plan||'—'}</td>
+    <td><button onclick="pmpAbrirModal('${e.frota}')" style="padding:3px 8px;font-size:11px;background:#F4F6F8;border:1px solid #E2E8ED;border-radius:5px;cursor:pointer">✏</button></td>
+  </tr>`).join('')}</tbody></table></div>`;
+}
+
+function pmpRenderAnalitica(equips){
+  const el=document.getElementById('pmp-plan-analitica'); if(!el) return;
+  if(!equips.length){el.innerHTML='<div style="padding:40px;text-align:center;color:#8FA4AE">Nenhum equipamento encontrado</div>';return;}
+  el.innerHTML=`<div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>
+    <th>FROTA</th><th>SÉRIE</th><th>MODELO</th><th>FAMÍLIA</th><th>OPERAÇÃO</th><th>CIDADE</th>
+    <th>PLANO</th><th>PERIOD.(h)</th><th>HOR.ATUAL</th>
+    <th style="background:#FFFBEB">DATA ÚLT.REV. ✏</th><th style="background:#FFFBEB">HOR.ÚLT.REV. ✏</th>
+    <th>HOR.PRÓX.PLANO</th><th>H/PMP</th><th>STATUS</th>
+    <th style="background:#FFFBEB">SEM.PLAN. ✏</th><th style="background:#FFFBEB">OM ✏</th><th></th>
+  </tr></thead><tbody>${equips.map(e=>`<tr>
+    <td><strong>${e.frota}</strong></td>
+    <td style="font-size:11px;color:#5A7280">${e.serie||'—'}</td>
+    <td>${e.modelo||'—'}</td><td style="font-size:11px">${e.familia||'—'}</td>
+    <td style="font-size:12px">${e.operacao||'—'}</td><td style="font-size:12px">${e.cidade||'—'}</td>
+    <td style="font-size:11px">${e.plano_desc||'—'}</td>
+    <td style="text-align:right">${e.period||'—'}</td>
+    <td style="text-align:right">${e.hor_atual||'—'}</td>
+    <td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','data_ultima_revisao','${e.data_ult_rev}')" style="background:#FFFBEB">${e.data_ult_rev||'<span style="color:#C8D4DA;font-size:11px">clique p/ editar</span>'}</td>
+    <td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','horimetro_ultima_revisao','${e.hor_ult_rev}')" style="background:#FFFBEB">${e.hor_ult_rev||'<span style="color:#C8D4DA;font-size:11px">—</span>'}</td>
+    <td style="text-align:right;font-weight:500">${e.hor_prox||'—'}</td>
+    <td style="text-align:right;font-weight:700;color:${_pmpHCor(e.h_para_pmp)}">${_pmpHFmt(e.h_para_pmp)}</td>
+    <td>${pmpBadge(e.status)}</td>
+    <td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','semana_planejada','${e.semana_plan}')" style="background:#FFFBEB;text-align:center">${e.semana_plan||'<span style="color:#C8D4DA;font-size:11px">—</span>'}</td>
+    <td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','om','${e.om}')" style="background:#FFFBEB">${e.om||'<span style="color:#C8D4DA;font-size:11px">—</span>'}</td>
+    <td><button onclick="pmpAbrirModal('${e.frota}')" style="padding:3px 8px;font-size:11px;background:#F4F6F8;border:1px solid #E2E8ED;border-radius:5px;cursor:pointer">✏</button></td>
+  </tr>`).join('')}</tbody></table></div>`;
+}
+
+let _pmpEditEl=null;
+function pmpEditCell(el,frota,campo,val){
+  if(_pmpEditEl&&_pmpEditEl!==el){_pmpEditEl.classList.remove('pmp-editing');}
+  el.classList.add('pmp-editing');
+  const inp=document.createElement('input');
+  inp.type=campo==='data_ultima_revisao'?'date':campo==='semana_planejada'?'number':'text';
+  if(campo==='data_ultima_revisao'&&val){
+    // convert dd/mm/yyyy to yyyy-mm-dd for date input
+    const p=val.split('/');if(p.length===3) val=p[2]+'-'+p[1]+'-'+p[0];
+  }
+  inp.value=val||'';
+  inp.style.cssText='width:100%;padding:4px 6px;border:1px solid #E8630A;border-radius:4px;font-size:12px;outline:none;box-sizing:border-box;background:#fff';
+  inp.onblur=async()=>{el.classList.remove('pmp-editing');await pmpSalvarCampo(frota,campo,inp.value.trim());};
+  inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape'){el.classList.remove('pmp-editing');pmpRenderPlanejamento();}};
+  el.innerHTML='';el.appendChild(inp);inp.focus();_pmpEditEl=el;
+}
+
+async function pmpSalvarCampo(frota,campo,valor){
+  const fid=String(frota);
+  if(!window.PMP_EQUIP[fid]) window.PMP_EQUIP[fid]={};
+  window.PMP_EQUIP[fid][campo]=valor;
+  try{await fetch(`${PMP_FB}/equip/${fid}/${campo}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(valor)});showToast('✓ Salvo');}
+  catch(e){showToast('Erro ao salvar');}
+  pmpRenderPlanejamento();
+}
+
+function pmpAbrirModal(frota){
+  const fid=String(frota);
+  const fb=(window.PMP_EQUIP||{})[fid]||{};
+  const all=pmpMontarEquips();
+  const eq=all.find(e=>e.frota===fid)||{};
+  document.getElementById('pmp-modal-titulo').textContent=`Frota ${fid}${eq.modelo?' — '+eq.modelo:''}`;
+  document.getElementById('pmp-modal-frota').value=fid;
+  document.getElementById('pmp-modal-data').value=fb.data_ultima_revisao||'';
+  document.getElementById('pmp-modal-hor').value=fb.horimetro_ultima_revisao||'';
+  document.getElementById('pmp-modal-semana').value=fb.semana_planejada||'';
+  document.getElementById('pmp-modal-om').value=fb.om||'';
+  document.getElementById('pmp-modal').style.display='flex';
+}
+function pmpFecharModal(){document.getElementById('pmp-modal').style.display='none';}
+async function pmpSalvarModal(){
+  const fid=document.getElementById('pmp-modal-frota').value;
+  const dados={
+    data_ultima_revisao:document.getElementById('pmp-modal-data').value,
+    horimetro_ultima_revisao:document.getElementById('pmp-modal-hor').value,
+    semana_planejada:document.getElementById('pmp-modal-semana').value,
+    om:document.getElementById('pmp-modal-om').value
+  };
+  if(!window.PMP_EQUIP[fid]) window.PMP_EQUIP[fid]={};
+  Object.assign(window.PMP_EQUIP[fid],dados);
+  try{
+    await fetch(`${PMP_FB}/equip/${fid}.json`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)});
+    showToast('✓ Dados salvos');pmpFecharModal();pmpRenderPlanejamento();
+  }catch(e){showToast('Erro: '+e.message);}
+}
+
+function pmpRenderProgramacao(){
+  const el=document.getElementById('pmp-content-programacao'); if(!el) return;
+  const all=pmpMontarEquips();
+  const prog=all.filter(e=>e.semana_plan);
+  const porSemana={};
+  prog.forEach(e=>{const s=e.semana_plan;if(!porSemana[s])porSemana[s]=[];porSemana[s].push(e);});
+  const semanas=Object.keys(porSemana).sort((a,b)=>Number(a)-Number(b));
+  const vencidas=all.filter(e=>e.status==='Vencida');
+  el.innerHTML=`<div style="padding:20px 28px;overflow-y:auto;flex:1">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px">
+      <div class="pmp-kpi" style="border-top:3px solid #6366F1"><div class="pmp-kpi-val" style="color:#6366F1">${prog.length}</div><div class="pmp-kpi-lbl">Programadas</div></div>
+      <div class="pmp-kpi" style="border-top:3px solid #B91C1C"><div class="pmp-kpi-val" style="color:#B91C1C">${vencidas.length}</div><div class="pmp-kpi-lbl">Vencidas</div></div>
+      ${semanas.slice(0,3).map(s=>`<div class="pmp-kpi" style="border-top:3px solid #1A2E35"><div class="pmp-kpi-val">${porSemana[s].length}</div><div class="pmp-kpi-lbl">Semana ${s}</div></div>`).join('')}
+    </div>
+    ${semanas.length?semanas.map(s=>`
+      <div style="margin-bottom:24px">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#1A2E35;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #E2E8ED">
+          Semana ${s} — ${porSemana[s].length} equipamentos
+        </div>
+        <div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>
+          <th>FROTA</th><th>MODELO</th><th>OPERAÇÃO</th><th>PLANO</th><th>HOR.PRÓX.</th><th>H/PMP</th><th>STATUS</th><th>OM</th>
+        </tr></thead><tbody>${porSemana[s].map(e=>`<tr>
+          <td><strong>${e.frota}</strong></td><td>${e.modelo||'—'}</td><td>${e.operacao||'—'}</td>
+          <td style="font-size:11px">${e.plano_desc||'—'}</td>
+          <td style="text-align:right">${e.hor_prox||'—'}</td>
+          <td style="text-align:right;font-weight:700;color:${_pmpHCor(e.h_para_pmp)}">${_pmpHFmt(e.h_para_pmp)}</td>
+          <td>${pmpBadge(e.status)}</td><td>${e.om||'—'}</td>
+        </tr>`).join('')}</tbody></table></div>
+      </div>`).join('')
+    :'<div style="text-align:center;padding:48px;color:#8FA4AE;font-size:14px">Nenhuma preventiva programada ainda.<br><span style="font-size:12px">Use a aba Planejamento → Área Analítica para definir a semana planejada.</span></div>'}
+  </div>`;
 }
 
 // ── OPERAÇÕES ─────────────────────────────────────────────────────────────────
@@ -18647,6 +18924,108 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
     <!-- ══════════════════════════════════════════════════════════ -->
+
+<!-- PMP — PLANEJAMENTO E PROGRAMAÇÃO -->
+<style>
+.pmp-kpi{background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:3px}
+.pmp-kpi-val{font-size:28px;font-weight:800;color:#1A2E35;line-height:1}
+.pmp-kpi-lbl{font-size:11px;font-weight:600;color:#8FA4AE;text-transform:uppercase;letter-spacing:.04em}
+.pmp-twrap{overflow-x:auto;border:1px solid #E2E8ED;border-radius:10px}
+.pmp-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.pmp-tbl thead th{background:#F8FAFC;padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #E2E8ED;white-space:nowrap;position:sticky;top:0;z-index:1}
+.pmp-tbl tbody tr{border-bottom:1px solid #F0F4F6;transition:background .1s}
+.pmp-tbl tbody tr:hover{background:#F8FAFC}
+.pmp-tbl tbody tr:last-child{border-bottom:none}
+.pmp-tbl tbody td{padding:8px 12px;vertical-align:middle}
+.pmp-edit{cursor:pointer;border-radius:4px;transition:background .12s}
+.pmp-edit:hover{background:#FFF9C4!important;outline:1px dashed #E8630A}
+.pmp-editing{background:#FFF3CD!important}
+</style>
+<div id="page-pmp" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;z-index:100;flex-direction:column;background:#F4F6F8">
+
+  <!-- Top nav bar -->
+  <div style="background:#1A2E35;padding:0 28px;display:flex;align-items:center;gap:0;flex-shrink:0;height:44px">
+    <span style="font-size:12px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.1em;margin-right:28px;opacity:.7">PMP</span>
+    <button id="pmp-tab-planejamento" onclick="pmpSetAba('planejamento')"
+      style="padding:0 20px;height:44px;background:none;border:none;border-bottom:3px solid #E8630A;color:#E8630A;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s">
+      Planejamento
+    </button>
+    <button id="pmp-tab-programacao" onclick="pmpSetAba('programacao')"
+      style="padding:0 20px;height:44px;background:none;border:none;border-bottom:3px solid transparent;color:rgba(255,255,255,.55);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s">
+      Programação
+    </button>
+  </div>
+
+  <!-- ── PLANEJAMENTO ── -->
+  <div id="pmp-content-planejamento" style="flex:1;overflow:hidden;flex-direction:column;display:flex">
+
+    <!-- Sub-tabs -->
+    <div style="background:#fff;padding:0 28px;border-bottom:1px solid #E2E8ED;display:flex;align-items:center;gap:0;flex-shrink:0">
+      <button id="pmp-sub-gerencial" onclick="pmpSetSubAba('gerencial')"
+        style="padding:10px 20px;background:none;border:none;border-bottom:2px solid #E8630A;color:#E8630A;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:-1px;transition:all .15s">
+        Visão Gerencial
+      </button>
+      <button id="pmp-sub-analitica" onclick="pmpSetSubAba('analitica')"
+        style="padding:10px 20px;background:none;border:none;border-bottom:2px solid transparent;color:#5A7280;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:-1px;transition:all .15s">
+        Área Analítica
+      </button>
+    </div>
+
+    <!-- KPIs -->
+    <div id="pmp-kpis" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:16px 28px;flex-shrink:0;background:#F4F6F8"></div>
+
+    <!-- Filtros -->
+    <div id="pmp-filtros-wrap" style="display:flex;align-items:center;gap:10px;padding:0 28px 14px;flex-shrink:0;flex-wrap:wrap"></div>
+
+    <!-- Tabelas scrolláveis -->
+    <div style="flex:1;overflow:auto;padding:0 28px 24px">
+      <div id="pmp-plan-gerencial"></div>
+      <div id="pmp-plan-analitica" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- ── PROGRAMAÇÃO ── -->
+  <div id="pmp-content-programacao" style="flex:1;overflow:hidden;flex-direction:column;display:none"></div>
+
+</div>
+
+<!-- Modal edição PMP -->
+<div id="pmp-modal" onclick="if(event.target===this)pmpFecharModal()"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.2);width:100%;max-width:480px;overflow:hidden">
+    <div style="padding:20px 24px;border-bottom:1px solid #E2E8ED;display:flex;justify-content:space-between;align-items:center">
+      <span id="pmp-modal-titulo" style="font-size:15px;font-weight:700;color:#1A2E35"></span>
+      <button onclick="pmpFecharModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#8FA4AE;padding:0 4px">✕</button>
+    </div>
+    <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
+      <input type="hidden" id="pmp-modal-frota">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Data Última Revisão</label>
+          <input type="date" id="pmp-modal-data" style="padding:8px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;color:#1A2E35;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Horímetro Última Revisão</label>
+          <input type="number" id="pmp-modal-hor" placeholder="ex: 12500" style="padding:8px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;color:#1A2E35;outline:none">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Semana Planejada</label>
+          <input type="number" id="pmp-modal-semana" placeholder="ex: 28" min="1" max="53" style="padding:8px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;color:#1A2E35;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Ordem de Manutenção</label>
+          <input type="text" id="pmp-modal-om" placeholder="ex: OM 000004012457" style="padding:8px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;color:#1A2E35;outline:none">
+        </div>
+      </div>
+    </div>
+    <div style="padding:14px 24px;border-top:1px solid #E2E8ED;display:flex;justify-content:flex-end;gap:10px">
+      <button onclick="pmpFecharModal()" style="padding:8px 18px;background:#F4F6F8;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:#1A2E35">Cancelar</button>
+      <button onclick="pmpSalvarModal()" style="padding:8px 20px;background:#E8630A;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:#fff">Salvar</button>
+    </div>
+  </div>
+</div>
 
 <!-- SOLICITAÇÕES RCD -->
 <div id="page-solrcd" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#eef1f6;z-index:100">
