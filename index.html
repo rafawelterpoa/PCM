@@ -16979,6 +16979,7 @@ window.BD_PLANOS_FROTA      = {}; // N°Interno → { mascara, plano_desc, grupo
 window.BD_PLANOS_INTERVALOS = {}; // Lista_code → { descricao, intervalos:[] }
 window.BD_RESPONSAVEIS      = []; // [{unidade,gerente,coordenador,supervisor,encarregado,programador}]
 window.BD_HISTORICO_PM      = {}; // equip_id → { [intervalo_h]: {data,horimetro_exec,om} }
+window.BD_MANUSIS           = []; // array de registros diários do Manusis (upload diário)
 window.BD_META              = {}; // timestamps e contagens
 
 function paginaBd() {
@@ -17007,6 +17008,7 @@ async function bdCarregar() {
     window.BD_PLANOS_INTERVALOS = JSON.parse(localStorage.getItem('mills_bd_planos_intervalos')||'{}');
     window.BD_RESPONSAVEIS      = JSON.parse(localStorage.getItem('mills_bd_responsaveis')||'[]');
     window.BD_HISTORICO_PM      = JSON.parse(localStorage.getItem('mills_bd_historico_pm')||'{}');
+    window.BD_MANUSIS           = JSON.parse(localStorage.getItem('mills_bd_manusis')||'[]');
   } catch(e) {}
 }
 
@@ -17048,6 +17050,12 @@ function bdRenderStatus() {
     bdSetInfo('hist', `Atualizado em ${fmt(m.hist_ts)}`);
     bdEnablePreview('hist');
     bdRenderPreviewHist();
+  }
+  if(m.manusis_ts) {
+    bdSetBadge('manusis', `${m.manusis_total||0} registros`, 'ok');
+    bdSetInfo('manusis', `Atualizado em ${fmt(m.manusis_ts)} — upload diário`);
+    bdEnablePreview('manusis');
+    bdRenderPreviewManusis();
   }
 }
 
@@ -17252,6 +17260,61 @@ function bdUploadHistorico(file) {
     }
   };
   reader.readAsArrayBuffer(file);
+}
+
+// ── UPLOAD: Manusis (diário) ───────────────────────────────────────────────────
+function bdUploadManusis(file) {
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      bdSetBadge('manusis','Processando...','info');
+      const ext = file.name.split('.').pop().toLowerCase();
+      let rows = [];
+      if(ext==='csv') {
+        const text = new TextDecoder('utf-8').decode(e.target.result);
+        const lines = text.split('\n').filter(l=>l.trim());
+        const headers = lines[0].split(';').map(h=>h.trim().replace(/^"|"$/g,''));
+        for(let i=1;i<lines.length;i++) {
+          const vals = lines[i].split(';').map(v=>v.trim().replace(/^"|"$/g,''));
+          if(vals.every(v=>!v)) continue;
+          const obj={};
+          headers.forEach((h,j)=>{ obj[h]=vals[j]||''; });
+          rows.push(obj);
+        }
+      } else {
+        const wb = XLSX.read(e.target.result,{type:'array',cellDates:true});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws,{defval:''});
+      }
+      if(!rows.length) throw new Error('Nenhum registro encontrado no arquivo');
+      window.BD_MANUSIS = rows;
+      localStorage.setItem('mills_bd_manusis', JSON.stringify(rows));
+      const ts = Date.now();
+      const meta = {...(window.BD_META||{}), manusis_ts:ts, manusis_total:rows.length, manusis_cols:Object.keys(rows[0]||{})};
+      window.BD_META = meta;
+      await fetch(`${BD_FB}/meta.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(meta)});
+      bdSetBadge('manusis',`${rows.length} registros`,'ok');
+      bdSetInfo('manusis',`Atualizado agora — ${rows.length} linhas · ${Object.keys(rows[0]||{}).length} colunas`);
+      bdEnablePreview('manusis');
+      bdRenderPreviewManusis();
+      showToast('✓ Base Manusis carregada com sucesso');
+    } catch(err) {
+      bdSetBadge('manusis','Erro','warn');
+      bdSetInfo('manusis','Erro: '+err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+function bdRenderPreviewManusis() {
+  const el=document.getElementById('bd-preview-manusis'); if(!el) return;
+  const rows=(window.BD_MANUSIS||[]).slice(0,10);
+  if(!rows.length){el.innerHTML='<div style="padding:12px;color:#8FA4AE;font-size:11px">Sem dados</div>';return;}
+  const cols=Object.keys(rows[0]).slice(0,8);
+  el.innerHTML=`<table style="width:100%;border-collapse:collapse">
+    <thead><tr>${cols.map(c=>`<th style="padding:6px 10px;background:#F8FAFC;border-bottom:1px solid #E2E8ED;font-size:10px;font-weight:700;color:#5A7280;text-align:left;white-space:nowrap">${c}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td style="padding:5px 10px;border-bottom:1px solid #F0F4F6;font-size:11px;color:#1A2E35;white-space:nowrap">${r[c]??''}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table>`;
 }
 
 // ── OPERAÇÕES ─────────────────────────────────────────────────────────────────
@@ -18513,18 +18576,31 @@ if ('serviceWorker' in navigator) {
             </div>
           </div>
 
-          <!-- ── PAINEL 4: Slot futuro ── -->
-          <div style="background:#fff;border:1px dashed #D1D5DB;border-radius:14px;padding:24px;box-shadow:none;opacity:.6">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-              <div style="width:44px;height:44px;border-radius:10px;background:#F4F6F8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C8D4DA" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          <!-- ── PAINEL 4: Manusis ── -->
+          <div style="background:#fff;border:1px solid #E2E8ED;border-radius:14px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:44px;height:44px;border-radius:10px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B21B6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:15px;font-weight:700;color:#1A2E35">Manusis</div>
+                  <div style="font-size:11px;color:#8FA4AE;margin-top:2px">Base diária de OMs e execuções</div>
+                </div>
               </div>
-              <div>
-                <div style="font-size:15px;font-weight:700;color:#8FA4AE">Base futura</div>
-                <div style="font-size:11px;color:#C8D4DA;margin-top:2px">Slot reservado para próximas bases</div>
-              </div>
+              <span id="bd-badge-manusis" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:#F4F6F8;color:#8FA4AE;white-space:nowrap;flex-shrink:0">Não carregado</span>
             </div>
-            <div style="font-size:12px;color:#C8D4DA;text-align:center;padding:20px 0">A definir conforme necessidade do módulo PMP</div>
+            <div style="background:#F8FAFC;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#5A7280;line-height:1.7">
+              <strong>Frequência:</strong> Upload diário (substitui base anterior)<br>
+              <strong>Formato:</strong> .xlsx ou .csv · Colunas definidas conforme modelo Manusis
+            </div>
+            <div id="bd-info-manusis" style="font-size:11px;color:#8FA4AE;margin-bottom:14px;min-height:16px"></div>
+            <div id="bd-preview-manusis" style="display:none;max-height:220px;overflow-y:auto;border:1px solid #E2E8ED;border-radius:8px;margin-bottom:14px;font-size:11px"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="document.getElementById('bd-file-manusis').click()" style="flex:1;padding:8px 14px;background:#5B21B6;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">⬆ Carregar arquivo</button>
+              <button id="bd-btn-prev-manusis" onclick="bdTogglePreview('manusis')" disabled style="padding:8px 14px;background:#F4F6F8;color:#8FA4AE;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;font-weight:600;cursor:not-allowed">Prévia</button>
+              <input type="file" id="bd-file-manusis" accept=".xlsx,.xls,.csv" style="display:none" onchange="bdUploadManusis(this.files[0]);this.value=''">
+            </div>
           </div>
 
         </div><!-- /grid -->
