@@ -5135,7 +5135,7 @@ async function doBaseUpdate(){
   const agora=Date.now();
   // ── CRÍTICO: atualizar EQUIPAMENTOS_ORIG em memória para evitar que o
   // EventSource do Firebase reverta estados recém-alterados pelo upload ──
-  novos.forEach(n=>{const o=EQUIPAMENTOS_ORIG.find(e=>e.id===n.id);if(o){o.status=n.status;o.oficina=n.oficina||o.oficina;o.alugaradoFilial=n.alugaradoFilial||false;if(n.horimetro)o.horimetro=n.horimetro;if(n.placa)o.placa=n.placa;}});
+  novos.forEach(n=>{const o=EQUIPAMENTOS_ORIG.find(e=>e.id===n.id);if(o){o.status=n.status;o.oficina=n.oficina||o.oficina;o.alugaradoFilial=n.alugaradoFilial||false;if(n.horimetro)o.horimetro=n.horimetro;if(n.placa)o.placa=n.placa;if(n.planta)o.planta=n.planta;if(n.municipio)o.municipio=n.municipio;if(n.serie)o.serie=n.serie;if(n.fabricante)o.fabricante=n.fabricante;if(n.grupo)o.grupo=n.grupo;if(n.linhaProduto)o.linhaProduto=n.linhaProduto;}});
   const user=currentUser?currentUser.nome:'sistema';
   let adicionados=0,baixados=0,atualizados=0;
   // Equipamentos ausentes do CSV permanecem onde estão — saída só via status Alugado
