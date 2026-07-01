@@ -17008,7 +17008,8 @@ async function bdCarregar() {
     window.BD_PLANOS_INTERVALOS = JSON.parse(localStorage.getItem('mills_bd_planos_intervalos')||'{}');
     window.BD_RESPONSAVEIS      = JSON.parse(localStorage.getItem('mills_bd_responsaveis')||'[]');
     window.BD_HISTORICO_PM      = JSON.parse(localStorage.getItem('mills_bd_historico_pm')||'{}');
-    window.BD_MANUSIS           = JSON.parse(localStorage.getItem('mills_bd_manusis')||'[]');
+    const _manusisSalvo = JSON.parse(localStorage.getItem('mills_bd_manusis')||'null');
+    if(_manusisSalvo) { window.BD_MANUSIS = _manusisSalvo; bdManusisReconstruirIndices(); }
   } catch(e) {}
 }
 
@@ -17052,8 +17053,8 @@ function bdRenderStatus() {
     bdRenderPreviewHist();
   }
   if(m.manusis_ts) {
-    bdSetBadge('manusis', `${m.manusis_total||0} registros`, 'ok');
-    bdSetInfo('manusis', `Atualizado em ${fmt(m.manusis_ts)} — upload diário`);
+    bdSetBadge('manusis', `${m.manusis_oms||0} OMs · ${m.manusis_rc||0} RC · ${m.manusis_pte||0} PTE`, 'ok');
+    bdSetInfo('manusis', `Atualizado em ${fmt(m.manusis_ts)}`);
     bdEnablePreview('manusis');
     bdRenderPreviewManusis();
   }
@@ -17269,33 +17270,60 @@ function bdUploadManusis(file) {
   reader.onload = async function(e) {
     try {
       bdSetBadge('manusis','Processando...','info');
-      const ext = file.name.split('.').pop().toLowerCase();
-      let rows = [];
-      if(ext==='csv') {
-        const text = new TextDecoder('utf-8').decode(e.target.result);
-        const lines = text.split('\n').filter(l=>l.trim());
-        const headers = lines[0].split(';').map(h=>h.trim().replace(/^"|"$/g,''));
-        for(let i=1;i<lines.length;i++) {
-          const vals = lines[i].split(';').map(v=>v.trim().replace(/^"|"$/g,''));
-          if(vals.every(v=>!v)) continue;
-          const obj={};
-          headers.forEach((h,j)=>{ obj[h]=vals[j]||''; });
-          rows.push(obj);
-        }
-      } else {
-        const wb = XLSX.read(e.target.result,{type:'array',cellDates:true});
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        rows = XLSX.utils.sheet_to_json(ws,{defval:''});
-      }
-      if(!rows.length) throw new Error('Nenhum registro encontrado no arquivo');
-      window.BD_MANUSIS = rows;
-      localStorage.setItem('mills_bd_manusis', JSON.stringify(rows));
+      const wb = XLSX.read(e.target.result,{type:'array',cellDates:true});
+
+      // Aba 1 — Ordens de Manutenção
+      const wsOMs = wb.Sheets[wb.SheetNames[0]];
+      const rawOMs = XLSX.utils.sheet_to_json(wsOMs,{defval:''});
+
+      // Aba 2 — Requisições (separa RC vs PTE pela coluna "Número da requisição")
+      const wsReqs = wb.Sheets[wb.SheetNames[1]];
+      const rawReqs = XLSX.utils.sheet_to_json(wsReqs,{defval:''});
+
+      const requisicoes = [];
+      const ptes = [];
+      rawReqs.forEach(r => {
+        const num = String(r['Número da requisição']||'');
+        if(num.toUpperCase().includes('RC')) requisicoes.push(r);
+        else ptes.push(r);
+      });
+
+      // Indexa requisições e PTEs por OM vinculada para lookup rápido
+      const rqPorOM = {};
+      requisicoes.forEach(r => {
+        const om = String(r['Ordem de manutenção']||'').trim();
+        if(om) { if(!rqPorOM[om]) rqPorOM[om]=[]; rqPorOM[om].push(r); }
+      });
+      const ptePorOM = {};
+      ptes.forEach(r => {
+        const om = String(r['Ordem de manutenção']||'').trim();
+        if(om) { if(!ptePorOM[om]) ptePorOM[om]=[]; ptePorOM[om].push(r); }
+      });
+
+      // Indexa OMs por número
+      const omPorNum = {};
+      rawOMs.forEach(r => {
+        const num = String(r['Número de ordem']||'').trim();
+        if(num) omPorNum[num] = r;
+      });
+
+      const dados = { oms: rawOMs, requisicoes, ptes, omPorNum, rqPorOM, ptePorOM };
+      window.BD_MANUSIS = dados;
+      // Salva apenas as listas (os índices são reconstruídos ao carregar)
+      localStorage.setItem('mills_bd_manusis', JSON.stringify({oms:rawOMs,requisicoes,ptes}));
+
       const ts = Date.now();
-      const meta = {...(window.BD_META||{}), manusis_ts:ts, manusis_total:rows.length, manusis_cols:Object.keys(rows[0]||{})};
+      const meta = {...(window.BD_META||{}),
+        manusis_ts: ts,
+        manusis_oms: rawOMs.length,
+        manusis_rc: requisicoes.length,
+        manusis_pte: ptes.length
+      };
       window.BD_META = meta;
       await fetch(`${BD_FB}/meta.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(meta)});
-      bdSetBadge('manusis',`${rows.length} registros`,'ok');
-      bdSetInfo('manusis',`Atualizado agora — ${rows.length} linhas · ${Object.keys(rows[0]||{}).length} colunas`);
+
+      bdSetBadge('manusis',`${rawOMs.length} OMs · ${requisicoes.length} RC · ${ptes.length} PTE`,'ok');
+      bdSetInfo('manusis',`Atualizado agora — ${rawOMs.length} ordens de manutenção`);
       bdEnablePreview('manusis');
       bdRenderPreviewManusis();
       showToast('✓ Base Manusis carregada com sucesso');
@@ -17306,14 +17334,26 @@ function bdUploadManusis(file) {
   };
   reader.readAsArrayBuffer(file);
 }
+function bdManusisReconstruirIndices() {
+  const d = window.BD_MANUSIS;
+  if(!d||!d.oms) return;
+  d.omPorNum={};
+  (d.oms||[]).forEach(r=>{ const n=String(r['Número de ordem']||'').trim(); if(n) d.omPorNum[n]=r; });
+  d.rqPorOM={};
+  (d.requisicoes||[]).forEach(r=>{ const om=String(r['Ordem de manutenção']||'').trim(); if(om){if(!d.rqPorOM[om])d.rqPorOM[om]=[];d.rqPorOM[om].push(r);} });
+  d.ptePorOM={};
+  (d.ptes||[]).forEach(r=>{ const om=String(r['Ordem de manutenção']||'').trim(); if(om){if(!d.ptePorOM[om])d.ptePorOM[om]=[];d.ptePorOM[om].push(r);} });
+}
 function bdRenderPreviewManusis() {
   const el=document.getElementById('bd-preview-manusis'); if(!el) return;
-  const rows=(window.BD_MANUSIS||[]).slice(0,10);
-  if(!rows.length){el.innerHTML='<div style="padding:12px;color:#8FA4AE;font-size:11px">Sem dados</div>';return;}
-  const cols=Object.keys(rows[0]).slice(0,8);
-  el.innerHTML=`<table style="width:100%;border-collapse:collapse">
+  const d=window.BD_MANUSIS||{};
+  const oms=(d.oms||[]).slice(0,8);
+  if(!oms.length){el.innerHTML='<div style="padding:12px;color:#8FA4AE;font-size:11px">Sem dados</div>';return;}
+  const cols=['Número de ordem','Status','Ativo','Família de ativos','Tipo de serviço','Data de abertura','Custo de material'];
+  el.innerHTML=`<div style="padding:8px 12px;background:#EDE9FE;font-size:11px;color:#5B21B6;font-weight:600;border-bottom:1px solid #E2E8ED">Ordens de Manutenção</div>
+  <table style="width:100%;border-collapse:collapse">
     <thead><tr>${cols.map(c=>`<th style="padding:6px 10px;background:#F8FAFC;border-bottom:1px solid #E2E8ED;font-size:10px;font-weight:700;color:#5A7280;text-align:left;white-space:nowrap">${c}</th>`).join('')}</tr></thead>
-    <tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td style="padding:5px 10px;border-bottom:1px solid #F0F4F6;font-size:11px;color:#1A2E35;white-space:nowrap">${r[c]??''}</td>`).join('')}</tr>`).join('')}</tbody>
+    <tbody>${oms.map(r=>`<tr>${cols.map(c=>`<td style="padding:5px 10px;border-bottom:1px solid #F0F4F6;font-size:11px;color:#1A2E35;white-space:nowrap">${r[c]??''}</td>`).join('')}</tr>`).join('')}</tbody>
   </table>`;
 }
 
