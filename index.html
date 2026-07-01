@@ -17414,10 +17414,16 @@ function pmpSetSubAba(sub){
 
 function pmpMontarEquips(){
   if(!EQUIPAMENTOS_ORIG||!EQUIPAMENTOS_ORIG.length) return [];
+  // DIAG: mostra os 3 primeiros Alugados no console
+  const _diag=EQUIPAMENTOS_ORIG.filter(e=>e.status==='Alugado').slice(0,3);
+  if(_diag.length) console.log('[PMP-DIAG] Amostra Alugados:',JSON.stringify(_diag.map(e=>({id:e.id,frota:e.frota,tipo:e.tipo,familia:e.familia,planta:e.planta,municipio:e.municipio,horimetro:e.horimetro,status:e.status}))));
   return EQUIPAMENTOS_ORIG.filter(e=>e.status==='Alugado').map(e=>{
     const fid=String(e.frota||e.id||'');
-    const plano=(window.BD_PLANOS_FROTA||{})[fid]||(window.BD_PLANOS_FROTA||{})[e.id]||null;
-    const fb=(window.PMP_EQUIP||{})[fid]||{};
+    // Tenta o id, o frota, e o sufixo numérico do id (ex: "PCP02553" → "2553")
+    const _numSuf=String(e.id||'').replace(/^[A-Za-z]+0*/,'');
+    const _bp=window.BD_PLANOS_FROTA||{};
+    const plano=_bp[e.id]||_bp[fid]||(_numSuf&&_bp[_numSuf])||null;
+    const fb=(window.PMP_EQUIP||{})[fid]||(window.PMP_EQUIP||{})[e.id]||{};
     const period=plano?parseFloat(plano.period||plano.periodicidade||0):0;
     const horAtual=parseFloat(e.horimetro)||0;
     const horUltRev=parseFloat(fb.horimetro_ultima_revisao)||0;
@@ -17431,8 +17437,8 @@ function pmpMontarEquips(){
       else if(hParaPmp<=50) status='Atenção';
       else status='Em Dia';
     }
-    return {frota:fid,serie:e.serie||'',modelo:(e.fabricante&&e.modelo)?e.fabricante+' '+e.modelo:(e.modelo||e.fabricante||''),
-      operacao:e.planta||'',cidade:e.municipio||'',familia:e.familia||'',
+    return {frota:e.id||fid,serie:e.serie||'',modelo:(e.fabricante&&e.modelo)?e.fabricante+' '+e.modelo:(e.modelo||e.fabricante||''),
+      operacao:e.planta||'',cidade:e.municipio||'',familia:e.tipo||e.familia||'',
       plano_desc:plano?(plano.plano_desc||plano.mascara||''):'',period,
       hor_atual:horAtual,data_ult_rev:fb.data_ultima_revisao||'',
       hor_ult_rev:horUltRev||'',hor_prox:horProx||'',h_para_pmp:hParaPmp,
