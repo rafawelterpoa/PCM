@@ -17311,19 +17311,19 @@ function bdUploadManusis(file) {
       // Indexa requisições e PTEs por OM vinculada para lookup rápido
       const rqPorOM = {};
       requisicoes.forEach(r => {
-        const om = String(r['Ordem de manutenção']||'').trim();
+        const om = String(r['Ordem de manutenção']||'').trim().replace(/^0+/,'');
         if(om) { if(!rqPorOM[om]) rqPorOM[om]=[]; rqPorOM[om].push(r); }
       });
       const ptePorOM = {};
       ptes.forEach(r => {
-        const om = String(r['Ordem de manutenção']||'').trim();
+        const om = String(r['Ordem de manutenção']||'').trim().replace(/^0+/,'');
         if(om) { if(!ptePorOM[om]) ptePorOM[om]=[]; ptePorOM[om].push(r); }
       });
 
-      // Indexa OMs por número
+      // Indexa OMs por número (sem zeros à esquerda)
       const omPorNum = {};
       rawOMs.forEach(r => {
-        const num = String(r['Número de ordem']||'').trim();
+        const num = String(r['Número de ordem']||'').trim().replace(/^0+/,'');
         if(num) omPorNum[num] = r;
       });
 
@@ -17358,11 +17358,11 @@ function bdManusisReconstruirIndices() {
   const d = window.BD_MANUSIS;
   if(!d||!d.oms) return;
   d.omPorNum={};
-  (d.oms||[]).forEach(r=>{ const n=String(r['Número de ordem']||'').trim(); if(n) d.omPorNum[n]=r; });
+  (d.oms||[]).forEach(r=>{ const n=String(r['Número de ordem']||'').trim().replace(/^0+/,''); if(n) d.omPorNum[n]=r; });
   d.rqPorOM={};
-  (d.requisicoes||[]).forEach(r=>{ const om=String(r['Ordem de manutenção']||'').trim(); if(om){if(!d.rqPorOM[om])d.rqPorOM[om]=[];d.rqPorOM[om].push(r);} });
+  (d.requisicoes||[]).forEach(r=>{ const om=String(r['Ordem de manutenção']||'').trim().replace(/^0+/,''); if(om){if(!d.rqPorOM[om])d.rqPorOM[om]=[];d.rqPorOM[om].push(r);} });
   d.ptePorOM={};
-  (d.ptes||[]).forEach(r=>{ const om=String(r['Ordem de manutenção']||'').trim(); if(om){if(!d.ptePorOM[om])d.ptePorOM[om]=[];d.ptePorOM[om].push(r);} });
+  (d.ptes||[]).forEach(r=>{ const om=String(r['Ordem de manutenção']||'').trim().replace(/^0+/,''); if(om){if(!d.ptePorOM[om])d.ptePorOM[om]=[];d.ptePorOM[om].push(r);} });
 }
 function bdRenderPreviewManusis() {
   const el=document.getElementById('bd-preview-manusis'); if(!el) return;
