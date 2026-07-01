@@ -17114,35 +17114,44 @@ function bdUploadPlanos(file) {
     try {
       const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
 
-      // ── Aba Frota ──
-      const wsF = wb.Sheets['Frota']; if(!wsF) throw new Error('Aba "Frota" não encontrada');
-      const frota = XLSX.utils.sheet_to_json(wsF, {defval:''});
       const frotas = {};
-      frota.forEach(row => {
-        const id = String(row['N° Interno']||'').trim(); if(!id) return;
-        const mascara = String(row['Máscara do Plano']||row['Mascara do Plano']||'').trim();
-        frotas[id] = {
-          mascara,
-          plano_desc: String(row['Descrição do Plano']||row['Descricao do Plano']||'').trim(),
-          grupo: String(row['Grupo de Modelo']||'').trim(),
-          modelo: String(row['Modelo']||'').trim(),
-          frota: row['Frota']||'',
-          cliente: String(row['Cliente']||'').trim(),
-          planta: String(row['Planta/Obra']||'').trim(),
-        };
-      });
-
-      // ── Aba Dados ──
-      const wsD = wb.Sheets['Dados']; if(!wsD) throw new Error('Aba "Dados" não encontrada');
-      const dados = XLSX.utils.sheet_to_json(wsD, {defval:''});
       const planosInts = {};
-      dados.forEach(row => {
-        const lista = String(row['Lista']||'').trim(); if(!lista) return;
-        const val = parseFloat(row['Valor Disparo']||0);
-        if(!planosInts[lista]) planosInts[lista] = { descricao: String(row['Descrição do Plano']||row['Descricao do Plano']||'').trim(), intervalos:[] };
-        if(val && !planosInts[lista].intervalos.includes(val)) planosInts[lista].intervalos.push(val);
-      });
-      Object.values(planosInts).forEach(p => p.intervalos.sort((a,b)=>a-b));
+
+      if(wb.Sheets['Planilha1']) {
+        // ── Formato: Controle de Preventivas Consolidado ──
+        // col1=FROTA, col13=periodicidade
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets['Planilha1'], {header:1, defval:''});
+        rows.slice(1).forEach(r => {
+          const id = String(r[1]||'').trim(); if(!id||isNaN(id)) return;
+          const period = parseFloat(r[13])||0; if(!period) return;
+          if(!frotas[id] || period > (frotas[id].period||0))
+            frotas[id] = {mascara:'', plano_desc:'', grupo:'', modelo:'', period};
+        });
+      } else {
+        // ── Formato: Consulta_Pecas ──
+        const wsF = wb.Sheets['Frota']; if(!wsF) throw new Error('Aba "Frota" não encontrada');
+        XLSX.utils.sheet_to_json(wsF, {defval:''}).forEach(row => {
+          const id = String(row['N° Interno']||'').trim(); if(!id) return;
+          const mascara = String(row['Máscara do Plano']||row['Mascara do Plano']||'').trim();
+          frotas[id] = {
+            mascara,
+            plano_desc: String(row['Descrição do Plano']||row['Descricao do Plano']||'').trim(),
+            grupo: String(row['Grupo de Modelo']||'').trim(),
+            modelo: String(row['Modelo']||'').trim(),
+            frota: row['Frota']||'',
+            cliente: String(row['Cliente']||'').trim(),
+            planta: String(row['Planta/Obra']||'').trim(),
+          };
+        });
+        const wsD = wb.Sheets['Dados']; if(!wsD) throw new Error('Aba "Dados" não encontrada');
+        XLSX.utils.sheet_to_json(wsD, {defval:''}).forEach(row => {
+          const lista = String(row['Lista']||'').trim(); if(!lista) return;
+          const val = parseFloat(row['Valor Disparo']||0);
+          if(!planosInts[lista]) planosInts[lista] = { descricao: String(row['Descrição do Plano']||row['Descricao do Plano']||'').trim(), intervalos:[] };
+          if(val && !planosInts[lista].intervalos.includes(val)) planosInts[lista].intervalos.push(val);
+        });
+        Object.values(planosInts).forEach(p => p.intervalos.sort((a,b)=>a-b));
+      }
 
       // Salva no localStorage
       localStorage.setItem('mills_bd_planos_frota', JSON.stringify(frotas));
