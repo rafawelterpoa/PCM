@@ -17193,39 +17193,55 @@ async function bdUploadPMPs(file) {
   const reader = new FileReader();
   reader.onload = async ev => {
     try {
-      const wb = XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+      const wb = XLSX.read(new Uint8Array(ev.target.result),{type:'array',cellDates:true});
       const sh = wb.Sheets['PMPs']||wb.Sheets['PMP']||wb.Sheets[wb.SheetNames[0]];
       if(!sh) throw new Error('Aba PMPs não encontrada');
-      const rows = XLSX.utils.sheet_to_json(sh,{header:1,defval:''});
-      // Mapa numeric frota → e.id (TAG) usando EQUIPAMENTOS_ORIG
+      const rows = XLSX.utils.sheet_to_json(sh,{header:1,defval:'',raw:true});
+      // Mapa numeric frota → TAG usando EQUIPAMENTOS_ORIG
       const numToTag={};
       (window.EQUIPAMENTOS_ORIG||[]).forEach(e=>{if(e.frota) numToTag[String(e.frota)]=e.id;});
+      // Formato de data: Date → yyyy-mm-dd
+      const _dt=v=>{if(!v) return '';if(v instanceof Date){const y=v.getFullYear(),m=String(v.getMonth()+1).padStart(2,'0'),d=String(v.getDate()).padStart(2,'0');return `${y}-${m}-${d}`;}return String(v).trim();};
+      const _str=v=>String(v||'').trim();
+      const _num=v=>{const n=parseFloat(v);return isNaN(n)?'':String(n);};
       let cnt=0;
       const patches=[];
+      // Atualiza BD_PLANOS_FROTA em memória com period da col AG(32)
+      if(!window.BD_PLANOS_FROTA) window.BD_PLANOS_FROTA={};
       rows.slice(1).forEach(r=>{
-        const num=String(r[1]||'').trim(); if(!num||isNaN(num)) return;
-        const tag=numToTag[num]; if(!tag) return;
-        const polo=String(r[10]||'').trim();
-        const centro=String(r[11]||'').trim();
-        const encarregado=String(r[12]||'').trim();
-        const ritmoDiario=String(r[16]||'').trim();
-        const horExecucao=String(r[22]||'').trim();
-        if(!polo&&!centro&&!encarregado&&!ritmoDiario&&!horExecucao) return;
+        // col A(0)=tag direto ou col B(1)=frota numeric para lookup
+        const tag=_str(r[0]); const num=_str(r[1]);
+        const id=tag||(numToTag[num]||''); if(!id) return;
         const dados={};
-        if(polo) dados.polo=polo;
-        if(centro) dados.centro=centro;
-        if(encarregado) dados.encarregado=encarregado;
-        if(ritmoDiario) dados.ritmo_diario=ritmoDiario;
-        if(horExecucao) dados.hor_execucao=horExecucao;
+        // AMARELO — editáveis
+        if(_str(r[10])) dados.polo=_str(r[10]);            // K POLO
+        if(_str(r[11])) dados.centro=_str(r[11]);          // L CENTRO
+        if(_str(r[12])) dados.encarregado=_str(r[12]);     // M ENCARREGADO
+        if(_num(r[16])) dados.ritmo_diario=_num(r[16]);    // Q RITMO DIÁRIO
+        if(_dt(r[18]))  dados.data_ultima_revisao=_dt(r[18]); // S DATA ÚLT REV
+        if(_num(r[21])) dados.horimetro_ultima_revisao=_num(r[21]); // V HOR ÚLT REV
+        if(_num(r[22])) dados.hor_execucao=_num(r[22]);    // W HOR EXECUÇÃO
+        // AZUL — informativos (semana, OM, status, material)
+        if(_str(r[28])) dados.semana_planejada=_str(r[28]); // AC SEM.PLAN
+        if(_str(r[31])) dados.status_v=_str(r[31]);          // AF STATUS
+        if(_str(r[36])) dados.om=_str(r[36]).replace(/^0+/,''); // AK OM
+        if(_str(r[37])) dados.status_material=_str(r[37]);   // AL MATERIAL
+        // Periodicidade → BD_PLANOS_FROTA
+        const period=parseFloat(r[32])||0; // AG PERIOD. PMP
+        if(period&&num) {
+          if(!window.BD_PLANOS_FROTA[num]||period>(window.BD_PLANOS_FROTA[num].period||0))
+            window.BD_PLANOS_FROTA[num]={mascara:'',plano_desc:'',grupo:'',modelo:'',period};
+        }
+        if(!Object.keys(dados).length) return;
         if(!window.PMP_EQUIP) window.PMP_EQUIP={};
-        if(!window.PMP_EQUIP[tag]) window.PMP_EQUIP[tag]={};
-        Object.assign(window.PMP_EQUIP[tag],dados);
-        patches.push(fetch(`${PMP_FB}/equip/${tag}.json`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)}));
+        if(!window.PMP_EQUIP[id]) window.PMP_EQUIP[id]={};
+        Object.assign(window.PMP_EQUIP[id],dados);
+        patches.push(fetch(`${PMP_FB}/equip/${id}.json`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)}));
         cnt++;
       });
       await Promise.all(patches);
       bdSetBadge('pmps',`${cnt} equip atualizados`,'ok');
-      bdSetInfo('pmps',`${cnt} equipamentos com polo/centro/ritmo/horímetro carregados`);
+      bdSetInfo('pmps',`${cnt} equipamentos carregados — polo, centro, encarregado, ritmo, datas, OM, status`);
       showToast(`✓ PMPs carregados: ${cnt} equipamentos`);
       pmpRenderPlanejamento();
     } catch(err) {
