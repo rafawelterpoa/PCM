@@ -2100,8 +2100,11 @@ async function fbGetPendentes(){const r=await fetch(`${FB_BASE}/usuarios_pendent
 async function fbSalvarPendente(p){await fetch(`${FB_BASE}/usuarios_pendentes.json`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});}
 async function fbSetPendentes(arr){await fbSet('usuarios_pendentes',arr.length?arr:null);}
 
+let _eqEs=null;
 function fbListen(){
+  if(_eqEs){_eqEs.close();_eqEs=null;}
   const es=new EventSource(`${FB_BASE}/equipamentos.json?accept=text/event-stream`);
+  _eqEs=es;
   es.addEventListener('put',e=>{
     try{
       const msg=JSON.parse(e.data);if(!msg.data)return;
@@ -8130,10 +8133,13 @@ async function initPMO(){
 
 
 
+let _pmoEs=null;
 function pmoStartLiveSync(){
   if(typeof EventSource === 'undefined') return;
   try{
+    if(_pmoEs){_pmoEs.close();_pmoEs=null;}
     const es = new EventSource(PMO_FB_BASE+'/projetos.json?accept=text/event-stream');
+    _pmoEs=es;
     es.addEventListener('put', e=>{
       if(!e.data) return;
       try{
@@ -8391,12 +8397,15 @@ async function bm_loadFirebase(){
 }
 // end initApp
 
+let _bmEs=null;
 function bmStartRealtime(){
   // SSE live sync — mesmo padrão do Kanban de Oficinas
   if(typeof EventSource === 'undefined') return;
   let firstEvent = true;
   try{
+    if(_bmEs){_bmEs.close();_bmEs=null;}
     const es = new EventSource(BM_FB_BASE+'.json?accept=text/event-stream');
+    _bmEs=es;
     es.addEventListener('put', e=>{
       if(!e.data) return;
       if(firstEvent){ firstEvent=false; return; }
