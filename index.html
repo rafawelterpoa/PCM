@@ -2480,6 +2480,9 @@ function doLogin(){
   if(subEl)subEl.textContent=dias[agora.getDay()]+', '+agora.getDate()+' de '+meses[agora.getMonth()]+' de '+agora.getFullYear();
   const _btnAdmin=document.getElementById('btn-admin');if(_btnAdmin)_btnAdmin.style.display=(user.perfil==='master'||user.perfil==='admin')?'':'none';
   aplicarControleAcesso(user);
+  if(user.perfil==='master'){
+    ['snav-bd','snav-bd-divider','snav-bd-label'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
+  }
   loadFromFirebase();renderAdminUsers();rsCheckAcesso();pmpCarregarLayout(user.uid);
   setTimeout(mostrarNotifBemVindo, 1800);
 }
