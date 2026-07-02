@@ -17492,9 +17492,7 @@ function pmpSetSubAba(sub){
     if(tab){tab.style.color=a===sub?'#E8630A':'#5A7280';tab.style.borderBottomColor=a===sub?'#E8630A':'transparent';}
     if(cont) cont.style.display=a===sub?'block':'none';
   });
-  const equips=pmpFiltrarEquips(pmpMontarEquips());
-  if(sub==='gerencial') pmpRenderGerencial(equips);
-  else pmpRenderAnalitica(equips);
+  pmpRenderPlanejamento();
 }
 
 function pmpMontarEquips(){
