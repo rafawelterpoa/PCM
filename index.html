@@ -14793,11 +14793,14 @@ function aplicarControleAcesso(user){
     'snav-gi','snav-bd','snav-bd-divider','snav-bd-label'];
 
   if(regras.navShow.length){
-    // Modo explícito: esconde tudo que não está na lista navShow
+    // Modo restrito: mostra só os listados em navShow
     allSnav.forEach(id=>{
       const el=document.getElementById(id); if(!el) return;
       el.style.display = regras.navShow.includes(id) ? '' : 'none';
     });
+  } else {
+    // Sem restrição de nav (Master) — garante que tudo está visível
+    allSnav.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
   }
   // Aplica ocultações adicionais
   (regras.navHide||[]).forEach(id=>{
