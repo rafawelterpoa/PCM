@@ -17853,7 +17853,7 @@ function pmpRenderGerencial(equips,all){
 function pmpRenderAnalitica(equips,all){
   const el=document.getElementById('pmp-plan-analitica'); if(!el) return;
   if(!equips.length){el.innerHTML='<div style="padding:40px;text-align:center;color:#8FA4AE">Nenhum equipamento encontrado</div>';return;}
-  const _ed=(e,campo,val)=>`<td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','${campo}','${String(val||'').replace(/'/g,"&#39;")}')" style="background:#FFFDE7;font-size:12px;cursor:pointer">${val||`<span style="color:#C8D4DA;font-size:11px">—</span>`}</td>`;
+  const _ed=(e,campo,val)=>`<td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','${campo}','${String(val||'').replace(/'/g,"&#39;")}')" style="background:#FFFDE7;font-size:12px;cursor:pointer;text-align:center">${val||`<span style="color:#C8D4DA;font-size:11px">—</span>`}</td>`;
   const _thA=(label,col,bg='#BDD7EE')=>{const act=_pmpSortCol===col;const arr=act?(_pmpSortDir>0?' ↑':' ↓'):'';return `<th style="background:${bg};cursor:pointer;user-select:none;${act?'color:#E8630A;':''}" onclick="_pmpSortCol='${col}';_pmpSortDir=${act?-_pmpSortDir:1};pmpRenderPlanejamento()">${label}${arr}</th>`;};
   const _thE=(label,col)=>_thA(label,col,'#FFF9C4');
   el.innerHTML=`<div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>
@@ -17882,19 +17882,19 @@ function pmpRenderAnalitica(equips,all){
     ${_ed(e,'polo',e.polo)}${_ed(e,'centro',e.centro)}
     <td style="font-size:11px;background:#EBF3FB">${e.encarregado||'—'}</td>
     ${_ed(e,'ritmo_diario',e.ritmo_diario||'')}
-    <td style="text-align:right;background:#EBF3FB">${e.ritmo_semanal||'—'}</td>
+    <td style="text-align:center;background:#EBF3FB">${e.ritmo_semanal||'—'}</td>
     <td style="font-size:11px;background:#EBF3FB">${e.data_ult_rev||'—'}</td>
-    <td style="text-align:right;background:#EBF3FB">${e.hor_ult_rev||'—'}</td>
+    <td style="text-align:center;background:#EBF3FB">${e.hor_ult_rev||'—'}</td>
     ${_ed(e,'hor_execucao',e.hor_execucao||'')}
-    <td style="text-align:right;background:#EBF3FB">${e.hor_prox||'—'}</td>
-    <td style="text-align:right;font-weight:700;background:#EBF3FB;color:${_pmpHCor(e.h_para_pmp)}">${_pmpHFmt(e.h_para_pmp)}</td>
+    <td style="text-align:center;background:#EBF3FB">${e.hor_prox||'—'}</td>
+    <td style="text-align:center;font-weight:700;background:#EBF3FB;color:${_pmpHCor(e.h_para_pmp)}">${_pmpHFmt(e.h_para_pmp)}</td>
     <td style="text-align:center;background:#EBF3FB;font-weight:600">${e.semana_plan||'—'}</td>
     <td style="text-align:center;background:#EBF3FB">${e.pmp_vencido?`<span style="color:#B91C1C;font-weight:700">SIM</span>`:'—'}</td>
     <td style="background:#EBF3FB">${pmpBadge(e.status)}</td>
-    <td style="text-align:right;background:#EBF3FB">${e.period||'—'}</td>
-    <td style="font-size:11px;background:#EBF3FB">${e.dia_vencimento||'—'}</td>
-    <td style="text-align:right;font-weight:700;background:#EBF3FB;color:${_pmpHCor(e.h_pmp_s1)}">${_pmpHFmt(e.h_pmp_s1)}</td>
-    <td style="text-align:right;font-weight:700;background:#EBF3FB;color:${dvCor}">${dv===null?'—':dv}</td>
+    <td style="text-align:center;background:#EBF3FB">${e.period||'—'}</td>
+    <td style="text-align:center;font-size:11px;background:#EBF3FB">${e.dia_vencimento||'—'}</td>
+    <td style="text-align:center;font-weight:700;background:#EBF3FB;color:${_pmpHCor(e.h_pmp_s1)}">${_pmpHFmt(e.h_pmp_s1)}</td>
+    <td style="text-align:center;font-weight:700;background:#EBF3FB;color:${dvCor}">${dv===null?'—':dv}</td>
     <td style="font-size:12px;background:#EBF3FB">${e.om||'—'}</td>
     <td style="font-size:11px;background:#EBF3FB">${e.status_material||'—'}</td>
     <td><button onclick="pmpAbrirModal('${e.frota}')" style="padding:3px 8px;font-size:11px;background:#F4F6F8;border:1px solid #E2E8ED;border-radius:5px;cursor:pointer">✏</button></td>
