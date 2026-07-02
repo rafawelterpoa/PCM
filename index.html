@@ -17686,7 +17686,7 @@ const _PMP_COLS_DEF=[
   {key:'dia_vencimento',label:'Dia Venc.',num:true},
   {key:'h_pmp_s1',  label:'H/PMP S+1',   num:true,hCor:true},
   {key:'dias_vencimento',label:'Dias p/ Venc.',num:true,dvCor:true},
-  {key:'om',        label:'OM'},
+  {key:'om',        label:'OM',         edit:true},
   {key:'status_material',label:'Material'},
 ];
 let _pmpLayoutCols=['frota','polo','centro','encarregado','hor_atual','ritmo_diario','hor_ult_rev','hor_execucao','hor_prox','h_para_pmp','semana_plan','status','h_pmp_s1','dias_vencimento','om','status_material'];
@@ -17799,7 +17799,8 @@ function pmpMontarEquips(){
       status_om:statusOm, requisicao, pte,
       status_v:fb.status_v||'', status_prog:fb.status_prog||'',
       data_conclusao:fb.data_conclusao||'', mantenedor:fb.mantenedor||'',
-      data_req:fb.data_req||'', status_material:fb.status_material||''
+      data_req:fb.data_req||'',
+      status_material:requisicao||fb.status_material||''
     };
   }).sort((a,b)=>{
     const o={'Vencida':0,'Atenção':1,'Sem Revisão':2,'Programado':3,'Em Dia':4,'Sem Plano':5};
