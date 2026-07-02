@@ -17186,6 +17186,55 @@ function bdUploadPlanos(file) {
   reader.readAsArrayBuffer(file);
 }
 
+// ── UPLOAD: PMPs (aba PMPs da planilha Controle de Preventivas) ───────────────
+async function bdUploadPMPs(file) {
+  if(!file) return;
+  bdSetBadge('pmps','Processando…','info');
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    try {
+      const wb = XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+      const sh = wb.Sheets['PMPs']||wb.Sheets['PMP']||wb.Sheets[wb.SheetNames[0]];
+      if(!sh) throw new Error('Aba PMPs não encontrada');
+      const rows = XLSX.utils.sheet_to_json(sh,{header:1,defval:''});
+      // Mapa numeric frota → e.id (TAG) usando EQUIPAMENTOS_ORIG
+      const numToTag={};
+      (window.EQUIPAMENTOS_ORIG||[]).forEach(e=>{if(e.frota) numToTag[String(e.frota)]=e.id;});
+      let cnt=0;
+      const patches=[];
+      rows.slice(1).forEach(r=>{
+        const num=String(r[1]||'').trim(); if(!num||isNaN(num)) return;
+        const tag=numToTag[num]; if(!tag) return;
+        const polo=String(r[10]||'').trim();
+        const centro=String(r[11]||'').trim();
+        const ritmoDiario=String(r[16]||'').trim();
+        const horExecucao=String(r[22]||'').trim();
+        if(!polo&&!centro&&!ritmoDiario&&!horExecucao) return;
+        const dados={};
+        if(polo) dados.polo=polo;
+        if(centro) dados.centro=centro;
+        if(ritmoDiario) dados.ritmo_diario=ritmoDiario;
+        if(horExecucao) dados.hor_execucao=horExecucao;
+        if(!window.PMP_EQUIP) window.PMP_EQUIP={};
+        if(!window.PMP_EQUIP[tag]) window.PMP_EQUIP[tag]={};
+        Object.assign(window.PMP_EQUIP[tag],dados);
+        patches.push(fetch(`${PMP_FB}/equip/${tag}.json`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)}));
+        cnt++;
+      });
+      await Promise.all(patches);
+      bdSetBadge('pmps',`${cnt} equip atualizados`,'ok');
+      bdSetInfo('pmps',`${cnt} equipamentos com polo/centro/ritmo/horímetro carregados`);
+      showToast(`✓ PMPs carregados: ${cnt} equipamentos`);
+      pmpRenderPlanejamento();
+    } catch(err) {
+      bdSetBadge('pmps','Erro','warn');
+      bdSetInfo('pmps','Erro: '+err.message);
+      showToast('Erro ao processar: '+err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
 // ── UPLOAD: Responsáveis ──────────────────────────────────────────────────────
 function bdUploadResponsaveis(file) {
   if(!file) return;
@@ -17455,8 +17504,22 @@ function pmpMontarEquips(){
     const _hStr=String(e.horimetro||'').trim();
     const horAtual=_hStr?(_hStr.includes(',')?parseFloat(_hStr.replace(/\./g,'').replace(',','.')):parseFloat(_hStr.replace(/\./g,'')))||0:0;
     const horUltRev=parseFloat(fb.horimetro_ultima_revisao)||0;
+    const horExecucao=parseFloat(fb.hor_execucao)||0;
     const horProx=period>0?(horUltRev+period):0;
     const hParaPmp=horProx>0?(horProx-horAtual):null;
+    const ritmoDiario=parseFloat(fb.ritmo_diario)||0;
+    const ritmoSemanal=ritmoDiario>0?Math.round(ritmoDiario*7):0;
+    // DIA DE VENCIMENTO: data_ult_rev + (period/ritmo_diario) dias
+    let diaVencimento='', diasVencimento=null, hPmpS1=null;
+    if(fb.data_ultima_revisao&&period>0&&ritmoDiario>0){
+      try{
+        const dtUlt=new Date(fb.data_ultima_revisao);
+        const dtVenc=new Date(dtUlt.getTime()+(period/ritmoDiario)*86400000);
+        diaVencimento=dtVenc.toLocaleDateString('pt-BR');
+        diasVencimento=Math.round((dtVenc-new Date())/86400000);
+      }catch(ex){}
+    }
+    if(hParaPmp!==null&&ritmoSemanal>0) hPmpS1=hParaPmp-ritmoSemanal;
     let status='Sem Plano';
     if(plano&&period>0){
       if(fb.semana_planejada) status='Programado';
@@ -17483,6 +17546,11 @@ function pmpMontarEquips(){
       plano_desc:plano?(plano.plano_desc||plano.mascara||''):'', period,
       hor_atual:horAtual, data_ult_rev:fb.data_ultima_revisao||'',
       hor_ult_rev:horUltRev||'', hor_prox:horProx||'', h_para_pmp:hParaPmp,
+      polo:fb.polo||'', centro:fb.centro||'',
+      ritmo_diario:ritmoDiario, ritmo_semanal:ritmoSemanal,
+      hor_execucao:horExecucao, dia_vencimento:diaVencimento,
+      dias_vencimento:diasVencimento, h_pmp_s1:hPmpS1,
+      pmp_vencido:hParaPmp!==null&&hParaPmp<0,
       status, semana_plan:fb.semana_planejada||'', om:omNum,
       status_om:statusOm, requisicao, pte,
       status_v:fb.status_v||'', status_prog:fb.status_prog||'',
@@ -17551,65 +17619,75 @@ function _pmpHFmt(h){return h===null?'—':(h>0?'+':'')+Math.round(h);}
 function pmpRenderGerencial(equips){
   const el=document.getElementById('pmp-plan-gerencial'); if(!el) return;
   if(!equips.length){el.innerHTML='<div style="padding:40px;text-align:center;color:#8FA4AE">Nenhum equipamento encontrado</div>';return;}
+  const _thG=(label,col)=>{const act=_pmpSortCol===col;const arr=act?(_pmpSortDir>0?' ↑':' ↓'):'';return `<th style="background:#BDD7EE;cursor:pointer;user-select:none;${act?'color:#E8630A;':''}" onclick="_pmpSortCol='${col}';_pmpSortDir=${act?-_pmpSortDir:1};pmpRenderPlanejamento()">${label}${arr}</th>`;};
   el.innerHTML=`<div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>
-    <th>FROTA</th><th>MODELO</th><th>FAMÍLIA</th><th>OPERAÇÃO</th><th>CIDADE</th>
-    <th>PLANO</th><th>PERIOD.(h)</th><th>HOR.ATUAL</th><th>H/PMP</th><th>STATUS</th><th>SEM.PLAN.</th><th></th>
-  </tr></thead><tbody>${equips.map(e=>`<tr>
-    <td><strong>${e.frota}</strong>${e.serie?`<div style="font-size:10px;color:#8FA4AE">${e.serie}</div>`:''}</td>
-    <td>${e.modelo||'—'}</td><td style="font-size:11px">${e.familia||'—'}</td>
-    <td style="font-size:12px">${e.operacao||'—'}</td><td style="font-size:12px">${e.cidade||'—'}</td>
-    <td style="font-size:11px">${e.plano_desc||'—'}</td>
-    <td style="text-align:right">${e.period||'—'}</td>
-    <td style="text-align:right">${e.hor_atual||'—'}</td>
-    <td style="text-align:right;font-weight:700;color:${_pmpHCor(e.h_para_pmp)}">${_pmpHFmt(e.h_para_pmp)}</td>
-    <td>${pmpBadge(e.status)}</td>
-    <td style="text-align:center">${e.semana_plan||'—'}</td>
-    <td><button onclick="pmpAbrirModal('${e.frota}')" style="padding:3px 8px;font-size:11px;background:#F4F6F8;border:1px solid #E2E8ED;border-radius:5px;cursor:pointer">✏</button></td>
-  </tr>`).join('')}</tbody></table></div>`;
+    ${_thG('FROTA','frota')}${_thG('UNIDADE','operacao')}${_thG('ENCARREGADO','encarregado')}
+    ${_thG('HOR.ATUAL','hor_atual')}${_thG('H/PMP S+1','h_pmp_s1')}${_thG('DIAS P/VENC.','dias_vencimento')}
+    ${_thG('OM','om')}${_thG('MATERIAL','status_material')}
+  </tr></thead><tbody>${equips.map(e=>{
+    const dv=e.dias_vencimento;
+    const dvCor=dv===null?'#8FA4AE':dv<0?'#B91C1C':dv<=7?'#B45309':'#1E8A4C';
+    return `<tr>
+    <td style="background:#EBF3FB"><strong style="font-size:12px">${e.frota}</strong>${e.serie?`<div style="font-size:10px;color:#8FA4AE">${e.serie}</div>`:''}</td>
+    <td style="font-size:11px;background:#EBF3FB">${e.operacao||'—'}</td>
+    <td style="font-size:11px;background:#EBF3FB">${e.encarregado||'—'}</td>
+    <td style="text-align:right;background:#EBF3FB">${e.hor_atual||'—'}</td>
+    <td style="text-align:right;font-weight:700;background:#EBF3FB;color:${_pmpHCor(e.h_pmp_s1)}">${_pmpHFmt(e.h_pmp_s1)}</td>
+    <td style="text-align:right;font-weight:700;background:#EBF3FB;color:${dvCor}">${dv===null?'—':dv}</td>
+    <td style="font-size:12px;background:#EBF3FB">${e.om||'—'}</td>
+    <td style="font-size:11px;background:#EBF3FB">${e.status_material||'—'}</td>
+  </tr>`;}).join('')}</tbody></table></div>`;
 }
 
 function pmpRenderAnalitica(equips){
   const el=document.getElementById('pmp-plan-analitica'); if(!el) return;
   if(!equips.length){el.innerHTML='<div style="padding:40px;text-align:center;color:#8FA4AE">Nenhum equipamento encontrado</div>';return;}
-  const _ed=(e,campo,val,label)=>`<td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','${campo}','${String(val).replace(/'/g,"&#39;")}')" style="background:#FFFBEB;font-size:12px">${val||`<span style="color:#C8D4DA;font-size:11px">${label||'—'}</span>`}</td>`;
-  const _th=(label,col,extra='')=>{const act=_pmpSortCol===col;const arr=act?(_pmpSortDir>0?' ↑':' ↓'):'';return `<th ${extra} style="${extra.includes('background')?'':''}cursor:pointer;user-select:none;${act?'color:#E8630A;':''}" onclick="_pmpSortCol='${col}';_pmpSortDir=${act?-_pmpSortDir:1};pmpRenderPlanejamento()">${label}${arr}</th>`;};
+  const _ed=(e,campo,val)=>`<td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','${campo}','${String(val||'').replace(/'/g,"&#39;")}')" style="background:#FFFDE7;font-size:12px;cursor:pointer">${val||`<span style="color:#C8D4DA;font-size:11px">—</span>`}</td>`;
+  const _thA=(label,col,bg='#BDD7EE')=>{const act=_pmpSortCol===col;const arr=act?(_pmpSortDir>0?' ↑':' ↓'):'';return `<th style="background:${bg};cursor:pointer;user-select:none;${act?'color:#E8630A;':''}" onclick="_pmpSortCol='${col}';_pmpSortDir=${act?-_pmpSortDir:1};pmpRenderPlanejamento()">${label}${arr}</th>`;};
+  const _thE=(label,col)=>_thA(label,col,'#FFF9C4');
   el.innerHTML=`<div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>
-    ${_th('SEM.PLAN','semana_plan')}${_th('FROTA','frota')}${_th('MODELO','modelo')}${_th('UNIDADE','operacao')}
-    ${_th('ENCARREGADO','encarregado')}${_th('PROGRAMADOR','programador')}${_th('CIDADE','cidade')}
-    ${_th('OM','om')}${_th('PLANO (h)','period')}${_th('STATUS OM','status_om')}
-    ${_th('HOR.ATUAL','hor_atual')}${_th('H/PMP','h_para_pmp')}${_th('STATUS PLANO','status')}
-    <th style="background:#FFFBEB">STATUS ✏</th>
-    <th style="background:#FFFBEB">STATUS PROG. ✏</th>
-    <th style="background:#FFFBEB">DT CONCLUSÃO ✏</th>
-    <th style="background:#FFFBEB">MANTENEDOR ✏</th>
-    <th>REQUISIÇÃO</th><th>PTE</th>
-    <th style="background:#FFFBEB">DT REQUISIÇÃO ✏</th>
-    <th style="background:#FFFBEB">STATUS MAT. ✏</th>
+    ${_thA('FROTA','frota')}${_thA('SÉRIE','serie')}${_thA('MODELO','modelo')}
+    ${_thA('UNIDADE','operacao')}${_thA('CIDADE','cidade')}
+    ${_thE('POLO ✏','polo')}${_thE('CENTRO ✏','centro')}
+    ${_thA('ENCARREGADO','encarregado')}
+    ${_thE('RITMO DIA ✏','ritmo_diario')}${_thA('RITMO SEM.','ritmo_semanal')}
+    ${_thA('DT ÚLT.REV','data_ult_rev')}${_thA('HOR.ÚLT.REV','hor_ult_rev')}
+    ${_thE('HOR.EXEC. ✏','hor_execucao')}${_thA('HOR.PRÓX','hor_prox')}
+    ${_thA('H/PMP','h_para_pmp')}${_thA('SEM.PLAN','semana_plan')}
+    ${_thA('PMP VENC.','pmp_vencido')}${_thA('STATUS','status')}
+    ${_thA('PERIOD.(h)','period')}${_thA('DIA VENC.','dia_vencimento')}
+    ${_thA('H/PMP S+1','h_pmp_s1')}${_thA('DIAS P/VENC.','dias_vencimento')}
+    ${_thA('OM','om')}${_thA('MATERIAL','status_material')}
     <th></th>
-  </tr></thead><tbody>${equips.map(e=>`<tr>
-    <td style="text-align:center;font-weight:600">${e.semana_plan||'—'}</td>
-    <td><strong style="font-size:12px">${e.frota}</strong>${e.serie?`<div style="font-size:10px;color:#8FA4AE">${e.serie}</div>`:''}</td>
-    <td style="font-size:12px">${e.modelo||'—'}</td>
-    <td style="font-size:11px">${e.operacao||'—'}</td>
-    <td style="font-size:11px">${e.encarregado||'—'}</td>
-    <td style="font-size:11px">${e.programador||'—'}</td>
-    <td style="font-size:11px">${e.cidade||'—'}</td>
-    <td style="font-size:12px">${e.om||'—'}</td>
-    <td style="text-align:right">${e.period||'—'}</td>
-    <td style="font-size:11px">${e.status_om||'—'}</td>
-    <td style="text-align:right">${e.hor_atual||'—'}</td>
-    <td style="text-align:right;font-weight:700;color:${_pmpHCor(e.h_para_pmp)}">${_pmpHFmt(e.h_para_pmp)}</td>
-    <td>${pmpBadge(e.status)}</td>
-    ${_ed(e,'status_v',e.status_v,'')}
-    ${_ed(e,'status_prog',e.status_prog,'')}
-    ${_ed(e,'data_conclusao',e.data_conclusao,'')}
-    ${_ed(e,'mantenedor',e.mantenedor,'')}
-    <td style="font-size:11px">${e.requisicao||'—'}</td>
-    <td style="font-size:11px">${e.pte||'—'}</td>
-    ${_ed(e,'data_req',e.data_req,'')}
-    ${_ed(e,'status_material',e.status_material,'')}
+  </tr></thead><tbody>${equips.map(e=>{
+    const dv=e.dias_vencimento;
+    const dvCor=dv===null?'#8FA4AE':dv<0?'#B91C1C':dv<=7?'#B45309':'#1E8A4C';
+    return `<tr>
+    <td style="background:#EBF3FB"><strong style="font-size:12px">${e.frota}</strong></td>
+    <td style="font-size:11px;color:#5A7280;background:#EBF3FB">${e.serie||'—'}</td>
+    <td style="font-size:12px;background:#EBF3FB">${e.modelo||'—'}</td>
+    <td style="font-size:11px;background:#EBF3FB">${e.operacao||'—'}</td>
+    <td style="font-size:11px;background:#EBF3FB">${e.cidade||'—'}</td>
+    ${_ed(e,'polo',e.polo)}${_ed(e,'centro',e.centro)}
+    <td style="font-size:11px;background:#EBF3FB">${e.encarregado||'—'}</td>
+    ${_ed(e,'ritmo_diario',e.ritmo_diario||'')}
+    <td style="text-align:right;background:#EBF3FB">${e.ritmo_semanal||'—'}</td>
+    <td style="font-size:11px;background:#EBF3FB">${e.data_ult_rev||'—'}</td>
+    <td style="text-align:right;background:#EBF3FB">${e.hor_ult_rev||'—'}</td>
+    ${_ed(e,'hor_execucao',e.hor_execucao||'')}
+    <td style="text-align:right;background:#EBF3FB">${e.hor_prox||'—'}</td>
+    <td style="text-align:right;font-weight:700;background:#EBF3FB;color:${_pmpHCor(e.h_para_pmp)}">${_pmpHFmt(e.h_para_pmp)}</td>
+    <td style="text-align:center;background:#EBF3FB;font-weight:600">${e.semana_plan||'—'}</td>
+    <td style="text-align:center;background:#EBF3FB">${e.pmp_vencido?`<span style="color:#B91C1C;font-weight:700">SIM</span>`:'—'}</td>
+    <td style="background:#EBF3FB">${pmpBadge(e.status)}</td>
+    <td style="text-align:right;background:#EBF3FB">${e.period||'—'}</td>
+    <td style="font-size:11px;background:#EBF3FB">${e.dia_vencimento||'—'}</td>
+    <td style="text-align:right;font-weight:700;background:#EBF3FB;color:${_pmpHCor(e.h_pmp_s1)}">${_pmpHFmt(e.h_pmp_s1)}</td>
+    <td style="text-align:right;font-weight:700;background:#EBF3FB;color:${dvCor}">${dv===null?'—':dv}</td>
+    <td style="font-size:12px;background:#EBF3FB">${e.om||'—'}</td>
+    <td style="font-size:11px;background:#EBF3FB">${e.status_material||'—'}</td>
     <td><button onclick="pmpAbrirModal('${e.frota}')" style="padding:3px 8px;font-size:11px;background:#F4F6F8;border:1px solid #E2E8ED;border-radius:5px;cursor:pointer">✏</button></td>
-  </tr>`).join('')}</tbody></table></div>`;
+  </tr>`;}).join('')}</tbody></table></div>`;
 }
 
 let _pmpEditEl=null;
@@ -17649,6 +17727,10 @@ function pmpAbrirModal(frota){
   document.getElementById('pmp-modal-hor').value=fb.horimetro_ultima_revisao||'';
   document.getElementById('pmp-modal-semana').value=fb.semana_planejada||'';
   document.getElementById('pmp-modal-om').value=fb.om||'';
+  document.getElementById('pmp-modal-polo').value=fb.polo||'';
+  document.getElementById('pmp-modal-centro').value=fb.centro||'';
+  document.getElementById('pmp-modal-ritmo').value=fb.ritmo_diario||'';
+  document.getElementById('pmp-modal-hor-exec').value=fb.hor_execucao||'';
   document.getElementById('pmp-modal-status-v').value=fb.status_v||'';
   document.getElementById('pmp-modal-status-prog').value=fb.status_prog||'';
   document.getElementById('pmp-modal-data-conclusao').value=fb.data_conclusao||'';
@@ -17661,6 +17743,10 @@ function pmpFecharModal(){document.getElementById('pmp-modal').style.display='no
 async function pmpSalvarModal(){
   const fid=document.getElementById('pmp-modal-frota').value;
   const dados={
+    polo:document.getElementById('pmp-modal-polo').value,
+    centro:document.getElementById('pmp-modal-centro').value,
+    ritmo_diario:document.getElementById('pmp-modal-ritmo').value,
+    hor_execucao:document.getElementById('pmp-modal-hor-exec').value,
     data_ultima_revisao:document.getElementById('pmp-modal-data').value,
     horimetro_ultima_revisao:document.getElementById('pmp-modal-hor').value,
     semana_planejada:document.getElementById('pmp-modal-semana').value,
@@ -18918,6 +19004,31 @@ if ('serviceWorker' in navigator) {
             </div>
           </div>
 
+          <!-- ── PAINEL 1b: PMPs (Polo / Centro / Ritmo / Horímetro) ── -->
+          <div style="background:#fff;border:1px solid #E2E8ED;border-radius:14px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:44px;height:44px;border-radius:10px;background:#BDD7EE;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:15px;font-weight:700;color:#1A2E35">PMPs — Planejamento</div>
+                  <div style="font-size:11px;color:#8FA4AE;margin-top:2px">Polo · Centro · Ritmo Diário · Horímetro Execução</div>
+                </div>
+              </div>
+              <span id="bd-badge-pmps" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:#F4F6F8;color:#8FA4AE;white-space:nowrap;flex-shrink:0">Não carregado</span>
+            </div>
+            <div style="background:#F8FAFC;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#5A7280;line-height:1.7">
+              <strong>Arquivo:</strong> Controle de Preventivas Consolidado.xlsx — aba <strong>PMPs</strong><br>
+              <strong>Colunas:</strong> B=Frota · K=Polo · L=Centro · Q=Ritmo Diário · W=Horímetro Execução
+            </div>
+            <div id="bd-info-pmps" style="font-size:11px;color:#8FA4AE;margin-bottom:14px;min-height:16px"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="document.getElementById('bd-file-pmps').click()" style="flex:1;padding:8px 14px;background:#1D4ED8;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">⬆ Carregar arquivo</button>
+              <input type="file" id="bd-file-pmps" accept=".xlsx,.xls" style="display:none" onchange="bdUploadPMPs(this.files[0]);this.value=''">
+            </div>
+          </div>
+
           <!-- ── PAINEL 2: Responsáveis ── -->
           <div style="background:#fff;border:1px solid #E2E8ED;border-radius:14px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px">
@@ -19078,7 +19189,26 @@ if ('serviceWorker' in navigator) {
     </div>
     <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;max-height:70vh;overflow-y:auto">
       <input type="hidden" id="pmp-modal-frota">
-      <div style="font-size:11px;font-weight:700;color:#8FA4AE;text-transform:uppercase;letter-spacing:.06em;padding-bottom:2px;border-bottom:1px solid #E2E8ED">Planejamento</div>
+      <div style="font-size:11px;font-weight:700;color:#8FA4AE;text-transform:uppercase;letter-spacing:.06em;padding-bottom:2px;border-bottom:1px solid #E2E8ED">Equipamento</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Polo (K)</label>
+          <input type="text" id="pmp-modal-polo" placeholder="ex: SP Interior" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;color:#1A2E35;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Centro (L)</label>
+          <input type="text" id="pmp-modal-centro" placeholder="ex: Ribeirão Preto" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;color:#1A2E35;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Ritmo Diário — h/dia (Q)</label>
+          <input type="number" id="pmp-modal-ritmo" placeholder="ex: 8.5" step="0.1" min="0" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;color:#1A2E35;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Horímetro Execução (W)</label>
+          <input type="number" id="pmp-modal-hor-exec" placeholder="ex: 12750" style="padding:8px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;color:#1A2E35;outline:none">
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#8FA4AE;text-transform:uppercase;letter-spacing:.06em;padding-bottom:2px;border-bottom:1px solid #E2E8ED;margin-top:4px">Planejamento</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div style="display:flex;flex-direction:column;gap:4px">
           <label style="font-size:11px;font-weight:700;color:#5A7280;text-transform:uppercase;letter-spacing:.04em">Data Última Revisão</label>
