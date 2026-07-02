@@ -5014,15 +5014,24 @@ async function aprovarPendente(idx){
   const perfil=document.getElementById('perfil-pend-'+idx)?.value||'';
   if(!setor||!perfil){showToast('Selecione setor e perfil antes de aprovar.');return;}
   const login=p.email.split('@')[0].replace(/[^a-z0-9.]/gi,'').toLowerCase();
-  if(usuariosCache.find(u=>u.login===login)){showToast('Login '+login+' já existe. Edite manualmente.');return;}
-  usuariosCache.push({nome:p.nome,login,senha:p.senha,email:p.email,perfil,setor,oficina:''});
-  await fbSetUsers(usuariosCache);
-  // Remove da lista de pendentes
-  const todos=await fbGetPendentes();
-  const novos=todos.filter(x=>!(x.email===p.email&&x.status==='pendente'));
-  await fbSetPendentes(novos);
-  showToast('✅ '+p.nome+' aprovado como '+perfil);
-  renderAdminUsers();carregarPendentes();
+  const existing=usuariosCache.findIndex(u=>u.login===login);
+  if(existing>=0){
+    // Atualiza perfil/setor do usuário existente
+    usuariosCache[existing].setor=setor;
+    usuariosCache[existing].perfil=perfil;
+    usuariosCache[existing].nome=p.nome||usuariosCache[existing].nome;
+    usuariosCache[existing].email=p.email||usuariosCache[existing].email;
+  } else {
+    usuariosCache.push({nome:p.nome,login,senha:p.senha,email:p.email,perfil,setor,oficina:''});
+  }
+  try{
+    await fbSetUsers(usuariosCache);
+    const todos=await fbGetPendentes();
+    const novos=todos.filter(x=>x.email!==p.email);
+    await fbSetPendentes(novos);
+    showToast('✅ '+p.nome+' aprovado como '+perfil+(existing>=0?' (atualizado)':''));
+    renderAdminUsers();carregarPendentes();
+  }catch(e){showToast('Erro ao salvar: '+e.message);}
 }
 async function rejeitarPendente(idx){
   const el=document.getElementById('admin-pendentes-body');
@@ -5074,15 +5083,22 @@ function toggleSetorField(setorId,perfilId){
   const wrap=document.getElementById(setorId+'-wrap');
   if(wrap)wrap.style.display=['usuario','gestor','pcm','programador','planejador','rcd'].includes(perfil)?'':'none';
 }
+function editUserPerfisUpdate(){
+  const setor=document.getElementById('edit-setor').value;
+  const sel=document.getElementById('edit-perfil');if(!sel)return;
+  const opts=_PERFIS_POR_SETOR[setor]||[];
+  sel.innerHTML='<option value="">— Perfil —</option>'+opts.map(p=>`<option value="${p}">${p}</option>`).join('');
+}
 function openEditUser(idx){
   const u=usuariosCache[idx];if(!u)return;
   const existing=document.getElementById('edit-user-modal');
   if(existing)existing.remove();
-  const setorOpts=['Oficinas','Planejamento','Programação','Gestão de Ativos','Implantação','Externos'].map(s=>`<option value="${s}"${u.setor===s?' selected':''}>${s}</option>`).join('');
-  const perfilOpts=[['usuario','Usuário'],['gestor','Gestor'],['pcm','PCM'],['programador','Programador'],['planejador','Planejador'],['rcd','RCD'],['sistemas','Sistemas'],['master','Master']].map(([v,l])=>`<option value="${v}"${u.perfil===v?' selected':''}>${l}</option>`).join('');
+  const setores=Object.keys(_PERFIS_POR_SETOR);
+  const setorOpts=setores.map(s=>`<option value="${s}"${u.setor===s?' selected':''}>${s}</option>`).join('');
+  const perfisDoSetor=_PERFIS_POR_SETOR[u.setor]||[];
+  const perfilOpts=(perfisDoSetor.length?perfisDoSetor:['master']).map(p=>`<option value="${p}"${u.perfil===p?' selected':''}>${p}</option>`).join('');
   const oficinas=['','Assis (SP)','Contagem (MG)','Osasco (SP)','Parauapebas (PA)','Santos (SP)','Sumaré (SP)','São José dos Pinhais (PR)'];
   const oficOpts=oficinas.map(o=>`<option value="${o}"${u.oficina===o?' selected':''}>${o||'— Todas —'}</option>`).join('');
-  const needsSetor=['usuario','gestor','pcm','programador','planejador','rcd'].includes(u.perfil);
   const modal=document.createElement('div');
   modal.id='edit-user-modal';
   modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:center;justify-content:center';
@@ -5092,11 +5108,11 @@ function openEditUser(idx){
       <div class="admin-field"><div class="admin-label">Nome completo</div><input type="text" id="edit-nome" value="${u.nome}" placeholder="Nome Sobrenome"></div>
       <div class="admin-field"><div class="admin-label">Nova senha (deixe vazio p/ manter)</div><input type="password" id="edit-senha" placeholder="••••"></div>
       <div class="admin-field"><div class="admin-label">E-mail</div><input type="email" id="edit-email" value="${u.email||''}" placeholder="nome@mills.com.br"></div>
-      <div class="admin-field"><div class="admin-label">Perfil</div>
-        <select id="edit-perfil" onchange="toggleSetorField('edit-setor','edit-perfil')">${perfilOpts}</select>
+      <div class="admin-field"><div class="admin-label">Setor</div>
+        <select id="edit-setor" onchange="editUserPerfisUpdate()">${setorOpts}</select>
       </div>
-      <div class="admin-field" id="edit-setor-wrap" style="display:${needsSetor?'':'none'}"><div class="admin-label">Setor</div>
-        <select id="edit-setor">${setorOpts}</select>
+      <div class="admin-field"><div class="admin-label">Perfil</div>
+        <select id="edit-perfil"><option value="">— Perfil —</option>${perfilOpts}</select>
       </div>
       <div class="admin-field"><div class="admin-label">Oficina</div><select id="edit-oficina">${oficOpts}</select></div>
     </div>
@@ -5111,18 +5127,20 @@ async function saveEditUser(idx){
   const u=usuariosCache[idx];if(!u)return;
   const nome=document.getElementById('edit-nome').value.trim();
   const senha=document.getElementById('edit-senha').value;
+  const setor=document.getElementById('edit-setor').value;
   const perfil=document.getElementById('edit-perfil').value;
-  const needsSetor=['usuario','gestor','pcm','programador','planejador','rcd'].includes(perfil);
-  const setor=needsSetor?document.getElementById('edit-setor').value:'';
   const oficina=document.getElementById('edit-oficina').value;
   const email=document.getElementById('edit-email').value.trim().toLowerCase();
   if(!nome){showToast('Nome obrigatório');return;}
+  if(!setor||!perfil){showToast('Selecione setor e perfil');return;}
   u.nome=nome;
   if(senha)u.senha=senha;
-  u.perfil=perfil;u.setor=setor;u.oficina=oficina;u.email=email;
-  await fbSetUsers(usuariosCache);
-  document.getElementById('edit-user-modal').remove();
-  renderAdminUsers();showToast('Usuário atualizado');
+  u.setor=setor;u.perfil=perfil;u.oficina=oficina;u.email=email;
+  try{
+    await fbSetUsers(usuariosCache);
+    document.getElementById('edit-user-modal').remove();
+    renderAdminUsers();showToast('✅ Usuário atualizado');
+  }catch(e){showToast('Erro ao salvar: '+e.message);}
 }
 async function delUser(idx){
   if(!confirm('Remover usuário?'))return;
@@ -17791,7 +17809,7 @@ function pmpMontarEquips(){
       plano_desc:plano?(plano.plano_desc||plano.mascara||''):'', period,
       hor_atual:horAtual, data_ult_rev:fb.data_ultima_revisao||'',
       hor_ult_rev:horUltRev||'', hor_prox:horProx||'', h_para_pmp:hParaPmp,
-      polo:fb.polo||'', centro:fb.centro||'',
+      polo:fb.polo||'', centro:e.oficina||fb.centro||'',
       ritmo_diario:ritmoDiario, ritmo_semanal:ritmoSemanal,
       hor_execucao:horExecucao, dia_vencimento:diaVencimento,
       dias_vencimento:diasVencimento, h_pmp_s1:hPmpS1,
