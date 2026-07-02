@@ -17423,6 +17423,7 @@ async function bdUploadPMPs(file) {
         // AZUL — informativos (semana, OM, status, material)
         if(_str(r[28])) dados.semana_planejada=_str(r[28]); // AC SEM.PLAN
         if(_str(r[31])) dados.status_v=_str(r[31]);          // AF STATUS
+        if(_num(r[32])) dados.period=_num(r[32]);             // AG PERIOD. PMP
         if(_str(r[36])) dados.om=_str(r[36]).replace(/^0+/,''); // AK OM
         if(_str(r[37])) dados.status_material=_str(r[37]);   // AL MATERIAL
         // Periodicidade → BD_PLANOS_FROTA
@@ -17674,12 +17675,12 @@ const _PMP_COLS_DEF=[
   {key:'hor_atual', label:'Hor. Atual',   num:true},
   {key:'ritmo_diario',label:'Ritmo Dia',  edit:true,num:true},
   {key:'ritmo_semanal',label:'Ritmo Sem.',num:true},
-  {key:'data_ult_rev',label:'Dt. Últ. Rev.'},
-  {key:'hor_ult_rev',label:'Hor. Últ. Rev.',num:true},
+  {key:'data_ult_rev',label:'Dt. Últ. Rev.', edit:true},
+  {key:'hor_ult_rev',label:'Hor. Últ. Rev.',num:true,edit:true},
   {key:'hor_execucao',label:'Hor. Exec.', edit:true,num:true},
-  {key:'hor_prox',  label:'Próx. Plano',  num:true},
+  {key:'hor_prox',  label:'Próx. Plano',  num:true,edit:true},
   {key:'h_para_pmp',label:'H/PMP',        num:true,hCor:true},
-  {key:'semana_plan',label:'Sem. Plan.',  num:true},
+  {key:'semana_plan',label:'Sem. Plan.',  num:true,edit:true},
   {key:'pmp_vencido',label:'PMP Venc.'},
   {key:'status',    label:'Status'},
   {key:'period',    label:'Period.(h)',   num:true},
@@ -17744,12 +17745,12 @@ function pmpMontarEquips(){
     const _bp=window.BD_PLANOS_FROTA||{};
     const plano=_bp[e.id]||_bp[fid]||(_numSuf&&_bp[_numSuf])||null;
     const fb=(window.PMP_EQUIP||{})[fid]||(window.PMP_EQUIP||{})[e.id]||{};
-    const period=plano?parseFloat(plano.period||plano.periodicidade||0):0;
+    const period=parseFloat(fb.period||0)||parseFloat(plano?.period||plano?.periodicidade||0)||0;
     const _hStr=String(e.horimetro||'').trim();
     const horAtual=_hStr?(_hStr.includes(',')?parseFloat(_hStr.replace(/\./g,'').replace(',','.')):parseFloat(_hStr.replace(/\./g,'')))||0:0;
     const horUltRev=parseFloat(fb.horimetro_ultima_revisao)||0;
     const horExecucao=parseFloat(fb.hor_execucao)||0;
-    const horProx=period>0?(horUltRev+period):0;
+    const horProx=parseFloat(fb.hor_prox)||(period>0?(horUltRev+period):0);
     const hParaPmp=horProx>0?(horProx-horAtual):null;
     const ritmoDiario=parseFloat(fb.ritmo_diario)||0;
     const ritmoSemanal=ritmoDiario>0?Math.round(ritmoDiario*7):0;
