@@ -4969,11 +4969,17 @@ async function carregarPendentes(){
         <td><code style="font-size:11px;color:var(--text3)">${p.senha}</code></td>
         <td style="font-size:11px;color:var(--text3)">${p.ts?new Date(p.ts).toLocaleString('pt-BR'):'—'}</td>
         <td style="display:flex;gap:6px;flex-wrap:wrap">
+          <select id="setor-pend-${i}" onchange="pmpUpdPerfis(${i})" style="font-size:11px;padding:2px 4px;border-radius:4px;border:1px solid var(--borda)">
+            <option value="">— Setor —</option>
+            <option value="Master">Master</option>
+            <option value="Oficinas">Oficinas</option>
+            <option value="PCM">PCM</option>
+            <option value="Gestão de Ativos">Gestão de Ativos</option>
+            <option value="Implantação">Implantação</option>
+            <option value="Operação">Operação</option>
+          </select>
           <select id="perfil-pend-${i}" style="font-size:11px;padding:2px 4px;border-radius:4px;border:1px solid var(--borda)">
-            <option value="usuario">Usuário</option>
-            <option value="gestor">Gestor</option>
-            <option value="sistemas">Sistemas</option>
-            <option value="master">Master</option>
+            <option value="">— Perfil —</option>
           </select>
           <button class="btn btn-sm" style="background:var(--verde);color:#fff;border:none" onclick="aprovarPendente(${i})">✅ Aprovar</button>
           <button class="del-btn btn-sm" onclick="rejeitarPendente(${i})">❌ Rejeitar</button>
@@ -4983,14 +4989,30 @@ async function carregarPendentes(){
     el._pendentes=ativos;
   }catch(e){el.innerHTML='<div style="color:var(--terra);font-size:12px">Erro ao carregar solicitações.</div>';}
 }
+const _PERFIS_POR_SETOR={
+  'Master':['master'],
+  'Oficinas':['Gestor','Analista'],
+  'PCM':['Programação','RCD','Planejamento'],
+  'Gestão de Ativos':['Gestor','Analista'],
+  'Implantação':['Gestor','Analista'],
+  'Operação':['Gestor','Analista'],
+};
+function pmpUpdPerfis(idx){
+  const setor=document.getElementById('setor-pend-'+idx)?.value||'';
+  const sel=document.getElementById('perfil-pend-'+idx);if(!sel)return;
+  const opts=_PERFIS_POR_SETOR[setor]||[];
+  sel.innerHTML='<option value="">— Perfil —</option>'+opts.map(p=>`<option value="${p}">${p}</option>`).join('');
+}
 async function aprovarPendente(idx){
   const el=document.getElementById('admin-pendentes-body');
   const pend=el._pendentes;if(!pend||!pend[idx])return;
   const p=pend[idx];
-  const perfil=document.getElementById('perfil-pend-'+idx)?.value||'usuario';
+  const setor=document.getElementById('setor-pend-'+idx)?.value||'';
+  const perfil=document.getElementById('perfil-pend-'+idx)?.value||'';
+  if(!setor||!perfil){showToast('Selecione setor e perfil antes de aprovar.');return;}
   const login=p.email.split('@')[0].replace(/[^a-z0-9.]/gi,'').toLowerCase();
   if(usuariosCache.find(u=>u.login===login)){showToast('Login '+login+' já existe. Edite manualmente.');return;}
-  usuariosCache.push({nome:p.nome,login,senha:p.senha,email:p.email,perfil,setor:'',oficina:''});
+  usuariosCache.push({nome:p.nome,login,senha:p.senha,email:p.email,perfil,setor,oficina:''});
   await fbSetUsers(usuariosCache);
   // Remove da lista de pendentes
   const todos=await fbGetPendentes();
