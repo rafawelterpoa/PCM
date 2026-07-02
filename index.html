@@ -2464,7 +2464,7 @@ function doLogin(){
   const nameEl=document.getElementById('header-user-name');
   if(nameEl)nameEl.textContent=(user.nome||'').split(' ').slice(0,2).join(' ');
   const roleEl=document.getElementById('header-user-role');
-  if(roleEl)roleEl.textContent=perfilLabel(user.perfil)||user.perfil||'Usuário';
+  if(roleEl){const s=user.setor||'';const p=user.perfil||'';roleEl.textContent=s&&p&&p!=='master'?s+' · '+p:s||p||'Usuário';}
   // Update sidebar footer
   const sfAvatar=document.getElementById('snav-footer-avatar');
   if(sfAvatar){const parts=(user.nome||'').split(' ');sfAvatar.textContent=parts.length>1?(parts[0][0]+parts[parts.length-1][0]).toUpperCase():parts[0].substring(0,2).toUpperCase();}
@@ -2479,8 +2479,7 @@ function doLogin(){
   const subEl=document.getElementById('home-sub');
   if(subEl)subEl.textContent=dias[agora.getDay()]+', '+agora.getDate()+' de '+meses[agora.getMonth()]+' de '+agora.getFullYear();
   const _btnAdmin=document.getElementById('btn-admin');if(_btnAdmin)_btnAdmin.style.display=(user.perfil==='master'||user.perfil==='admin')?'':'none';
-  const _isAdm=user.perfil==='master'||user.perfil==='admin';
-  ['snav-bd','snav-bd-divider','snav-bd-label'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=_isAdm?'':'none';});
+  aplicarControleAcesso(user);
   loadFromFirebase();renderAdminUsers();rsCheckAcesso();
   setTimeout(mostrarNotifBemVindo, 1800);
 }
@@ -14674,6 +14673,172 @@ function rsCheckAcesso(){
   else tab.style.display='none';
 }
 
+// ── CONTROLE DE ACESSO ────────────────────────────────────────────────────────
+// Regras: { navShow, navHide, bloqueado, soLeitura }
+// navShow/navHide: IDs de elementos no sidebar
+// bloqueado: seções que NÃO pode entrar (mostrar aviso)
+// soLeitura: seções que pode ver mas não tem ações
+const _REGRAS_ACESSO = {
+  // Master — acesso total (sem restrição)
+  'Master/master': {navShow:[], navHide:[], bloqueado:[], soLeitura:[]},
+
+  // Oficinas (Gestor e Analista) — só Pátio e Oficinas
+  'Oficinas/Gestor': {
+    navShow:['snav-home','snav-oficinas','snav-patio'],
+    navHide:['snav-operacoes','snav-rcd','snav-solrcd','snav-pmp','snav-manuterceiros','snav-valepecas','snav-gi','snav-bd','snav-bd-divider','snav-bd-label'],
+    bloqueado:['operacoes','rcd','solrcd','pmp','bd'],
+    soLeitura:[]
+  },
+  'Oficinas/Analista': {
+    navShow:['snav-home','snav-oficinas','snav-patio'],
+    navHide:['snav-operacoes','snav-rcd','snav-solrcd','snav-pmp','snav-manuterceiros','snav-valepecas','snav-gi','snav-bd','snav-bd-divider','snav-bd-label'],
+    bloqueado:['operacoes','rcd','solrcd','pmp','bd'],
+    soLeitura:[]
+  },
+
+  // PCM Programação — operações/PMP/RCD/garantias com restrições
+  'PCM/Programação': {
+    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd','snav-solrcd'],
+    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-manuterceiros','snav-valepecas'],
+    bloqueado:['oficinas','patio','bd'],
+    soLeitura:['operacoes']  // pmp tem restrição por sub-aba; rcd só criar/enviar
+  },
+
+  // PCM RCD — RCD total, demais só leitura
+  'PCM/RCD': {
+    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd','snav-solrcd'],
+    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-manuterceiros','snav-valepecas'],
+    bloqueado:['oficinas','patio','bd'],
+    soLeitura:['operacoes','pmp']
+  },
+
+  // PCM Planejamento — PMP Planejamento total, RCD criar/enviar
+  'PCM/Planejamento': {
+    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd','snav-solrcd'],
+    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-manuterceiros','snav-valepecas'],
+    bloqueado:['oficinas','patio','bd'],
+    soLeitura:['operacoes']
+  },
+
+  // Gestão de Ativos Gestor — entra em tudo exceto oficinas/patio, sem ações em PMP/RCD/garantias
+  'Gestão de Ativos/Gestor': {
+    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd'],
+    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-manuterceiros','snav-valepecas','snav-solrcd'],
+    bloqueado:['oficinas','patio','bd'],
+    soLeitura:['operacoes','pmp','rcd']
+  },
+
+  // Gestão de Ativos Analista — não entra em PMP/RCD/garantias
+  'Gestão de Ativos/Analista': {
+    navShow:['snav-home','snav-operacoes'],
+    navHide:['snav-oficinas','snav-patio','snav-pmp','snav-rcd','snav-solrcd','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-manuterceiros','snav-valepecas'],
+    bloqueado:['oficinas','patio','pmp','rcd','solrcd','bd'],
+    soLeitura:['operacoes']
+  },
+
+  // Implantação Gestor — igual Gestão de Ativos Gestor
+  'Implantação/Gestor': {
+    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd'],
+    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-manuterceiros','snav-valepecas','snav-solrcd'],
+    bloqueado:['oficinas','patio','bd'],
+    soLeitura:['operacoes','pmp','rcd']
+  },
+
+  // Implantação Analista — igual Gestão de Ativos Analista
+  'Implantação/Analista': {
+    navShow:['snav-home','snav-operacoes'],
+    navHide:['snav-oficinas','snav-patio','snav-pmp','snav-rcd','snav-solrcd','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-manuterceiros','snav-valepecas'],
+    bloqueado:['oficinas','patio','pmp','rcd','solrcd','bd'],
+    soLeitura:['operacoes']
+  },
+
+  // Operação — entra em tudo, sem ações em lugar nenhum
+  'Operação/Gestor': {
+    navShow:[],
+    navHide:['snav-bd','snav-bd-divider','snav-bd-label'],
+    bloqueado:['bd'],
+    soLeitura:['oficinas','patio','operacoes','pmp','rcd','solrcd']
+  },
+  'Operação/Analista': {
+    navShow:[],
+    navHide:['snav-bd','snav-bd-divider','snav-bd-label'],
+    bloqueado:['bd'],
+    soLeitura:['oficinas','patio','operacoes','pmp','rcd','solrcd']
+  },
+};
+
+window._acessoAtual = {bloqueado:[], soLeitura:[]};
+
+function _acessoSoLeitura(secao){
+  return window._acessoAtual.soLeitura.includes(secao);
+}
+function _acessoBloqueado(secao){
+  return window._acessoAtual.bloqueado.includes(secao);
+}
+
+function aplicarControleAcesso(user){
+  const setor  = user.setor  || '';
+  const perfil = user.perfil || '';
+  const chave  = setor+'/'+perfil;
+  const regras = _REGRAS_ACESSO[chave] || (perfil==='master'?_REGRAS_ACESSO['Master/master']:null);
+
+  // Sem regra definida = acesso total (fallback seguro para master)
+  if(!regras){window._acessoAtual={bloqueado:[],soLeitura:[]};return;}
+
+  window._acessoAtual = {bloqueado: regras.bloqueado||[], soLeitura: regras.soLeitura||[]};
+
+  // Aplica visibilidade no nav
+  const allSnav = ['snav-home','snav-oficinas','snav-patio','snav-operacoes',
+    'snav-rcd','snav-solrcd','snav-pmp','snav-manuterceiros','snav-valepecas',
+    'snav-gi','snav-bd','snav-bd-divider','snav-bd-label'];
+
+  if(regras.navShow.length){
+    // Modo explícito: esconde tudo que não está na lista navShow
+    allSnav.forEach(id=>{
+      const el=document.getElementById(id); if(!el) return;
+      el.style.display = regras.navShow.includes(id) ? '' : 'none';
+    });
+  }
+  // Aplica ocultações adicionais
+  (regras.navHide||[]).forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+
+  // BD: só master vê
+  if(perfil!=='master'){
+    ['snav-bd','snav-bd-divider','snav-bd-label'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.style.display='none';
+    });
+  }
+
+  // Exibe badge do perfil no header
+  const badgeEl=document.getElementById('header-perfil-badge');
+  if(badgeEl){
+    const label = setor==='Master'?'Master':(setor+(perfil&&perfil!=='master'?' · '+perfil:''));
+    badgeEl.textContent=label;
+    badgeEl.style.display=label?'':'none';
+  }
+}
+
+// Banner padrão para seções em modo somente leitura
+function _acessoBannerLeitura(msg){
+  return `<div style="display:flex;align-items:center;gap:10px;padding:10px 18px;background:#FEF3C7;border-bottom:1px solid #FDE68A;font-size:12px;color:#92400E">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    <strong>Visualização</strong> — ${msg||'Sem permissão para executar ações nesta área.'}
+  </div>`;
+}
+
+// Banner para seções completamente bloqueadas
+function _paginaBloqueada(nome){
+  fecharPaginasFixed();
+  const el=document.getElementById('main-content');
+  if(el) el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:16px;color:#8FA4AE">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C8D4DA" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <div style="font-size:16px;font-weight:600;color:#5A7280">Acesso restrito</div>
+    <div style="font-size:13px;color:#8FA4AE">Seu perfil não tem permissão para acessar <strong>${nome}</strong>.</div>
+  </div>`;
+}
+
 // ── Backup & Restauração ─────────────────────────────────────────────────────
 async function exportarBackup(){
   showToast('Gerando backup completo...');
@@ -15310,6 +15475,12 @@ function fecharPaginasFixed(){
 }
 
 function navegarPara(destino){
+  // Gate de acesso — verifica se seção está bloqueada para o perfil atual
+  const _nomeSecao={oficinas:'Oficinas',patio:'Pátio',operacoes:'Em Contrato',
+    rcd:'RCD — Avarias',solrcd:'Solicitação RCD',pmp:'PMP',
+    bd:'Base de Dados',manuterceiros:'Manut. Terceiros',valepecas:'Vale Peças'};
+  if(_acessoBloqueado(destino)){_paginaBloqueada(_nomeSecao[destino]||destino);return;}
+
   fecharPaginasFixed();
   if(destino==='home'){switchTab('home');snavSetActive('snav-home');return;}
   if(destino==='admin'){switchTab('admin');return;}
