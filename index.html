@@ -17446,6 +17446,7 @@ async function pmpCarregar() {
 let _pmpAba='planejamento', _pmpSubAba='gerencial';
 let _pmpFiltroStatus='', _pmpFiltroOp='', _pmpBusca='', _pmpFiltroEnc='', _pmpFiltroProgr='';
 let _pmpSortCol='', _pmpSortDir=1;
+let _pmpColFiltros={};
 
 function paginaPmp(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -17571,17 +17572,18 @@ function pmpFiltrarEquips(list){
   if(_pmpFiltroEnc) list=list.filter(e=>e.encarregado===_pmpFiltroEnc);
   if(_pmpFiltroProgr) list=list.filter(e=>e.programador===_pmpFiltroProgr);
   if(_pmpBusca){const q=_pmpBusca.toLowerCase();list=list.filter(e=>e.frota.toLowerCase().includes(q)||(e.serie||'').toLowerCase().includes(q)||e.modelo.toLowerCase().includes(q));}
+  Object.entries(_pmpColFiltros).forEach(([col,val])=>{if(val) list=list.filter(e=>String(e[col]||'')=== val);});
   if(_pmpSortCol){const d=_pmpSortDir;list=[...list].sort((a,b)=>{const va=a[_pmpSortCol]??'',vb=b[_pmpSortCol]??'';return typeof va==='number'?(va-vb)*d:String(va).localeCompare(String(vb),undefined,{numeric:true})*d;});}
   return list;
 }
 
 function pmpRenderPlanejamento(){
   const all=pmpMontarEquips();
-  pmpRenderKPIs(all);
   pmpRenderFiltros(all);
   const equips=pmpFiltrarEquips(all);
-  if(_pmpSubAba==='gerencial') pmpRenderGerencial(equips);
-  else pmpRenderAnalitica(equips);
+  pmpRenderKPIs(equips);
+  if(_pmpSubAba==='gerencial') pmpRenderGerencial(equips,all);
+  else pmpRenderAnalitica(equips,all);
 }
 
 function pmpRenderKPIs(equips){
@@ -17618,13 +17620,35 @@ function pmpBadge(s){const c=_pmpCor[s]||{bg:'#F4F6F8',c:'#8FA4AE'};return `<spa
 function _pmpHCor(h){return h===null?'#8FA4AE':h<0?'#B91C1C':h<=50?'#B45309':'#1E8A4C';}
 function _pmpHFmt(h){return h===null?'—':(h>0?'+':'')+Math.round(h);}
 
-function pmpRenderGerencial(equips){
+function pmpRenderGerencial(equips,all){
   const el=document.getElementById('pmp-plan-gerencial'); if(!el) return;
   if(!equips.length){el.innerHTML='<div style="padding:40px;text-align:center;color:#8FA4AE">Nenhum equipamento encontrado</div>';return;}
-  const _thG=(label,col)=>{const act=_pmpSortCol===col;const arr=act?(_pmpSortDir>0?' ↑':' ↓'):'';return `<th style="background:#BDD7EE;cursor:pointer;user-select:none;${act?'color:#E8630A;':''}" onclick="_pmpSortCol='${col}';_pmpSortDir=${act?-_pmpSortDir:1};pmpRenderPlanejamento()">${label}${arr}</th>`;};
-  el.innerHTML=`<div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>
+  const src=all||equips;
+  const _uniq=col=>[...new Set(src.map(e=>String(e[col]||'')).filter(Boolean))].sort();
+  const _thG=(label,col,align='left')=>{
+    const act=_pmpSortCol===col; const arr=act?(_pmpSortDir>0?'↑':'↓'):'';
+    const fv=_pmpColFiltros[col]||''; const fActive=fv?'color:#E8630A':'color:#C8D4DA';
+    const vals=_uniq(col);
+    const selOpts=vals.map(v=>`<option value="${v}"${fv===v?' selected':''}>${v}</option>`).join('');
+    return `<th style="background:#BDD7EE;white-space:nowrap;padding:0">
+      <div style="display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:${align==='center'?'center':'space-between'};gap:4px;padding:8px 12px 4px;cursor:pointer;user-select:none;${act?'color:#E8630A':''}"
+          onclick="_pmpSortCol='${col}';_pmpSortDir=${act?-_pmpSortDir:1};pmpRenderPlanejamento()">
+          <span style="font-size:11px;font-weight:700;letter-spacing:.03em">${label}</span>
+          <span style="font-size:10px;opacity:.7">${arr||'⇅'}</span>
+        </div>
+        <div style="padding:0 6px 6px">
+          <select onchange="_pmpColFiltros['${col}']=this.value;pmpRenderPlanejamento()"
+            style="width:100%;padding:3px 4px;border:1px solid ${fv?'#E8630A':'#C8D4DA'};border-radius:5px;font-size:10px;background:#fff;color:#1A2E35;cursor:pointer;outline:none">
+            <option value="">Todos</option>${selOpts}
+          </select>
+        </div>
+      </div>
+    </th>`;
+  };
+  el.innerHTML=`<div class="pmp-twrap"><table class="pmp-tbl" style="border-collapse:collapse"><thead><tr>
     ${_thG('FROTA','frota')}${_thG('UNIDADE','operacao')}${_thG('ENCARREGADO','encarregado')}
-    ${_thG('HOR.ATUAL','hor_atual')}${_thG('H/PMP S+1','h_pmp_s1')}${_thG('DIAS P/VENC.','dias_vencimento')}
+    ${_thG('HOR.ATUAL','hor_atual','center')}${_thG('H/PMP S+1','h_pmp_s1','center')}${_thG('DIAS P/VENC.','dias_vencimento','center')}
     ${_thG('OM','om')}${_thG('MATERIAL','status_material')}
   </tr></thead><tbody>${equips.map(e=>{
     const dv=e.dias_vencimento;
@@ -17633,7 +17657,7 @@ function pmpRenderGerencial(equips){
     <td style="background:#EBF3FB"><strong style="font-size:12px">${e.frota}</strong>${e.serie?`<div style="font-size:10px;color:#8FA4AE">${e.serie}</div>`:''}</td>
     <td style="font-size:11px;background:#EBF3FB">${e.operacao||'—'}</td>
     <td style="font-size:11px;background:#EBF3FB">${e.encarregado||'—'}</td>
-    <td style="text-align:center;background:#EBF3FB">${e.hor_atual||'—'}</td>
+    <td style="text-align:center;background:#EBF3FB;font-weight:600">${e.hor_atual||'—'}</td>
     <td style="text-align:center;font-weight:700;background:#EBF3FB;color:${_pmpHCor(e.h_pmp_s1)}">${_pmpHFmt(e.h_pmp_s1)}</td>
     <td style="text-align:center;font-weight:700;background:#EBF3FB;color:${dvCor}">${dv===null?'—':dv}</td>
     <td style="font-size:12px;background:#EBF3FB">${e.om||'—'}</td>
@@ -17641,7 +17665,7 @@ function pmpRenderGerencial(equips){
   </tr>`;}).join('')}</tbody></table></div>`;
 }
 
-function pmpRenderAnalitica(equips){
+function pmpRenderAnalitica(equips,all){
   const el=document.getElementById('pmp-plan-analitica'); if(!el) return;
   if(!equips.length){el.innerHTML='<div style="padding:40px;text-align:center;color:#8FA4AE">Nenhum equipamento encontrado</div>';return;}
   const _ed=(e,campo,val)=>`<td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','${campo}','${String(val||'').replace(/'/g,"&#39;")}')" style="background:#FFFDE7;font-size:12px;cursor:pointer">${val||`<span style="color:#C8D4DA;font-size:11px">—</span>`}</td>`;
