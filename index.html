@@ -17860,7 +17860,7 @@ function pmpRenderAnalitica(equips,all){
     ${_thA('FROTA','frota')}${_thA('SÉRIE','serie')}${_thA('MODELO','modelo')}
     ${_thA('UNIDADE','operacao')}${_thA('CIDADE','cidade')}
     ${_thE('POLO ✏','polo')}${_thE('CENTRO ✏','centro')}
-    ${_thA('ENCARREGADO','encarregado')}
+    ${_thA('ENCARREGADO','encarregado')}${_thA('HOR.ATUAL','hor_atual')}
     ${_thE('RITMO DIA ✏','ritmo_diario')}${_thA('RITMO SEM.','ritmo_semanal')}
     ${_thA('DT ÚLT.REV','data_ult_rev')}${_thA('HOR.ÚLT.REV','hor_ult_rev')}
     ${_thE('HOR.EXEC. ✏','hor_execucao')}${_thA('HOR.PRÓX','hor_prox')}
@@ -17881,6 +17881,7 @@ function pmpRenderAnalitica(equips,all){
     <td style="font-size:11px;background:#EBF3FB">${e.cidade||'—'}</td>
     ${_ed(e,'polo',e.polo)}${_ed(e,'centro',e.centro)}
     <td style="font-size:11px;background:#EBF3FB">${e.encarregado||'—'}</td>
+    <td style="text-align:center;font-weight:600;background:#EBF3FB">${e.hor_atual||'—'}</td>
     ${_ed(e,'ritmo_diario',e.ritmo_diario||'')}
     <td style="text-align:center;background:#EBF3FB">${e.ritmo_semanal||'—'}</td>
     <td style="font-size:11px;background:#EBF3FB">${e.data_ult_rev||'—'}</td>
