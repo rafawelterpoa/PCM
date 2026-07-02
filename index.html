@@ -17207,12 +17207,14 @@ async function bdUploadPMPs(file) {
         const tag=numToTag[num]; if(!tag) return;
         const polo=String(r[10]||'').trim();
         const centro=String(r[11]||'').trim();
+        const encarregado=String(r[12]||'').trim();
         const ritmoDiario=String(r[16]||'').trim();
         const horExecucao=String(r[22]||'').trim();
-        if(!polo&&!centro&&!ritmoDiario&&!horExecucao) return;
+        if(!polo&&!centro&&!encarregado&&!ritmoDiario&&!horExecucao) return;
         const dados={};
         if(polo) dados.polo=polo;
         if(centro) dados.centro=centro;
+        if(encarregado) dados.encarregado=encarregado;
         if(ritmoDiario) dados.ritmo_diario=ritmoDiario;
         if(horExecucao) dados.hor_execucao=horExecucao;
         if(!window.PMP_EQUIP) window.PMP_EQUIP={};
@@ -17528,7 +17530,7 @@ function pmpMontarEquips(){
       else if(hParaPmp<=50) status='Atenção';
       else status='Em Dia';
     }
-    // Responsáveis pelo lookup por unidade/planta
+    // Responsáveis: Firebase (do upload PMPs) tem prioridade; fallback para fuzzy match por planta
     const resp=_findResp(e.planta)||{};
     // Manusis: OM, status OM, requisições, PTEs
     const omNum=String(fb.om||'');
@@ -17542,7 +17544,7 @@ function pmpMontarEquips(){
       frota:e.id||fid, serie:e.serie||'',
       modelo:(e.fabricante&&e.modelo)?e.fabricante+' '+e.modelo:(e.modelo||e.fabricante||''),
       operacao:e.planta||'', cidade:e.municipio||'', familia:e.tipo||e.familia||'',
-      encarregado:resp.encarregado||'', programador:resp.programador||'',
+      encarregado:fb.encarregado||resp.encarregado||'', programador:fb.programador||resp.programador||'',
       plano_desc:plano?(plano.plano_desc||plano.mascara||''):'', period,
       hor_atual:horAtual, data_ult_rev:fb.data_ultima_revisao||'',
       hor_ult_rev:horUltRev||'', hor_prox:horProx||'', h_para_pmp:hParaPmp,
@@ -17631,9 +17633,9 @@ function pmpRenderGerencial(equips){
     <td style="background:#EBF3FB"><strong style="font-size:12px">${e.frota}</strong>${e.serie?`<div style="font-size:10px;color:#8FA4AE">${e.serie}</div>`:''}</td>
     <td style="font-size:11px;background:#EBF3FB">${e.operacao||'—'}</td>
     <td style="font-size:11px;background:#EBF3FB">${e.encarregado||'—'}</td>
-    <td style="text-align:right;background:#EBF3FB">${e.hor_atual||'—'}</td>
-    <td style="text-align:right;font-weight:700;background:#EBF3FB;color:${_pmpHCor(e.h_pmp_s1)}">${_pmpHFmt(e.h_pmp_s1)}</td>
-    <td style="text-align:right;font-weight:700;background:#EBF3FB;color:${dvCor}">${dv===null?'—':dv}</td>
+    <td style="text-align:center;background:#EBF3FB">${e.hor_atual||'—'}</td>
+    <td style="text-align:center;font-weight:700;background:#EBF3FB;color:${_pmpHCor(e.h_pmp_s1)}">${_pmpHFmt(e.h_pmp_s1)}</td>
+    <td style="text-align:center;font-weight:700;background:#EBF3FB;color:${dvCor}">${dv===null?'—':dv}</td>
     <td style="font-size:12px;background:#EBF3FB">${e.om||'—'}</td>
     <td style="font-size:11px;background:#EBF3FB">${e.status_material||'—'}</td>
   </tr>`;}).join('')}</tbody></table></div>`;
