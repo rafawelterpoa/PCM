@@ -17393,7 +17393,8 @@ async function pmpCarregar() {
 }
 
 let _pmpAba='planejamento', _pmpSubAba='gerencial';
-let _pmpFiltroStatus='', _pmpFiltroOp='', _pmpBusca='';
+let _pmpFiltroStatus='', _pmpFiltroOp='', _pmpBusca='', _pmpFiltroEnc='', _pmpFiltroProgr='';
+let _pmpSortCol='', _pmpSortDir=1;
 
 function paginaPmp(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -17497,7 +17498,10 @@ function pmpMontarEquips(){
 function pmpFiltrarEquips(list){
   if(_pmpFiltroStatus) list=list.filter(e=>e.status===_pmpFiltroStatus);
   if(_pmpFiltroOp) list=list.filter(e=>e.operacao===_pmpFiltroOp);
-  if(_pmpBusca){const q=_pmpBusca.toLowerCase();list=list.filter(e=>e.frota.toLowerCase().includes(q)||e.serie.toLowerCase().includes(q)||e.modelo.toLowerCase().includes(q));}
+  if(_pmpFiltroEnc) list=list.filter(e=>e.encarregado===_pmpFiltroEnc);
+  if(_pmpFiltroProgr) list=list.filter(e=>e.programador===_pmpFiltroProgr);
+  if(_pmpBusca){const q=_pmpBusca.toLowerCase();list=list.filter(e=>e.frota.toLowerCase().includes(q)||(e.serie||'').toLowerCase().includes(q)||e.modelo.toLowerCase().includes(q));}
+  if(_pmpSortCol){const d=_pmpSortDir;list=[...list].sort((a,b)=>{const va=a[_pmpSortCol]??'',vb=b[_pmpSortCol]??'';return typeof va==='number'?(va-vb)*d:String(va).localeCompare(String(vb),undefined,{numeric:true})*d;});}
   return list;
 }
 
@@ -17525,21 +17529,18 @@ function pmpRenderKPIs(equips){
 
 function pmpRenderFiltros(equips){
   const el=document.getElementById('pmp-filtros-wrap'); if(!el) return;
+  const _sel=(label,cur,vals,fn)=>`<select onchange="${fn}=this.value;pmpRenderPlanejamento()" style="padding:7px 12px;border:1px solid ${cur?'#E8630A':'#E2E8ED'};border-radius:8px;font-size:13px;color:#1A2E35;background:#fff;cursor:pointer;max-width:200px"><option value="">${label}</option>${vals.map(v=>`<option value="${v}"${cur===v?' selected':''}>${v}</option>`).join('')}</select>`;
   const ops=[...new Set(equips.map(e=>e.operacao).filter(Boolean))].sort();
+  const encs=[...new Set(equips.map(e=>e.encarregado).filter(Boolean))].sort();
+  const progrs=[...new Set(equips.map(e=>e.programador).filter(Boolean))].sort();
   el.innerHTML=`
     <input type="search" placeholder="Buscar frota / série / modelo…" value="${_pmpBusca||''}"
       oninput="_pmpBusca=this.value;pmpRenderPlanejamento()"
       style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;width:220px;outline:none;color:#1A2E35">
-    <select onchange="_pmpFiltroStatus=this.value;pmpRenderPlanejamento()"
-      style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;color:#1A2E35;background:#fff;cursor:pointer">
-      <option value="">Todos os status</option>
-      ${['Vencida','Atenção','Em Dia','Programado','Sem Revisão','Sem Plano'].map(s=>`<option value="${s}"${_pmpFiltroStatus===s?' selected':''}>${s}</option>`).join('')}
-    </select>
-    <select onchange="_pmpFiltroOp=this.value;pmpRenderPlanejamento()"
-      style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;color:#1A2E35;background:#fff;cursor:pointer;max-width:220px">
-      <option value="">Todas as operações</option>
-      ${ops.map(o=>`<option value="${o}"${_pmpFiltroOp===o?' selected':''}>${o}</option>`).join('')}
-    </select>`;
+    ${_sel('Todos os status',_pmpFiltroStatus,['Vencida','Atenção','Em Dia','Programado','Sem Revisão','Sem Plano'],'_pmpFiltroStatus')}
+    ${_sel('Todas as operações',_pmpFiltroOp,ops,'_pmpFiltroOp')}
+    ${_sel('Todos os encarregados',_pmpFiltroEnc,encs,'_pmpFiltroEnc')}
+    ${_sel('Todos os programadores',_pmpFiltroProgr,progrs,'_pmpFiltroProgr')}`;
 }
 
 const _pmpCor={'Vencida':{bg:'#FEE2E2',c:'#B91C1C'},'Atenção':{bg:'#FEF3C7',c:'#B45309'},'Em Dia':{bg:'#D1FAE5',c:'#065F46'},'Programado':{bg:'#EDE9FE',c:'#5B21B6'},'Sem Revisão':{bg:'#F0F4F6',c:'#5A7280'},'Sem Plano':{bg:'#F4F6F8',c:'#8FA4AE'}};
@@ -17571,11 +17572,12 @@ function pmpRenderAnalitica(equips){
   const el=document.getElementById('pmp-plan-analitica'); if(!el) return;
   if(!equips.length){el.innerHTML='<div style="padding:40px;text-align:center;color:#8FA4AE">Nenhum equipamento encontrado</div>';return;}
   const _ed=(e,campo,val,label)=>`<td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','${campo}','${String(val).replace(/'/g,"&#39;")}')" style="background:#FFFBEB;font-size:12px">${val||`<span style="color:#C8D4DA;font-size:11px">${label||'—'}</span>`}</td>`;
+  const _th=(label,col,extra='')=>{const act=_pmpSortCol===col;const arr=act?(_pmpSortDir>0?' ↑':' ↓'):'';return `<th ${extra} style="${extra.includes('background')?'':''}cursor:pointer;user-select:none;${act?'color:#E8630A;':''}" onclick="_pmpSortCol='${col}';_pmpSortDir=${act?-_pmpSortDir:1};pmpRenderPlanejamento()">${label}${arr}</th>`;};
   el.innerHTML=`<div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>
-    <th>SEM.PLAN</th><th>FROTA</th><th>SÉRIE</th><th>MODELO</th><th>UNIDADE</th>
-    <th>ENCARREGADO</th><th>PROGRAMADOR</th><th>CIDADE</th>
-    <th>OM</th><th>PLANO (h)</th><th>STATUS OM</th>
-    <th>HOR.ATUAL</th><th>H/PMP</th><th>STATUS PLANO</th>
+    ${_th('SEM.PLAN','semana_plan')}${_th('FROTA','frota')}${_th('MODELO','modelo')}${_th('UNIDADE','operacao')}
+    ${_th('ENCARREGADO','encarregado')}${_th('PROGRAMADOR','programador')}${_th('CIDADE','cidade')}
+    ${_th('OM','om')}${_th('PLANO (h)','period')}${_th('STATUS OM','status_om')}
+    ${_th('HOR.ATUAL','hor_atual')}${_th('H/PMP','h_para_pmp')}${_th('STATUS PLANO','status')}
     <th style="background:#FFFBEB">STATUS ✏</th>
     <th style="background:#FFFBEB">STATUS PROG. ✏</th>
     <th style="background:#FFFBEB">DT CONCLUSÃO ✏</th>
@@ -17587,7 +17589,6 @@ function pmpRenderAnalitica(equips){
   </tr></thead><tbody>${equips.map(e=>`<tr>
     <td style="text-align:center;font-weight:600">${e.semana_plan||'—'}</td>
     <td><strong style="font-size:12px">${e.frota}</strong>${e.serie?`<div style="font-size:10px;color:#8FA4AE">${e.serie}</div>`:''}</td>
-    <td style="font-size:11px;color:#5A7280">${e.serie||'—'}</td>
     <td style="font-size:12px">${e.modelo||'—'}</td>
     <td style="font-size:11px">${e.operacao||'—'}</td>
     <td style="font-size:11px">${e.encarregado||'—'}</td>
