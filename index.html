@@ -17698,6 +17698,7 @@ async function pmpCarregar() {
 
 let _pmpAba='planejamento', _pmpSubAba='gerencial';
 let _pmpFiltroStatus='', _pmpFiltroOp='', _pmpBusca='', _pmpFiltroEnc='', _pmpFiltroProgr='';
+let _pmpProgFiltroGestor='', _pmpProgFiltroProgr='', _pmpProgFiltroPolo='', _pmpProgFiltroOp='';
 let _pmpSortCol='', _pmpSortDir=1;
 let _pmpColFiltros={};
 const _PMP_COLS_DEF=[
@@ -17828,7 +17829,7 @@ function pmpMontarEquips(){
       plano_desc:plano?(plano.plano_desc||plano.mascara||''):'', period,
       hor_atual:horAtual, data_ult_rev:fb.data_ultima_revisao||'',
       hor_ult_rev:horUltRev||'', hor_prox:horProx||'', h_para_pmp:hParaPmp,
-      polo:resp.polo||fb.polo||'', centro:e.oficina||fb.centro||'',
+      polo:resp.polo||fb.polo||'', centro:e.oficina||fb.centro||'', gestor:resp.gerente||'',
       ritmo_diario:ritmoDiario, ritmo_semanal:ritmoSemanal,
       hor_execucao:horExecucao, dia_vencimento:diaVencimento,
       dias_vencimento:diasVencimento, h_pmp_s1:hPmpS1,
@@ -18169,12 +18170,28 @@ async function pmpSalvarModal(){
 function pmpRenderProgramacao(){
   const el=document.getElementById('pmp-content-programacao'); if(!el) return;
   const all=pmpMontarEquips();
-  const prog=all.filter(e=>e.semana_plan);
+  const _sel=(label,cur,vals,fn)=>`<select onchange="${fn}=this.value;pmpRenderProgramacao()" style="padding:6px 10px;border:1px solid ${cur?'#E8630A':'#E2E8ED'};border-radius:8px;font-size:12px;color:#1A2E35;background:#fff;cursor:pointer;max-width:180px"><option value="">${label}</option>${vals.map(v=>`<option value="${v}"${cur===v?' selected':''}>${v}</option>`).join('')}</select>`;
+  const gestores=[...new Set(all.map(e=>e.gestor).filter(Boolean))].sort();
+  const progrs=[...new Set(all.map(e=>e.programador).filter(Boolean))].sort();
+  const polos=[...new Set(all.map(e=>e.polo).filter(Boolean))].sort();
+  const ops=[...new Set(all.map(e=>e.operacao).filter(Boolean))].sort();
+  let prog=all.filter(e=>e.semana_plan);
+  if(_pmpProgFiltroGestor) prog=prog.filter(e=>e.gestor===_pmpProgFiltroGestor);
+  if(_pmpProgFiltroProgr)  prog=prog.filter(e=>e.programador===_pmpProgFiltroProgr);
+  if(_pmpProgFiltroPolo)   prog=prog.filter(e=>e.polo===_pmpProgFiltroPolo);
+  if(_pmpProgFiltroOp)     prog=prog.filter(e=>e.operacao===_pmpProgFiltroOp);
   const porSemana={};
   prog.forEach(e=>{const s=e.semana_plan;if(!porSemana[s])porSemana[s]=[];porSemana[s].push(e);});
   const semanas=Object.keys(porSemana).sort((a,b)=>Number(a)-Number(b));
   const vencidas=all.filter(e=>e.status==='Vencida');
   el.innerHTML=`<div style="padding:20px 28px;overflow-y:auto;flex:1">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center">
+      ${_sel('Todos os gestores',_pmpProgFiltroGestor,gestores,'_pmpProgFiltroGestor')}
+      ${_sel('Todos os programadores',_pmpProgFiltroProgr,progrs,'_pmpProgFiltroProgr')}
+      ${_sel('Todos os polos',_pmpProgFiltroPolo,polos,'_pmpProgFiltroPolo')}
+      ${_sel('Todas as operações',_pmpProgFiltroOp,ops,'_pmpProgFiltroOp')}
+      ${(_pmpProgFiltroGestor||_pmpProgFiltroProgr||_pmpProgFiltroPolo||_pmpProgFiltroOp)?`<button onclick="_pmpProgFiltroGestor='';_pmpProgFiltroProgr='';_pmpProgFiltroPolo='';_pmpProgFiltroOp='';pmpRenderProgramacao()" style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;background:#fff;color:#5A7280;cursor:pointer">✕ Limpar</button>`:''}
+    </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px">
       <div class="pmp-kpi" style="border-top:3px solid #6366F1"><div class="pmp-kpi-val" style="color:#6366F1">${prog.length}</div><div class="pmp-kpi-lbl">Programadas</div></div>
       <div class="pmp-kpi" style="border-top:3px solid #B91C1C"><div class="pmp-kpi-val" style="color:#B91C1C">${vencidas.length}</div><div class="pmp-kpi-lbl">Vencidas</div></div>
