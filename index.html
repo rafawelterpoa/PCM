@@ -5124,23 +5124,32 @@ function openEditUser(idx){
   document.body.appendChild(modal);
 }
 async function saveEditUser(idx){
-  const u=usuariosCache[idx];if(!u)return;
-  const nome=document.getElementById('edit-nome').value.trim();
-  const senha=document.getElementById('edit-senha').value;
-  const setor=document.getElementById('edit-setor').value;
-  const perfil=document.getElementById('edit-perfil').value;
-  const oficina=document.getElementById('edit-oficina').value;
-  const email=document.getElementById('edit-email').value.trim().toLowerCase();
-  if(!nome){showToast('Nome obrigatório');return;}
-  if(!setor||!perfil){showToast('Selecione setor e perfil');return;}
-  u.nome=nome;
-  if(senha)u.senha=senha;
-  u.setor=setor;u.perfil=perfil;u.oficina=oficina;u.email=email;
   try{
+    const u=usuariosCache[idx];
+    if(!u){showToast('Erro: usuário não encontrado (idx='+idx+')');return;}
+    const nomeEl=document.getElementById('edit-nome');
+    const senhaEl=document.getElementById('edit-senha');
+    const setorEl=document.getElementById('edit-setor');
+    const perfilEl=document.getElementById('edit-perfil');
+    const oficEl=document.getElementById('edit-oficina');
+    const emailEl=document.getElementById('edit-email');
+    if(!nomeEl||!setorEl||!perfilEl){showToast('Erro: modal incompleto, reabra');return;}
+    const nome=nomeEl.value.trim();
+    const senha=senhaEl?senhaEl.value:'';
+    const setor=setorEl.value;
+    const perfil=perfilEl.value;
+    const oficina=oficEl?oficEl.value:'';
+    const email=emailEl?emailEl.value.trim().toLowerCase():'';
+    if(!nome){showToast('Nome obrigatório');return;}
+    if(!setor||!perfil){showToast('Selecione setor e perfil');return;}
+    u.nome=nome;
+    if(senha)u.senha=senha;
+    u.setor=setor;u.perfil=perfil;u.oficina=oficina;u.email=email;
     await fbSetUsers(usuariosCache);
-    document.getElementById('edit-user-modal').remove();
+    const modal=document.getElementById('edit-user-modal');
+    if(modal)modal.remove();
     renderAdminUsers();showToast('✅ Usuário atualizado');
-  }catch(e){showToast('Erro ao salvar: '+e.message);}
+  }catch(e){showToast('Erro: '+e.message);console.error('saveEditUser',e);}
 }
 async function delUser(idx){
   if(!confirm('Remover usuário?'))return;
