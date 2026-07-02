@@ -17510,6 +17510,7 @@ function bdUploadResponsaveis(file) {
       const norm = s => String(s||'').trim().replace(/^-$/, '');
       const resp = rows.filter(r => norm(r['UNIDADE']||r['Unidade'])).map(r => ({
         unidade:     norm(r['UNIDADE']||r['Unidade']||''),
+        polo:        norm(r['POLO']||r['Polo']||''),
         gerente:     norm(r['Gerente']||''),
         coordenador: norm(r['Coordenador']||''),
         supervisor:  norm(r['Supervisor']||''),
@@ -17705,7 +17706,7 @@ const _PMP_COLS_DEF=[
   {key:'modelo',    label:'Modelo'},
   {key:'operacao',  label:'Unidade'},
   {key:'cidade',    label:'Cidade'},
-  {key:'polo',      label:'Polo',         edit:true},
+  {key:'polo',      label:'Polo'},
   {key:'centro',    label:'Centro',       edit:true},
   {key:'encarregado',label:'Encarregado'},
   {key:'hor_atual', label:'Hor. Atual',   num:true},
@@ -17827,7 +17828,7 @@ function pmpMontarEquips(){
       plano_desc:plano?(plano.plano_desc||plano.mascara||''):'', period,
       hor_atual:horAtual, data_ult_rev:fb.data_ultima_revisao||'',
       hor_ult_rev:horUltRev||'', hor_prox:horProx||'', h_para_pmp:hParaPmp,
-      polo:fb.polo||'', centro:e.oficina||fb.centro||'',
+      polo:resp.polo||fb.polo||'', centro:e.oficina||fb.centro||'',
       ritmo_diario:ritmoDiario, ritmo_semanal:ritmoSemanal,
       hor_execucao:horExecucao, dia_vencimento:diaVencimento,
       dias_vencimento:diasVencimento, h_pmp_s1:hPmpS1,
