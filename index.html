@@ -2480,7 +2480,7 @@ function doLogin(){
   if(subEl)subEl.textContent=dias[agora.getDay()]+', '+agora.getDate()+' de '+meses[agora.getMonth()]+' de '+agora.getFullYear();
   const _btnAdmin=document.getElementById('btn-admin');if(_btnAdmin)_btnAdmin.style.display=(user.perfil==='master'||user.perfil==='admin')?'':'none';
   aplicarControleAcesso(user);
-  loadFromFirebase();renderAdminUsers();rsCheckAcesso();
+  loadFromFirebase();renderAdminUsers();rsCheckAcesso();pmpCarregarLayout(user.uid);
   setTimeout(mostrarNotifBemVindo, 1800);
 }
 
@@ -17634,6 +17634,34 @@ let _pmpAba='planejamento', _pmpSubAba='gerencial';
 let _pmpFiltroStatus='', _pmpFiltroOp='', _pmpBusca='', _pmpFiltroEnc='', _pmpFiltroProgr='';
 let _pmpSortCol='', _pmpSortDir=1;
 let _pmpColFiltros={};
+const _PMP_COLS_DEF=[
+  {key:'frota',     label:'Frota',        fixo:true},
+  {key:'serie',     label:'Série'},
+  {key:'modelo',    label:'Modelo'},
+  {key:'operacao',  label:'Unidade'},
+  {key:'cidade',    label:'Cidade'},
+  {key:'polo',      label:'Polo',         edit:true},
+  {key:'centro',    label:'Centro',       edit:true},
+  {key:'encarregado',label:'Encarregado'},
+  {key:'hor_atual', label:'Hor. Atual',   num:true},
+  {key:'ritmo_diario',label:'Ritmo Dia',  edit:true,num:true},
+  {key:'ritmo_semanal',label:'Ritmo Sem.',num:true},
+  {key:'data_ult_rev',label:'Dt. Últ. Rev.'},
+  {key:'hor_ult_rev',label:'Hor. Últ. Rev.',num:true},
+  {key:'hor_execucao',label:'Hor. Exec.', edit:true,num:true},
+  {key:'hor_prox',  label:'Próx. Plano',  num:true},
+  {key:'h_para_pmp',label:'H/PMP',        num:true,hCor:true},
+  {key:'semana_plan',label:'Sem. Plan.',  num:true},
+  {key:'pmp_vencido',label:'PMP Venc.'},
+  {key:'status',    label:'Status'},
+  {key:'period',    label:'Period.(h)',   num:true},
+  {key:'dia_vencimento',label:'Dia Venc.',num:true},
+  {key:'h_pmp_s1',  label:'H/PMP S+1',   num:true,hCor:true},
+  {key:'dias_vencimento',label:'Dias p/ Venc.',num:true,dvCor:true},
+  {key:'om',        label:'OM'},
+  {key:'status_material',label:'Material'},
+];
+let _pmpLayoutCols=['frota','polo','centro','encarregado','hor_atual','ritmo_diario','hor_ult_rev','hor_execucao','hor_prox','h_para_pmp','semana_plan','status','h_pmp_s1','dias_vencimento','om','status_material'];
 
 function paginaPmp(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -17797,7 +17825,8 @@ function pmpRenderFiltros(equips){
     ${_sel('Todos os status',_pmpFiltroStatus,['Vencida','Atenção','Em Dia','Programado','Sem Revisão','Sem Plano'],'_pmpFiltroStatus')}
     ${_sel('Todas as operações',_pmpFiltroOp,ops,'_pmpFiltroOp')}
     ${_sel('Todos os encarregados',_pmpFiltroEnc,encs,'_pmpFiltroEnc')}
-    ${_sel('Todos os programadores',_pmpFiltroProgr,progrs,'_pmpFiltroProgr')}`;
+    ${_sel('Todos os programadores',_pmpFiltroProgr,progrs,'_pmpFiltroProgr')}
+    <button onclick="pmpAbrirLayout()" style="padding:7px 14px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;background:#fff;color:#1A2E35;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;margin-left:auto">⊞ Layout</button>`;
 }
 
 const _pmpCor={'Vencida':{bg:'#FEE2E2',c:'#B91C1C'},'Atenção':{bg:'#FEF3C7',c:'#B45309'},'Em Dia':{bg:'#D1FAE5',c:'#065F46'},'Programado':{bg:'#EDE9FE',c:'#5B21B6'},'Sem Revisão':{bg:'#F0F4F6',c:'#5A7280'},'Sem Plano':{bg:'#F4F6F8',c:'#8FA4AE'}};
@@ -17854,52 +17883,144 @@ function pmpRenderAnalitica(equips,all){
   const el=document.getElementById('pmp-plan-analitica'); if(!el) return;
   if(!equips.length){el.innerHTML='<div style="padding:40px;text-align:center;color:#8FA4AE">Nenhum equipamento encontrado</div>';return;}
   const _ed=(e,campo,val)=>`<td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','${campo}','${String(val||'').replace(/'/g,"&#39;")}')" style="background:#FFFDE7;font-size:12px;cursor:pointer;text-align:center">${val||`<span style="color:#C8D4DA;font-size:11px">—</span>`}</td>`;
-  const _thA=(label,col,bg='#BDD7EE')=>{const act=_pmpSortCol===col;const arr=act?(_pmpSortDir>0?' ↑':' ↓'):'';return `<th style="background:${bg};cursor:pointer;user-select:none;${act?'color:#E8630A;':''}" onclick="_pmpSortCol='${col}';_pmpSortDir=${act?-_pmpSortDir:1};pmpRenderPlanejamento()">${label}${arr}</th>`;};
+  const _thA=(label,col,bg='#BDD7EE')=>{const act=_pmpSortCol===col;const arr=act?(_pmpSortDir>0?' ↑':' ↓'):'';return `<th style="background:${bg};cursor:pointer;user-select:none;white-space:nowrap;${act?'color:#E8630A;':''}" onclick="_pmpSortCol='${col}';_pmpSortDir=${act?-_pmpSortDir:1};pmpRenderPlanejamento()">${label}${arr}</th>`;};
   const _thE=(label,col)=>_thA(label,col,'#FFF9C4');
-  el.innerHTML=`<div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>
-    ${_thA('FROTA','frota')}${_thA('SÉRIE','serie')}${_thA('MODELO','modelo')}
-    ${_thA('UNIDADE','operacao')}${_thA('CIDADE','cidade')}
-    ${_thE('POLO ✏','polo')}${_thE('CENTRO ✏','centro')}
-    ${_thA('ENCARREGADO','encarregado')}${_thA('HOR.ATUAL','hor_atual')}
-    ${_thE('RITMO DIA ✏','ritmo_diario')}${_thA('RITMO SEM.','ritmo_semanal')}
-    ${_thA('DT ÚLT.REV','data_ult_rev')}${_thA('HOR.ÚLT.REV','hor_ult_rev')}
-    ${_thE('HOR.EXEC. ✏','hor_execucao')}${_thA('PRÓX. PLANO','hor_prox')}
-    ${_thA('H/PMP','h_para_pmp')}${_thA('SEM.PLAN','semana_plan')}
-    ${_thA('PMP VENC.','pmp_vencido')}${_thA('STATUS','status')}
-    ${_thA('PERIOD.(h)','period')}${_thA('DIA VENC.','dia_vencimento')}
-    ${_thA('H/PMP S+1','h_pmp_s1')}${_thA('DIAS P/VENC.','dias_vencimento')}
-    ${_thA('OM','om')}${_thA('MATERIAL','status_material')}
-    <th></th>
-  </tr></thead><tbody>${equips.map(e=>{
+  const visCols=_pmpLayoutCols.map(k=>_PMP_COLS_DEF.find(c=>c.key===k)).filter(Boolean);
+  const headers=visCols.map(c=>c.edit?_thE(c.label.toUpperCase()+(c.edit?' ✏':''),c.key):_thA(c.label.toUpperCase(),c.key)).join('');
+  const rows=equips.map(e=>{
     const dv=e.dias_vencimento;
     const dvCor=dv===null?'#8FA4AE':dv<0?'#B91C1C':dv<=7?'#B45309':'#1E8A4C';
-    return `<tr>
-    <td style="background:#EBF3FB"><strong style="font-size:12px">${e.frota}</strong></td>
-    <td style="font-size:11px;color:#5A7280;background:#EBF3FB">${e.serie||'—'}</td>
-    <td style="font-size:12px;background:#EBF3FB">${e.modelo||'—'}</td>
-    <td style="font-size:11px;background:#EBF3FB">${e.operacao||'—'}</td>
-    <td style="font-size:11px;background:#EBF3FB">${e.cidade||'—'}</td>
-    ${_ed(e,'polo',e.polo)}${_ed(e,'centro',e.centro)}
-    <td style="font-size:11px;background:#EBF3FB">${e.encarregado||'—'}</td>
-    <td style="text-align:center;font-weight:600;background:#EBF3FB">${e.hor_atual||'—'}</td>
-    ${_ed(e,'ritmo_diario',e.ritmo_diario||'')}
-    <td style="text-align:center;background:#EBF3FB">${e.ritmo_semanal||'—'}</td>
-    <td style="font-size:11px;background:#EBF3FB">${e.data_ult_rev||'—'}</td>
-    <td style="text-align:center;background:#EBF3FB">${e.hor_ult_rev||'—'}</td>
-    ${_ed(e,'hor_execucao',e.hor_execucao||'')}
-    <td style="text-align:center;background:#EBF3FB">${e.hor_prox||'—'}</td>
-    <td style="text-align:center;font-weight:700;background:#EBF3FB;color:${_pmpHCor(e.h_para_pmp)}">${_pmpHFmt(e.h_para_pmp)}</td>
-    <td style="text-align:center;background:#EBF3FB;font-weight:600">${e.semana_plan||'—'}</td>
-    <td style="text-align:center;background:#EBF3FB">${e.pmp_vencido?`<span style="color:#B91C1C;font-weight:700">SIM</span>`:'—'}</td>
-    <td style="background:#EBF3FB">${pmpBadge(e.status)}</td>
-    <td style="text-align:center;background:#EBF3FB">${e.period||'—'}</td>
-    <td style="text-align:center;font-size:11px;background:#EBF3FB">${e.dia_vencimento||'—'}</td>
-    <td style="text-align:center;font-weight:700;background:#EBF3FB;color:${_pmpHCor(e.h_pmp_s1)}">${_pmpHFmt(e.h_pmp_s1)}</td>
-    <td style="text-align:center;font-weight:700;background:#EBF3FB;color:${dvCor}">${dv===null?'—':dv}</td>
-    <td style="font-size:12px;background:#EBF3FB">${e.om||'—'}</td>
-    <td style="font-size:11px;background:#EBF3FB">${e.status_material||'—'}</td>
-    <td><button onclick="pmpAbrirModal('${e.frota}')" style="padding:3px 8px;font-size:11px;background:#F4F6F8;border:1px solid #E2E8ED;border-radius:5px;cursor:pointer">✏</button></td>
-  </tr>`;}).join('')}</tbody></table></div>`;
+    const cells=visCols.map(c=>{
+      if(c.edit) return _ed(e,c.key,e[c.key]||'');
+      const bg='#EBF3FB'; const val=e[c.key];
+      if(c.key==='frota') return `<td style="background:${bg}"><strong style="font-size:12px">${e.frota}</strong></td>`;
+      if(c.key==='serie') return `<td style="font-size:11px;color:#5A7280;background:${bg}">${val||'—'}</td>`;
+      if(c.key==='status') return `<td style="background:${bg}">${pmpBadge(e.status)}</td>`;
+      if(c.key==='pmp_vencido') return `<td style="text-align:center;background:${bg}">${val?`<span style="color:#B91C1C;font-weight:700">SIM</span>`:'—'}</td>`;
+      if(c.hCor) return `<td style="text-align:center;font-weight:700;background:${bg};color:${_pmpHCor(val)}">${_pmpHFmt(val)}</td>`;
+      if(c.dvCor) return `<td style="text-align:center;font-weight:700;background:${bg};color:${dvCor}">${dv===null?'—':dv}</td>`;
+      if(c.num) return `<td style="text-align:center;background:${bg}">${val||'—'}</td>`;
+      return `<td style="font-size:11px;background:${bg}">${val||'—'}</td>`;
+    }).join('');
+    return `<tr>${cells}<td><button onclick="pmpAbrirModal('${e.frota}')" style="padding:3px 8px;font-size:11px;background:#F4F6F8;border:1px solid #E2E8ED;border-radius:5px;cursor:pointer">✏</button></td></tr>`;
+  }).join('');
+  el.innerHTML=`<div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>${headers}<th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+let _pmpLayState={exibidas:[],selExib:null,selDisp:null};
+
+function _pmpLayDisp(){return _PMP_COLS_DEF.filter(c=>!_pmpLayState.exibidas.includes(c.key)).map(c=>c.key);}
+function _pmpLayGetCol(key){return _PMP_COLS_DEF.find(c=>c.key===key);}
+
+function _pmpLayRender(){
+  const {exibidas,selExib,selDisp}=_pmpLayState;
+  const elE=document.getElementById('pmp-lay-exib');
+  const elD=document.getElementById('pmp-lay-disp');
+  if(!elE||!elD) return;
+  const _badge=(c)=>c.fixo?'<span style="font-size:9px;padding:1px 6px;background:#FDE8D8;color:#E8630A;border-radius:10px;margin-left:auto;flex-shrink:0">fixo</span>':c.edit?'<span style="font-size:9px;padding:1px 6px;background:#FFFDE7;color:#B45309;border-radius:10px;border:1px solid #FFF9C4;margin-left:auto;flex-shrink:0">✏ edit</span>':'';
+  elE.innerHTML=exibidas.map(k=>{const c=_pmpLayGetCol(k);const sel=selExib===k;return `<div onclick="pmpLaySel('exib','${k}')" style="display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;border-bottom:1px solid #F4F6F8;font-size:12px;color:#1A2E35;background:${sel?'#BDD7EE':'#fff'};font-weight:${sel?600:400}">${c.label}${_badge(c)}</div>`;}).join('');
+  elD.innerHTML=_pmpLayDisp().map(k=>{const c=_pmpLayGetCol(k);const sel=selDisp===k;return `<div onclick="pmpLaySel('disp','${k}')" style="display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;border-bottom:1px solid #F4F6F8;font-size:12px;color:#1A2E35;background:${sel?'#BDD7EE':'#fff'};font-weight:${sel?600:400}">${c.label}${_badge(c)}</div>`;}).join('');
+}
+
+function pmpLaySel(lado,key){
+  if(lado==='exib'){_pmpLayState.selExib=_pmpLayState.selExib===key?null:key;_pmpLayState.selDisp=null;}
+  else{_pmpLayState.selDisp=_pmpLayState.selDisp===key?null:key;_pmpLayState.selExib=null;}
+  _pmpLayRender();
+}
+
+function pmpLayMover(dir){
+  const {exibidas,selExib}=_pmpLayState; if(!selExib) return;
+  const i=exibidas.indexOf(selExib); if(i<0) return;
+  const fixo=_pmpLayGetCol(selExib)?.fixo;
+  if(dir==='up'&&i>1){[exibidas[i-1],exibidas[i]]=[exibidas[i],exibidas[i-1]];}
+  else if(dir==='down'&&i<exibidas.length-1&&!fixo){[exibidas[i+1],exibidas[i]]=[exibidas[i],exibidas[i+1]];}
+  else if(dir==='top'&&i>1){exibidas.splice(i,1);exibidas.splice(1,0,selExib);}
+  else if(dir==='bot'&&!fixo){exibidas.splice(i,1);exibidas.push(selExib);}
+  _pmpLayRender();
+}
+
+function pmpLayMoverLado(para){
+  const {exibidas,selExib,selDisp}=_pmpLayState;
+  if(para==='disp'&&selExib&&!_pmpLayGetCol(selExib)?.fixo){
+    _pmpLayState.exibidas=exibidas.filter(k=>k!==selExib);
+    _pmpLayState.selDisp=selExib;_pmpLayState.selExib=null;
+  } else if(para==='exib'&&selDisp){
+    _pmpLayState.exibidas=[...exibidas,selDisp];
+    _pmpLayState.selExib=selDisp;_pmpLayState.selDisp=null;
+  }
+  _pmpLayRender();
+}
+
+function pmpLayReset(){
+  _pmpLayState.exibidas=['frota','polo','centro','encarregado','hor_atual','ritmo_diario','hor_ult_rev','hor_execucao','hor_prox','h_para_pmp','semana_plan','status','h_pmp_s1','dias_vencimento','om','status_material'];
+  _pmpLayState.selExib=null;_pmpLayState.selDisp=null;
+  _pmpLayRender();
+}
+
+function pmpLayAplicar(salvar){
+  _pmpLayoutCols=[..._pmpLayState.exibidas];
+  document.getElementById('pmp-lay-modal')?.remove();
+  pmpRenderPlanejamento();
+  if(salvar){
+    const uid=window._currentUser?.uid; if(!uid) return;
+    fetch(`${PMP_FB}/user_layouts/${uid}.json`,{method:'PUT',body:JSON.stringify({cols:_pmpLayoutCols})}).catch(()=>{});
+  }
+}
+
+async function pmpCarregarLayout(uid){
+  if(!uid) return;
+  try{
+    const r=await fetch(`${PMP_FB}/user_layouts/${uid}.json`);
+    const d=await r.json();
+    if(d&&Array.isArray(d.cols)&&d.cols.length){
+      _pmpLayoutCols=d.cols.filter(k=>_PMP_COLS_DEF.find(c=>c.key===k));
+    }
+  }catch(e){}
+}
+
+function pmpAbrirLayout(){
+  document.getElementById('pmp-lay-modal')?.remove();
+  _pmpLayState={exibidas:[..._pmpLayoutCols],selExib:null,selDisp:null};
+  const m=document.createElement('div');
+  m.id='pmp-lay-modal';
+  m.style.cssText='position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center';
+  m.innerHTML=`
+  <div style="background:#F4F6F8;border-radius:8px;width:660px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.25)">
+    <div style="background:#1A2E35;color:#fff;padding:10px 16px;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600">⊞ Modificar layout — Área Analítica</span>
+      <span onclick="document.getElementById('pmp-lay-modal').remove()" style="cursor:pointer;font-size:18px;opacity:.7;line-height:1">×</span>
+    </div>
+    <div style="display:flex;gap:0;padding:14px;gap:10px;flex:1;overflow:hidden">
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+        <div style="font-size:13px;font-weight:700;color:#1A2E35">Colunas exibidas</div>
+        <div style="display:flex;gap:3px;margin-bottom:2px">
+          <button onclick="pmpLayMover('top')" title="Ao topo" style="padding:4px 7px;border:1px solid #C8D4DA;border-radius:4px;background:#fff;cursor:pointer;font-size:12px">⇈</button>
+          <button onclick="pmpLayMover('up')" title="Acima" style="padding:4px 7px;border:1px solid #C8D4DA;border-radius:4px;background:#fff;cursor:pointer;font-size:12px">↑</button>
+          <button onclick="pmpLayMover('down')" title="Abaixo" style="padding:4px 7px;border:1px solid #C8D4DA;border-radius:4px;background:#fff;cursor:pointer;font-size:12px">↓</button>
+          <button onclick="pmpLayMover('bot')" title="Ao fim" style="padding:4px 7px;border:1px solid #C8D4DA;border-radius:4px;background:#fff;cursor:pointer;font-size:12px">⇊</button>
+        </div>
+        <div id="pmp-lay-exib" style="flex:1;border:1px solid #C8D4DA;border-radius:4px;overflow-y:auto;background:#fff;min-height:300px"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;justify-content:center;padding-top:30px">
+        <button onclick="pmpLayMoverLado('disp')" title="Remover" style="padding:5px 8px;border:1px solid #C8D4DA;border-radius:4px;background:#fff;cursor:pointer;font-size:14px">›</button>
+        <button onclick="pmpLayMoverLado('exib')" title="Adicionar" style="padding:5px 8px;border:1px solid #C8D4DA;border-radius:4px;background:#fff;cursor:pointer;font-size:14px">‹</button>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+        <div style="font-size:13px;font-weight:700;color:#1A2E35">Conjunto de colunas</div>
+        <div style="height:26px"></div>
+        <div id="pmp-lay-disp" style="flex:1;border:1px solid #C8D4DA;border-radius:4px;overflow-y:auto;background:#fff;min-height:300px"></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;padding:10px 16px;border-top:1px solid #E2E8ED;background:#fff;border-radius:0 0 8px 8px">
+      <button onclick="pmpLayReset()" style="padding:6px 14px;border:1px solid #E2E8ED;border-radius:4px;background:#fff;color:#5A7280;font-size:12px;cursor:pointer">Padrão</button>
+      <button onclick="document.getElementById('pmp-lay-modal').remove()" style="padding:6px 14px;border:1px solid #FECACA;border-radius:4px;background:#fff;color:#B91C1C;font-size:12px;cursor:pointer">Cancelar</button>
+      <button onclick="pmpLayAplicar(false)" style="padding:6px 16px;border:none;border-radius:4px;background:#1A2E35;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Aplicar</button>
+      <button onclick="pmpLayAplicar(true)" style="padding:6px 16px;border:none;border-radius:4px;background:#E8630A;color:#fff;font-size:12px;font-weight:600;cursor:pointer">💾 Salvar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click',ev=>{if(ev.target===m)m.remove();});
+  _pmpLayRender();
 }
 
 let _pmpEditEl=null;
