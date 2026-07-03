@@ -13481,11 +13481,10 @@ function rcdRenderTratamento() {
             ${extraInfo}
           </div>
           ${isInsp ? `<button onclick="rcdInspAbrir('${r.id}')" style="padding:4px 9px;background:#DBEAFE;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">✏ Editar</button>` : ''}
-          ${status==='em_orcamento' ? `<button onclick="rcdOrcAbrir('${r.id}')" style="padding:4px 9px;background:#FEF3C7;color:#B45309;border:1px solid #FDE68A;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">📄 Orçamento</button>` : ''}
+          ${!isInsp ? `<button onclick="rcdOrcAbrir('${r.id}')" style="padding:4px 9px;background:#FEF3C7;color:#B45309;border:1px solid #FDE68A;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">📄 Gerar Orçamento</button>` : ''}
         </div>
         <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:5px">
           ${prox ? `<button onclick="rcdAvancar('${r.id}','${prox}')" ${bloqueado?'disabled title="Preencha a ordem de inspeção primeiro"':''} style="flex:1;padding:5px 8px;background:${bloqueado?'#F4F6F8':cor};color:${bloqueado?'#8FA4AE':'#fff'};border:none;border-radius:6px;font-size:10px;font-weight:600;cursor:${bloqueado?'not-allowed':'pointer'}">→ ${proxLbl}</button>` : ''}
-          ${status==='aguardando_cliente' ? `<button onclick="rcdOrcAbrir('${r.id}')" style="flex:1;padding:5px 8px;background:#FEF3C7;color:#B45309;border:1px solid #FDE68A;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer">✏ Editar Orç.</button>` : ''}
           ${status==='em_orcamento' ? `<button onclick="rcdConcluirSemAvaria('${r.id}')" style="flex:1;padding:5px 8px;background:#E8F5EE;color:#1E8A4C;border:1px solid #A7F3D0;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer">✓ Sem Avaria</button>` : ''}
           ${status!=='aguardando_inspecao' ? `<button onclick="rcdConcluir('${r.id}')" style="flex:1;padding:5px 8px;background:#F4F6F8;color:#5A7280;border:1px solid #E2E8ED;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer">Concluir</button>` : ''}
           <button onclick="rcdCancelarRegistro('${r.id}','${r.equip_id}')" style="padding:5px 8px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer">✕ Cancelar</button>
