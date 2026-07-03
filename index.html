@@ -15849,6 +15849,73 @@ async function solRcdSalvarReg(reg){
   _solRegistros[reg.id]=reg;
 }
 
+// ── Follow-up ──────────────────────────────────────────────
+let _solFuId=null;
+function solRcdFollowupAbrir(id){
+  _solFuId=id;
+  const reg=_solRegistros[id];if(!reg)return;
+  let modal=document.getElementById('sol-fu-modal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='sol-fu-modal';
+    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px';
+    modal.innerHTML=`<div style="background:#fff;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.18);width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column">
+      <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#1e293b">💬 Follow-up</div>
+          <div id="sol-fu-subtitulo" style="font-size:11px;color:#64748b;margin-top:2px"></div>
+        </div>
+        <button onclick="solRcdFollowupFechar()" style="background:none;border:none;font-size:18px;color:#94a3b8;cursor:pointer;line-height:1">×</button>
+      </div>
+      <div id="sol-fu-lista" style="padding:12px 20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px;max-height:300px"></div>
+      <div style="padding:12px 20px;border-top:1px solid #f1f5f9">
+        <textarea id="sol-fu-texto" rows="3" placeholder="Registre a tratativa: contato com cliente, prazo acordado, próximos passos..." style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;resize:none;font-family:inherit;box-sizing:border-box"></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+          <button onclick="solRcdFollowupFechar()" style="padding:7px 14px;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer">Fechar</button>
+          <button onclick="solRcdFollowupAdicionar()" style="padding:7px 14px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer">Registrar</button>
+        </div>
+      </div>
+    </div>`;
+    modal.addEventListener('click',e=>{if(e.target===modal)solRcdFollowupFechar();});
+    document.body.appendChild(modal);
+  }
+  modal.style.display='flex';
+  const sub=document.getElementById('sol-fu-subtitulo');
+  if(sub) sub.textContent=`${reg.equip_id||''}${reg.numero?' #'+reg.numero:''} — ${reg.equip_cliente||reg.cliente||''}`;
+  solRcdFollowupRenderLista();
+  setTimeout(()=>document.getElementById('sol-fu-texto')?.focus(),100);
+}
+function solRcdFollowupFechar(){
+  const m=document.getElementById('sol-fu-modal');if(m)m.style.display='none';
+  _solFuId=null;
+}
+function solRcdFollowupRenderLista(){
+  const lista=document.getElementById('sol-fu-lista');if(!lista)return;
+  const reg=_solFuId&&_solRegistros[_solFuId];
+  const fus=(reg?.followups||[]).slice().reverse();
+  if(!fus.length){lista.innerHTML='<div style="text-align:center;color:#cbd5e1;font-size:11px;padding:16px">Nenhum follow-up registrado</div>';return;}
+  const fmt=ts=>new Date(ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  lista.innerHTML=fus.map(f=>`
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <span style="font-size:10px;font-weight:700;color:#2563eb">${f.usuario||'—'}</span>
+        <span style="font-size:10px;color:#94a3b8">${fmt(f.ts)}</span>
+      </div>
+      <div style="font-size:12px;color:#334155;white-space:pre-wrap">${f.texto}</div>
+    </div>`).join('');
+}
+async function solRcdFollowupAdicionar(){
+  const txt=document.getElementById('sol-fu-texto')?.value?.trim();
+  if(!txt||!_solFuId)return;
+  const reg=_solRegistros[_solFuId];if(!reg)return;
+  if(!reg.followups)reg.followups=[];
+  reg.followups.push({ts:Date.now(),texto:txt,usuario:currentUser?.nome||'—'});
+  await fetch(`${SOL_FB}/${reg.id}/followups.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(reg.followups)});
+  document.getElementById('sol-fu-texto').value='';
+  solRcdFollowupRenderLista();
+  solRcdRenderTodos();
+}
+
 function solRcdDiasNaFase(reg, fase){
   const tsEntrada = reg['ts_'+fase] || reg.ts_criacao;
   if(!tsEntrada) return 0;
@@ -15926,6 +15993,7 @@ function solRcdRender(sfx=''){
       const isOrc=status==='aguardando_orcamento';
       const isAprovador=currentUser&&(currentUser.perfil==='master'||currentUser.perfil==='rcd');
       const temOrc=(r.orc_valor||0)>0;
+      const nFu=(r.followups||[]).length;
       const pcTag=r.aguardando_pc?`<span style="font-size:9px;background:#fef3c7;color:#b45309;border-radius:3px;padding:1px 5px;font-weight:700">PC pendente</span>`:'';
       const paradaBadge=r.maquina_parada==='sim'&&!r.data_retorno?`<span style="font-size:9px;background:#fee2e2;color:#dc2626;border-radius:3px;padding:1px 5px;font-weight:700">🔴 PARADA</span>`:'';
       return `<div style="background:#fff;border:1px solid #e2e8f0;border-left:3px solid ${cor};border-radius:8px;padding:10px 12px">
@@ -15950,6 +16018,7 @@ function solRcdRender(sfx=''){
             <button onclick="solRcdEditarAbrir('${r.id}')" style="padding:3px 7px;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✏ Editar</button>
             ${isAprov&&isAprovador?`<button onclick="solRcdAvancar('${r.id}','aguardando_orcamento')" style="padding:3px 7px;background:#ede9fe;color:#6366f1;border:1px solid #c4b5fd;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✓ Aprovar</button>`:''}
             ${isAprov&&!isAprovador?`<span style="padding:3px 7px;font-size:9px;color:#94a3b8;font-style:italic">Aguardando aprovação</span>`:''}
+            ${isOrc&&!temOrc?`<button onclick="solRcdEditarAbrir('${r.id}')" style="padding:3px 7px;background:#fef3c7;color:#b45309;border:1px solid #fde68a;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">📄 Gerar Orçamento</button>`:''}
             ${temOrc&&isAprovador?`<button onclick="solRcdGerarOrcamento('${r.id}')" style="padding:3px 7px;background:#fef3c7;color:#b45309;border:1px solid #fde68a;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">📄 Orçamento${r.rev&&r.rev>1?` Rev.${r.rev}`:''}${r.orc_numero?` ${r.orc_numero}`:''}</button>`:''}
             ${isOrc?`<button onclick="solRcdAvancar('${r.id}','aguardando_cliente')" ${temOrc?'':'disabled title="Preencha o orçamento primeiro"'} style="padding:3px 7px;background:${temOrc?'#fffbeb':'#f1f5f9'};color:${temOrc?'#d97706':'#94a3b8'};border:1px solid ${temOrc?'#fde68a':'#e2e8f0'};border-radius:4px;font-size:9px;font-weight:600;cursor:${temOrc?'pointer':'not-allowed'}">→ Ag. Cliente</button>`:''}
             ${isCliente?`<button onclick="solRcdAbrirFaturamentoModal('${r.id}')" style="padding:3px 7px;background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">→ Ag. Execução</button>`:''}
@@ -15959,6 +16028,9 @@ function solRcdRender(sfx=''){
             <button onclick="solRcdCancelar('${r.id}')" style="padding:3px 7px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">✖ Cancelar</button>
           </div>
           <span title="Meta: 30 dias — Total: ${crit.dias}d no processo" style="flex-shrink:0;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:${crit.bg};color:${crit.cor};white-space:nowrap">${crit.emoji} ${crit.dias}d</span>
+        </div>
+        <div style="margin-top:5px;border-top:1px solid #f1f5f9;padding-top:5px">
+          <button onclick="solRcdFollowupAbrir('${r.id}');event.stopPropagation()" style="padding:3px 8px;background:${nFu?'#eff6ff':'#f8fafc'};color:${nFu?'#2563eb':'#94a3b8'};border:1px solid ${nFu?'#bfdbfe':'#e2e8f0'};border-radius:4px;font-size:9px;font-weight:600;cursor:pointer">💬 ${nFu?nFu+' follow-up'+(nFu>1?'s':''):'Adicionar follow-up'}</button>
         </div>
       </div>`;
     }).join('');
