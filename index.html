@@ -5196,7 +5196,7 @@ async function doBaseUpdate(){
   const agora=Date.now();
   // ── CRÍTICO: atualizar EQUIPAMENTOS_ORIG em memória para evitar que o
   // EventSource do Firebase reverta estados recém-alterados pelo upload ──
-  novos.forEach(n=>{const o=EQUIPAMENTOS_ORIG.find(e=>e.id===n.id);if(o){o.status=n.status;o.oficina=n.oficina||o.oficina;o.alugaradoFilial=n.alugaradoFilial||false;if(n.horimetro)o.horimetro=n.horimetro;if(n.placa)o.placa=n.placa;if(n.planta)o.planta=n.planta;if(n.municipio)o.municipio=n.municipio;if(n.serie)o.serie=n.serie;if(n.fabricante)o.fabricante=n.fabricante;if(n.grupo)o.grupo=n.grupo;if(n.linhaProduto)o.linhaProduto=n.linhaProduto;}});
+  novos.forEach(n=>{const o=EQUIPAMENTOS_ORIG.find(e=>e.id===n.id);if(o){o.status=n.status;o.oficina=n.oficina;o.alugaradoFilial=n.alugaradoFilial||false;if(n.horimetro)o.horimetro=n.horimetro;if(n.placa)o.placa=n.placa;if(n.planta)o.planta=n.planta;if(n.municipio)o.municipio=n.municipio;if(n.serie)o.serie=n.serie;if(n.fabricante)o.fabricante=n.fabricante;if(n.grupo)o.grupo=n.grupo;if(n.linhaProduto)o.linhaProduto=n.linhaProduto;}});
   const user=currentUser?currentUser.nome:'sistema';
   let adicionados=0,baixados=0,atualizados=0;
   // Equipamentos ausentes do CSV permanecem onde estão — saída só via status Alugado
@@ -5252,6 +5252,8 @@ async function doBaseUpdate(){
         eq.oficina=n.oficina;eq.etapa='chegada';eq.etapa_desde=agora;eq.etapa_interna=null;eq.etapa_interna_desde=null;
         fbLogMove({eqId:eq.id,nome:eq.equipamento,from:`Oficina: ${ofAnt}`,to:`Oficina: ${n.oficina} → Aguard. Movimentação`,ts:agora,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:'sistema',oficina:n.oficina,visao:'mudanca_oficina'});
         registrarAlteracao('mudanca_oficina',eq.id,eq.equipamento,n.oficina,user,ofAnt);
+      } else if(!n.oficina&&eq.oficina){
+        eq.oficina='';
       }
       atualizados++;
     } else {
