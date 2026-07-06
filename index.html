@@ -14753,70 +14753,70 @@ const _REGRAS_ACESSO = {
 
   // Oficinas (Gestor e Analista) — só Pátio e Oficinas
   'Oficinas/Gestor': {
-    navShow:['snav-home','snav-oficinas','snav-patio'],
-    navHide:['snav-operacoes','snav-rcd','snav-solrcd','snav-pmp','snav-manuterceiros','snav-valepecas','snav-gi','snav-bd','snav-bd-divider','snav-bd-label'],
+    navShow:['snav-home','snav-oficinas','snav-patio','snav-manuterceiros','snav-valepecas'],
+    navHide:['snav-operacoes','snav-rcd','snav-solrcd','snav-pmp','snav-gi','snav-bd','snav-bd-divider','snav-bd-label'],
     bloqueado:['operacoes','rcd','solrcd','pmp','bd'],
     soLeitura:[]
   },
   'Oficinas/Analista': {
-    navShow:['snav-home','snav-oficinas','snav-patio'],
-    navHide:['snav-operacoes','snav-rcd','snav-solrcd','snav-pmp','snav-manuterceiros','snav-valepecas','snav-gi','snav-bd','snav-bd-divider','snav-bd-label'],
+    navShow:['snav-home','snav-oficinas','snav-patio','snav-manuterceiros','snav-valepecas'],
+    navHide:['snav-operacoes','snav-rcd','snav-solrcd','snav-pmp','snav-gi','snav-bd','snav-bd-divider','snav-bd-label'],
     bloqueado:['operacoes','rcd','solrcd','pmp','bd'],
     soLeitura:[]
   },
 
   // PCM Programação — operações/PMP/RCD/garantias com restrições
   'PCM/Programação': {
-    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd','snav-solrcd'],
-    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-manuterceiros','snav-valepecas'],
+    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd','snav-solrcd','snav-manuterceiros','snav-valepecas'],
+    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label'],
     bloqueado:['oficinas','patio','bd'],
     soLeitura:['operacoes']  // pmp tem restrição por sub-aba; rcd só criar/enviar
   },
 
   // PCM RCD — RCD total, demais só leitura
   'PCM/RCD': {
-    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd','snav-solrcd'],
-    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-manuterceiros','snav-valepecas'],
+    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd','snav-solrcd','snav-manuterceiros','snav-valepecas'],
+    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label'],
     bloqueado:['oficinas','patio','bd'],
     soLeitura:['operacoes','pmp']
   },
 
   // PCM Planejamento — PMP Planejamento total, RCD criar/enviar
   'PCM/Planejamento': {
-    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd','snav-solrcd'],
-    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-manuterceiros','snav-valepecas'],
+    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd','snav-solrcd','snav-manuterceiros','snav-valepecas'],
+    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label'],
     bloqueado:['oficinas','patio','bd'],
     soLeitura:['operacoes']
   },
 
   // Gestão de Ativos Gestor — entra em tudo exceto oficinas/patio, sem ações em PMP/RCD/garantias
   'Gestão de Ativos/Gestor': {
-    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd'],
-    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-manuterceiros','snav-valepecas','snav-solrcd'],
+    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd','snav-manuterceiros','snav-valepecas'],
+    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-solrcd'],
     bloqueado:['oficinas','patio','bd'],
     soLeitura:['operacoes','pmp','rcd']
   },
 
   // Gestão de Ativos Analista — não entra em PMP/RCD/garantias
   'Gestão de Ativos/Analista': {
-    navShow:['snav-home','snav-operacoes'],
-    navHide:['snav-oficinas','snav-patio','snav-pmp','snav-rcd','snav-solrcd','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-manuterceiros','snav-valepecas'],
+    navShow:['snav-home','snav-operacoes','snav-manuterceiros','snav-valepecas'],
+    navHide:['snav-oficinas','snav-patio','snav-pmp','snav-rcd','snav-solrcd','snav-gi','snav-bd','snav-bd-divider','snav-bd-label'],
     bloqueado:['oficinas','patio','pmp','rcd','solrcd','bd'],
     soLeitura:['operacoes']
   },
 
   // Implantação Gestor — igual Gestão de Ativos Gestor
   'Implantação/Gestor': {
-    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd'],
-    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-manuterceiros','snav-valepecas','snav-solrcd'],
+    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd','snav-manuterceiros','snav-valepecas'],
+    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-solrcd'],
     bloqueado:['oficinas','patio','bd'],
     soLeitura:['operacoes','pmp','rcd']
   },
 
   // Implantação Analista — igual Gestão de Ativos Analista
   'Implantação/Analista': {
-    navShow:['snav-home','snav-operacoes'],
-    navHide:['snav-oficinas','snav-patio','snav-pmp','snav-rcd','snav-solrcd','snav-gi','snav-bd','snav-bd-divider','snav-bd-label','snav-manuterceiros','snav-valepecas'],
+    navShow:['snav-home','snav-operacoes','snav-manuterceiros','snav-valepecas'],
+    navHide:['snav-oficinas','snav-patio','snav-pmp','snav-rcd','snav-solrcd','snav-gi','snav-bd','snav-bd-divider','snav-bd-label'],
     bloqueado:['oficinas','patio','pmp','rcd','solrcd','bd'],
     soLeitura:['operacoes']
   },
