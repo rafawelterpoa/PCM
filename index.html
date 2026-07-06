@@ -5380,13 +5380,20 @@ function parseCSVToEquipamentos(csvText){
   const iFilialCol=hdrCols.findIndex(h=>h.includes('filial')&&(h.includes('alugad')||h.includes('na filial')));
   // Detecta posição do Status pelo cabeçalho
   const iStatusCol=hdrCols.findIndex(h=>h==='status');
-  console.log('[CSV] colunas no header:',hdrCols.length,'| iFilial:',iFilialCol,'| iStatus:',iStatusCol,'| temLinhaP:',temLinhaP);
+  // Detecta se há coluna "Alterado em" — formato 39 com 21 cols
+  const iAlteradoCol=hdrCols.findIndex(h=>h.includes('alterado'));
+  console.log('[CSV] colunas:',hdrCols.length,'| iFilial:',iFilialCol,'| iStatus:',iStatusCol,'| iAlterado:',iAlteradoCol);
 
   for(let i=2;i<lines.length;i++){
     const c=lines[i].split(';').map(x=>x.replace(/^"|"$/g,'').trim());
-    let frota,serie,id,horimetro,placa,linhaProduto,familia,grupo,gerencial,fabric,modelo,clienteRes,oficina,tipoContrato,clienteNfe,planta,estado,municipio,status,alugaradoFilial='';
+    let frota,serie,id,horimetro,placa,linhaProduto,familia,grupo,gerencial,fabric,modelo,clienteRes,oficina,tipoContrato,clienteNfe,planta,estado,municipio,status,alugaradoFilial='',filialAgencia='';
     if(temLinhaP&&c.length<18){continue;} // linha malformada — pular
-    if(temLinhaP&&c.length>=20){
+    if(temLinhaP&&c.length>=21&&iAlteradoCol>=0){
+      // Formato 39 — 21 cols: Horímetro(c[3]) + Alterado em(c[11]) + Filial(c[13])
+      frota=c[0];serie=c[1];id=c[2];horimetro=c[3];placa=c[4];linhaProduto=c[5];familia=c[6];grupo=c[7];gerencial=c[8];fabric=c[9];modelo=c[10];
+      clienteRes=c[12];filialAgencia=c[13];tipoContrato=c[14];clienteNfe=c[15];planta=c[16];estado=c[17];municipio=c[18];alugaradoFilial=c[19];status=c[20];
+      oficina=''; // será definida abaixo com base no status
+    } else if(temLinhaP&&c.length>=20){
       // Formato 38 — 20 cols: col "Horímetro" em c[3], demais deslocados +1
       frota=c[0];serie=c[1];id=c[2];horimetro=c[3];placa=c[4];linhaProduto=c[5];familia=c[6];grupo=c[7];gerencial=c[8];fabric=c[9];modelo=c[10];clienteRes=c[11];oficina=c[12];tipoContrato=c[13];clienteNfe=c[14];planta=c[15];estado=c[16];municipio=c[17];alugaradoFilial=c[18];status=c[19];
     } else if(temLinhaP&&c.length>=19){
@@ -5434,7 +5441,7 @@ function parseCSVToEquipamentos(csvText){
     const emFilial=alugaradoFilial.toLowerCase()==='sim';
     if(sn==='Alugado'&&emFilial)sn='Manutenção';
     const _fL2=(frota||'').toLowerCase();const _tf=_fL2.includes('loca')?'locação':(_fL2.includes('venda')||_fL2.includes('standby'))?'venda':'';
-    equips.push({id,equipamento:grupo||familia,modelo:`${fabric||''} ${modelo||''}`.trim(),tipo:familia,linhaProduto:linhaProduto||'',oficina:(oficina||'').trim(),status:sn,alugaradoFilial:emFilial,cliente:(clienteRes||'').trim(),reservado:!!(clienteRes||'').trim(),planta:(planta||'').trim(),estado:(estado||'').trim(),municipio:(municipio||'').trim(),tipoContrato:(tipoContrato||'').trim(),clienteNfe:(clienteNfe||'').trim(),frota:(frota||'').trim(),tipoFrota:_tf,serie:(serie||'').trim(),placa:(placa||'').trim(),fabricante:(fabric||'').trim(),grupo:(grupo||familia||'').trim(),horimetro:(horimetro||'').trim(),gerencial:(gerencial||'').trim()});
+    equips.push({id,equipamento:grupo||familia,modelo:`${fabric||''} ${modelo||''}`.trim(),tipo:familia,linhaProduto:linhaProduto||'',oficina:(sn==='Manutenção'&&filialAgencia?filialAgencia:(oficina||'')).trim(),status:sn,alugaradoFilial:emFilial,cliente:(clienteRes||'').trim(),reservado:!!(clienteRes||'').trim(),planta:(planta||'').trim(),estado:(estado||'').trim(),municipio:(municipio||'').trim(),tipoContrato:(tipoContrato||'').trim(),clienteNfe:(clienteNfe||'').trim(),frota:(frota||'').trim(),tipoFrota:_tf,serie:(serie||'').trim(),placa:(placa||'').trim(),fabricante:(fabric||'').trim(),grupo:(grupo||familia||'').trim(),horimetro:(horimetro||'').trim(),gerencial:(gerencial||'').trim()});
   }
   console.log('[CSV-DIAG] totalAll='+_csvParseStats.totalAll+' | frota values:',_dbgFrotaMap,'| status values:',_dbgStatusMap);
   return equips;
