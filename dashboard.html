@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Gerencial — Mills PCM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#EFF2F5;color:#1A2E35;min-height:100vh}
+
+/* Header */
+.header{background:#1A2E35;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{font-size:15px;font-weight:700;letter-spacing:.5px;color:#fff}
+.logo span{color:#E8630A}
+.badge-live{display:flex;align-items:center;gap:5px;font-size:11px;color:#9BB5C0}
+.dot-live{width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.header-right{display:flex;align-items:center;gap:16px}
+.btn-refresh{background:#E8630A;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px}
+.btn-refresh:hover{background:#C85508}
+.btn-voltar{color:#9BB5C0;text-decoration:none;font-size:12px;display:flex;align-items:center;gap:4px}
+.btn-voltar:hover{color:#fff}
+.ts{font-size:11px;color:#6B8A96}
+
+/* Layout */
+.main{padding:16px 20px;display:flex;flex-direction:column;gap:12px;max-width:1600px;margin:0 auto}
+
+/* Loading */
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:16px;color:#6B8A96}
+.spinner{width:36px;height:36px;border:3px solid #E2E8ED;border-top-color:#E8630A;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-msg{background:#FEE2E2;color:#B91C1C;padding:16px 20px;border-radius:8px;font-size:13px;text-align:center}
+
+/* KPI Strip */
+.kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.kpi{background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #E2E8ED;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.kpi-ico{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.kpi-label{font-size:10px;font-weight:600;color:#6B8A96;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+.kpi-val{font-size:22px;font-weight:800;color:#1A2E35;line-height:1}
+.kpi-delta{font-size:10px;margin-top:4px;color:#9BB5C0}
+.kpi-delta.up{color:#059669}.kpi-delta.dn{color:#DC2626}
+
+/* Mid row */
+.mid-row{display:grid;grid-template-columns:1fr 2fr 1fr;gap:10px}
+
+/* Charts row */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Bottom row */
+.bottom-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+/* Panel */
+.panel{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #E2E8ED;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.panel-title{font-size:10px;font-weight:700;color:#6B8A96;text-transform:uppercase;letter-spacing:.6px}
+.panel-link{font-size:10px;font-weight:600;color:#E8630A;text-decoration:none}
+
+/* RCD cards */
+.rcd-num{font-size:36px;font-weight:800;color:#1A2E35;line-height:1}
+.rcd-sub{font-size:11px;color:#9BB5C0;margin-top:2px}
+.rcd-items{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.rcd-item{display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid #F0F4F6}
+.rcd-item:last-child{border-bottom:none}
+.rcd-lbl{color:#5A7280}.rcd-val{font-weight:700;color:#1A2E35;font-variant-numeric:tabular-nums}
+
+/* Oficina funil */
+.funil-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F0F4F6}
+.funil-item:last-child{border-bottom:none}
+.funil-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.funil-nome{font-size:12px;color:#1A2E35;flex:1}
+.funil-bar-wrap{width:70px;background:#EEF2F5;border-radius:99px;height:5px;overflow:hidden}
+.funil-bar{height:100%;border-radius:99px}
+.funil-num{font-size:12px;font-weight:700;color:#1A2E35;min-width:30px;text-align:right;font-variant-numeric:tabular-nums}
+.funil-pct{font-size:10px;color:#9BB5C0;min-width:28px;text-align:right}
+
+/* Pátios */
+.patio-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F0F4F6;font-size:12px;color:#3D5560}
+.patio-item:last-child{border-bottom:none}
+.patio-bar-wrap{flex:1;margin:0 10px;background:#EEF2F5;border-radius:99px;height:7px;overflow:hidden}
+.patio-bar{height:100%;background:#E8630A;border-radius:99px}
+.patio-num{font-variant-numeric:tabular-nums;font-weight:700;color:#1A2E35;min-width:36px;text-align:right;font-size:13px}
+
+/* Situação */
+.sit-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F0F4F6;font-size:12px}
+.sit-item:last-child{border-bottom:none}
+.sit-lbl{display:flex;align-items:center;gap:7px;color:#3D5560}
+.sit-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sit-right{display:flex;align-items:center;gap:6px}
+.sit-val{font-weight:700;color:#1A2E35;font-variant-numeric:tabular-nums}
+.sit-pct{font-size:10px;color:#9BB5C0}
+
+/* Prog */
+.prog-item{display:flex;align-items:center;gap:8px;padding:0}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">MILLS <span>PCM</span> — Gerencial</div>
+    <div class="badge-live"><div class="dot-live"></div> Ao vivo</div>
+  </div>
+  <div class="header-right">
+    <span class="ts" id="tsLabel">Carregando...</span>
+    <button class="btn-refresh" onclick="loadData()">↻ Atualizar</button>
+    <a href="index.html" class="btn-voltar">← Sistema</a>
+  </div>
+</div>
+
+<div class="main" id="main">
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <span>Conectando ao Firebase...</span>
+  </div>
+</div>
+
+<script>
+const FB = 'https://mills-frota-default-rtdb.firebaseio.com/pcm';
+
+// ── helpers canvas hi-DPI ──────────────────────────────────────────────────
+function hiDpi(canvas, w, h) {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return ctx;
+}
+
+// ── normalizar texto (encoding safe) ──────────────────────────────────────
+function norm(s) { return (s || '').trim(); }
+
+// ── carregar dados ─────────────────────────────────────────────────────────
+async function loadData() {
+  document.getElementById('loading').style.display = 'flex';
+  const content = document.getElementById('content');
+  if (content) content.remove();
+
+  try {
+    const [eqRes, progRes] = await Promise.all([
+      fetch(FB + '/equipamentos.json'),
+      fetch(FB + '/programacao.json'),
+    ]);
+    const eqRaw = await eqRes.json();
+    const progRaw = await progRes.json().catch(() => null);
+
+    const equip = Object.values(eqRaw || {}).filter(e => !e.baixado);
+    render(equip, progRaw);
+
+    const now = new Date();
+    document.getElementById('tsLabel').textContent =
+      'Atualizado ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+  } catch(e) {
+    document.getElementById('loading').innerHTML =
+      '<div class="error-msg">Erro ao conectar ao Firebase.<br>' + e.message + '</div>';
+  }
+}
+
+// ── agregar KPIs ───────────────────────────────────────────────────────────
+function kpis(equip) {
+  const total    = equip.length;
+  const alugado  = equip.filter(e => norm(e.status) === 'Alugado').length;
+  const disp     = equip.filter(e => norm(e.status) === 'Disponível').length;
+  const manut    = equip.filter(e => norm(e.status) === 'Manutenção').length;
+  const comodato = equip.filter(e => norm(e.status) === 'Comodato').length;
+  const tu       = total > 0 ? (alugado / total * 100).toFixed(1) : 0;
+  return { total, alugado, disp, manut, comodato, tu };
+}
+
+// ── agrupar por filial ─────────────────────────────────────────────────────
+function porFilial(equip, statusFn) {
+  const map = {};
+  equip.filter(statusFn).forEach(e => {
+    const f = norm(e.oficina) || 'Sem filial';
+    map[f] = (map[f] || 0) + 1;
+  });
+  return Object.entries(map).sort((a,b) => b[1]-a[1]);
+}
+
+// ── programação ────────────────────────────────────────────────────────────
+function calcProg(progRaw) {
+  if (!progRaw) return { total:0, reservados:0, emAndamento:0, concluidos:0, atrasados:0 };
+  let reservados=0, emAndamento=0, concluidos=0, atrasados=0;
+  Object.values(progRaw).forEach(semana => {
+    Object.values(semana).forEach(box => {
+      Object.values(box).forEach(item => {
+        const st = norm(item.status || item.situacao || '');
+        if (st === 'Reservado' || st === 'reservado') reservados++;
+        else if (st === 'Concluído' || st === 'concluido' || st === 'Concluido') concluidos++;
+        else if (st === 'Atrasado' || st === 'atrasado') atrasados++;
+        else emAndamento++;
+      });
+    });
+  });
+  const total = reservados + emAndamento + concluidos + atrasados;
+  return { total, reservados, emAndamento, concluidos, atrasados };
+}
+
+// ── renderizar página ──────────────────────────────────────────────────────
+function render(equip, progRaw) {
+  document.getElementById('loading').style.display = 'none';
+
+  const K     = kpis(equip);
+  const prog  = calcProg(progRaw);
+  const locFil = porFilial(equip, e => norm(e.status) === 'Alugado');
+  const dispFil= porFilial(equip, e => norm(e.status) === 'Disponível');
+  const manuFil= porFilial(equip, e => norm(e.status) === 'Manutenção');
+
+  // montar filiais para Frota Parada
+  const filSet = new Set([...dispFil.map(x=>x[0]), ...manuFil.map(x=>x[0])]);
+  const dispMap = Object.fromEntries(dispFil);
+  const manuMap = Object.fromEntries(manuFil);
+  const frotaFil = [...filSet].map(f => ({
+    nome: f, patio: dispMap[f]||0, oficina: manuMap[f]||0
+  })).sort((a,b) => (b.patio+b.oficina)-(a.patio+a.oficina));
+
+  const div = document.createElement('div');
+  div.id = 'content';
+  div.innerHTML = buildHTML(K, prog, locFil, frotaFil);
+  document.getElementById('main').appendChild(div);
+
+  // desenhar gráficos depois do DOM existir
+  requestAnimationFrame(() => {
+    drawDonut(K);
+    drawFrotaBar(frotaFil);
+  });
+}
+
+// ── HTML ───────────────────────────────────────────────────────────────────
+function buildHTML(K, prog, locFil, frotaFil) {
+  const pct = n => K.total > 0 ? Math.round(n/K.total*100) : 0;
+  const fmt = n => n.toLocaleString('pt-BR');
+
+  // KPI strip
+  const kpiStrip = `
+  <div class="kpi-strip">
+    <div class="kpi">
+      <div class="kpi-ico" style="background:#F0F4F6">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A6470" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
+      </div>
+      <div class="kpi-label">Frota Total</div>
+      <div class="kpi-val">${fmt(K.total)}</div>
+      <div class="kpi-delta">ativos no sistema</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-ico" style="background:#DCFCE7">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+      <div class="kpi-label">Em Operação</div>
+      <div class="kpi-val">${fmt(K.alugado)}</div>
+      <div class="kpi-delta up">Status Alugado</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-ico" style="background:#DCFCE7">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="kpi-label">Taxa Utilização</div>
+      <div class="kpi-val" style="font-size:20px">${K.tu}%</div>
+      <div class="kpi-delta up">Operação / Total</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-ico" style="background:#DBEAFE">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+      <div class="kpi-label">Disponíveis</div>
+      <div class="kpi-val">${fmt(K.disp)}</div>
+      <div class="kpi-delta">Prontos para locação</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-ico" style="background:#FEE2E2">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      </div>
+      <div class="kpi-label">Em Manutenção</div>
+      <div class="kpi-val">${fmt(K.manut)}</div>
+      <div class="kpi-delta dn">Fora de operação</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-ico" style="background:#EEF2FF">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87m-4-12a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="kpi-label">Comodato</div>
+      <div class="kpi-val">${fmt(K.comodato)}</div>
+      <div class="kpi-delta">Fora das filiais</div>
+    </div>
+  </div>`;
+
+  // Locações por Filial
+  const locRows = locFil.slice(0,7).map((f,i) => {
+    const pct = Math.round(f[1]/locFil[0][1]*100);
+    return `<div class="patio-item">
+      <span style="font-weight:500;color:#1A2E35;min-width:110px;font-size:11px">${f[0]}</span>
+      <div class="patio-bar-wrap"><div class="patio-bar" style="width:${pct}%"></div></div>
+      <span class="patio-num">${fmt(f[1])}</span>
+    </div>`;
+  }).join('');
+
+  // Situação da Frota
+  const sitRows = [
+    {label:'Locados',     val:K.alugado,  cor:'#2563EB'},
+    {label:'Disponíveis', val:K.disp,     cor:'#059669'},
+    {label:'Manutenção',  val:K.manut,    cor:'#E8630A'},
+    {label:'Comodato',    val:K.comodato, cor:'#8B5CF6'},
+  ].map(s => `
+    <div class="sit-item">
+      <div class="sit-lbl"><div class="sit-dot" style="background:${s.cor}"></div>${s.label}</div>
+      <div class="sit-right">
+        <span class="sit-val">${fmt(s.val)}</span>
+        <span class="sit-pct">(${pct(s.val)}%)</span>
+      </div>
+    </div>`).join('');
+
+  // Programação
+  const progTotal = prog.total || 35;
+  const progItens = [
+    {nome:'Reservados',   qtd:prog.reservados,   cor:'#6366F1'},
+    {nome:'Em andamento', qtd:prog.emAndamento,  cor:'#E8630A'},
+    {nome:'Concluídos',   qtd:prog.concluidos,   cor:'#059669'},
+    {nome:'Atrasados',    qtd:prog.atrasados,     cor:'#DC2626'},
+  ].map(o => {
+    const pp = progTotal > 0 ? Math.round(o.qtd/progTotal*100) : 0;
+    return `<div class="prog-item" style="display:grid;grid-template-columns:80px 1fr 22px;align-items:center;gap:6px">
+      <span style="font-size:10px;color:#5A7280;font-weight:500">${o.nome}</span>
+      <div style="height:6px;border-radius:3px;background:#F0F2F5;overflow:hidden">
+        <div style="height:100%;width:${pp}%;border-radius:3px;background:${o.cor}"></div>
+      </div>
+      <span style="font-size:11px;font-weight:700;color:#1A2E35;text-align:right;font-variant-numeric:tabular-nums">${o.qtd}</span>
+    </div>`;
+  }).join('');
+
+  return `
+  ${kpiStrip}
+
+  <div class="mid-row">
+    <div class="panel">
+      <div class="panel-hdr"><span class="panel-title">RCD — Desmobilizações</span></div>
+      <div class="rcd-num" id="rcd-desmob">—</div>
+      <div class="rcd-sub">Este mês</div>
+    </div>
+
+    <div class="panel" style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:14px 16px">
+      <div class="panel-hdr" style="width:100%"><span class="panel-title">Situação da Frota</span><a class="panel-link" href="#">Ver todos →</a></div>
+      <div style="display:flex;align-items:center;gap:24px;width:100%">
+        <div style="position:relative;width:120px;height:120px;flex-shrink:0">
+          <canvas id="donut" width="120" height="120"></canvas>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <div style="font-size:20px;font-weight:800;color:#1A2E35;line-height:1">${fmt(K.total)}</div>
+            <div style="font-size:9px;color:#9BB5C0;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:2px">ativos</div>
+          </div>
+        </div>
+        <div style="flex:1">${sitRows}</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-hdr"><span class="panel-title">RCD — Em Operação</span></div>
+      <div class="rcd-num" id="rcd-op">—</div>
+      <div class="rcd-sub">Este mês</div>
+    </div>
+  </div>
+
+  <div class="bottom-row">
+    <div class="panel">
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:2px 0 10px">
+        <div style="width:36px;height:36px;border-radius:8px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#1A2E35;line-height:1.1">Programação de Oficina</div>
+          <div style="font-size:10px;color:#9BB5C0;margin-top:1px">Semana atual</div>
+        </div>
+      </div>
+      <div style="font-size:28px;font-weight:800;color:#1A2E35;line-height:1;margin-bottom:3px">${progTotal} <span style="font-size:12px;font-weight:500;color:#9BB5C0">programados</span></div>
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:12px">${progItens}</div>
+    </div>
+
+    <div class="panel" id="patio-panel">
+      <div class="panel-hdr">
+        <span class="panel-title">Locações por Filial</span>
+      </div>
+      <div id="patio-rows">${locRows}</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-hdr"><span class="panel-title">Frota Parada por Filial</span></div>
+      <canvas id="chartPatioBar" height="172" style="width:100%"></canvas>
+    </div>
+
+    <div class="panel">
+      <div class="panel-hdr"><span class="panel-title">Disponível vs Manutenção</span></div>
+      <div style="margin-top:4px;display:flex;flex-direction:column;gap:10px">
+        ${frotaFil.slice(0,6).map(f => `
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#5A7280;margin-bottom:3px">
+            <span>${f.nome.replace(' (SP)','').replace(' (MG)','').replace(' (PR)','').replace(' (PA)','')}</span>
+            <span style="color:#1A2E35;font-weight:600">${f.patio+f.oficina}</span>
+          </div>
+          <div style="display:flex;height:6px;border-radius:3px;overflow:hidden;background:#F0F4F6">
+            <div style="width:${Math.round(f.patio/(f.patio+f.oficina+.001)*100)}%;background:#059669"></div>
+            <div style="width:${Math.round(f.oficina/(f.patio+f.oficina+.001)*100)}%;background:#E8630A"></div>
+          </div>
+        </div>`).join('')}
+        <div style="display:flex;gap:12px;margin-top:2px">
+          <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#5A7280">
+            <div style="width:8px;height:8px;border-radius:2px;background:#059669"></div>Disponível
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#5A7280">
+            <div style="width:8px;height:8px;border-radius:2px;background:#E8630A"></div>Manutenção
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Donut ──────────────────────────────────────────────────────────────────
+function drawDonut(K) {
+  const c = document.getElementById('donut'); if (!c) return;
+  const ctx = hiDpi(c, 120, 120), cx=60, cy=60, r=54, t=14;
+  const slices = [
+    {v:K.alugado,  color:'#2563EB'},
+    {v:K.disp,     color:'#059669'},
+    {v:K.manut,    color:'#E8630A'},
+    {v:K.comodato, color:'#8B5CF6'},
+  ];
+  const total = slices.reduce((s,x) => s+x.v, 0);
+  let angle = -Math.PI/2;
+  slices.forEach(s => {
+    if (!s.v) return;
+    const sweep = (s.v/total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, angle, angle+sweep);
+    ctx.arc(cx, cy, r-t, angle+sweep, angle, true);
+    ctx.closePath();
+    ctx.fillStyle = s.color;
+    ctx.fill();
+    angle += sweep;
+  });
+}
+
+// ── Frota Parada Bar ───────────────────────────────────────────────────────
+function drawFrotaBar(filiais) {
+  const c = document.getElementById('chartPatioBar'); if (!c) return;
+  const cssW = c.parentElement.offsetWidth - 28 || 280;
+  const cssH = 172;
+  const ctx = hiDpi(c, cssW, cssH), w=cssW, h=cssH;
+  const pl=28, pr=6, pt=20, pb=34, cw=w-pl-pr, ch=h-pt-pb;
+  const mx = Math.max(...filiais.map(f => f.patio+f.oficina), 1);
+  const gw = cw / filiais.length;
+  const bw = Math.min(gw*.36, 13);
+
+  // legenda
+  ctx.fillStyle='#059669'; ctx.fillRect(pl,4,8,7);
+  ctx.fillStyle='#3D5560'; ctx.font='8px Segoe UI'; ctx.textAlign='left';
+  ctx.fillText('Pátio (disponível)', pl+11, 10);
+  ctx.fillStyle='#E8630A'; ctx.fillRect(pl+104,4,8,7);
+  ctx.fillText('Oficina (manutenção)', pl+115, 10);
+
+  // grid
+  const steps = [0, Math.round(mx*.33), Math.round(mx*.66), mx];
+  steps.forEach(v => {
+    const y = pt + ch - (v/mx)*ch;
+    ctx.strokeStyle='#EEF2F5'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pl,y); ctx.lineTo(pl+cw,y); ctx.stroke();
+    ctx.fillStyle='#BCC8CE'; ctx.font='7px Segoe UI'; ctx.textAlign='right';
+    ctx.fillText(v, pl-3, y+2.5);
+  });
+
+  // barras
+  filiais.forEach((f, i) => {
+    const x = pl + gw*i + gw/2;
+    const hp = (f.patio/mx)*ch, ho = (f.oficina/mx)*ch;
+    const yp = pt+ch-hp, yo = pt+ch-ho;
+
+    ctx.fillStyle='#059669';
+    ctx.fillRect(x-bw-1, yp, bw, hp);
+    ctx.fillStyle='#E8630A';
+    ctx.fillRect(x+1, yo, bw, ho);
+
+    // rótulos de valor
+    ctx.fillStyle='#3D5560'; ctx.font='bold 7px Segoe UI'; ctx.textAlign='center';
+    if (f.patio) ctx.fillText(f.patio, x-bw/2, yp-3);
+    if (f.oficina) ctx.fillText(f.oficina, x+bw/2+1, yo-3);
+
+    // nome filial rotacionado
+    ctx.save();
+    ctx.translate(x, pt+ch+4);
+    ctx.rotate(-Math.PI/4);
+    ctx.fillStyle='#6B8A96'; ctx.font='8px Segoe UI'; ctx.textAlign='right';
+    ctx.fillText(f.nome.replace(/ \(.*\)$/,''), 0, 0);
+    ctx.restore();
+  });
+}
+
+// ── init ───────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

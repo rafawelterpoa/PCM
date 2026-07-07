@@ -4,6 +4,7 @@
 # Exceto os arquivos do projeto PCM
 !.gitignore
 !index.html
+!dashboard.html
 !pcm-powerbi-sync.user.js
 !manusis4-pcm-deeplink.user.js
 !manusis4-pcm-sync.user.js
