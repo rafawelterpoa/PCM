@@ -15853,7 +15853,8 @@ function solRcdListen(){
 }
 
 async function solRcdSalvarReg(reg){
-  await fetch(`${SOL_FB}/${reg.id}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(reg)});
+  const r=await fetch(`${SOL_FB}/${reg.id}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(reg)});
+  if(!r.ok)throw new Error(`Firebase ${r.status}: ${await r.text().catch(()=>'')}`);
   _solRegistros[reg.id]=reg;
 }
 
@@ -16748,8 +16749,13 @@ async function solRcdReverterConcluido(id){
   if(!ok||ok.nivel!=='master'){showToast('⛔ Senha master incorreta');return;}
   reg.status='aguardando_faturamento';delete reg.ts_concluido;delete reg.fatura;
   reg.ts_aguardando_faturamento=Date.now();
-  await solRcdSalvarReg(reg);solRcdRenderTodos();
-  showToast('↩ Revertido para Ag. Faturamento');
+  try{
+    await solRcdSalvarReg(reg);
+    solRcdRenderTodos();
+    showToast('↩ Revertido para Ag. Faturamento');
+  }catch(e){
+    showToast('⚠ Erro ao reverter: '+e.message);
+  }
 }
 
 function solRcdCancelar(id){
