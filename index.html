@@ -16762,12 +16762,17 @@ async function solRcdCancelarConfirmar(){
   const id=document.getElementById('sol-cancel-id').value;
   const radio=[...document.querySelectorAll('input[name="sol-cancel-motivo"]')].find(r=>r.checked);
   if(!radio){showToast('⚠ Selecione o motivo');return;}
-  const reg=_solRegistros[id];if(!reg)return;
+  const reg=_solRegistros[id];
+  if(!reg){showToast('⚠ Registro não encontrado. Feche e tente novamente.');return;}
   reg.status='cancelado';reg.ts_cancelado=Date.now();reg.motivo_cancelamento=radio.value;
-  await solRcdSalvarReg(reg);
-  document.getElementById('sol-cancel-modal').style.display='none';
-  solRcdRenderTodos();
-  showToast('✖ Cancelado: '+radio.dataset.label);
+  try{
+    await solRcdSalvarReg(reg);
+    document.getElementById('sol-cancel-modal').style.display='none';
+    solRcdRenderTodos();
+    showToast('✖ Cancelado: '+radio.dataset.label);
+  }catch(e){
+    showToast('⚠ Erro ao salvar: '+e.message);
+  }
 }
 
 function solRcdNovaAbrir(){
