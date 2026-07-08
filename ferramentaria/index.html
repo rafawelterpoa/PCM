@@ -889,7 +889,7 @@ async function startApp() {
   document.getElementById('sidebarUserPerfil').textContent = perfil;
   const iniciais = nome.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('snav-footer-avatar').textContent = iniciais;
-  if(['master','admin'].includes(STATE.usuario.perfil||'')){
+  if(['master','admin'].includes((STATE.usuario.perfil||'').toLowerCase())){
     const na=document.getElementById('navAdmin');if(na)na.style.display='';
   }
   await syncAll();
@@ -1020,7 +1020,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('open') }
 function ferramentasList() { return Object.values(STATE.ferramentas||{}).filter(f=>f&&f.ativo!==false) }
 function movimentacoesList() { return Object.values(STATE.movimentacoes||{}).filter(m=>m!=null) }
 
-function isAdmin() { return ['master','admin'].includes(STATE.usuario?.perfil) }
+function isAdmin() { return ['master','admin'].includes((STATE.usuario?.perfil||'').toLowerCase()) }
 
 // ===================== DASHBOARD =====================
 async function renderDashboard() {
