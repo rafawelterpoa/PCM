@@ -15792,6 +15792,7 @@ function solRcdGerarPDF(sfx='') {
     <span>Total: <strong>${regs.length} registros</strong></span>
     <span>Valor total: <strong>${fmt(regs.reduce((s,r)=>s+(parseFloat(r.orc_valor)||0),0))}</strong></span>
     ${clienteFiltro?`<span>Cliente: <strong>${clienteFiltro}</strong></span>`:''}
+    ${_solFiltros.planta?`<span>Planta/Obra: <strong>${_solFiltros.planta}</strong></span>`:''}
     ${_solFiltros.status?`<span>Status: <strong>${STATUS_LABEL[_solFiltros.status]||_solFiltros.status}</strong></span>`:''}
   </div>
   <table>
@@ -16012,6 +16013,7 @@ function solRcdRender(sfx=''){
             <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id||'—'}${r.numero?` <span style="font-size:10px;font-weight:400;color:#94a3b8">#${r.numero}</span>`:''}</div>
             <div style="font-size:10px;color:#64748b;margin-top:1px">${r.equip_nome||''}</div>
             ${(r.equip_cliente||r.cliente)?`<div style="font-size:10px;color:#1D4ED8;font-weight:600;margin-top:2px">👤 ${r.equip_cliente||r.cliente}</div>`:''}
+            ${r.equip_planta?`<div style="font-size:10px;color:#5A7280;margin-top:1px">🏭 ${r.equip_planta}</div>`:''}
           </div>
           <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px">
             <span style="font-size:10px;color:#94a3b8">${solRcdFmtDias(dias)}</span>
@@ -16120,7 +16122,7 @@ function solRcdRender(sfx=''){
 }
 
 const _solCharts = {};
-const _solFiltros = { equip:'', cliente:'', responsavel:'', de:'', ate:'', orc_numero:'', status:'', criticidade:'' };
+const _solFiltros = { equip:'', cliente:'', planta:'', responsavel:'', de:'', ate:'', orc_numero:'', status:'', criticidade:'' };
 
 function solRcdCriticidade(r) {
   const ts = r.ts_criacao || r.ts_em_aprovacao || 0;
@@ -16136,6 +16138,7 @@ function solRcdFiltrarRegs(regs) {
     const f = _solFiltros;
     if (f.equip && !(r.equip_id||'').toLowerCase().includes(f.equip.toLowerCase())) return false;
     if (f.cliente && !(r.equip_cliente||r.cliente||'').toLowerCase().includes(f.cliente.toLowerCase())) return false;
+    if (f.planta && !(r.equip_planta||'').toLowerCase().includes(f.planta.toLowerCase())) return false;
     if (f.responsavel && !(r.responsavel||'').toLowerCase().includes(f.responsavel.toLowerCase())) return false;
     if (f.de) { const ts = r.ts_criacao||0; if (ts < new Date(f.de+'T00:00:00').getTime()) return false; }
     if (f.ate) { const ts = r.ts_criacao||0; if (ts > new Date(f.ate+'T23:59:59').getTime()) return false; }
@@ -16160,15 +16163,20 @@ function solRcdFiltrosRender(sfx, regs) {
     // Sincroniza selects com _solFiltros (evita dessincronismo após reset externo)
     const selS=document.getElementById('sf-status'+sfx);if(selS&&selS.value!==(f.status||''))selS.value=f.status||'';
     const selC=document.getElementById('sf-crit'+sfx);if(selC&&selC.value!==(f.criticidade||''))selC.value=f.criticidade||'';
+    // Atualiza datalist de plantas
+    const dl=document.getElementById('sol-planta-list'+sfx);
+    if(dl){const plantas=[...new Set(Object.values(_solRegistros).map(r=>r.equip_planta||'').filter(Boolean))].sort();dl.innerHTML=plantas.map(p=>`<option value="${p}">`).join('');}
     const badgeEl = el.querySelector('[data-sol-badge]');
     if (badgeEl) badgeEl.innerHTML = badgeTxt;
     const limparEl = el.querySelector('[data-sol-limpar]');
     if (limparEl) limparEl.style.display = Object.values(f).some(v=>v) ? '' : 'none';
     return;
   }
-  // Primeira renderização
-  const inpH = (id,ph,key,w) => `<input id="${id}" type="text" placeholder="${ph}" value="${f[key]}"
+  // Primeira renderização — monta datalist com plantas únicas dos registros
+  const _plantasUnicas = [...new Set(Object.values(_solRegistros).map(r=>r.equip_planta||'').filter(Boolean))].sort();
+  const inpH = (id,ph,key,w,list='') => `<input id="${id}" type="text" placeholder="${ph}" value="${f[key]}"
     oninput="_solFiltros['${key}']=this.value;solRcdAtualizarResultados()"
+    ${list?`list="${list}"`:''}
     style="width:${w};padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#1e293b">`;
   const dat = (id,key,ph) => `<input id="${id}" type="date" value="${f[key]}" title="${ph}"
     onchange="_solFiltros['${key}']=this.value;solRcdAtualizarResultados()"
@@ -16192,16 +16200,18 @@ function solRcdFiltrosRender(sfx, regs) {
     <option value="laranja"${f.criticidade==='laranja'?' selected':''}>🟠 21–30 dias</option>
     <option value="vermelho"${f.criticidade==='vermelho'?' selected':''}>🔴 +30 dias</option>
   </select>`;
-  el.innerHTML = `<span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Filtros:</span>
+  el.innerHTML = `<datalist id="sol-planta-list${sfx}">${_plantasUnicas.map(p=>`<option value="${p}">`).join('')}</datalist>
+    <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Filtros:</span>
     ${inpH('sf-equip'+sfx,'Equipamento','equip','90px')}
     ${inpH('sf-cli'+sfx,'Cliente','cliente','100px')}
+    ${inpH('sf-planta'+sfx,'Planta/Obra','planta','120px','sol-planta-list'+sfx)}
     ${inpH('sf-resp'+sfx,'Responsável','responsavel','90px')}
     ${inpH('sf-orc'+sfx,'Nº Orçamento','orc_numero','90px')}
     ${selStatus}
     ${selCrit}
     <span style="display:flex;align-items:center;gap:3px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">De:</span>${dat('sf-de'+sfx,'de','Data início')}</span>
     <span style="display:flex;align-items:center;gap:3px;white-space:nowrap"><span style="font-size:10px;color:#94a3b8">Até:</span>${dat('sf-ate'+sfx,'ate','Data fim')}</span>
-    <button data-sol-limpar onclick="Object.keys(_solFiltros).forEach(k=>_solFiltros[k]='');['sf-equip${sfx}','sf-cli${sfx}','sf-resp${sfx}','sf-orc${sfx}','sf-de${sfx}','sf-ate${sfx}'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const _ss=document.getElementById('sf-status${sfx}');if(_ss)_ss.value='';const _sc=document.getElementById('sf-crit${sfx}');if(_sc)_sc.value='';solRcdRenderTodos()"
+    <button data-sol-limpar onclick="Object.keys(_solFiltros).forEach(k=>_solFiltros[k]='');['sf-equip${sfx}','sf-cli${sfx}','sf-planta${sfx}','sf-resp${sfx}','sf-orc${sfx}','sf-de${sfx}','sf-ate${sfx}'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const _ss=document.getElementById('sf-status${sfx}');if(_ss)_ss.value='';const _sc=document.getElementById('sf-crit${sfx}');if(_sc)_sc.value='';solRcdRenderTodos()"
       style="padding:5px 8px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:${Object.values(f).some(v=>v)?'':'none'}">✕</button>
     <span data-sol-badge style="white-space:nowrap">${badgeTxt}</span>`;
 }
