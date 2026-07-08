@@ -16000,7 +16000,7 @@ function solRcdRender(sfx=''){
       const isExec=status==='aguardando_execucao';
       const isCliente=status==='aguardando_cliente';
       const isOrc=status==='aguardando_orcamento';
-      const isAprovador=currentUser&&(currentUser.perfil==='master'||currentUser.perfil==='rcd');
+      const isAprovador=currentUser&&(currentUser.perfil==='master'||(currentUser.perfil||'').toLowerCase()==='rcd');
       const temOrc=(r.orc_valor||0)>0;
       const nFu=(r.followups||[]).length;
       const pcTag=r.aguardando_pc?`<span style="font-size:9px;background:#fef3c7;color:#b45309;border-radius:3px;padding:1px 5px;font-weight:700">PC pendente</span>`:'';
@@ -16507,10 +16507,15 @@ async function solRcdAvancar(id, novoStatus){
   reg.status=novoStatus;
   reg['ts_'+novoStatus]=agora;
   reg.aguardando_pc=false;
-  await solRcdSalvarReg(reg);
-  solRcdRenderTodos();
-  showToast('→ '+novoStatus.replace(/_/g,' '));
-  if(reg.maquina_parada==='sim'&&!reg.data_retorno) solReestAbrir(id);
+  try{
+    await solRcdSalvarReg(reg);
+    solRcdRenderTodos();
+    showToast('→ '+novoStatus.replace(/_/g,' '));
+    if(reg.maquina_parada==='sim'&&!reg.data_retorno) solReestAbrir(id);
+  }catch(e){
+    reg.status=antigo;delete reg['ts_'+novoStatus];
+    showToast('⚠ Erro ao salvar: '+e.message);
+  }
 }
 
 async function solRcdVoltarCliente(id){
@@ -16541,9 +16546,14 @@ async function solRcdConcluir(id){
   const tsEnt=reg.ts_aguardando_faturamento||agora;
   reg.dias.aguardando_faturamento=(reg.dias.aguardando_faturamento||0)+Math.max(0,Math.round((agora-tsEnt)/86400000));
   reg.status='concluido';reg.fatura=fatura.trim();reg.ts_concluido=agora;
-  await solRcdSalvarReg(reg);
-  solRcdRenderTodos();
-  showToast('💰 Faturado — Fatura: '+fatura.trim());
+  try{
+    await solRcdSalvarReg(reg);
+    solRcdRenderTodos();
+    showToast('💰 Faturado — Fatura: '+fatura.trim());
+  }catch(e){
+    reg.status='aguardando_faturamento';delete reg.fatura;delete reg.ts_concluido;
+    showToast('⚠ Erro ao salvar: '+e.message);
+  }
 }
 
 function solRcdDetalheAbrir(id){
