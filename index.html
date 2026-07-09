@@ -835,7 +835,7 @@ input.filter-sel{padding:5px 10px;height:32px}
       <div style="display:flex;gap:12px;justify-content:flex-end;margin-bottom:20px;margin-top:-4px">
         <button onclick="abrirPrimeiroAcesso()" class="login-link">Primeiro acesso</button>
         <span class="login-link-sep">|</span>
-        <button onclick="abrirPrimeiroAcesso()" class="login-link">Esqueci minha senha</button>
+        <button onclick="abrirResetSenha()" class="login-link">Esqueci minha senha</button>
       </div>
       <button class="login-btn" onclick="doLogin()">Entrar</button>
       <div class="login-error" id="login-error">Usuário ou senha incorretos.</div>
@@ -871,6 +871,32 @@ input.filter-sel{padding:5px 10px;height:32px}
     <button class="login-btn" id="pa-btn" onclick="enviarPrimeiroAcesso()">Solicitar Acesso</button>
     <div style="margin-top:16px;text-align:center">
       <button onclick="fecharPrimeiroAcesso()" style="background:none;border:none;color:#8FA4AE;font-size:12px;cursor:pointer;text-decoration:underline;padding:0">← Voltar ao login</button>
+    </div>
+  </div>
+</div>
+
+<!-- ESQUECI A SENHA -->
+<div id="reset-senha-overlay" style="display:none;position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.55);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:36px 40px;width:420px;max-width:94vw;box-shadow:0 10px 40px rgba(0,0,0,.22)">
+    <div style="font-size:20px;font-weight:700;color:#1A2E35;margin-bottom:4px">Esqueci minha senha</div>
+    <div style="font-size:13px;color:#8FA4AE;margin-bottom:24px">Informe seu e-mail e a nova senha desejada. A troca depende da aprovação do administrador.</div>
+    <div class="login-field">
+      <label>E-mail Mills</label>
+      <input class="login-input" type="text" id="rs-email" placeholder="nome@mills.com.br" style="padding-left:12px">
+    </div>
+    <div class="login-field">
+      <label>Nova Senha</label>
+      <input class="login-input" type="password" id="rs-senha" placeholder="Crie a nova senha" style="padding-left:12px">
+    </div>
+    <div class="login-field">
+      <label>Confirmar Nova Senha</label>
+      <input class="login-input" type="password" id="rs-senha2" placeholder="Repita a nova senha" style="padding-left:12px" onkeydown="if(event.key==='Enter')enviarResetSenha()">
+    </div>
+    <div class="login-error" id="rs-error" style="display:none"></div>
+    <div id="rs-sucesso" style="display:none;font-size:12px;color:#1D9E75;margin-top:8px;text-align:center;line-height:1.5"></div>
+    <button class="login-btn" id="rs-btn" onclick="enviarResetSenha()">Solicitar Nova Senha</button>
+    <div style="margin-top:16px;text-align:center">
+      <button onclick="fecharResetSenha()" style="background:none;border:none;color:#8FA4AE;font-size:12px;cursor:pointer;text-decoration:underline;padding:0">← Voltar ao login</button>
     </div>
   </div>
 </div>
@@ -2442,6 +2468,49 @@ async function enviarPrimeiroAcesso(){
   }
 }
 
+// ── ESQUECI A SENHA ──
+function abrirResetSenha(){
+  document.getElementById('login-overlay').style.display='none';
+  document.getElementById('reset-senha-overlay').style.display='flex';
+  ['rs-email','rs-senha','rs-senha2'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('rs-error').style.display='none';
+  document.getElementById('rs-sucesso').style.display='none';
+  const btn=document.getElementById('rs-btn');btn.disabled=false;btn.textContent='Solicitar Nova Senha';
+}
+function fecharResetSenha(){
+  document.getElementById('reset-senha-overlay').style.display='none';
+  document.getElementById('login-overlay').style.display='flex';
+}
+async function enviarResetSenha(){
+  const email=document.getElementById('rs-email').value.trim().toLowerCase();
+  const senha=document.getElementById('rs-senha').value.trim();
+  const senha2=document.getElementById('rs-senha2').value.trim();
+  const errEl=document.getElementById('rs-error');
+  const sucEl=document.getElementById('rs-sucesso');
+  const btn=document.getElementById('rs-btn');
+  errEl.style.display='none';
+  if(!email||!senha||!senha2){errEl.textContent='Preencha todos os campos.';errEl.style.display='block';return;}
+  if(!email.endsWith('@mills.com.br')){errEl.textContent='Use seu e-mail Mills (@mills.com.br).';errEl.style.display='block';return;}
+  if(senha.length<4){errEl.textContent='A senha deve ter ao menos 4 caracteres.';errEl.style.display='block';return;}
+  if(senha!==senha2){errEl.textContent='As senhas não coincidem.';errEl.style.display='block';return;}
+  const prefixo=email.split('@')[0];
+  const user=usuariosCache.find(u=>(u.email||'').toLowerCase()===email||(u.login||'').toLowerCase()===prefixo);
+  if(!user){errEl.textContent='E-mail não encontrado. Se você ainda não tem acesso, use "Primeiro acesso".';errEl.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Enviando...';
+  try{
+    const pendentes=await fbGetPendentes();
+    const jaPendente=pendentes.find(p=>p.email===email&&p.tipo==='reset_senha'&&p.status==='pendente');
+    if(jaPendente){errEl.textContent='Já existe uma solicitação de nova senha pendente para este e-mail.';errEl.style.display='block';btn.disabled=false;btn.textContent='Solicitar Nova Senha';return;}
+    await fbSalvarPendente({nome:user.nome||prefixo,email,senha,tipo:'reset_senha',status:'pendente',ts:new Date().toISOString()});
+    sucEl.innerHTML='✅ Solicitação enviada!<br>A nova senha vale após a aprovação do administrador.';
+    sucEl.style.display='block';
+    btn.textContent='Solicitação Enviada';
+  }catch(e){
+    errEl.textContent='Erro ao enviar solicitação. Tente novamente.';errEl.style.display='block';
+    btn.disabled=false;btn.textContent='Solicitar Nova Senha';
+  }
+}
+
 function doLogin(){
   const login=document.getElementById('login-user').value.trim().toLowerCase();
   const senha=document.getElementById('login-pass').value.trim();
@@ -2488,6 +2557,7 @@ function doLogin(){
   }
   loadFromFirebase();renderAdminUsers();rsCheckAcesso();pmpCarregarLayout(user.uid);
   setTimeout(mostrarNotifBemVindo, 1800);
+  iniciarMonitorSolicitacoes();
 }
 
 function mostrarNotifBemVindo(){
@@ -4968,13 +5038,20 @@ async function carregarPendentes(){
     const pend=await fbGetPendentes();
     const ativos=pend.filter(p=>p.status==='pendente');
     if(!ativos.length){el.innerHTML='<div style="color:var(--text3);font-size:12px;padding:8px 0">Nenhuma solicitação pendente.</div>';return;}
-    el.innerHTML=`<table class="user-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Senha</th><th>Data</th><th>Ações</th></tr></thead><tbody>${
-      ativos.map((p,i)=>`<tr>
-        <td>${p.nome}</td>
-        <td style="font-size:11px">${p.email}</td>
-        <td><code style="font-size:11px;color:var(--text3)">${p.senha}</code></td>
+    el.innerHTML=`<table class="user-table"><thead><tr><th>Tipo</th><th>Nome</th><th>E-mail</th><th>Senha</th><th>Data</th><th>Ações</th></tr></thead><tbody>${
+      ativos.map((p,i)=>{
+        const isReset=p.tipo==='reset_senha';
+        return `<tr>
+        <td>${isReset
+          ?'<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#FEF3C7;color:#B45309;white-space:nowrap">🔑 Nova senha</span>'
+          :'<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#E0F2FE;color:#0369A1;white-space:nowrap">🆕 Cadastro</span>'}</td>
+        <td>${_escHtml(p.nome)}</td>
+        <td style="font-size:11px">${_escHtml(p.email)}</td>
+        <td><code style="font-size:11px;color:var(--text3)">${_escHtml(p.senha)}</code></td>
         <td style="font-size:11px;color:var(--text3)">${p.ts?new Date(p.ts).toLocaleString('pt-BR'):'—'}</td>
         <td style="display:flex;gap:6px;flex-wrap:wrap">
+          ${isReset?`
+          <button class="btn btn-sm" style="background:var(--verde);color:#fff;border:none" onclick="aprovarResetSenha(${i})">✅ Aprovar nova senha</button>`:`
           <select id="setor-pend-${i}" onchange="pmpUpdPerfis(${i})" style="font-size:11px;padding:2px 4px;border-radius:4px;border:1px solid var(--borda)">
             <option value="">— Setor —</option>
             <option value="Master">Master</option>
@@ -4987,10 +5064,10 @@ async function carregarPendentes(){
           <select id="perfil-pend-${i}" style="font-size:11px;padding:2px 4px;border-radius:4px;border:1px solid var(--borda)">
             <option value="">— Perfil —</option>
           </select>
-          <button class="btn btn-sm" style="background:var(--verde);color:#fff;border:none" onclick="aprovarPendente(${i})">✅ Aprovar</button>
+          <button class="btn btn-sm" style="background:var(--verde);color:#fff;border:none" onclick="aprovarPendente(${i})">✅ Aprovar</button>`}
           <button class="del-btn btn-sm" onclick="rejeitarPendente(${i})">❌ Rejeitar</button>
         </td>
-      </tr>`).join('')
+      </tr>`;}).join('')
     }</tbody></table>`;
     el._pendentes=ativos;
   }catch(e){el.innerHTML='<div style="color:var(--terra);font-size:12px">Erro ao carregar solicitações.</div>';}
@@ -5030,7 +5107,7 @@ async function aprovarPendente(idx){
   try{
     await fbSetUsers(usuariosCache);
     const todos=await fbGetPendentes();
-    const novos=todos.filter(x=>x.email!==p.email);
+    const novos=todos.filter(x=>!(x.email===p.email&&(x.tipo||'')===(p.tipo||'')));
     await fbSetPendentes(novos);
     showToast('✅ '+p.nome+' aprovado como '+perfil+(existing>=0?' (atualizado)':''));
     renderAdminUsers();carregarPendentes();
@@ -5042,10 +5119,94 @@ async function rejeitarPendente(idx){
   const p=pend[idx];
   if(!confirm('Rejeitar solicitação de '+p.nome+'?'))return;
   const todos=await fbGetPendentes();
-  const novos=todos.filter(x=>!(x.email===p.email&&x.status==='pendente'));
+  const novos=todos.filter(x=>!(x.email===p.email&&(x.tipo||'')===(p.tipo||'')&&x.status==='pendente'));
   await fbSetPendentes(novos);
   showToast('Solicitação de '+p.nome+' rejeitada.');
   carregarPendentes();
+  checarSolicitacoesAcesso();
+}
+
+// ── Aprovar redefinição de senha ──
+async function aprovarResetSenha(idx){
+  const el=document.getElementById('admin-pendentes-body');
+  const pend=el._pendentes;if(!pend||!pend[idx])return;
+  const p=pend[idx];
+  const email=(p.email||'').toLowerCase();
+  const prefixo=email.split('@')[0];
+  const iU=usuariosCache.findIndex(u=>(u.email||'').toLowerCase()===email||(u.login||'').toLowerCase()===prefixo);
+  if(iU<0){showToast('Usuário não encontrado no cadastro. Rejeite e peça um novo cadastro.');return;}
+  usuariosCache[iU].senha=p.senha;
+  try{
+    await fbSetUsers(usuariosCache);
+    const todos=await fbGetPendentes();
+    const novos=todos.filter(x=>!(x.email===p.email&&(x.tipo||'')===(p.tipo||'')));
+    await fbSetPendentes(novos);
+    showToast('🔑 Nova senha de '+(p.nome||p.email)+' aprovada.');
+    renderAdminUsers();carregarPendentes();
+    checarSolicitacoesAcesso();
+  }catch(e){showToast('Erro ao salvar: '+e.message);}
+}
+
+// ── Monitor de solicitações de acesso (pop-up para admin/master) ──
+function _escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+let _solicMonitorTimer=null;
+let _solicDismissKey='';
+function iniciarMonitorSolicitacoes(){
+  if(!currentUser)return;
+  const perfil=(currentUser.perfil||'').toLowerCase();
+  if(perfil!=='master'&&perfil!=='admin')return;
+  if(_solicMonitorTimer)clearInterval(_solicMonitorTimer);
+  checarSolicitacoesAcesso();
+  _solicMonitorTimer=setInterval(checarSolicitacoesAcesso,30000);
+}
+async function checarSolicitacoesAcesso(){
+  if(!currentUser)return;
+  const perfil=(currentUser.perfil||'').toLowerCase();
+  if(perfil!=='master'&&perfil!=='admin')return;
+  let ativos=[];
+  try{
+    const pend=await fbGetPendentes();
+    ativos=pend.filter(p=>p.status==='pendente');
+  }catch(e){return;}
+  if(!ativos.length){fecharPopupSolicitacoes(false);return;}
+  const key=ativos.map(p=>(p.email||'')+'|'+(p.tipo||'cadastro')+'|'+(p.ts||'')).sort().join(';');
+  if(key===_solicDismissKey)return;
+  const aberto=document.getElementById('popup-solicitacoes');
+  if(aberto&&aberto.dataset.key===key)return;
+  mostrarPopupSolicitacoes(ativos,key);
+}
+function mostrarPopupSolicitacoes(ativos,key){
+  fecharPopupSolicitacoes(false);
+  const div=document.createElement('div');
+  div.id='popup-solicitacoes';
+  div.dataset.key=key;
+  div.style.cssText='position:fixed;inset:0;z-index:1250;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center';
+  div.innerHTML=`<div style="background:#fff;border-radius:14px;width:480px;max-width:94vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 14px 50px rgba(0,0,0,.3);overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:#1A2E35">
+      <div style="font-size:15px;font-weight:700;color:#fff">🔔 Solicitações de acesso pendentes (${ativos.length})</div>
+      <button onclick="fecharPopupSolicitacoes(true)" style="background:none;border:none;color:#9FB2BA;font-size:22px;cursor:pointer;line-height:1;padding:2px 8px" title="Fechar">×</button>
+    </div>
+    <div style="padding:10px 20px;overflow-y:auto;flex:1">
+      ${ativos.map(p=>{
+        const isReset=p.tipo==='reset_senha';
+        return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #EDF1F4">
+          <div style="width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;background:${isReset?'#FEF3C7':'#E0F2FE'}">${isReset?'🔑':'🆕'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:#1A2E35">${_escHtml(p.nome||p.email)}</div>
+            <div style="font-size:11px;color:#8FA4AE">${_escHtml(p.email)}${p.ts?' · '+new Date(p.ts).toLocaleString('pt-BR'):''}</div>
+          </div>
+          <span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;white-space:nowrap;background:${isReset?'#FEF3C7':'#E0F2FE'};color:${isReset?'#B45309':'#0369A1'}">${isReset?'Nova senha':'Cadastro'}</span>
+        </div>`;}).join('')}
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid #EDF1F4;display:flex;justify-content:flex-end">
+      <button onclick="fecharPopupSolicitacoes(true);navegarPara('admin')" style="background:#E8630A;border:none;color:#fff;font-size:13px;font-weight:600;padding:9px 18px;border-radius:8px;cursor:pointer">Ir para aprovações →</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+}
+function fecharPopupSolicitacoes(marcarVisto){
+  const el=document.getElementById('popup-solicitacoes');
+  if(el){if(marcarVisto)_solicDismissKey=el.dataset.key||'';el.remove();}
 }
 
 function renderAdminPage(){renderAdminUsers();loadLogJson();carregarPendentes();}
