@@ -2571,6 +2571,7 @@ function doLogin(){
   loadFromFirebase();renderAdminUsers();rsCheckAcesso();pmpCarregarLayout(user.uid);
   setTimeout(mostrarNotifBemVindo, 1800);
   iniciarMonitorSolicitacoes();
+  setTimeout(registrarSnapshotDiario, 5000); // série diária do T.U. (1x/dia, idempotente)
 }
 
 function mostrarNotifBemVindo(){
@@ -5375,6 +5376,9 @@ async function doBaseUpdate(){
   let adicionados=0,baixados=0,atualizados=0;
   // Equipamentos ausentes do CSV permanecem onde estão — saída só via status Alugado
   const _recentRetornos=new Set(); // IDs que retornaram NESTE upload
+  // ── Raio-X da frota: snapshot do estado ANTERIOR (antes das mutações abaixo) ──
+  const _prevTinha=new Set(Object.keys(state));
+  const _prevAlugado={};Object.values(state).forEach(eq=>{_prevAlugado[eq.id]=(eq.etapa==='alugado'&&!eq.baixado);});
   novos.forEach(n=>{
     if(state[n.id]){
       const eq=state[n.id];
@@ -5441,6 +5445,8 @@ async function doBaseUpdate(){
       adicionados++;
     }
   });
+  // ── Raio-X da frota: gerar e persistir eventos mob/desmob/compra/venda/sinistro ──
+  try{registrarEventosFrota(novos,_prevTinha,_prevAlugado,agora);}catch(e){console.warn('[Eventos frota] erro:',e);}
   // Limpeza: marcar como baixado itens corrompidos (equipamento="sim"/"não") ausentes do novo CSV
   const _novosIds=new Set(novos.map(n=>n.id));
   const _corr=['sim','não','nao','yes','no'];
@@ -5512,7 +5518,7 @@ async function doBaseUpdate(){
   const fbOk=await saveToFirebase(Object.keys(state));
   // Salvar base atual no Firebase para referência dinâmica
   try{
-    const baseObj={};novos.forEach(n=>{baseObj[n.id]={id:n.id,status:n.status,oficina:n.oficina,ts:agora,planta:n.planta||'',municipio:n.municipio||'',serie:n.serie||'',fabricante:n.fabricante||'',horimetro:n.horimetro||'',frota:n.frota||'',tipoFrota:n.tipoFrota||''};});
+    const baseObj={};novos.forEach(n=>{baseObj[n.id]={id:n.id,status:n.status,oficina:n.oficina,ts:agora,planta:n.planta||'',municipio:n.municipio||'',serie:n.serie||'',fabricante:n.fabricante||'',horimetro:n.horimetro||'',frota:n.frota||'',tipoFrota:n.tipoFrota||'',alteradoEm:n.alteradoEm||''};});
     await fetch(FB_BASE+'/base_atual.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(baseObj)});
   }catch(e){console.warn('base_atual save:',e);}
   if(!fbOk){
@@ -5528,6 +5534,7 @@ const EXCLUIR_STATUS_SET=new Set(['vendido','sinistrado']);
 let _csvParseStats={totalAll:0,nEq:0,nImp:0,nAc:0}; // populado em parseCSVToEquipamentos
 function parseCSVToEquipamentos(csvText){
   _csvParseStats={totalAll:0,nEq:0,nImp:0,nAc:0,nLocacao:0,nVenda:0,nStandby:0}; // reset a cada parse
+  window._csvBaixados={ts:Date.now(),items:[]}; // vendidos/sinistrados capturados p/ eventos de frota (não entram nos KPIs)
   const _dbgFrotaMap={},_dbgStatusMap={};  // diagnóstico — valores distintos de frota e status
   const lines=csvText.split(/\r?\n/).filter(l=>l.trim());const equips=[];
   const isNovoFormato=lines[0]&&lines[0].toLowerCase().includes('equipamento;equipamento');
@@ -5597,7 +5604,13 @@ function parseCSVToEquipamentos(csvText){
     if(iStatusCol>=0&&iStatusCol!==18&&iStatusCol!==17&&c[iStatusCol]!==undefined){status=c[iStatusCol];}
     if(!id)continue;
     if(gerencial&&gerencial.toLowerCase()!=='sim')continue;   // Filtro: apenas gerencial=sim
-    if(status&&EXCLUIR_STATUS_SET.has(status.trim().toLowerCase()))continue;  // Excluir Vendido/Sinistrado (status vazio = manter)
+    // "Alterado em" (formato 39+) — data da última mudança de status, usada nos eventos de frota
+    const _altEm=(iAlteradoCol>=0&&c[iAlteradoCol]!==undefined)?String(c[iAlteradoCol]).trim():'';
+    if(status&&EXCLUIR_STATUS_SET.has(status.trim().toLowerCase())){
+      // Excluir Vendido/Sinistrado dos KPIs (regra oficial), mas capturar p/ eventos de venda/sinistro
+      if(window._csvBaixados)window._csvBaixados.items.push({id,status:status.trim().toLowerCase(),alteradoEm:_altEm,modelo:`${fabric||''} ${modelo||''}`.trim(),familia:(familia||'').trim(),frota:(frota||'').trim()});
+      continue;
+    }
     if(!frota||!frota.trim())continue;                         // Excluir ativos de apoio (coluna Frota em branco)
     if(frota.toLowerCase()==='leve')continue;                  // Excluir Frota Leve explícita
     // Diagnóstico — contagem por frota e status antes de qualquer exclusão
@@ -5617,7 +5630,7 @@ function parseCSVToEquipamentos(csvText){
     const emFilial=alugaradoFilial.toLowerCase()==='sim';
     if(sn==='Alugado'&&emFilial)sn='Manutenção';
     const _fL2=(frota||'').toLowerCase();const _tf=_fL2.includes('loca')?'locação':(_fL2.includes('venda')||_fL2.includes('standby'))?'venda':'';
-    equips.push({id,equipamento:grupo||familia,modelo:`${fabric||''} ${modelo||''}`.trim(),tipo:familia,linhaProduto:linhaProduto||'',oficina:(sn==='Manutenção'&&filialAgencia?filialAgencia:(oficina||'')).trim(),status:sn,alugaradoFilial:emFilial,cliente:(clienteRes||'').trim(),reservado:!!(clienteRes||'').trim(),planta:(planta||'').trim(),estado:(estado||'').trim(),municipio:(municipio||'').trim(),tipoContrato:(tipoContrato||'').trim(),clienteNfe:(clienteNfe||'').trim(),frota:(frota||'').trim(),tipoFrota:_tf,serie:(serie||'').trim(),placa:(placa||'').trim(),fabricante:(fabric||'').trim(),grupo:(grupo||familia||'').trim(),horimetro:(horimetro||'').trim(),gerencial:(gerencial||'').trim()});
+    equips.push({id,equipamento:grupo||familia,modelo:`${fabric||''} ${modelo||''}`.trim(),tipo:familia,linhaProduto:linhaProduto||'',oficina:(sn==='Manutenção'&&filialAgencia?filialAgencia:(oficina||'')).trim(),status:sn,alugaradoFilial:emFilial,cliente:(clienteRes||'').trim(),reservado:!!(clienteRes||'').trim(),planta:(planta||'').trim(),estado:(estado||'').trim(),municipio:(municipio||'').trim(),tipoContrato:(tipoContrato||'').trim(),clienteNfe:(clienteNfe||'').trim(),frota:(frota||'').trim(),tipoFrota:_tf,serie:(serie||'').trim(),placa:(placa||'').trim(),fabricante:(fabric||'').trim(),grupo:(grupo||familia||'').trim(),horimetro:(horimetro||'').trim(),gerencial:(gerencial||'').trim(),alteradoEm:_altEm});
   }
   console.log('[CSV-DIAG] totalAll='+_csvParseStats.totalAll+' | frota values:',_dbgFrotaMap,'| status values:',_dbgStatusMap);
   return equips;
@@ -5629,6 +5642,80 @@ function handleBaseFile(file){
   const ext=file.name.split('.').pop().toLowerCase();
   if(ext==='csv'){const r=new FileReader();r.onload=e=>{try{const eq=parseCSVToEquipamentos(e.target.result);document.getElementById('base-ta').value=JSON.stringify(eq);const al=eq.filter(x=>x.status==='Alugado').length,di=eq.filter(x=>x.status==='Disponível').length,ma=eq.filter(x=>x.status==='Manutenção').length,temGer=eq.length>0&&eq[0].linhaProduto!==undefined;document.getElementById('base-preview').style.display='block';document.getElementById('base-preview').textContent=`✓ ${eq.length} equipamentos${temGer?' (Formato 36 — com Linha de produto)':''} — ${al} Alugados · ${di} Disponíveis · ${ma} Manutenção`;}catch(err){showToast('Erro CSV: '+err.message);}};r.readAsText(file,'UTF-8');}
   else if(ext==='xlsx'||ext==='xls'){const r=new FileReader();r.onload=e=>{try{if(typeof XLSX==='undefined'){showToast('Use CSV');return;}const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const csv=XLSX.utils.sheet_to_csv(ws,{FS:';'});const eq=parseCSVToEquipamentos(csv);document.getElementById('base-ta').value=JSON.stringify(eq);document.getElementById('base-preview').style.display='block';document.getElementById('base-preview').textContent=`✓ ${eq.length} equipamentos encontrados`;}catch(err){showToast('Erro Excel: '+err.message);}};r.readAsArrayBuffer(file);}
+}
+
+// ══════════ RAIO-X DA FROTA — eventos de mob/desmob/compra/venda/sinistro ══════════
+// Regra (definida com Rafael 09/07/26):
+//   mob    = status sai de Disponível/Manutenção → Alugado (data = "Alterado em")
+//   desmob = status sai de Alugado → Disponível/Manutenção
+//   venda/sinistro = linha some dos KPIs com status vendido/sinistrado (data = "Alterado em")
+//   compra = ID novo aparece na base
+// Eventos ficam em /pcm/frota_eventos com chave idempotente (re-upload não duplica).
+function _evtDataISO(s){
+  const m=String(s||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if(m)return m[3]+'-'+m[2]+'-'+m[1];
+  const m2=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m2)return m2[0];
+  return new Date().toISOString().slice(0,10);
+}
+async function registrarEventosFrota(novos,prevTinha,prevAlugado,agora){
+  const eventos={};
+  // Guard: se o estado anterior estava vazio/incompleto (primeira carga, cache limpo),
+  // não gerar mob/desmob/compra em massa — só vendas/sinistros (que têm data própria).
+  const baselineOk=prevTinha.size>100;
+  if(baselineOk){
+    novos.forEach(n=>{
+      const novoAlugado=n.status==='Alugado'&&!n.alugaradoFilial;
+      const data=_evtDataISO(n.alteradoEm);
+      const dk=data.replace(/-/g,'');
+      const base={id:n.id,modelo:n.modelo||'',data,filial:n.oficina||'',planta:n.planta||'',origem:'auto',ts:agora};
+      if(!prevTinha.has(n.id)){
+        eventos['compra_'+n.id]={...base,tipo:'compra'};
+        if(novoAlugado)eventos['mob_'+n.id+'_'+dk]={...base,tipo:'mob'};
+        return;
+      }
+      const era=prevAlugado[n.id]===true;
+      if(!era&&novoAlugado)eventos['mob_'+n.id+'_'+dk]={...base,tipo:'mob'};
+      else if(era&&!novoAlugado)eventos['desmob_'+n.id+'_'+dk]={...base,tipo:'desmob'};
+    });
+  } else {
+    console.warn('[Eventos frota] baseline anterior vazio ('+prevTinha.size+' itens) — mob/desmob/compra pulados neste upload');
+  }
+  // Vendidos/sinistrados capturados no parse (chave sem data: evento terminal por ID)
+  const bx=(window._csvBaixados&&Date.now()-window._csvBaixados.ts<1800000)?window._csvBaixados.items:[];
+  bx.forEach(b=>{
+    const data=_evtDataISO(b.alteradoEm);
+    const tipo=(b.status||'').includes('sinistr')?'sinistro':'venda';
+    eventos[tipo+'_'+b.id]={tipo,id:b.id,modelo:b.modelo||'',familia:b.familia||'',data,origem:'auto',ts:agora};
+    if(baselineOk&&prevAlugado[b.id]===true)eventos['desmob_'+b.id+'_'+data.replace(/-/g,'')]={tipo:'desmob',id:b.id,modelo:b.modelo||'',data,origem:'auto',ts:agora};
+  });
+  const total=Object.keys(eventos).length;
+  if(!total){console.log('[Eventos frota] nenhum evento neste upload');return;}
+  try{
+    await fetch(FB_BASE+'/frota_eventos.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(eventos)});
+    console.log('[Eventos frota] '+total+' eventos registrados/atualizados');
+  }catch(e){console.warn('[Eventos frota] erro ao salvar:',e);}
+  if(bx.length){
+    try{
+      const o={};bx.forEach(b=>{o[b.id]=b;});
+      await fetch(FB_BASE+'/base_baixados.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)});
+    }catch(e){console.warn('[base_baixados] erro:',e);}
+  }
+}
+
+// ── Snapshot diário de KPIs (/pcm/kpi_historico/{YYYY-MM-DD}) — série do T.U. ──
+async function registrarSnapshotDiario(){
+  try{
+    const r=await fetch(FB_BASE+'/csv_stats.json');const s=await r.json();
+    if(!s||!s.totalFrota)return;
+    const hoje=new Date().toISOString().slice(0,10);
+    const chk=await fetch(FB_BASE+'/kpi_historico/'+hoje+'.json');
+    const ja=await chk.json();
+    if(ja&&ja.ts)return; // já gravado hoje — idempotente
+    const snap={data:hoje,tu:s.tu||0,locados:s.locados||0,nLocacao:s.nLocacao||0,totalFrota:s.totalFrota||0,nVenda:s.nVenda||0,paraLocacao:s.paraLocacao||0,origem:'snapshot',ts:Date.now()};
+    await fetch(FB_BASE+'/kpi_historico/'+hoje+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(snap)});
+    console.log('[KPI histórico] snapshot de '+hoje+' gravado');
+  }catch(e){console.warn('[KPI histórico]',e);}
 }
 
 // MODAIS
