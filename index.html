@@ -245,6 +245,40 @@ input:focus,select:focus,textarea:focus{
 .area-card-new .ac-kpi{font-size:24px;font-weight:700;margin-top:auto;color:#1A2E35;letter-spacing:-.02em}
 .area-card-new .ac-badge{display:inline-block;font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
 
+/* ── HOME DARK — raio-x da frota (escopado em #page-home) ── */
+#page-home{background:#0F172A;min-height:calc(100vh - 56px)}
+#page-home .home-wrap{max-width:1520px;margin:0 auto;padding:22px 26px 34px}
+.hd-title{font-size:18px;font-weight:700;color:#F1F5F9}
+.hd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;align-items:stretch}
+@media(max-width:1100px){.hd-grid{grid-template-columns:repeat(2,1fr)}}
+.hd-card{background:#1E293B;border:1px solid #2E3D52;border-radius:10px;padding:15px 17px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.hd-card.clickable{cursor:pointer;transition:border-color .15s,transform .15s}
+.hd-card.clickable:hover{border-color:#E8630A;transform:translateY(-2px)}
+.hd-h5{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#64748B}
+.hd-big{font-size:30px;font-weight:700;line-height:1;color:#F1F5F9;font-variant-numeric:tabular-nums}
+.hd-big small{font-size:12px;font-weight:400;color:#64748B;margin-left:6px}
+.hd-row{display:flex;align-items:center;gap:6px;font-size:11px;color:#94A3B8}
+.hd-row .lbl{width:80px;flex-shrink:0}
+.hd-row .tr{flex:1;height:5px;background:#2A3850;border-radius:3px;overflow:hidden}
+.hd-row .tr>div{height:100%;border-radius:3px;transition:width .4s}
+.hd-row .val{font-weight:700;color:#F1F5F9;min-width:30px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+.hd-donut{position:relative;width:124px;height:124px;flex-shrink:0}
+.hd-donut svg{transform:rotate(-90deg);width:100%;height:100%;display:block}
+.hd-donut .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hd-donut .ctr b{font-size:26px;font-weight:800;color:#F1F5F9;line-height:1}
+.hd-donut .ctr span{font-size:10px;color:#64748B;margin-top:3px}
+.hd-lg{display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:#94A3B8;min-width:0}
+.hd-lg .li{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.hd-lg .li i{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.hd-lg .li b{color:#F1F5F9;font-weight:700;font-variant-numeric:tabular-nums}
+.hd-stack{display:flex;height:12px;border-radius:6px;overflow:hidden;background:#2A3850}
+.hd-stack i{height:100%}
+.hd-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.hd-trio .t{background:#0F172A;border:1px solid #2E3D52;border-radius:8px;padding:10px 6px;display:flex;flex-direction:column;justify-content:center}
+.hd-cols{display:flex;align-items:flex-end;height:76px}
+.hd-cols .g{flex:1;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:3px}
+.hd-cols .g i{width:10px;border-radius:3px 3px 0 0}
+
 .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#5A7280;margin-bottom:12px;margin-top:20px;padding-bottom:6px;border-bottom:2px solid #E8630A;display:inline-block}
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:20px}
 .etapas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:14px}
@@ -1214,185 +1248,160 @@ input.filter-sel{padding:5px 10px;height:32px}
   </div>
 </div>
 
-<!-- HOME -->
+<!-- HOME (dark — raio-x da frota) -->
 <div class="page active" id="page-home">
 <div class="home-wrap">
-  <div class="home-greeting" id="home-greeting">Bem-vindo, Rafael 👋</div>
-  <div class="home-sub" id="home-sub">Selecione uma área abaixo para navegar</div>
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px">
+    <div class="hd-title">Visão geral</div>
+    <div id="home-sub" style="font-size:11px;color:#64748B"></div>
+  </div>
 
-  <!-- VISÃO GERAL + OFICINA + PÁTIO (linha única 4-col) -->
-  <div class="home-section-label">Visão Geral da Frota</div>
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;align-items:stretch">
+  <!-- LINHA 1: T.U. + Frota (gerados em rgRenderVisaoGeral) + Oficina + Pátios -->
+  <div class="hd-grid">
     <div id="home-visao-geral" style="display:contents"></div>
 
-    <!-- OFICINA (movido da linha Grandes Áreas) -->
-    <div class="area-card-new" style="border-top:3px solid #E8630A;cursor:default">
+    <!-- OFICINA -->
+    <div class="hd-card">
       <div onclick="navegarPara('oficinas')" style="cursor:pointer;display:flex;flex-direction:column;gap:8px;flex:1">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:32px;height:32px;border-radius:8px;background:#FDE8D8;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🔧</div>
-          <div><div class="ac-title">Oficina</div><div class="ac-desc">Kanban de manutenção</div></div>
-        </div>
+        <div class="hd-h5">Oficina — Kanban de manutenção</div>
         <div style="display:flex;align-items:baseline;gap:6px">
-          <div id="home-kpi-oficina" style="font-size:38px;font-weight:300;color:#E8630A;line-height:1;letter-spacing:-.02em">—</div>
-          <div style="font-size:12px;color:#8FA4AE">em processo</div>
+          <div id="home-kpi-oficina" class="hd-big" style="color:#F5A96D">—</div>
+          <div style="font-size:12px;color:#64748B">em processo</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px">
-          <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Recepção</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-of-bar-recep" style="height:100%;background:#E8630A;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-of-recep" style="font-weight:600;color:#1A2E35;width:24px;text-align:right;flex-shrink:0">—</span></div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Manutenção</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-of-bar-manut" style="height:100%;background:#E8630A;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-of-manut" style="font-weight:600;color:#1A2E35;width:24px;text-align:right;flex-shrink:0">—</span></div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Rev. Saída</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-of-bar-pronto" style="height:100%;background:#7c3aed;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-of-pronto" style="font-weight:600;color:#7c3aed;width:24px;text-align:right;flex-shrink:0">—</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div class="hd-row"><span class="lbl">Recepção</span><div class="tr"><div id="home-of-bar-recep" style="background:#5B7A8A;width:0%"></div></div><span id="home-of-recep" class="val">—</span></div>
+          <div class="hd-row"><span class="lbl">Manutenção</span><div class="tr"><div id="home-of-bar-manut" style="background:#E8630A;width:0%"></div></div><span id="home-of-manut" class="val">—</span></div>
+          <div class="hd-row"><span class="lbl">Rev. Saída</span><div class="tr"><div id="home-of-bar-pronto" style="background:#F59E0B;width:0%"></div></div><span id="home-of-pronto" class="val" style="color:#FBBF24">—</span></div>
         </div>
       </div>
-      <div style="display:flex;gap:6px;padding-top:10px;border-top:1px solid #F4F6F8">
-        <button onclick="event.stopPropagation();navegarPara('manuterceiros')" style="flex:1;background:#faf5ff;border:1px solid #e9d5ff;border-radius:6px;padding:5px 6px;font-size:10px;font-weight:600;color:#7c3aed;cursor:pointer;text-align:center">🏭 Manut. Terceiros</button>
-        <button onclick="event.stopPropagation();navegarPara('valepecas')" style="flex:1;background:#fff5f5;border:1px solid #fecaca;border-radius:6px;padding:5px 6px;font-size:10px;font-weight:600;color:#dc2626;cursor:pointer;text-align:center">🔩 Vale Peças</button>
+      <div style="display:flex;gap:6px;padding-top:10px;border-top:1px solid #2E3D52">
+        <button onclick="event.stopPropagation();navegarPara('manuterceiros')" style="flex:1;background:#0F172A;border:1px solid #2E3D52;border-radius:6px;padding:5px 6px;font-size:10px;font-weight:600;color:#94A3B8;cursor:pointer;text-align:center">Manut. Terceiros</button>
+        <button onclick="event.stopPropagation();navegarPara('valepecas')" style="flex:1;background:#0F172A;border:1px solid #2E3D52;border-radius:6px;padding:5px 6px;font-size:10px;font-weight:600;color:#94A3B8;cursor:pointer;text-align:center">Vale Peças</button>
       </div>
     </div>
 
-    <!-- GESTÃO DE PÁTIOS (movido da linha Grandes Áreas) -->
-    <div class="area-card-new" onclick="navegarPara('patio')" style="border-top:3px solid #1D9E75">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;background:#E1F5EE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🏠</div>
-        <div><div class="ac-title">Gestão de Pátios</div><div class="ac-desc">Prontos para locação ou venda</div></div>
-      </div>
+    <!-- PÁTIOS -->
+    <div class="hd-card clickable" onclick="navegarPara('patio')">
+      <div class="hd-h5">Gestão de Pátios</div>
       <div style="display:flex;align-items:baseline;gap:6px">
-        <div id="home-kpi-patio" style="font-size:38px;font-weight:300;color:#1D9E75;line-height:1;letter-spacing:-.02em">—</div>
-        <div style="font-size:12px;color:#8FA4AE">prontos</div>
+        <div id="home-kpi-patio" class="hd-big">—</div>
+        <div style="font-size:12px;color:#64748B">prontos</div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Locação</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-pat-bar-loc" style="height:100%;background:#2563eb;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-pat-loc" style="font-weight:600;color:#2563eb;width:24px;text-align:right;flex-shrink:0">—</span></div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Venda</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-pat-bar-venda" style="height:100%;background:#1D9E75;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-pat-venda" style="font-weight:600;color:#1D9E75;width:24px;text-align:right;flex-shrink:0">—</span></div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Sem classif.</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-pat-bar-sem" style="height:100%;background:#94a3b8;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-pat-sem" style="font-weight:600;color:#94a3b8;width:24px;text-align:right;flex-shrink:0">—</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="hd-row"><span class="lbl">Locação</span><div class="tr"><div id="home-pat-bar-loc" style="background:#E8630A;width:0%"></div></div><span id="home-pat-loc" class="val">—</span></div>
+        <div class="hd-row"><span class="lbl">Venda</span><div class="tr"><div id="home-pat-bar-venda" style="background:#5B7A8A;width:0%"></div></div><span id="home-pat-venda" class="val">—</span></div>
+        <div class="hd-row"><span class="lbl">Sem classif.</span><div class="tr"><div id="home-pat-bar-sem" style="background:#F59E0B;width:0%"></div></div><span id="home-pat-sem" class="val" style="color:#FBBF24">—</span></div>
       </div>
     </div>
   </div>
 
-  <!-- GRANDES ÁREAS -->
-  <div class="home-section-label">Grandes Áreas</div>
-  <div class="areas-grid-7">
+  <!-- LINHA 2: Programação + RCD + Tendência T.U. + Atenção hoje -->
+  <div class="hd-grid">
 
-    <!-- 5 — PLANEJAMENTO E PROGRAMAÇÃO PMP -->
-    <div class="area-card-new" onclick="navegarPara('pmp')" style="border-top:3px solid #0369a1">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;background:#E0F2FE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">📋</div>
-        <div><div class="ac-title">Planej. e Prog. PMP</div><div class="ac-desc">Planejamento e programação de manutenção</div></div>
-      </div>
-    </div>
-
-    <!-- 6 — OPERAÇÕES -->
-    <div class="area-card-new" onclick="navegarPara('operacoes')" style="border-top:3px solid #2563eb">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">⚡</div>
-        <div><div class="ac-title">Operações</div><div class="ac-desc">Equipamentos em campo</div></div>
-      </div>
+    <!-- PROGRAMAÇÃO -->
+    <div class="hd-card clickable" onclick="switchTab('programacao')">
+      <div class="hd-h5">Programação — <span id="home-prog-semana" style="color:#F5A96D">S—</span></div>
       <div style="display:flex;align-items:baseline;gap:6px">
-        <div id="home-kpi-operacoes" style="font-size:28px;font-weight:700;color:#2563eb;line-height:1">—</div>
-        <div style="font-size:12px;color:#8FA4AE">em operação</div>
+        <div id="home-kpi-prog" class="hd-big">—</div>
+        <div style="font-size:12px;color:#64748B">programados</div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Equipamentos</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-op-bar-eq" style="height:100%;background:#2563eb;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-op-eq" style="font-weight:600;color:#2563eb;width:36px;text-align:right;flex-shrink:0">—</span></div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Implementos</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-op-bar-imp" style="height:100%;background:#7c3aed;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-op-imp" style="font-weight:600;color:#7c3aed;width:36px;text-align:right;flex-shrink:0">—</span></div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Acessórios</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-op-bar-ac" style="height:100%;background:#94a3b8;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-op-ac" style="font-weight:600;color:#94a3b8;width:36px;text-align:right;flex-shrink:0">—</span></div>
-      </div>
-    </div>
-
-    <!-- 7 — RCD — AVARIAS -->
-    <div class="area-card-new" onclick="navegarPara('rcd')" style="border-top:3px solid #b45309">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">⚠️</div>
-        <div><div class="ac-title">RCD — Avarias</div><div class="ac-desc">Cobranças de avarias a clientes</div></div>
-      </div>
-      <div style="display:flex;gap:12px;align-items:flex-start">
-        <div style="flex:1;text-align:center">
-          <div style="font-size:10px;color:#8FA4AE;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">Triagem</div>
-          <div id="home-rcd-triagem" style="font-size:22px;font-weight:700;color:#b45309;line-height:1">—</div>
-        </div>
-        <div style="width:1px;background:#E2E8ED;align-self:stretch"></div>
-        <div style="flex:1;text-align:center">
-          <div style="font-size:10px;color:#8FA4AE;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">Desmob.</div>
-          <div id="home-rcd-desmob" style="font-size:22px;font-weight:700;color:#1A2E35;line-height:1">—</div>
-        </div>
-        <div style="width:1px;background:#E2E8ED;align-self:stretch"></div>
-        <div style="flex:1;text-align:center">
-          <div style="font-size:10px;color:#8FA4AE;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">Contrato</div>
-          <div id="home-rcd-contrato" style="font-size:22px;font-weight:700;color:#1A2E35;line-height:1">—</div>
-        </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="hd-row"><span class="lbl">Reservados</span><div class="tr"><div id="home-prog-bar-res" style="background:#E8630A;width:0%"></div></div><span id="home-prog-res" class="val">—</span></div>
+        <div class="hd-row"><span class="lbl">Concluídos</span><div class="tr"><div id="home-prog-bar-conc" style="background:#22C55E;width:0%"></div></div><span id="home-prog-conc" class="val" style="color:#4ADE80">—</span></div>
+        <div class="hd-row"><span class="lbl">Atrasados</span><div class="tr"><div id="home-prog-bar-atras" style="background:#EF4444;width:0%"></div></div><span id="home-prog-atras" class="val" style="color:#F87171">—</span></div>
       </div>
     </div>
 
-    <!-- 8 — GARANTIAS -->
-    <div class="area-card-new" onclick="navegarPara('garantias')" style="border-top:3px solid #0891b2">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;background:#E0F2FE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🛡️</div>
-        <div><div class="ac-title">Garantias</div><div class="ac-desc">Controle de garantias de equipamentos</div></div>
+    <!-- RCD — AVARIAS -->
+    <div class="hd-card clickable" onclick="navegarPara('rcd')">
+      <div class="hd-h5">RCD — Avarias</div>
+      <div class="hd-trio" style="flex:1">
+        <div class="t"><div id="home-rcd-triagem" style="font-size:22px;font-weight:800;color:#F1F5F9;line-height:1">—</div><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748B;margin-top:4px">Triagem</div></div>
+        <div class="t"><div id="home-rcd-desmob" style="font-size:22px;font-weight:800;color:#FBBF24;line-height:1">—</div><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748B;margin-top:4px">Desmob.</div></div>
+        <div class="t"><div id="home-rcd-contrato" style="font-size:22px;font-weight:800;color:#F1F5F9;line-height:1">—</div><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748B;margin-top:4px">Contrato</div></div>
       </div>
-      <div style="display:flex;gap:12px;align-items:flex-start">
-        <div style="flex:1;text-align:center">
-          <div style="font-size:10px;color:#8FA4AE;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">Ativas</div>
-          <div id="home-gar-ativas" style="font-size:22px;font-weight:700;color:#0891b2;line-height:1">—</div>
-        </div>
-        <div style="width:1px;background:#E2E8ED;align-self:stretch"></div>
-        <div style="flex:1;text-align:center">
-          <div style="font-size:10px;color:#8FA4AE;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">A vencer</div>
-          <div id="home-gar-vencer" style="font-size:22px;font-weight:700;color:#B45309;line-height:1">—</div>
-        </div>
-        <div style="width:1px;background:#E2E8ED;align-self:stretch"></div>
-        <div style="flex:1;text-align:center">
-          <div style="font-size:10px;color:#8FA4AE;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">Vencidas</div>
-          <div id="home-gar-vencidas" style="font-size:22px;font-weight:700;color:#B91C1C;line-height:1">—</div>
-        </div>
-      </div>
-      <div style="font-size:11px;color:#0891b2;font-weight:600;text-align:center;padding:4px 0;background:#E0F2FE;border-radius:6px">Em desenvolvimento</div>
     </div>
 
-    <!-- 9 — PROGRAMAÇÃO -->
-    <div class="area-card-new" onclick="switchTab('programacao')" style="border-top:3px solid #7c3aed">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">📅</div>
-        <div><div class="ac-title">Programação</div><div class="ac-desc">Semana atual — <span id="home-prog-semana" style="color:#7c3aed;font-weight:600">S—</span></div></div>
-      </div>
+    <!-- TENDÊNCIA T.U. -->
+    <div class="hd-card">
+      <div class="hd-h5">T.U. — últimos 6 meses</div>
+      <div id="hd-tu-trend" style="flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;color:#64748B">carregando…</div>
+    </div>
+
+    <!-- ATENÇÃO HOJE -->
+    <div class="hd-card">
+      <div class="hd-h5">Atenção hoje</div>
+      <div id="hd-atencao" style="flex:1;display:flex;flex-direction:column;justify-content:center;font-size:12px;color:#64748B">—</div>
+    </div>
+  </div>
+
+  <!-- LINHA 3: Movimentação + Mob&Desmob + Tempo médio + Aderência -->
+  <div class="hd-grid">
+    <div class="hd-card">
+      <div class="hd-h5">Movimentação de ativos — <span id="hd-mov-mes" style="color:#94A3B8">mês</span></div>
+      <div id="hd-mov" style="flex:1;font-size:11px;color:#64748B">carregando…</div>
+    </div>
+    <div class="hd-card">
+      <div class="hd-h5">Mob &amp; Desmob — últimas 6 semanas</div>
+      <div id="hd-mobdesmob" style="flex:1;font-size:11px;color:#64748B">carregando…</div>
+    </div>
+    <div class="hd-card">
+      <div class="hd-h5">Tempo médio em oficina</div>
+      <div id="hd-tmo" style="flex:1;font-size:11px;color:#64748B">—</div>
+    </div>
+    <div class="hd-card">
+      <div class="hd-h5">Aderência de preventivas</div>
+      <div id="hd-pmp" style="flex:1;font-size:11px;color:#64748B">carregando…</div>
+    </div>
+  </div>
+
+  <!-- LINHA 4: Operações + Gestão Integrada + Histórico + Garantias -->
+  <div class="hd-grid" style="margin-bottom:0">
+    <!-- OPERAÇÕES -->
+    <div class="hd-card clickable" onclick="navegarPara('operacoes')">
+      <div class="hd-h5">Operações — equipamentos em campo</div>
       <div style="display:flex;align-items:baseline;gap:6px">
-        <div id="home-kpi-prog" style="font-size:28px;font-weight:700;color:#7c3aed;line-height:1">—</div>
-        <div style="font-size:12px;color:#8FA4AE">programados</div>
+        <div id="home-kpi-operacoes" class="hd-big">—</div>
+        <div style="font-size:12px;color:#64748B">em operação</div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Reservados</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-res" style="height:100%;background:#7c3aed;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-res" style="font-weight:600;color:#7c3aed;width:24px;text-align:right;flex-shrink:0">—</span></div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Concluídos</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-conc" style="height:100%;background:#1D9E75;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-conc" style="font-weight:600;color:#1D9E75;width:24px;text-align:right;flex-shrink:0">—</span></div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Atrasados</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-prog-bar-atras" style="height:100%;background:#B91C1C;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-prog-atras" style="font-weight:600;color:#B91C1C;width:24px;text-align:right;flex-shrink:0">—</span></div>
-      </div>
-    </div>
-
-    <!-- 10 — GESTÃO INTEGRADA -->
-    <div class="area-card-new" onclick="abrirTodo()" style="border-top:3px solid #0f766e">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;background:#CCFBF1;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">✅</div>
-        <div><div class="ac-title">Gestão Integrada</div><div class="ac-desc">TO-DO, KPIs e reuniões</div></div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <div class="mini-todo-item"><div class="mini-todo-check done"></div><span class="mini-todo-text">Reunião semanal realizada</span></div>
-        <div class="mini-todo-item"><div class="mini-todo-check done"></div><span class="mini-todo-text">KPIs atualizados</span></div>
-        <div class="mini-todo-item"><div class="mini-todo-check pending"></div><span class="mini-todo-text">Relatório mensal pendente</span></div>
-        <div class="mini-todo-item"><div class="mini-todo-check pending"></div><span class="mini-todo-text">Alinhamento com operações</span></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;margin-top:4px;padding-top:8px;border-top:1px solid #F4F6F8">
-        <div style="flex:1;height:5px;background:#F4F6F8;border-radius:3px;overflow:hidden"><div style="width:50%;height:100%;background:#0f766e;border-radius:3px"></div></div>
-        <span style="font-size:11px;font-weight:600;color:#0f766e">2 / 4</span>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="hd-row"><span class="lbl">Equipamentos</span><div class="tr"><div id="home-op-bar-eq" style="background:#E8630A;width:0%"></div></div><span id="home-op-eq" class="val">—</span></div>
+        <div class="hd-row"><span class="lbl">Implementos</span><div class="tr"><div id="home-op-bar-imp" style="background:#5B7A8A;width:0%"></div></div><span id="home-op-imp" class="val">—</span></div>
+        <div class="hd-row"><span class="lbl">Acessórios</span><div class="tr"><div id="home-op-bar-ac" style="background:#3D4F68;width:0%"></div></div><span id="home-op-ac" class="val">—</span></div>
       </div>
     </div>
 
-    <!-- 11 — HISTÓRICO DE ATIVOS -->
-    <div class="area-card-new" onclick="abrirHistoricoAtivos()" style="border-top:3px solid #6366f1">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">⏱</div>
-        <div><div class="ac-title">Histórico de Ativos</div><div class="ac-desc">Linha do tempo de movimentações</div></div>
+    <!-- GESTÃO INTEGRADA -->
+    <div class="hd-card clickable" onclick="abrirTodo()">
+      <div class="hd-h5">Gestão Integrada</div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px">
+        <div style="font-size:13px;color:#94A3B8;line-height:1.5">TO-DOs, KPIs mensais e rotinas das áreas de manutenção e operações.</div>
       </div>
+      <div style="font-size:11px;font-weight:700;color:#F5A96D">Abrir painel →</div>
+    </div>
+
+    <!-- HISTÓRICO DE ATIVOS -->
+    <div class="hd-card clickable" onclick="abrirHistoricoAtivos()">
+      <div class="hd-h5">Histórico de Ativos</div>
       <div style="display:flex;align-items:baseline;gap:6px">
-        <div id="home-hist-total" style="font-size:28px;font-weight:700;color:#6366f1;line-height:1">—</div>
-        <div style="font-size:12px;color:#8FA4AE">ativos monitorados</div>
+        <div id="home-hist-total" class="hd-big">—</div>
+        <div style="font-size:12px;color:#64748B">ativos monitorados</div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Últ. 24h</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-hist-bar-24h" style="height:100%;background:#6366f1;border-radius:2px;width:0%;transition:width .4s"></div></div><span id="home-hist-24h" style="font-weight:600;color:#6366f1;width:36px;text-align:right;flex-shrink:0">—</span></div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="color:#8FA4AE;width:76px;flex-shrink:0">Esta semana</span><div style="flex:1;height:4px;background:#F4F6F8;border-radius:2px;overflow:hidden"><div id="home-hist-bar-sem" style="height:100%;background:#6366f1;border-radius:2px;width:60%;transition:width .4s"></div></div><span id="home-hist-semana" style="font-weight:600;color:#6366f1;width:36px;text-align:right;flex-shrink:0">—</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="hd-row"><span class="lbl">Últ. 24h</span><div class="tr"><div id="home-hist-bar-24h" style="background:#E8630A;width:0%"></div></div><span id="home-hist-24h" class="val">—</span></div>
+        <div class="hd-row"><span class="lbl">Esta semana</span><div class="tr"><div id="home-hist-bar-sem" style="background:#5B7A8A;width:0%"></div></div><span id="home-hist-semana" class="val">—</span></div>
       </div>
+    </div>
+
+    <!-- GARANTIAS -->
+    <div class="hd-card clickable" onclick="navegarPara('garantias')">
+      <div class="hd-h5">Garantias</div>
+      <div class="hd-trio" style="flex:1">
+        <div class="t"><div id="home-gar-ativas" style="font-size:22px;font-weight:800;color:#F1F5F9;line-height:1">—</div><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748B;margin-top:4px">Ativas</div></div>
+        <div class="t"><div id="home-gar-vencer" style="font-size:22px;font-weight:800;color:#FBBF24;line-height:1">—</div><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748B;margin-top:4px">A vencer</div></div>
+        <div class="t"><div id="home-gar-vencidas" style="font-size:22px;font-weight:800;color:#F87171;line-height:1">—</div><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748B;margin-top:4px">Vencidas</div></div>
+      </div>
+      <div style="font-size:10px;font-weight:700;color:#38BDF8;text-align:center;padding:4px 0;background:rgba(56,189,248,.1);border-radius:6px;letter-spacing:.05em">EM DESENVOLVIMENTO</div>
     </div>
 
   </div>
@@ -2572,6 +2581,7 @@ function doLogin(){
   setTimeout(mostrarNotifBemVindo, 1800);
   iniciarMonitorSolicitacoes();
   setTimeout(registrarSnapshotDiario, 5000); // série diária do T.U. (1x/dia, idempotente)
+  setTimeout(function(){try{renderHomeRaioX();}catch(e){}}, 6000); // cards do raio-x na home
 }
 
 function mostrarNotifBemVindo(){
@@ -3476,6 +3486,7 @@ function switchTab(tabId){
   const te=document.querySelector('[data-tab="'+tabId+'"]');
   const pe=document.getElementById('page-'+tabId);
   if(te)te.classList.add('active');if(pe)pe.classList.add('active');
+  if(tabId==='home'){try{renderHomeRaioX();}catch(e){}}
   if(tabId==='programacao')renderProgramacao();
   else if(tabId==='graficos')renderGraficos();
   else if(tabId==='reservas')renderReservas();
@@ -19119,6 +19130,7 @@ function rgUpdateHomeKpis(ativos){
     setBar('home-hist-bar-sem',logsSem,Math.max(logsSem,1));
   }catch(e3){}
 
+  try{renderHomeAtencao();}catch(e4){}
   rgRenderVisaoGeral(ativos,emOperacao);
 }
 
@@ -19176,78 +19188,199 @@ function rgRenderVisaoGeral(ativos,emOperacao){
   const pctP=n=>patioTotal>0?Math.round(n/patioTotal*100):0;
   const fmt=n=>n.toLocaleString('pt-BR');
 
+  const _dashTU=(Math.max(0,Math.min(100,tuLocPct))/100*314.16).toFixed(1);
   cont.innerHTML=`
-  <div class="vg-card total">
-    <div class="vg-label">Frota Total</div>
-    <div class="vg-num" style="color:#0f172a">${fmt(totalFrota)}</div>
-    <div class="vg-breakdown" style="margin-top:12px">
-      <div class="vg-breakdown-row">
-        <div class="vg-breakdown-dot" style="background:#1e293b"></div>
-        <span class="vg-breakdown-label">Equipamentos</span>
-        <span class="vg-breakdown-val">${fmt(nEq)}</span>
-        <span class="vg-breakdown-pct">${pctT(nEq)}%</span>
+  <div class="hd-card">
+    <div class="hd-h5">T.U. Locação</div>
+    <div style="display:flex;align-items:center;gap:14px;flex:1">
+      <div class="hd-donut">
+        <svg viewBox="0 0 124 124">
+          <circle cx="62" cy="62" r="50" fill="none" stroke="#2A3850" stroke-width="12"/>
+          <circle cx="62" cy="62" r="50" fill="none" stroke="#E8630A" stroke-width="12" stroke-linecap="round" stroke-dasharray="${_dashTU} 314.16"/>
+        </svg>
+        <div class="ctr"><b>${tuLocPct}%</b><span>geral ${tuTotPct}%</span></div>
       </div>
-      <div style="margin:2px 0 4px 15px"><div class="vg-progress-bar"><div class="vg-progress-fill" style="width:${pctT(nEq)}%;background:#1e293b"></div></div></div>
-      <div class="vg-breakdown-row">
-        <div class="vg-breakdown-dot" style="background:#475569"></div>
-        <span class="vg-breakdown-label">Implementos</span>
-        <span class="vg-breakdown-val">${fmt(nImp)}</span>
-        <span class="vg-breakdown-pct">${pctT(nImp)}%</span>
-      </div>
-      <div style="margin:2px 0 4px 15px"><div class="vg-progress-bar"><div class="vg-progress-fill" style="width:${pctT(nImp)}%;background:#475569"></div></div></div>
-      <div class="vg-breakdown-row">
-        <div class="vg-breakdown-dot" style="background:#94a3b8"></div>
-        <span class="vg-breakdown-label">Acessórios</span>
-        <span class="vg-breakdown-val">${fmt(nAc)}</span>
-        <span class="vg-breakdown-pct">${pctT(nAc)}%</span>
-      </div>
-      <div style="margin:2px 0 4px 15px"><div class="vg-progress-bar"><div class="vg-progress-fill" style="width:${pctT(nAc)}%;background:#94a3b8"></div></div></div>
-      ${nOut>0?`<div class="vg-breakdown-row">
-        <div class="vg-breakdown-dot" style="background:#cbd5e1"></div>
-        <span class="vg-breakdown-label">Outros</span>
-        <span class="vg-breakdown-val">${nOut}</span>
-        <span class="vg-breakdown-pct">${pctT(nOut)}%</span>
-      </div>`:''}
-    </div>
-  </div>
-
-  <div class="vg-card alugada">
-    <div class="vg-label">Frota de Locação</div>
-    <div style="margin-top:10px">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f5f9">
-        <span style="font-size:12px;color:#64748b;font-weight:500">Para locação</span>
-        <span style="font-size:20px;font-weight:800;color:#0f172a">${fmt(paraLocacao)}</span>
-      </div>
-      ${nVendaStandby>0?`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f1f5f9">
-        <span style="font-size:11px;color:#94a3b8;font-weight:500">Venda</span>
-        <span style="font-size:13px;font-weight:700;color:#94a3b8">${fmt(nVendaStandby)}</span>
-      </div>`:''}
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f5f9">
-        <span style="font-size:12px;color:#64748b;font-weight:500">Locados</span>
-        <span style="font-size:20px;font-weight:800;color:#2563eb">${fmt(locadosLoc)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0 2px">
-        <div style="flex:1">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#2563eb">T.U. Locação</span>
-            <span style="font-size:22px;font-weight:900;color:#2563eb">${tuLocPct}%</span>
-          </div>
-          <div style="height:4px;background:#eff6ff;border-radius:3px;overflow:hidden;margin-bottom:6px">
-            <div style="height:100%;width:${tuLocPct}%;background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:3px;transition:width .8s ease"></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b">T.U. Geral (${_denTot})</span>
-            <span style="font-size:16px;font-weight:700;color:#64748b">${tuTotPct}%</span>
-          </div>
-          <div style="height:4px;background:#f1f5f9;border-radius:3px;overflow:hidden">
-            <div style="height:100%;width:${tuTotPct}%;background:linear-gradient(90deg,#94a3b8,#cbd5e1);border-radius:3px;transition:width .8s ease"></div>
-          </div>
-        </div>
+      <div class="hd-lg">
+        <div class="li"><i style="background:#E8630A"></i>Locados <b>${fmt(locadosLoc)}</b></div>
+        <div class="li"><i style="background:#2A3850"></i>Disponíveis <b>${fmt(Math.max(0,paraLocacao-locadosLoc))}</b></div>
+        <div class="li" style="color:#64748B;margin-top:2px">frota locação ${fmt(paraLocacao)}</div>
       </div>
     </div>
   </div>
 
+  <div class="hd-card">
+    <div class="hd-h5">Frota Total</div>
+    <div class="hd-big">${fmt(totalFrota)}<small>gerencial</small></div>
+    <div class="hd-stack" style="margin:8px 0 4px">
+      <i style="width:${pctT(nEq)}%;background:#E8630A"></i><i style="width:${pctT(nImp)}%;background:#5B7A8A"></i><i style="width:${Math.max(1,pctT(nAc))}%;background:#94A3B8"></i>
+    </div>
+    <div class="hd-lg">
+      <div class="li"><i style="background:#E8630A"></i>Equipamentos <b>${fmt(nEq)}</b> <span style="color:#64748B">${pctT(nEq)}%</span></div>
+      <div class="li"><i style="background:#5B7A8A"></i>Implementos <b>${fmt(nImp)}</b> <span style="color:#64748B">${pctT(nImp)}%</span></div>
+      <div class="li"><i style="background:#94A3B8"></i>Acessórios <b>${fmt(nAc)}</b> <span style="color:#64748B">${pctT(nAc)}%</span></div>
+      ${nOut>0?`<div class="li"><i style="background:#2A3850"></i>Outros <b>${nOut}</b></div>`:''}
+      ${nVendaStandby>0?`<div class="li" style="color:#64748B">frota venda/standby ${fmt(nVendaStandby)}</div>`:''}
+    </div>
+  </div>
   `;
+}
+
+// ══════════ HOME DARK — cards do raio-x (tendência, eventos, aderência) ══════════
+let _raioxCache={ts:0,kpi:null,ev:null,gik:null};
+function _isoSemana(dstr){
+  const d=new Date(dstr+'T12:00:00');
+  const t=new Date(d);t.setDate(t.getDate()+3-((t.getDay()+6)%7));
+  const s1=new Date(t.getFullYear(),0,4);
+  const w=1+Math.round(((t-s1)/86400000-3+((s1.getDay()+6)%7))/7);
+  return t.getFullYear()+'-'+String(w).padStart(2,'0');
+}
+async function renderHomeRaioX(){
+  if(!document.getElementById('hd-tu-trend'))return;
+  const agora=Date.now();
+  if(agora-_raioxCache.ts>300000){
+    try{
+      const [rK,rE,rG]=await Promise.all([
+        fetch(FB_BASE+'/kpi_historico.json'),
+        fetch(FB_BASE+'/frota_eventos.json'),
+        fetch(FB_BASE+'/gi_kpis/shared.json')
+      ]);
+      _raioxCache={ts:agora,kpi:await rK.json(),ev:await rE.json(),gik:await rG.json()};
+    }catch(e){console.warn('[RaioX] fetch:',e);return;}
+  }
+  const kpiH=_raioxCache.kpi||{};
+  const evs=Object.values(_raioxCache.ev||{});
+  const gik=Object.values(_raioxCache.gik||{});
+
+  // 1) Tendência do T.U. — último snapshot de cada mês (6 meses)
+  try{
+    const porMes={};
+    Object.values(kpiH).forEach(s=>{if(s&&s.data&&s.tu!=null){const m=s.data.slice(0,7);if(!porMes[m]||s.data>porMes[m].data)porMes[m]=s;}});
+    const meses=Object.keys(porMes).sort().slice(-6);
+    const el=document.getElementById('hd-tu-trend');
+    if(meses.length>=2){
+      const vals=meses.map(m=>porMes[m].tu);
+      const mn=Math.min(...vals)-1,mx=Math.max(...vals)+1;
+      const X=i=>8+i*(224/(meses.length-1));
+      const Y=v=>8+(54-(v-mn)/((mx-mn)||1)*54);
+      const pts=vals.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
+      const first=vals[0],last=vals[vals.length-1];
+      const MN=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+      el.innerHTML=`<div style="width:100%">
+        <svg viewBox="0 0 240 72" preserveAspectRatio="none" style="width:100%;height:62px;display:block">
+          <line x1="8" y1="68" x2="232" y2="68" stroke="#2E3D52" stroke-width="1"/>
+          <polyline points="${pts}" fill="none" stroke="#E8630A" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="${X(vals.length-1).toFixed(1)}" cy="${Y(last).toFixed(1)}" r="4" fill="#F5A96D"/>
+        </svg>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#64748B;margin-top:3px;padding:0 2px">${meses.map(m=>`<span>${MN[parseInt(m.slice(5,7),10)-1]}</span>`).join('')}</div>
+        <div style="margin-top:8px;font-size:11.5px;font-weight:700;color:${last>=first?'#4ADE80':'#F87171'}">${last>=first?'▲':'▼'} ${Math.abs(last-first)} p.p. no período · atual ${last}%</div>
+      </div>`;
+    } else el.textContent='coletando histórico…';
+  }catch(e){console.warn('[RaioX] trend:',e);}
+
+  // 2) Mob & Desmob — últimas 6 semanas ISO
+  try{
+    const hoje=new Date();
+    const semanas=[];
+    for(let i=5;i>=0;i--){const d=new Date(hoje);d.setDate(d.getDate()-i*7);semanas.push(_isoSemana(d.toISOString().slice(0,10)));}
+    const mm={},dd={};let totM=0,totD=0;
+    evs.forEach(ev=>{
+      if(ev.tipo!=='mob'&&ev.tipo!=='desmob')return;
+      const k=_isoSemana(ev.data);
+      if(!semanas.includes(k))return;
+      if(ev.tipo==='mob'){mm[k]=(mm[k]||0)+1;totM++;}else{dd[k]=(dd[k]||0)+1;totD++;}
+    });
+    const mxV=Math.max(1,...semanas.map(k=>Math.max(mm[k]||0,dd[k]||0)));
+    document.getElementById('hd-mobdesmob').innerHTML=
+      `<div class="hd-cols">${semanas.map(k=>`<div class="g"><i style="height:${Math.max(3,Math.round((mm[k]||0)/mxV*100))}%;background:#E8630A" title="${mm[k]||0} mob"></i><i style="height:${Math.max(3,Math.round((dd[k]||0)/mxV*100))}%;background:#5B7A8A" title="${dd[k]||0} desmob"></i></div>`).join('')}</div>
+      <div style="display:flex;margin-top:4px">${semanas.map(k=>`<span style="flex:1;text-align:center;font-size:10px;color:#64748B">S${parseInt(k.slice(5),10)}</span>`).join('')}</div>
+      <div style="display:flex;gap:14px;margin-top:8px;font-size:11px;color:#94A3B8"><span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#E8630A;margin-right:5px"></i>Mob <b style="color:#F1F5F9">${totM}</b></span><span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#5B7A8A;margin-right:5px"></i>Desmob <b style="color:#F1F5F9">${totD}</b></span><span style="color:#64748B">saldo ${totM-totD>=0?'+':''}${totM-totD}</span></div>`;
+  }catch(e){console.warn('[RaioX] mobdesmob:',e);}
+
+  // 3) Movimentação de ativos — mês atual (compras/vendas/sinistros)
+  try{
+    const mesAtual=new Date().toISOString().slice(0,7);
+    const MN2=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    const lbl=document.getElementById('hd-mov-mes');if(lbl)lbl.textContent=MN2[new Date().getMonth()];
+    const nC=evs.filter(e=>e.tipo==='compra'&&(e.data||'').startsWith(mesAtual)).length;
+    const nV=evs.filter(e=>e.tipo==='venda'&&(e.data||'').startsWith(mesAtual)).length;
+    const nS=evs.filter(e=>e.tipo==='sinistro'&&(e.data||'').startsWith(mesAtual)).length;
+    const saldo=nC-nV-nS;
+    document.getElementById('hd-mov').innerHTML=
+      `<div class="hd-trio">
+        <div class="t"><div style="font-size:22px;font-weight:800;color:#4ADE80">${nC}</div><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748B;margin-top:4px">Compras</div></div>
+        <div class="t"><div style="font-size:22px;font-weight:800;color:#F5A96D">${nV}</div><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748B;margin-top:4px">Vendas</div></div>
+        <div class="t"><div style="font-size:22px;font-weight:800;color:#F87171">${nS}</div><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748B;margin-top:4px">Sinistros</div></div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:#94A3B8">Saldo da frota no mês: <b style="color:${saldo>=0?'#4ADE80':'#F87171'}">${saldo>=0?'+':''}${saldo} ativo${Math.abs(saldo)===1?'':'s'}</b></div>
+      ${(nC+nV+nS)===0?'<div style="margin-top:4px;font-size:10px;color:#64748B">alimentado pelos uploads da base (coluna "Alterado em")</div>':''}`;
+  }catch(e){console.warn('[RaioX] mov:',e);}
+
+  // 4) Tempo médio em oficina (equipamentos em processo hoje)
+  try{
+    const OF=new Set(['chegada','cl_entrada','manutencao','lavagem','catalogacao','solda','borracharia','funilaria','suprimentos','ag_baia','manut_int','cl_saida']);
+    const em=Object.values(state).filter(e=>!e.baixado&&OF.has(e.etapa)&&e.etapa_desde);
+    const el=document.getElementById('hd-tmo');
+    if(em.length){
+      const dias=em.map(e=>(agora-e.etapa_desde)/86400000);
+      const med=Math.round(dias.reduce((a,b)=>a+b,0)/dias.length);
+      const mais30=dias.filter(d=>d>30).length;
+      el.innerHTML=`<div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:30px;font-weight:800;color:#F1F5F9">${med}</span><span style="font-size:12px;color:#64748B">dias — média atual</span></div>
+        <div style="margin-top:8px;font-size:11px;color:#94A3B8">${em.length} equipamentos em processo na etapa atual</div>
+        ${mais30?`<div style="margin-top:4px;font-size:11px;color:#FBBF24">⚠ ${mais30} há mais de 30 dias na mesma etapa</div>`:''}`;
+    } else el.textContent='sem equipamentos em processo';
+  }catch(e){console.warn('[RaioX] tmo:',e);}
+
+  // 5) Aderência de preventivas (KPI da Gestão Integrada)
+  try{
+    const el=document.getElementById('hd-pmp');
+    const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    const k=gik.find(x=>norm(x.name).includes('aderencia de preventivas'));
+    if(k&&Array.isArray(k.meses)){
+      const vals=k.meses.map(v=>parseFloat(String(v).replace(',','.'))).filter(v=>!isNaN(v));
+      if(vals.length){
+        const ult=vals[vals.length-1];
+        const dash=(Math.max(0,Math.min(100,ult))/100*314.16).toFixed(1);
+        el.innerHTML=`<div style="display:flex;align-items:center;gap:14px">
+          <div class="hd-donut" style="width:100px;height:100px">
+            <svg viewBox="0 0 124 124">
+              <circle cx="62" cy="62" r="50" fill="none" stroke="#2A3850" stroke-width="12"/>
+              <circle cx="62" cy="62" r="50" fill="none" stroke="#E8630A" stroke-width="12" stroke-linecap="round" stroke-dasharray="${dash} 314.16"/>
+            </svg>
+            <div class="ctr"><b style="font-size:21px">${Math.round(ult)}%</b></div>
+          </div>
+          <div class="hd-lg">
+            <div class="li">meta <b>${_escHtml(k.meta||'—')}${String(k.unit||'').startsWith('%')?'%':''}</b></div>
+            <div class="li" style="color:#64748B">últimos: ${vals.slice(-4).map(v=>Math.round(v)+'%').join(' · ')}</div>
+            <div class="li" style="color:#64748B;font-size:10px">fonte: KPIs da Gestão Integrada</div>
+          </div>
+        </div>`;
+      } else el.textContent='KPI sem valores mensais';
+    } else el.textContent='KPI não encontrado na Gestão Integrada';
+  }catch(e){console.warn('[RaioX] pmp:',e);}
+}
+
+// Atenção hoje — recalculado junto com os demais cards da home
+function renderHomeAtencao(){
+  const el=document.getElementById('hd-atencao');if(!el)return;
+  try{
+    const sa=semanaAtual();
+    const ativos=Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado');
+    const progAtras=Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.semana&&e.semana<sa&&e.etapa!=='pronto').length;
+    const revSaida=ativos.filter(e=>e.etapa==='cl_saida').length;
+    const nDesmobRcd=Object.values(_rcdRegistros||{}).filter(r=>['aguardando_inspecao','em_orcamento','aguardando_cliente','aguardando_faturamento'].includes(r.status)).length;
+    const getTF=id=>{const o=EQUIPAMENTOS_ORIG&&EQUIPAMENTOS_ORIG.find(x=>x.id===id);return(o?.tipoFrota||'').toLowerCase();};
+    const emPatio=ativos.filter(e=>e.etapa==='pronto');
+    const patSem=emPatio.filter(e=>getTF(e.id)==='').length;
+    const itens=[
+      {t:'Programação atrasada',v:progAtras,bg:'#DC2626',tx:'#fff'},
+      {t:'RCD aguard. desmob.',v:nDesmobRcd,bg:'#FDBA74',tx:'#7C2D12'},
+      {t:'Revisão de saída',v:revSaida,bg:'#FDBA74',tx:'#7C2D12'},
+      {t:'Pátio sem classif.',v:patSem,bg:'#FDBA74',tx:'#7C2D12'}
+    ].filter(i=>i.v>0);
+    el.innerHTML=itens.length
+      ?itens.map((i,ix)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;${ix?'border-top:1px solid #2E3D52;':''}font-size:12px;color:#94A3B8"><span>${i.t}</span><span style="font-size:11px;font-weight:800;border-radius:999px;padding:2px 10px;background:${i.bg};color:${i.tx}">${i.v}</span></div>`).join('')
+      :'<div style="text-align:center;font-size:12px;color:#4ADE80;padding:14px 0">✓ Nenhuma pendência crítica</div>';
+  }catch(e){el.textContent='—';}
 }
 // ═════════════════════════════════════════════════════════════════════════════
 
