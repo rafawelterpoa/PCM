@@ -259,7 +259,7 @@ input:focus,select:focus,textarea:focus{
 .hd-big small{font-size:12px;font-weight:400;color:#64748B;margin-left:6px}
 .hd-row{display:flex;align-items:center;gap:6px;font-size:11px;color:#94A3B8}
 .hd-row .lbl{width:80px;flex-shrink:0}
-.hd-row .tr{flex:1;height:5px;background:#2A3850;border-radius:3px;overflow:hidden}
+.hd-row .tr{flex:1;height:8px;background:#2A3850;border-radius:4px;overflow:hidden}
 .hd-row .tr>div{height:100%;border-radius:3px;transition:width .4s}
 .hd-row .val{font-weight:700;color:#F1F5F9;min-width:30px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
 .hd-donut{position:relative;width:124px;height:124px;flex-shrink:0}
@@ -1262,15 +1262,11 @@ input.filter-sel{padding:5px 10px;height:32px}
 
     <!-- OFICINA -->
     <div class="hd-card">
-      <div onclick="navegarPara('oficinas')" style="cursor:pointer;display:flex;flex-direction:column;gap:8px;flex:1">
-        <div class="hd-h5">Oficina — Kanban de manutenção</div>
-        <div style="display:flex;align-items:baseline;gap:6px">
-          <div id="home-kpi-oficina" class="hd-big" style="color:#F5A96D">—</div>
-          <div style="font-size:12px;color:#64748B">em processo</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <div class="hd-row"><span class="lbl">Recepção</span><div class="tr"><div id="home-of-bar-recep" style="background:#5B7A8A;width:0%"></div></div><span id="home-of-recep" class="val">—</span></div>
+      <div onclick="navegarPara('oficinas')" style="cursor:pointer;display:flex;flex-direction:column;gap:9px;flex:1">
+        <div class="hd-h5">Oficina — <span id="home-kpi-oficina" style="color:#F5A96D">—</span> em processo</div>
+        <div style="display:flex;flex-direction:column;gap:9px;flex:1;justify-content:center">
           <div class="hd-row"><span class="lbl">Manutenção</span><div class="tr"><div id="home-of-bar-manut" style="background:#E8630A;width:0%"></div></div><span id="home-of-manut" class="val">—</span></div>
+          <div class="hd-row"><span class="lbl">Recepção</span><div class="tr"><div id="home-of-bar-recep" style="background:#5B7A8A;width:0%"></div></div><span id="home-of-recep" class="val">—</span></div>
           <div class="hd-row"><span class="lbl">Rev. Saída</span><div class="tr"><div id="home-of-bar-pronto" style="background:#F59E0B;width:0%"></div></div><span id="home-of-pronto" class="val" style="color:#FBBF24">—</span></div>
         </div>
       </div>
@@ -1280,17 +1276,24 @@ input.filter-sel{padding:5px 10px;height:32px}
       </div>
     </div>
 
-    <!-- PÁTIOS -->
+    <!-- PÁTIOS (donut 3 fatias — segmentos preenchidos por renderHomeDarkCharts) -->
     <div class="hd-card clickable" onclick="navegarPara('patio')">
-      <div class="hd-h5">Gestão de Pátios</div>
-      <div style="display:flex;align-items:baseline;gap:6px">
-        <div id="home-kpi-patio" class="hd-big">—</div>
-        <div style="font-size:12px;color:#64748B">prontos</div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <div class="hd-row"><span class="lbl">Locação</span><div class="tr"><div id="home-pat-bar-loc" style="background:#E8630A;width:0%"></div></div><span id="home-pat-loc" class="val">—</span></div>
-        <div class="hd-row"><span class="lbl">Venda</span><div class="tr"><div id="home-pat-bar-venda" style="background:#5B7A8A;width:0%"></div></div><span id="home-pat-venda" class="val">—</span></div>
-        <div class="hd-row"><span class="lbl">Sem classif.</span><div class="tr"><div id="home-pat-bar-sem" style="background:#F59E0B;width:0%"></div></div><span id="home-pat-sem" class="val" style="color:#FBBF24">—</span></div>
+      <div class="hd-h5">Pátios — prontos</div>
+      <div style="display:flex;align-items:center;gap:14px;flex:1">
+        <div class="hd-donut">
+          <svg viewBox="0 0 124 124">
+            <circle cx="62" cy="62" r="50" fill="none" stroke="#2A3850" stroke-width="12"/>
+            <circle id="hd-pat-seg-loc" cx="62" cy="62" r="50" fill="none" stroke="#E8630A" stroke-width="12" stroke-dasharray="0 314.16"/>
+            <circle id="hd-pat-seg-venda" cx="62" cy="62" r="50" fill="none" stroke="#5B7A8A" stroke-width="12" stroke-dasharray="0 314.16"/>
+            <circle id="hd-pat-seg-sem" cx="62" cy="62" r="50" fill="none" stroke="#F59E0B" stroke-width="12" stroke-dasharray="0 314.16"/>
+          </svg>
+          <div class="ctr"><b id="home-kpi-patio">—</b><span>prontos</span></div>
+        </div>
+        <div class="hd-lg">
+          <div class="li"><i style="background:#E8630A"></i>Locação <b id="home-pat-loc">—</b></div>
+          <div class="li"><i style="background:#5B7A8A"></i>Venda <b id="home-pat-venda">—</b></div>
+          <div class="li"><i style="background:#F59E0B"></i>Sem classif. <b id="home-pat-sem">—</b></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1305,20 +1308,28 @@ input.filter-sel{padding:5px 10px;height:32px}
         <div id="home-kpi-prog" class="hd-big">—</div>
         <div style="font-size:12px;color:#64748B">programados</div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <div class="hd-row"><span class="lbl">Reservados</span><div class="tr"><div id="home-prog-bar-res" style="background:#E8630A;width:0%"></div></div><span id="home-prog-res" class="val">—</span></div>
-        <div class="hd-row"><span class="lbl">Concluídos</span><div class="tr"><div id="home-prog-bar-conc" style="background:#22C55E;width:0%"></div></div><span id="home-prog-conc" class="val" style="color:#4ADE80">—</span></div>
-        <div class="hd-row"><span class="lbl">Atrasados</span><div class="tr"><div id="home-prog-bar-atras" style="background:#EF4444;width:0%"></div></div><span id="home-prog-atras" class="val" style="color:#F87171">—</span></div>
+      <div class="hd-stack" style="margin:8px 0 6px">
+        <i id="hd-prog-seg-conc" style="width:0%;background:#22C55E"></i><i id="hd-prog-seg-res" style="width:0%;background:#E8630A"></i><i id="hd-prog-seg-aexec" style="width:0%;background:#3D4F68"></i>
+      </div>
+      <div class="hd-lg" style="flex-direction:row;flex-wrap:wrap;gap:6px 12px">
+        <div class="li"><i style="background:#22C55E"></i>Concluídos <b id="home-prog-conc">—</b></div>
+        <div class="li"><i style="background:#E8630A"></i>Reservados <b id="home-prog-res">—</b></div>
+        <div class="li"><i style="background:#3D4F68"></i>A executar <b id="hd-prog-aexec">—</b></div>
+        <div class="li"><i style="background:#EF4444"></i>Atrasados <b id="home-prog-atras" style="color:#F87171">—</b></div>
       </div>
     </div>
 
     <!-- RCD — AVARIAS -->
     <div class="hd-card clickable" onclick="navegarPara('rcd')">
       <div class="hd-h5">RCD — Avarias</div>
-      <div class="hd-trio" style="flex:1">
-        <div class="t"><div id="home-rcd-triagem" style="font-size:22px;font-weight:800;color:#F1F5F9;line-height:1">—</div><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748B;margin-top:4px">Triagem</div></div>
-        <div class="t"><div id="home-rcd-desmob" style="font-size:22px;font-weight:800;color:#FBBF24;line-height:1">—</div><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748B;margin-top:4px">Desmob.</div></div>
-        <div class="t"><div id="home-rcd-contrato" style="font-size:22px;font-weight:800;color:#F1F5F9;line-height:1">—</div><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748B;margin-top:4px">Contrato</div></div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <div id="home-rcd-contrato" class="hd-big">—</div>
+        <div style="font-size:12px;color:#64748B">em contrato</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px;flex:1;justify-content:center">
+        <div class="hd-row"><span class="lbl">Desmob.</span><div class="tr"><div id="hd-rcd-bar-desmob" style="background:#F59E0B;width:0%"></div></div><span id="home-rcd-desmob" class="val" style="color:#FBBF24">—</span></div>
+        <div class="hd-row"><span class="lbl">Triagem</span><div class="tr"><div id="hd-rcd-bar-triagem" style="background:#3D4F68;width:0%"></div></div><span id="home-rcd-triagem" class="val">—</span></div>
+        <div class="hd-row"><span class="lbl">Contrato</span><div class="tr"><div id="hd-rcd-bar-contrato" style="background:#5B7A8A;width:0%"></div></div><span id="hd-rcd-contrato2" class="val" style="color:#94A3B8">—</span></div>
       </div>
     </div>
 
@@ -19381,6 +19392,30 @@ function renderHomeAtencao(){
       ?itens.map((i,ix)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;${ix?'border-top:1px solid #2E3D52;':''}font-size:12px;color:#94A3B8"><span>${i.t}</span><span style="font-size:11px;font-weight:800;border-radius:999px;padding:2px 10px;background:${i.bg};color:${i.tx}">${i.v}</span></div>`).join('')
       :'<div style="text-align:center;font-size:12px;color:#4ADE80;padding:14px 0">✓ Nenhuma pendência crítica</div>';
   }catch(e){el.textContent='—';}
+  try{renderHomeDarkCharts();}catch(e){}
+}
+
+// Donut de pátios, barra empilhada da programação e barras do RCD —
+// lê os valores que os setters já escreveram no DOM (roda logo após rgUpdateHomeKpis)
+function renderHomeDarkCharts(){
+  const num=id=>{const el=document.getElementById(id);const v=parseInt(String(el&&el.textContent||'').replace(/\./g,''),10);return isNaN(v)?0:v;};
+  // Pátios — donut 3 fatias
+  const pl=num('home-pat-loc'),pv=num('home-pat-venda'),ps=num('home-pat-sem');
+  const tot=pl+pv+ps,C=314.16;
+  const seg=(id,frac,off)=>{const el=document.getElementById(id);if(el){el.setAttribute('stroke-dasharray',(frac*C).toFixed(1)+' '+C.toFixed(2));el.setAttribute('stroke-dashoffset',(-off*C).toFixed(1));}};
+  if(tot>0){seg('hd-pat-seg-loc',pl/tot,0);seg('hd-pat-seg-venda',pv/tot,pl/tot);seg('hd-pat-seg-sem',ps/tot,(pl+pv)/tot);}
+  // Programação — barra empilhada + "a executar"
+  const prog=num('home-kpi-prog'),conc=num('home-prog-conc'),res=num('home-prog-res');
+  const aexec=Math.max(0,prog-conc-res);
+  const ax=document.getElementById('hd-prog-aexec');if(ax)ax.textContent=aexec;
+  const pw=(id,v)=>{const el=document.getElementById(id);if(el)el.style.width=(prog>0?Math.round(v/prog*100):0)+'%';};
+  pw('hd-prog-seg-conc',conc);pw('hd-prog-seg-res',res);pw('hd-prog-seg-aexec',aexec);
+  // RCD — barras proporcionais ao maior valor
+  const rd=num('home-rcd-desmob'),rt=num('home-rcd-triagem'),rc=num('home-rcd-contrato');
+  const rmax=Math.max(rd,rt,rc,1);
+  const rw=(id,v)=>{const el=document.getElementById(id);if(el)el.style.width=(v>0?Math.max(3,Math.round(v/rmax*100)):0)+'%';};
+  rw('hd-rcd-bar-desmob',rd);rw('hd-rcd-bar-triagem',rt);rw('hd-rcd-bar-contrato',rc);
+  const rc2=document.getElementById('hd-rcd-contrato2');if(rc2)rc2.textContent=rc||'—';
 }
 // ═════════════════════════════════════════════════════════════════════════════
 
