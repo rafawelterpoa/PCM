@@ -302,6 +302,15 @@ input:focus,select:focus,textarea:focus{
 #page-valepecas .vp-kpi b{font-size:22px;font-weight:800;color:#1A2E35;line-height:1;display:block}
 #page-valepecas .vp-kpi span{font-size:11px;color:#8FA4AE}
 
+/* ── MANUTENÇÃO DE TERCEIROS (mesmo tratamento — seções + recolhível) ── */
+#page-manuterceiros .mt-row:hover td{background:#FDF3EA}
+#page-manuterceiros .mt-act{opacity:.3;background:none;border:none;font-size:13px;cursor:pointer;transition:opacity .12s;padding:3px 7px;border-radius:5px}
+#page-manuterceiros .mt-row:hover .mt-act{opacity:1}
+#page-manuterceiros .mt-sec-tag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#B7862E;background:#FDE8D8;display:inline-block;padding:2px 9px;border-radius:5px;margin-bottom:10px}
+#page-manuterceiros .mt-kpi{background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:12px 16px}
+#page-manuterceiros .mt-kpi b{font-size:20px;font-weight:800;color:#1A2E35;line-height:1;display:block;margin-bottom:4px}
+#page-manuterceiros .mt-kpi span{font-size:11px;color:#8FA4AE}
+
 .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#5A7280;margin-bottom:12px;margin-top:20px;padding-bottom:6px;border-bottom:2px solid #E8630A;display:inline-block}
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:20px}
 .etapas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:14px}
@@ -14817,6 +14826,7 @@ function mtSalvar(){
     document.getElementById('mt-aprovador').value='';
   }
   mtSalvarTudo(obj);mtRender();mtUpdateHomeBadge();mtPopularFiltroFornecedor();showToast('✅ Registro salvo!');
+  mtFormRecolher();
 }
 
 function mtEditar(id){
@@ -14830,6 +14840,7 @@ function mtEditar(id){
   document.getElementById('mt-form-label').textContent='Editando: '+r.equipId+' — '+r.fornecedor;
   document.getElementById('mt-salvar-btn').textContent='💾 Salvar alterações';
   document.getElementById('mt-cancelar-btn').style.display='inline-block';
+  mtFormExpandir();
   document.getElementById('page-manuterceiros').scrollTop=0;
 }
 
@@ -14846,10 +14857,24 @@ function mtAba(aba){
   ['andamento','historico'].forEach(a=>{
     const btn=document.getElementById('mt-tab-'+a);if(!btn)return;
     const ativo=a===aba;
-    btn.style.color=ativo?'#7c3aed':'#8FA4AE';
-    btn.style.borderBottomColor=ativo?'#7c3aed':'transparent';
+    btn.style.color=ativo?'#E8630A':'#8FA4AE';
+    btn.style.borderBottomColor=ativo?'#E8630A':'transparent';
   });
   mtRender();
+}
+
+// Formulário recolhível — some quando não está em uso
+function mtFormExpandir(){
+  const body=document.getElementById('mt-form-body'), tgl=document.getElementById('mt-form-toggle');
+  if(body)body.style.display='block';
+  if(tgl)tgl.style.display='none';
+  document.getElementById('mt-equip-id')?.focus();
+}
+function mtFormRecolher(){
+  const body=document.getElementById('mt-form-body'), tgl=document.getElementById('mt-form-toggle');
+  if(body)body.style.display='none';
+  if(tgl)tgl.style.display='flex';
+  mtCancelar();
 }
 
 async function mtConcluir(id){
@@ -14906,17 +14931,13 @@ function mtRender(){
     const topTipo=Object.entries(porTipo).sort((a,b)=>b[1]-a[1])[0];
     const nForn=[...new Set(_mtRegistros.map(r=>r.fornecedor).filter(Boolean))].length;
     kpiEl.innerHTML=[
-      {l:'Total de Registros',v:_mtRegistros.length,c:'#7c3aed',s:'serviços cadastrados',a:'#7c3aed'},
-      {l:'Valor Total',v:'R$ '+totalValor.toLocaleString('pt-BR',{minimumFractionDigits:2}),c:'#B91C1C',s:'em serviços externos',a:'#B91C1C'},
-      {l:'Fornecedores',v:nForn,c:'#1E8A4C',s:'fornecedores diferentes',a:'#1E8A4C'},
-      {l:'Tipo Mais Freq.',v:topTipo?topTipo[0]:'—',c:'#B45309',s:topTipo?topTipo[1]+' registros':'',a:'#f59e0b'},
-    ].map(k=>`<div style="background:#fff;border:1px solid #E2E8ED;border-left:3px solid ${k.a};border-radius:10px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;margin-bottom:6px">${k.l}</div>
-      <div style="font-size:22px;font-weight:800;color:${k.c};line-height:1.1;margin-bottom:4px">${k.v}</div>
-      <div style="font-size:11px;color:#8FA4AE">${k.s}</div>
-    </div>`).join('');
+      {l:'Total de registros',v:_mtRegistros.length,s:'serviços cadastrados'},
+      {l:'Valor total',v:'R$ '+totalValor.toLocaleString('pt-BR',{minimumFractionDigits:2}),s:'em serviços externos'},
+      {l:'Fornecedores',v:nForn,s:'fornecedores diferentes'},
+      {l:'Tipo mais freq.',v:topTipo?topTipo[0]:'—',s:topTipo?topTipo[1]+' registros':''},
+    ].map(k=>`<div class="mt-kpi"><b>${k.v}</b><span>${k.l} — ${k.s}</span></div>`).join('');
     const hdrStats=document.getElementById('mt-header-stats');
-    if(hdrStats) hdrStats.innerHTML=`<div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#7c3aed">${_mtRegistros.length}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Registros</div></div><div style="width:1px;height:32px;background:#E2E8ED"></div><div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#B91C1C">R$ ${(totalValor/1000).toLocaleString('pt-BR',{minimumFractionDigits:0})}k</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Valor Total</div></div><div style="width:1px;height:32px;background:#E2E8ED"></div><div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#1E8A4C">${nForn}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Fornecedores</div></div>`;
+    if(hdrStats) hdrStats.innerHTML=`<div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#1A2E35">${_mtRegistros.length}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Registros</div></div><div style="width:1px;height:32px;background:#E2E8ED"></div><div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#1A2E35">R$ ${(totalValor/1000).toLocaleString('pt-BR',{minimumFractionDigits:0})}k</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Valor Total</div></div><div style="width:1px;height:32px;background:#E2E8ED"></div><div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#1A2E35">${nForn}</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8FA4AE;letter-spacing:.04em">Fornecedores</div></div>`;
   }
 
   // Tabela
@@ -14925,7 +14946,7 @@ function mtRender(){
   const colHd=s=>`<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#5A7280;border-bottom:1px solid #E2E8ED;background:#F4F6F8;white-space:nowrap">${s}</th>`;
   const tipoCor={Corretiva:'#B91C1C',Sinistro:'#B45309','Preparação para Mobilização':'#1D4ED8',Preventiva:'#1E8A4C'};
   const tipoBg={Corretiva:'#FEE2E2',Sinistro:'#FEF3C7','Preparação para Mobilização':'#DBEAFE',Preventiva:'#E8F5EE'};
-  const rows=dados.map(r=>`<tr style="border-bottom:1px solid #E2E8ED;transition:background 120ms" onmouseenter="this.style.background='#F8FAFB'" onmouseleave="this.style.background=''">
+  const rows=dados.map(r=>`<tr class="mt-row" style="border-bottom:1px solid #E2E8ED">
     <td style="padding:10px 12px;font-family:monospace;font-weight:700;font-size:12px;color:#1A2E35">${r.equipId||'—'}</td>
     <td style="padding:10px 12px;font-size:12px;color:#5A7280">${r.familia||'—'}</td>
     <td style="padding:10px 12px"><span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:${tipoBg[r.tipo]||'#F0F4F6'};color:${tipoCor[r.tipo]||'#5A7280'}">${r.tipo||'—'}</span></td>
@@ -14936,12 +14957,12 @@ function mtRender(){
     <td style="padding:10px 12px;font-family:monospace;font-size:11px;color:#5A7280">${r.rc||'—'}</td>
     <td style="padding:10px 12px;font-family:monospace;font-size:11px;color:#5A7280">${r.pc||'—'}</td>
     <td style="padding:10px 12px;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1A2E35" title="${r.descricao||''}">${r.descricao||'—'}</td>
-    <td style="padding:10px 12px;text-align:right;font-weight:700;color:#B91C1C;font-size:12px;white-space:nowrap">${r.valor?'R$ '+r.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'}</td>
+    <td style="padding:10px 12px;text-align:right;font-weight:700;color:#1A2E35;font-size:12px;white-space:nowrap">${r.valor?'R$ '+r.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'}</td>
     <td style="padding:10px 12px;font-size:11px;color:#8FA4AE">${r.dataRegistro||'—'}</td>
     <td style="padding:10px 12px;text-align:right;white-space:nowrap">
-      ${!abaHist?`<button onclick="mtConcluir('${r.id}')" style="padding:4px 10px;background:#E8F5EE;color:#1E8A4C;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin-right:4px">✓ Concluir</button>`:`<span style="font-size:11px;color:#8FA4AE;margin-right:8px">${r.dataConclusao||''}</span>`}
-      <button onclick="mtEditar('${r.id}')" style="padding:4px 10px;background:#FDE8D8;color:#E8630A;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin-right:4px">Editar</button>
-      <button onclick="mtDeletar('${r.id}')" style="padding:4px 10px;background:#FEE2E2;color:#B91C1C;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer">Excluir</button>
+      ${!abaHist?`<button class="mt-act" onclick="mtConcluir('${r.id}')" title="Concluir">✓</button>`:`<span style="font-size:11px;color:#8FA4AE;margin-right:8px">${r.dataConclusao||''}</span>`}
+      <button class="mt-act" onclick="mtEditar('${r.id}')" title="Editar">✎</button>
+      <button class="mt-act" onclick="mtDeletar('${r.id}')" title="Excluir">🗑</button>
     </td>
   </tr>`).join('');
   tabEl.innerHTML=`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)">
@@ -19723,16 +19744,26 @@ if ('serviceWorker' in navigator) {
 
 <!-- MANUTENÇÃO DE TERCEIROS -->
 <div id="page-manuterceiros" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow:auto;background:#F4F6F8;z-index:100">
-  <div style="padding:24px 28px;min-width:1200px">
+  <div style="padding:22px 26px;min-width:1200px">
 
-    <!-- FORMULÁRIO -->
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
+    <!-- Barra de abertura do formulário (visível quando recolhido) -->
+    <div id="mt-form-toggle" onclick="mtFormExpandir()" style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:14px 18px;margin-bottom:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.06)'" onmouseout="this.style.boxShadow=''">
+      <span style="font-size:13px;font-weight:700;color:#1A2E35">+ Novo registro de manutenção externa</span>
+      <span style="background:#E8630A;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;border-radius:7px">+ Novo registro</span>
+    </div>
+
+    <!-- FORMULÁRIO (recolhível — some quando não está em uso) -->
+    <div id="mt-form-body" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #E2E8ED">
         <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#5A7280" id="mt-form-label">Novo Registro</span>
-        <button class="gi-btn ghost" id="mt-cancelar-btn" style="display:none;font-size:11px;padding:5px 12px" onclick="mtCancelar()">✕ Cancelar</button>
+        <div style="display:flex;gap:8px">
+          <button class="gi-btn ghost" id="mt-cancelar-btn" style="display:none;font-size:11px;padding:5px 12px" onclick="mtCancelar()">✕ Cancelar</button>
+          <button type="button" onclick="mtFormRecolher()" style="background:#F4F6F8;color:#5A7280;border:1px solid #E2E8ED;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer">✕ Fechar</button>
+        </div>
       </div>
-      <!-- Linha 1 -->
-      <div class="gi-form-row" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:10px">
+
+      <span class="mt-sec-tag">Equipamento e serviço</span>
+      <div class="gi-form-row" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:14px">
         <div><label class="gi-label">ID Equipamento</label><input class="gi-input" id="mt-equip-id" placeholder="Ex: MCP04741" maxlength="8" oninput="this.value=this.value.toUpperCase();mtAutoFillFamilia()" onblur="pcmValidarEquipId(this)"></div>
         <div><label class="gi-label">Família</label><input class="gi-input" id="mt-familia" placeholder="Auto-preenchido" readonly style="background:#f8fafc"></div>
         <div><label class="gi-label">Tipo de Manutenção</label>
@@ -19740,37 +19771,42 @@ if ('serviceWorker' in navigator) {
             <option value="">— Selecione —</option>
             <option>Corretiva</option><option>Sinistro</option><option>Preparação para Mobilização</option><option>Preventiva</option>
           </select></div>
-        <div><label class="gi-label">Solicitante</label><select class="gi-select" id="mt-solicitante"><option value="">— Selecione —</option></select></div>
       </div>
-      <!-- Linha 2 -->
-      <div class="gi-form-row" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:10px">
+
+      <span class="mt-sec-tag">Fornecedor e responsáveis</span>
+      <div class="gi-form-row" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:14px">
         <div><label class="gi-label">Fornecedor</label><input class="gi-input" id="mt-fornecedor" placeholder="Nome do fornecedor"></div>
+        <div><label class="gi-label">Solicitante</label><select class="gi-select" id="mt-solicitante"><option value="">— Selecione —</option></select></div>
         <div><label class="gi-label">Aprovador</label><select class="gi-select" id="mt-aprovador"><option value="">— Selecione —</option></select></div>
+      </div>
+
+      <span class="mt-sec-tag">Referências</span>
+      <div class="gi-form-row" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:14px">
         <div><label class="gi-label">O.M.</label><input class="gi-input" id="mt-om" placeholder="Nº da O.M."></div>
         <div><label class="gi-label">RC</label><input class="gi-input" id="mt-rc" placeholder="Nº do RC"></div>
-      </div>
-      <!-- Linha 3 -->
-      <div class="gi-form-row" style="grid-template-columns:1fr 2fr 1fr;margin-bottom:10px">
         <div><label class="gi-label">Pedido de Compras</label><input class="gi-input" id="mt-pc" placeholder="Nº do PC"></div>
+      </div>
+
+      <span class="mt-sec-tag">Detalhes do serviço</span>
+      <div class="gi-form-row" style="grid-template-columns:2fr 1fr;margin-bottom:10px">
         <div><label class="gi-label">Descrição do Serviço</label><input class="gi-input" id="mt-descricao" placeholder="Descreva o serviço realizado"></div>
         <div><label class="gi-label">Valor do Serviço (R$)</label><input class="gi-input" type="number" min="0" step="0.01" id="mt-valor" placeholder="0,00"></div>
       </div>
-      <!-- Linha 4 -->
       <div class="gi-form-row" style="grid-template-columns:1fr;margin-bottom:14px">
         <div><label class="gi-label">Justificativa</label><input class="gi-input" id="mt-justificativa" placeholder="Justifique a necessidade do serviço externo"></div>
       </div>
       <input type="hidden" id="mt-editing-id">
       <div style="display:flex;gap:8px">
-        <button class="gi-btn" id="mt-salvar-btn" onclick="mtSalvar()" style="background:#7c3aed">💾 Registrar</button>
+        <button class="gi-btn" id="mt-salvar-btn" onclick="mtSalvar()" style="background:#E8630A">💾 Registrar</button>
       </div>
     </div>
 
     <!-- KPIs rápidos -->
-    <div id="mt-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px"></div>
+    <div id="mt-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px"></div>
 
     <!-- ABAS -->
     <div style="display:flex;gap:0;border-bottom:2px solid #E2E8ED;margin-bottom:16px">
-      <button id="mt-tab-andamento" onclick="mtAba('andamento')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#7c3aed;border-bottom:2px solid #7c3aed;margin-bottom:-2px">Em Andamento</button>
+      <button id="mt-tab-andamento" onclick="mtAba('andamento')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#E8630A;border-bottom:2px solid #E8630A;margin-bottom:-2px">Em Andamento</button>
       <button id="mt-tab-historico" onclick="mtAba('historico')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#8FA4AE;border-bottom:2px solid transparent;margin-bottom:-2px">Histórico / Concluídos</button>
     </div>
 
@@ -19785,7 +19821,7 @@ if ('serviceWorker' in navigator) {
       <select id="mt-fil-fornecedor" onchange="mtRender()" style="padding:7px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;background:#fff;color:#1A2E35;flex-shrink:0;max-width:180px">
         <option value="">Fornecedor — Todos</option>
       </select>
-      <button onclick="mtGerarRelatorio()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">Relatório</button>
+      <button onclick="mtGerarRelatorio()" style="background:#fff;color:#5A7280;border:1px solid #E2E8ED;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">Relatório</button>
     </div>
 
     <!-- Tabela -->
