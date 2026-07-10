@@ -1226,62 +1226,65 @@ input.filter-sel{padding:5px 10px;height:32px}
   </div>
 </div>
 
-<!-- OPERAÇÕES -->
+<!-- OPERAÇÕES (dark) -->
 <div class="page" id="page-operacoes">
-  <div style="padding:24px 28px;max-width:1400px">
+  <div style="padding:22px 26px;max-width:1500px;background:#0F172A;min-height:calc(100vh - 56px)">
 
     <!-- Header -->
     <div style="margin-bottom:20px;display:flex;align-items:flex-start;gap:10px">
       <div style="width:3px;height:24px;background:#E8630A;border-radius:2px;flex-shrink:0;margin-top:4px"></div>
       <div>
-        <div style="font-size:20px;font-weight:700;color:#1A2E35;line-height:1.2">Em contrato</div>
-        <div style="font-size:12px;color:#8FA4AE;margin-top:3px">Equipamentos em campo — plantas e obras ativas</div>
+        <div style="font-size:20px;font-weight:700;color:#F1F5F9;line-height:1.2">Em contrato</div>
+        <div style="font-size:12px;color:#64748B;margin-top:3px">Equipamentos em campo — plantas e obras ativas</div>
       </div>
     </div>
 
     <!-- KPIs (3 cards) -->
-    <div id="op-kpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px"></div>
+    <div id="op-kpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"></div>
 
     <!-- Filtros unificados -->
-    <div style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;margin-bottom:16px;overflow:hidden">
-      <!-- Linha 1: tipo + contrato -->
-      <div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #F0F4F6;flex-wrap:wrap">
+    <div style="background:#1E293B;border:1px solid #2E3D52;border-radius:10px;margin-bottom:16px;overflow:hidden">
+      <!-- Linha única: tipo + contrato com rótulo inline -->
+      <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:2px solid #2E3D52;flex-wrap:wrap">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748B;flex-shrink:0">Tipo:</span>
         <div id="op-filtro-tipo-wrap" style="display:flex;gap:5px">
-          <button onclick="opSetTipo('')"            data-tipo=""           style="padding:5px 14px;border-radius:20px;border:1.5px solid #E8630A;background:#FDE8D8;color:#E8630A;font-size:11px;font-weight:600;cursor:pointer">Tudo</button>
-          <button onclick="opSetTipo('equipamento')" data-tipo="equipamento" style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Equipamentos</button>
-          <button onclick="opSetTipo('implemento')"  data-tipo="implemento"  style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Implementos</button>
-          <button onclick="opSetTipo('acessorio')"   data-tipo="acessorio"   style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Acessórios</button>
+          <button onclick="opSetTipo('')"            data-tipo=""           style="padding:5px 14px;border-radius:20px;border:1.5px solid #E8630A;background:rgba(232,99,10,.16);color:#F5A96D;font-size:11px;font-weight:600;cursor:pointer">Tudo</button>
+          <button onclick="opSetTipo('equipamento')" data-tipo="equipamento" style="padding:5px 14px;border-radius:20px;border:1.5px solid #2E3D52;background:#1E293B;color:#94A3B8;font-size:11px;font-weight:600;cursor:pointer">Equipamentos</button>
+          <button onclick="opSetTipo('implemento')"  data-tipo="implemento"  style="padding:5px 14px;border-radius:20px;border:1.5px solid #2E3D52;background:#1E293B;color:#94A3B8;font-size:11px;font-weight:600;cursor:pointer">Implementos</button>
+          <button onclick="opSetTipo('acessorio')"   data-tipo="acessorio"   style="padding:5px 14px;border-radius:20px;border:1.5px solid #2E3D52;background:#1E293B;color:#94A3B8;font-size:11px;font-weight:600;cursor:pointer">Acessórios</button>
         </div>
-        <div style="width:1px;height:20px;background:#E2E8ED;flex-shrink:0"></div>
+        <div style="width:1px;height:20px;background:#2E3D52;flex-shrink:0"></div>
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748B;flex-shrink:0">Contrato:</span>
         <div id="op-filtro-contrato-wrap" style="display:flex;gap:5px;flex-wrap:wrap">
-          <button onclick="opSetContrato('')"                   data-contrato=""                    style="padding:5px 14px;border-radius:20px;border:1.5px solid #7c3aed;background:#f5f3ff;color:#7c3aed;font-size:11px;font-weight:600;cursor:pointer">Todos contratos</button>
-          <button onclick="opSetContrato('Gestão de frota')"    data-contrato="Gestão de frota"     style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Gestão de frota</button>
-          <button onclick="opSetContrato('Locação')"            data-contrato="Locação"             style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Locação</button>
-          <button onclick="opSetContrato('Locação + Operação')" data-contrato="Locação + Operação"  style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Locação + Operação</button>
-          <button onclick="opSetContrato('Venda')"              data-contrato="Venda"               style="padding:5px 14px;border-radius:20px;border:1.5px solid #E2E8ED;background:#fff;color:#5A7280;font-size:11px;font-weight:600;cursor:pointer">Venda</button>
+          <button onclick="opSetContrato('')"                   data-contrato=""                    style="padding:5px 14px;border-radius:20px;border:1.5px solid #E8630A;background:rgba(232,99,10,.16);color:#F5A96D;font-size:11px;font-weight:600;cursor:pointer">Todos</button>
+          <button onclick="opSetContrato('Gestão de frota')"    data-contrato="Gestão de frota"     style="padding:5px 14px;border-radius:20px;border:1.5px solid #2E3D52;background:#1E293B;color:#94A3B8;font-size:11px;font-weight:600;cursor:pointer">Gestão de frota</button>
+          <button onclick="opSetContrato('Locação')"            data-contrato="Locação"             style="padding:5px 14px;border-radius:20px;border:1.5px solid #2E3D52;background:#1E293B;color:#94A3B8;font-size:11px;font-weight:600;cursor:pointer">Locação</button>
+          <button onclick="opSetContrato('Locação + Operação')" data-contrato="Locação + Operação"  style="padding:5px 14px;border-radius:20px;border:1.5px solid #2E3D52;background:#1E293B;color:#94A3B8;font-size:11px;font-weight:600;cursor:pointer">Locação + Operação</button>
+          <button onclick="opSetContrato('Venda')"              data-contrato="Venda"               style="padding:5px 14px;border-radius:20px;border:1.5px solid #2E3D52;background:#1E293B;color:#94A3B8;font-size:11px;font-weight:600;cursor:pointer">Venda</button>
         </div>
       </div>
       <!-- Linha 2: buscas + selects -->
-      <div style="padding:8px 14px;display:flex;align-items:center;gap:8px;background:#F4F6F8;flex-wrap:wrap">
-        <input id="op-busca-id" type="text" placeholder="🔍 Buscar por ID..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:130px;outline:none;box-sizing:border-box;background:#fff;color:#1A2E35" oninput="opRender()">
-        <input id="op-busca" type="text" placeholder="🔍 Operação ou cliente..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:190px;outline:none;box-sizing:border-box;background:#fff;color:#1A2E35" oninput="opRender()">
-        <select id="op-filtro-estado" onchange="opRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:150px;background:#fff;color:#5A7280;outline:none;box-sizing:border-box">
+      <div style="padding:10px 14px;display:flex;align-items:center;gap:8px;background:#182234;flex-wrap:wrap">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748B;flex-shrink:0">Filtros:</span>
+        <input id="op-busca-id" type="text" placeholder="🔍 Buscar por ID..." style="padding:6px 12px;border:1px solid #2E3D52;border-radius:7px;font-size:11px;width:130px;outline:none;box-sizing:border-box;background:#0F172A;color:#F1F5F9" oninput="opRender()">
+        <input id="op-busca" type="text" placeholder="🔍 Operação ou cliente..." style="padding:6px 12px;border:1px solid #2E3D52;border-radius:7px;font-size:11px;width:190px;outline:none;box-sizing:border-box;background:#0F172A;color:#F1F5F9" oninput="opRender()">
+        <select id="op-filtro-estado" onchange="opRender()" style="padding:6px 10px;border:1px solid #2E3D52;border-radius:7px;font-size:11px;width:150px;background:#0F172A;color:#94A3B8;outline:none;box-sizing:border-box">
           <option value="">Estado — Todos</option>
         </select>
-        <select id="op-filtro-familia" onchange="opRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:11px;width:150px;background:#fff;color:#5A7280;outline:none;box-sizing:border-box">
+        <select id="op-filtro-familia" onchange="opRender()" style="padding:6px 10px;border:1px solid #2E3D52;border-radius:7px;font-size:11px;width:150px;background:#0F172A;color:#94A3B8;outline:none;box-sizing:border-box">
           <option value="">Família — Todas</option>
         </select>
       </div>
     </div>
 
     <!-- Gráficos lado a lado -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:16px">Top Famílias</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div style="background:#1E293B;border:1px solid #2E3D52;border-radius:10px;padding:16px 18px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748B;margin-bottom:14px">Top Famílias</div>
         <div id="op-chart"></div>
       </div>
-      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:16px">Top Clientes por Qtd. Equipamentos</div>
+      <div style="background:#1E293B;border:1px solid #2E3D52;border-radius:10px;padding:16px 18px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748B;margin-bottom:14px">Top Clientes por Qtd. Equipamentos</div>
         <div id="op-chart-clientes"></div>
       </div>
     </div>
@@ -18860,9 +18863,9 @@ function opSetTipo(v){
   _opTipoFiltro = v;
   document.querySelectorAll('#op-filtro-tipo-wrap button').forEach(b=>{
     const sel = b.dataset.tipo === v;
-    b.style.background = sel ? '#FDE8D8' : '#fff';
-    b.style.color = sel ? '#E8630A' : '#5A7280';
-    b.style.borderColor = sel ? '#E8630A' : '#E2E8ED';
+    b.style.background = sel ? 'rgba(232,99,10,.16)' : '#1E293B';
+    b.style.color = sel ? '#F5A96D' : '#94A3B8';
+    b.style.borderColor = sel ? '#E8630A' : '#2E3D52';
   });
   opRender();
 }
@@ -18872,9 +18875,9 @@ function opSetContrato(v){
   else { _opContratoFiltros.add(v); }
   document.querySelectorAll('#op-filtro-contrato-wrap button').forEach(b=>{
     const sel = b.dataset.contrato===''?_opContratoFiltros.size===0:_opContratoFiltros.has(b.dataset.contrato);
-    b.style.background = sel ? '#f5f3ff' : '#fff';
-    b.style.color = sel ? '#7c3aed' : '#5A7280';
-    b.style.borderColor = sel ? '#7c3aed' : '#E2E8ED';
+    b.style.background = sel ? 'rgba(232,99,10,.16)' : '#1E293B';
+    b.style.color = sel ? '#F5A96D' : '#94A3B8';
+    b.style.borderColor = sel ? '#E8630A' : '#2E3D52';
   });
   opRender();
 }
@@ -18959,13 +18962,13 @@ function opRenderKpis(opsFiltradas){
   const estados=[...new Set(ops.map(o=>o.estado).filter(Boolean))].length;
   const tipoLabel=_opTipoFiltro?({equipamento:'Equipamentos',implemento:'Implementos',acessorio:'Acessórios'}[_opTipoFiltro]):'unidades locadas';
   el.innerHTML=[
-    {l:'Operações Ativas',v:totalOps,c:'#E8630A',sub:'contratos ativos'},
-    {l:'Em Campo',v:totalEquips,c:'#1A2E35',sub:tipoLabel},
-    {l:'Estados Atendidos',v:estados,c:'#1D4ED8',sub:'UFs com operação'},
-  ].map(k=>`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;margin-bottom:8px">${k.l}</div>
-    <div style="font-size:32px;font-weight:700;color:${k.c};line-height:1;margin-bottom:4px">${k.v?.toLocaleString('pt-BR')}</div>
-    <div style="font-size:11px;color:#8FA4AE">${k.sub}</div>
+    {l:'Operações Ativas',v:totalOps,c:'#F5A96D',sub:'contratos ativos'},
+    {l:'Em Campo',v:totalEquips,c:'#F1F5F9',sub:tipoLabel},
+    {l:'Estados Atendidos',v:estados,c:'#F1F5F9',sub:'UFs com operação'},
+  ].map(k=>`<div style="background:#1E293B;border:1px solid #2E3D52;border-radius:12px;padding:18px 22px">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748B;margin-bottom:8px">${k.l}</div>
+    <div style="font-size:32px;font-weight:700;color:${k.c};line-height:1;margin-bottom:4px;font-variant-numeric:tabular-nums">${k.v?.toLocaleString('pt-BR')}</div>
+    <div style="font-size:11px;color:#64748B">${k.sub}</div>
   </div>`).join('');
 }
 function opRenderChart(ops){
@@ -18981,23 +18984,23 @@ function opRenderChart(ops){
     if(!sorted.length){el.innerHTML='<div style="text-align:center;color:#8FA4AE;padding:40px 20px;font-size:12px">Sem dados</div>';}
     else{
       const max=sorted[0][1];
-      // Degradê do laranja Mills para tons mais frios
-      const pal=['#E8630A','#F07C35','#F59556','#F9AE77','#94a3b8','#b0bec5','#cfd8dc','#eceff1'];
+      // Degradê do laranja Mills para tons frios (dark)
+      const pal=['#E8630A','#D97441','#C77F52','#B58862','#5B7A8A','#4A667A','#3D4F68','#2E3D52'];
       const steps=4;
       const gridLines=Array.from({length:steps},(_,i)=>Math.round(max*(steps-i)/steps));
       el.innerHTML=`
         <div style="position:relative;display:flex;gap:8px">
           <!-- Eixo Y -->
           <div style="display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;height:180px;padding-bottom:2px;flex-shrink:0">
-            ${gridLines.map(v=>`<div style="font-size:9px;color:#C8D4DA;font-weight:500;line-height:1">${v}</div>`).join('')}
-            <div style="font-size:9px;color:#C8D4DA">0</div>
+            ${gridLines.map(v=>`<div style="font-size:9px;color:#64748B;font-weight:500;line-height:1">${v}</div>`).join('')}
+            <div style="font-size:9px;color:#64748B">0</div>
           </div>
           <!-- Área das barras -->
           <div style="flex:1;position:relative">
             <!-- Linhas de grade -->
             <div style="position:absolute;inset:0 0 0 0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none">
-              ${gridLines.map(()=>`<div style="border-top:1px dashed #E2E8ED;width:100%"></div>`).join('')}
-              <div style="border-top:2px solid #E2E8ED;width:100%"></div>
+              ${gridLines.map(()=>`<div style="border-top:1px dashed #2E3D52;width:100%"></div>`).join('')}
+              <div style="border-top:2px solid #2E3D52;width:100%"></div>
             </div>
             <!-- Barras -->
             <div style="display:flex;align-items:flex-end;justify-content:space-around;gap:4px;height:180px;padding:0 2px;position:relative">
@@ -19006,7 +19009,7 @@ function opRenderChart(ops){
                 const words=fam.split(' ');
                 const label=words.length>2?words.slice(0,2).join(' ')+'…':fam;
                 return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0" title="${fam}: ${n}">
-                  <div style="font-size:10px;font-weight:700;color:#1A2E35">${n}</div>
+                  <div style="font-size:10px;font-weight:700;color:#F1F5F9">${n}</div>
                   <div style="width:100%;max-width:48px;height:${h}px;background:${pal[i]};border-radius:5px 5px 0 0;transition:height .4s ease;cursor:default"></div>
                 </div>`;
               }).join('')}
@@ -19018,7 +19021,7 @@ function opRenderChart(ops){
           ${sorted.map(([fam],i)=>{
             const words=fam.split(' ');
             const label=words.length>2?words.slice(0,2).join(' ')+'…':fam;
-            return `<div style="flex:1;min-width:0;text-align:center;font-size:9px;color:#8FA4AE;line-height:1.3">${label}</div>`;
+            return `<div style="flex:1;min-width:0;text-align:center;font-size:9px;color:#64748B;line-height:1.3">${label}</div>`;
           }).join('')}
         </div>`;
     }
@@ -19041,12 +19044,12 @@ function opRenderChart(ops){
         const short=cli.length>28?cli.slice(0,27)+'…':cli;
         const isTop=i===0;
         return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <div style="width:18px;font-size:10px;font-weight:700;color:${isTop?'#E8630A':'#C8D4DA'};text-align:right;flex-shrink:0">${i+1}</div>
-          <div style="width:130px;font-size:10px;font-weight:${isTop?'600':'400'};color:${isTop?'#1A2E35':'#5A7280'};text-align:right;flex-shrink:0;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${short}</div>
-          <div style="flex:1;background:#F4F6F8;border-radius:4px;height:18px;overflow:hidden">
+          <div style="width:18px;font-size:10px;font-weight:700;color:${isTop?'#F5A96D':'#64748B'};text-align:right;flex-shrink:0">${i+1}</div>
+          <div style="width:130px;font-size:10px;font-weight:${isTop?'600':'400'};color:${isTop?'#F1F5F9':'#94A3B8'};text-align:right;flex-shrink:0;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${short}</div>
+          <div style="flex:1;background:#0F172A;border-radius:4px;height:18px;overflow:hidden">
             <div style="width:${pct}%;background:${isTop?'#E8630A':'linear-gradient(90deg,#E8630A,#F5A96D)'};opacity:${isTop?1:0.4+i*0.06};height:100%;border-radius:4px;transition:width .4s ease"></div>
           </div>
-          <div style="width:28px;font-size:11px;font-weight:700;color:#1A2E35;text-align:right;flex-shrink:0">${n}</div>
+          <div style="width:28px;font-size:11px;font-weight:700;color:#F1F5F9;text-align:right;flex-shrink:0">${n}</div>
         </div>`;
       }).join('');
     }
@@ -19073,42 +19076,42 @@ function opRender(){
   opRenderKpis(ops);
   opRenderChart(ops);
   if(!lista)return;
-  if(!ops.length){lista.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhuma operação encontrada.</div>';return;}
+  if(!ops.length){lista.innerHTML='<div style="padding:40px;text-align:center;color:#64748B">Nenhuma operação encontrada.</div>';return;}
 
-  const _CTcor={'Gestão de frota':['#EDE9FF','#5B4DB5'],'Locação':['#DBEAFE','#1D4ED8'],'Locação + Operação':['#D1FAE5','#065F46'],'Venda':['#FEE2E2','#B91C1C']};
-  lista.innerHTML=`<div style="font-size:11px;color:#8FA4AE;margin-bottom:10px;font-weight:600;letter-spacing:.03em">${ops.length} operaç${ops.length===1?'ão':'ões'} encontrada${ops.length===1?'':'s'}</div>
-  <div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+  const _CTcor={'Gestão de frota':['rgba(91,122,138,.25)','#9FB8C4'],'Locação':['rgba(56,189,248,.16)','#7DD3FC'],'Locação + Operação':['rgba(34,197,94,.16)','#4ADE80'],'Venda':['rgba(248,113,113,.16)','#F87171']};
+  lista.innerHTML=`<div style="font-size:11px;color:#64748B;margin-bottom:10px;font-weight:600;letter-spacing:.03em">${ops.length} operaç${ops.length===1?'ão':'ões'} encontrada${ops.length===1?'':'s'}</div>
+  <div style="background:#1E293B;border:1px solid #2E3D52;border-radius:12px;overflow:hidden">
   <table style="width:100%;border-collapse:collapse;font-size:13px">
-    <thead><tr style="background:#F4F6F8">
-      <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;border-bottom:2px solid #E2E8ED">Planta / Obra</th>
-      <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;border-bottom:2px solid #E2E8ED">Cliente</th>
-      <th style="padding:11px 16px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;border-bottom:2px solid #E2E8ED">Equip.</th>
-      <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;border-bottom:2px solid #E2E8ED">Município</th>
-      <th style="padding:11px 16px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;border-bottom:2px solid #E2E8ED">UF</th>
-      <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;border-bottom:2px solid #E2E8ED">Contrato</th>
+    <thead><tr style="background:#111C30">
+      <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748B;border-bottom:2px solid #2E3D52">Planta / Obra</th>
+      <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748B;border-bottom:2px solid #2E3D52">Cliente</th>
+      <th style="padding:11px 16px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748B;border-bottom:2px solid #2E3D52">Equip.</th>
+      <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748B;border-bottom:2px solid #2E3D52">Município</th>
+      <th style="padding:11px 16px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748B;border-bottom:2px solid #2E3D52">UF</th>
+      <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748B;border-bottom:2px solid #2E3D52">Contrato</th>
     </tr></thead>
     <tbody>
       ${ops.sort((a,b)=>b.equips.length-a.equips.length).map((op,rank)=>{
         const ct=op.equips[0]?opContratoEquip(op.equips[0]):'';
-        const cc=_CTcor[ct]||['#F4F6F8','#5A7280'];
-        const ctBadge=ct?`<span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;background:${cc[0]};color:${cc[1]}">${ct}</span>`:'<span style="color:#C8D4DA;font-size:11px">—</span>';
+        const cc=_CTcor[ct]||['#263449','#94A3B8'];
+        const ctBadge=ct?`<span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;background:${cc[0]};color:${cc[1]}">${ct}</span>`:'<span style="color:#64748B;font-size:11px">—</span>';
         const idx=op._origIdx;
         const initials=(op.nome||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
-        const avatarColors=['#E8630A','#1D4ED8','#065F46','#5B4DB5','#B45309','#0F766E'];
+        const avatarColors=['#E8630A','#5B7A8A','#B45309','#6D28D9','#0F766E','#3D4F68'];
         const ac=avatarColors[rank%avatarColors.length];
-        return `<tr style="border-bottom:1px solid #F0F4F6;cursor:pointer;transition:background 120ms" onclick="opVerDetalhe(${idx})" onmouseover="this.style.background='#FAFBFC'" onmouseout="this.style.background=''">
+        return `<tr style="border-bottom:1px solid #263449;cursor:pointer;transition:background 120ms" onclick="opVerDetalhe(${idx})" onmouseover="this.style.background='#233046'" onmouseout="this.style.background=''">
           <td style="padding:12px 16px">
             <div style="display:flex;align-items:center;gap:10px">
               <div style="width:32px;height:32px;border-radius:8px;background:${ac};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">${initials}</div>
-              <div style="font-weight:600;color:#1A2E35;line-height:1.3">${op.nome}</div>
+              <div style="font-weight:600;color:#F1F5F9;line-height:1.3">${op.nome}</div>
             </div>
           </td>
-          <td style="padding:12px 16px;color:#5A7280;font-size:12px">${op.cliente&&op.cliente!==op.nome?op.cliente:'—'}</td>
+          <td style="padding:12px 16px;color:#94A3B8;font-size:12px">${op.cliente&&op.cliente!==op.nome?op.cliente:'—'}</td>
           <td style="padding:12px 16px;text-align:center">
-            <div style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:28px;background:rgba(232,99,10,.08);border-radius:6px;font-weight:700;color:#E8630A;font-size:15px">${op.equips.length}</div>
+            <div style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:28px;background:rgba(232,99,10,.16);border-radius:6px;font-weight:700;color:#F5A96D;font-size:15px">${op.equips.length}</div>
           </td>
-          <td style="padding:12px 16px;color:#5A7280;font-size:12px">${op.municipio||'—'}</td>
-          <td style="padding:12px 16px;text-align:center">${op.estado?`<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:#F4F6F8;color:#5A7280;border:1px solid #E2E8ED">${op.estado}</span>`:'—'}</td>
+          <td style="padding:12px 16px;color:#94A3B8;font-size:12px">${op.municipio||'—'}</td>
+          <td style="padding:12px 16px;text-align:center">${op.estado?`<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:#263449;color:#94A3B8;border:1px solid #2E3D52">${op.estado}</span>`:'—'}</td>
           <td style="padding:12px 16px">${ctBadge}</td>
         </tr>`;}).join('')}
     </tbody>
@@ -19143,7 +19146,7 @@ function opDtRenderTabela(){
   }
   const tbody=document.getElementById('op-dt-tbody');if(!tbody)return;
   const cnt=document.getElementById('op-dt-cnt');if(cnt)cnt.textContent=`Todos os Equipamentos (${rows.length}${rows.length!==window._opDtEquips.length?' de '+window._opDtEquips.length:''})`;
-  tbody.innerHTML=rows.map((e,ki)=>`<tr style="background:${ki%2?'#fff':'#f8fafc'}"><td style="padding:6px 12px;font-family:monospace;font-weight:700;font-size:11px">${e.id}</td><td style="padding:6px 12px;font-weight:600">${e.grupo||e.familia||'—'}</td><td style="padding:6px 12px;color:#64748b;font-size:11px">${e.modelo||'—'}</td><td style="padding:6px 12px;text-align:right">${e._hor?`<span style="font-size:10px;font-weight:600;color:#1A2E35">${e._hor}</span> <span style="font-size:9px;color:#8FA4AE">h</span>`:'<span style="color:#C8D4DA">—</span>'}</td></tr>`).join('');
+  tbody.innerHTML=rows.map((e,ki)=>`<tr style="background:${ki%2?'#1E293B':'#182234'}"><td style="padding:6px 12px;font-family:monospace;font-weight:700;font-size:11px;color:#F1F5F9">${e.id}</td><td style="padding:6px 12px;font-weight:600;color:#F1F5F9">${e.grupo||e.familia||'—'}</td><td style="padding:6px 12px;color:#94A3B8;font-size:11px">${e.modelo||'—'}</td><td style="padding:6px 12px;text-align:right">${e._hor?`<span style="font-size:10px;font-weight:600;color:#F1F5F9">${e._hor}</span> <span style="font-size:9px;color:#64748B">h</span>`:'<span style="color:#64748B">—</span>'}</td></tr>`).join('');
 }
 
 function opDtSort(col,dir){
@@ -19205,44 +19208,44 @@ function opVerDetalhe(idx){
 
   const famMap=Counter_js(op.equips.map(e=>e.familia||'Outros'));
   const grupoMap=Counter_js(op.equips.map(e=>e.grupo||'Outros'));
-  const famRows=Object.entries(famMap).sort((a,b)=>b[1]-a[1]).map(([f,n],ki)=>`<tr style="background:${ki%2?'#fff':'#f8fafc'}"><td style="padding:7px 12px;font-weight:600">${f}</td><td style="padding:7px 12px;text-align:center;font-weight:700;color:#2563eb">${n}</td><td style="padding:7px 12px"><div style="background:#dbeafe;border-radius:4px;height:8px;width:${Math.round(n/op.equips.length*100)}%"></div></td></tr>`).join('');
-  const grupoRows=Object.entries(grupoMap).sort((a,b)=>b[1]-a[1]).slice(0,15).map(([g,n],ki)=>`<tr style="background:${ki%2?'#fff':'#f8fafc'}"><td style="padding:7px 12px;font-weight:600">${g}</td><td style="padding:7px 12px;text-align:center;font-weight:700;color:#0f766e">${n}</td></tr>`).join('');
+  const famRows=Object.entries(famMap).sort((a,b)=>b[1]-a[1]).map(([f,n],ki)=>`<tr style="background:${ki%2?'#1E293B':'#182234'}"><td style="padding:7px 12px;font-weight:600;color:#F1F5F9">${f}</td><td style="padding:7px 12px;text-align:center;font-weight:700;color:#F5A96D">${n}</td><td style="padding:7px 12px"><div style="background:#E8630A;border-radius:4px;height:8px;width:${Math.round(n/op.equips.length*100)}%"></div></td></tr>`).join('');
+  const grupoRows=Object.entries(grupoMap).sort((a,b)=>b[1]-a[1]).slice(0,15).map(([g,n],ki)=>`<tr style="background:${ki%2?'#1E293B':'#182234'}"><td style="padding:7px 12px;font-weight:600;color:#F1F5F9">${g}</td><td style="padding:7px 12px;text-align:center;font-weight:700;color:#F5A96D">${n}</td></tr>`).join('');
 
   const thStyle='padding:9px 12px;cursor:pointer;user-select:none;white-space:nowrap;transition:background 120ms';
-  const thInner=(label,col,align)=>`<th id="op-dt-th-${col}" data-op-dt-th style="${thStyle};text-align:${align||'left'}" onclick="opDtOpenDropdown('${col}',this)"><span style="display:inline-flex;align-items:center;gap:4px">${label}<span style="font-size:10px;opacity:.6">▾</span><span class="op-dt-arrow" style="font-size:10px;color:#93C5FD"></span></span></th>`;
+  const thInner=(label,col,align)=>`<th id="op-dt-th-${col}" data-op-dt-th style="${thStyle};text-align:${align||'left'}" onclick="opDtOpenDropdown('${col}',this)"><span style="display:inline-flex;align-items:center;gap:4px">${label}<span style="font-size:10px;opacity:.6">▾</span><span class="op-dt-arrow" style="font-size:10px;color:#F5A96D"></span></span></th>`;
 
   detalhe.innerHTML=`
     <div style="margin-bottom:16px">
-      <button onclick="opRender()" style="background:none;border:none;color:#F37021;cursor:pointer;font-size:13px;padding:0">← Voltar à lista</button>
+      <button onclick="opRender()" style="background:none;border:none;color:#F5A96D;cursor:pointer;font-size:13px;padding:0">← Voltar à lista</button>
     </div>
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:16px">
-      <div style="font-size:20px;font-weight:800;color:#1e293b;margin-bottom:4px">${op.nome}</div>
-      <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:#64748b;margin-bottom:14px">
+    <div style="background:#1E293B;border:1px solid #2E3D52;border-radius:10px;padding:20px 24px;margin-bottom:16px">
+      <div style="font-size:20px;font-weight:800;color:#F1F5F9;margin-bottom:4px">${op.nome}</div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:#94A3B8;margin-bottom:14px">
         ${op.cliente&&op.cliente!==op.nome?`<span>👤 ${op.cliente}</span>`:''}
         ${op.municipio?`<span>📍 ${op.municipio}${op.estado?' — '+op.estado:''}</span>`:''}
         ${!op.municipio&&op.estado?`<span>📍 ${op.estado}</span>`:''}
-        <span style="font-weight:800;color:#2563eb;font-size:16px">${op.equips.length} equipamentos</span>
+        <span style="font-weight:800;color:#F5A96D;font-size:16px">${op.equips.length} equipamentos</span>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
       <div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:8px">Por Família</div>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
-          <thead><tr style="background:#0f172a;color:#fff"><th style="padding:7px 12px;text-align:left">Família</th><th style="padding:7px 12px;text-align:center">Qtd</th><th style="padding:7px 12px">Dist.</th></tr></thead>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748B;margin-bottom:8px">Por Família</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;background:#1E293B;border:1px solid #2E3D52;border-radius:8px;overflow:hidden">
+          <thead><tr style="background:#111C30;color:#F1F5F9"><th style="padding:7px 12px;text-align:left">Família</th><th style="padding:7px 12px;text-align:center">Qtd</th><th style="padding:7px 12px">Dist.</th></tr></thead>
           <tbody>${famRows}</tbody>
         </table>
       </div>
       <div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:8px">Por Modelo (Top 15)</div>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
-          <thead><tr style="background:#0f172a;color:#fff"><th style="padding:7px 12px;text-align:left">Modelo</th><th style="padding:7px 12px;text-align:center">Qtd</th></tr></thead>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748B;margin-bottom:8px">Por Modelo (Top 15)</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;background:#1E293B;border:1px solid #2E3D52;border-radius:8px;overflow:hidden">
+          <thead><tr style="background:#111C30;color:#F1F5F9"><th style="padding:7px 12px;text-align:left">Modelo</th><th style="padding:7px 12px;text-align:center">Qtd</th></tr></thead>
           <tbody>${grupoRows}</tbody>
         </table>
       </div>
     </div>
-    <div id="op-dt-cnt" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:8px">Todos os Equipamentos (${op.equips.length})</div>
-    <table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
-      <thead><tr style="background:#0f172a;color:#fff">${thInner('ID','id')}${thInner('Equipamento','equip')}${thInner('Modelo','modelo')}${thInner('Horímetro','hor','right')}</tr></thead>
+    <div id="op-dt-cnt" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748B;margin-bottom:8px">Todos os Equipamentos (${op.equips.length})</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;background:#1E293B;border:1px solid #2E3D52;border-radius:8px;overflow:hidden">
+      <thead><tr style="background:#111C30;color:#F1F5F9">${thInner('ID','id')}${thInner('Equipamento','equip')}${thInner('Modelo','modelo')}${thInner('Horímetro','hor','right')}</tr></thead>
       <tbody id="op-dt-tbody"></tbody>
     </table>
   `;
