@@ -1131,30 +1131,31 @@ input.filter-sel{padding:5px 10px;height:32px}
 
 <!-- OFICINAS SELECTOR -->
 <div class="page" id="page-oficinas">
-  <div style="padding:24px 28px">
+  <div style="padding:22px 26px">
     <div class="page-hdr">
       <div class="page-hdr-title"><span style="color:#F37021">🔧</span> Oficinas</div>
       <div class="page-hdr-sub">Selecione uma oficina para abrir o kanban de manutenção</div>
     </div>
-    <div id="oficinas-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px"></div>
-    <div style="margin-top:24px">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:10px">Subáreas da Oficina</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px">
-        <div onclick="navegarPara('manuterceiros')" style="background:#fff;border:0.5px solid #e9d5ff;border-radius:12px;padding:16px;cursor:pointer;border-top:3px solid #7c3aed;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow=''">
+    <div id="oficinas-resumo" style="margin-bottom:14px"></div>
+    <div id="oficinas-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px"></div>
+    <div style="margin-top:22px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;margin-bottom:10px">Subáreas da oficina</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
+        <div onclick="navegarPara('manuterceiros')" style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:14px 16px;cursor:pointer;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow=''">
           <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:22px">🏭</span>
+            <div style="width:36px;height:36px;border-radius:8px;background:#FDE8D8;color:#C24003;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🏭</div>
             <div>
-              <div style="font-size:14px;font-weight:600;color:#1e293b">Manutenção de Terceiros</div>
-              <div style="font-size:11px;color:#94a3b8;margin-top:2px">Serviços externos e M.O. de terceiros</div>
+              <div style="font-size:13px;font-weight:700;color:#1A2E35">Manutenção de Terceiros</div>
+              <div style="font-size:11px;color:#8FA4AE;margin-top:2px">Serviços externos e M.O. de terceiros</div>
             </div>
           </div>
         </div>
-        <div onclick="navegarPara('valepecas')" style="background:#fff;border:0.5px solid #fecaca;border-radius:12px;padding:16px;cursor:pointer;border-top:3px solid #dc2626;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow=''">
+        <div onclick="navegarPara('valepecas')" style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:14px 16px;cursor:pointer;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow=''">
           <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:22px">🔩</span>
+            <div style="width:36px;height:36px;border-radius:8px;background:#FDE8D8;color:#C24003;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🔩</div>
             <div>
-              <div style="font-size:14px;font-weight:600;color:#1e293b">Vale Peças</div>
-              <div style="font-size:11px;color:#94a3b8;margin-top:2px">Controle de retirada e devolução de peças</div>
+              <div style="font-size:13px;font-weight:700;color:#1A2E35">Vale Peças</div>
+              <div style="font-size:11px;color:#8FA4AE;margin-top:2px">Controle de retirada e devolução de peças</div>
             </div>
           </div>
         </div>
@@ -17526,26 +17527,57 @@ function paginaOficinas(){
 function renderOficinaCards(){
   const grid=document.getElementById('oficinas-cards-grid');if(!grid)return;
   const ETAPAS_OF=new Set(['lavagem','lubrificacao','catalogacao','solda','borracharia','funilaria','suprimentos','ag_baia','manut_int']);
-  const oficinas=[...new Set(Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.etapa!=='pronto'&&e.oficina).map(e=>e.oficina))].sort();
-  grid.innerHTML=oficinas.map(of=>{
+  const oficinas=[...new Set(Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.etapa!=='pronto'&&e.oficina).map(e=>e.oficina))];
+
+  const dados=oficinas.map(of=>{
     const equips=Object.values(state).filter(e=>!e.baixado&&e.etapa!=='alugado'&&e.etapa!=='pronto'&&e.oficina===of);
     const manut=equips.filter(e=>e.etapa==='manutencao'||ETAPAS_OF.has(e.etapa)).length;
-    const sid=of.replace(/ /g,'_').replace(/[()]/g,'').replace(/\//g,'_');
     const pct=equips.length>0?Math.round(manut/equips.length*100):0;
-    return `<div onclick="switchTab('${sid}')" style="background:var(--color-background-primary,#fff);border:0.5px solid #e2e8f0;border-radius:12px;padding:16px;cursor:pointer;transition:box-shadow .15s;border-top:3px solid #F37021" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow=''">
-      <div style="font-size:15px;font-weight:500;color:#1e293b;margin-bottom:4px">${of}</div>
-      <div style="font-size:28px;font-weight:500;color:#1e293b;line-height:1.1">${equips.length}</div>
-      <div style="font-size:11px;color:#94a3b8;margin-bottom:12px">equipamentos</div>
-      <div style="height:0.5px;background:#e2e8f0;margin-bottom:12px"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><div style="font-size:20px;font-weight:500;color:#c2410c">${manut}</div><div style="font-size:10px;color:#94a3b8">em manutenção</div></div>
-        <div style="font-size:22px;font-weight:500;color:#94a3b8">${pct}%</div>
+    return {of,total:equips.length,manut,pct};
+  }).sort((a,b)=>b.pct-a.pct);
+
+  const sev=pct=>pct>90?{cor:'#EF4444',txt:'#B91C1C',bg:'#FEE2E2',label:'crítico'}:pct>=50?{cor:'#F59E0B',txt:'#B45309',bg:'#FEF3C7',label:'atenção'}:{cor:'#22C55E',txt:'#1E8A4C',bg:'#E8F5EE',label:'saudável'};
+
+  // Resumo agregado
+  const resEl=document.getElementById('oficinas-resumo');
+  if(resEl){
+    const totGeral=dados.reduce((s,d)=>s+d.total,0);
+    const manutGeral=dados.reduce((s,d)=>s+d.manut,0);
+    const pctGeral=totGeral>0?Math.round(manutGeral/totGeral*100):0;
+    const nCrit=dados.filter(d=>d.pct>90).length;
+    const nAtn=dados.filter(d=>d.pct>=50&&d.pct<=90).length;
+    const nOk=dados.filter(d=>d.pct<50).length;
+    resEl.innerHTML=dados.length?`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:14px 16px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8FA4AE;margin-bottom:10px">Visão geral</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1.4fr;gap:16px;align-items:center">
+        <div><div style="font-size:24px;font-weight:800;color:#1A2E35">${totGeral}</div><div style="font-size:11px;color:#8FA4AE">equipamentos</div></div>
+        <div><div style="font-size:24px;font-weight:800;color:#B45309">${manutGeral}</div><div style="font-size:11px;color:#8FA4AE">em manutenção</div></div>
+        <div><div style="font-size:24px;font-weight:800;color:#1A2E35">${pctGeral}%</div><div style="font-size:11px;color:#8FA4AE">média geral</div></div>
+        <div style="display:flex;gap:8px;font-size:11px;flex-wrap:wrap">
+          ${nCrit?`<span style="background:#FEE2E2;color:#B91C1C;font-weight:700;padding:3px 10px;border-radius:999px">${nCrit} crítica${nCrit>1?'s':''} (&gt;90%)</span>`:''}
+          ${nAtn?`<span style="background:#FEF3C7;color:#B45309;font-weight:700;padding:3px 10px;border-radius:999px">${nAtn} atenção</span>`:''}
+          ${nOk?`<span style="background:#E8F5EE;color:#1E8A4C;font-weight:700;padding:3px 10px;border-radius:999px">${nOk} saudáve${nOk>1?'is':'l'}</span>`:''}
+        </div>
       </div>
-      <div style="margin-top:10px;height:4px;background:#f1f5f9;border-radius:4px">
-        <div style="width:${pct}%;height:100%;background:#F37021;border-radius:4px;transition:width .3s"></div>
+    </div>`:'';
+  }
+
+  grid.innerHTML=dados.map(({of,total,manut,pct})=>{
+    const s=sev(pct);
+    const sid=of.replace(/ /g,'_').replace(/[()]/g,'').replace(/\//g,'_');
+    return `<div onclick="switchTab('${sid}')" style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:15px 16px;cursor:pointer;transition:box-shadow .15s,transform .15s;display:flex;flex-direction:column;gap:9px" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)';this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='';this.style.transform=''">
+      <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:999px;align-self:flex-start;background:${s.bg};color:${s.txt}">${s.label}</span>
+      <div style="font-size:13px;font-weight:700;color:#1A2E35">${of}</div>
+      <div style="display:flex;align-items:baseline;gap:6px"><b style="font-size:24px;font-weight:800;color:#1A2E35;line-height:1">${total}</b><span style="font-size:11px;color:#8FA4AE">equipamentos</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-size:12px;font-weight:600;color:${s.txt}">${manut} em manutenção</span>
+        <span style="font-size:15px;font-weight:800;color:${s.txt}">${pct}%</span>
+      </div>
+      <div style="height:7px;border-radius:4px;background:#EDF1F4;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${s.cor};border-radius:4px;transition:width .4s"></div>
       </div>
     </div>`;
-  }).join('');
+  }).join('')||'<div style="grid-column:1/-1;padding:24px;text-align:center;color:#8FA4AE;font-size:12px">Nenhum equipamento em oficina no momento.</div>';
 }
 
 // ── PÁTIO ─────────────────────────────────────────────────────────────────────
