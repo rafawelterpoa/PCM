@@ -293,6 +293,15 @@ input:focus,select:focus,textarea:focus{
 #page-patio .pt-fil.clk:hover{background:#FDF3EA}
 #page-patio .pt-badge{display:inline-block;font-size:10px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
 
+/* ── VALE PEÇAS (opção B — seções + formulário recolhível) ── */
+#page-valepecas .vp-row:hover td{background:#FDF3EA}
+#page-valepecas .vp-act{opacity:.3;background:none;border:none;font-size:13px;cursor:pointer;transition:opacity .12s;padding:3px 7px;border-radius:5px}
+#page-valepecas .vp-row:hover .vp-act{opacity:1}
+#page-valepecas .vp-sec-tag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#B7862E;background:#FDE8D8;display:inline-block;padding:2px 9px;border-radius:5px;margin-bottom:10px}
+#page-valepecas .vp-kpi{background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:12px 16px}
+#page-valepecas .vp-kpi b{font-size:22px;font-weight:800;color:#1A2E35;line-height:1;display:block}
+#page-valepecas .vp-kpi span{font-size:11px;color:#8FA4AE}
+
 .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#5A7280;margin-bottom:12px;margin-top:20px;padding-bottom:6px;border-bottom:2px solid #E8630A;display:inline-block}
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:20px}
 .etapas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:14px}
@@ -14467,7 +14476,7 @@ function vpMudarAba(aba){
   if(ldEl)ldEl.style.display=aba==='devolvidas'?'':'none';
   ['abertas','devolvidas'].forEach(a=>{
     const btn=document.getElementById('vptab-'+a);
-    if(btn){btn.style.color=a===aba?'#dc2626':'#8FA4AE';btn.style.borderBottomColor=a===aba?'#dc2626':'transparent';}
+    if(btn){btn.style.color=a===aba?'#E8630A':'#8FA4AE';btn.style.borderBottomColor=a===aba?'#E8630A':'transparent';}
   });
   vpRender();
 }
@@ -14531,6 +14540,7 @@ function vpSalvar(){
     _vpItens=[{pn:'',qtd:1,desc:''}];vpRenderItens();
   }
   vpSalvarTudo();vpRender();vpUpdateHomeBadge();showToast('✅ Vale registrado!');
+  vpFormRecolher();
 }
 
 function vpEditar(id){
@@ -14546,6 +14556,7 @@ function vpEditar(id){
   document.getElementById('vp-form-label').textContent='Editando: '+r.equipRet;
   document.getElementById('vp-salvar-btn').textContent='💾 Salvar alterações';
   document.getElementById('vp-cancelar-btn').style.display='inline-block';
+  vpFormExpandir();
   document.getElementById('page-valepecas').scrollTop=0;
 }
 
@@ -14559,6 +14570,20 @@ function vpCancelar(){
   document.getElementById('vp-form-label').textContent='Novo Registro';
   document.getElementById('vp-salvar-btn').textContent='💾 Registrar Vale';
   document.getElementById('vp-cancelar-btn').style.display='none';
+}
+
+// Formulário recolhível — some quando não está em uso, some por padrão ao abrir a página
+function vpFormExpandir(){
+  const body=document.getElementById('vp-form-body'), tgl=document.getElementById('vp-form-toggle');
+  if(body)body.style.display='block';
+  if(tgl)tgl.style.display='none';
+  document.getElementById('vp-equip-ret')?.focus();
+}
+function vpFormRecolher(){
+  const body=document.getElementById('vp-form-body'), tgl=document.getElementById('vp-form-toggle');
+  if(body)body.style.display='none';
+  if(tgl)tgl.style.display='flex';
+  vpCancelar();
 }
 
 function vpAbrirDevolucao(id){
@@ -14598,21 +14623,50 @@ function vpUpdateHomeBadge(){
 
 function vpRender(){
   const filtOf=document.getElementById('vp-fil-oficina')?.value||'';
-  const abertas=_vpRegistros.filter(r=>!r.devolvido&&(!filtOf||r.oficina===filtOf));
+  let abertas=_vpRegistros.filter(r=>!r.devolvido&&(!filtOf||r.oficina===filtOf));
   const devolvidas=_vpRegistros.filter(r=>r.devolvido&&(!filtOf||r.oficina===filtOf));
   const hoje=new Date().toISOString().split('T')[0];
+  const diasAtraso=r=>(r.dataPrevDev&&r.dataPrevDev<hoje)?Math.floor((new Date(hoje)-new Date(r.dataPrevDev))/86400000):0;
+  // Mais atrasados primeiro; entre não-atrasados, o de prazo mais próximo primeiro
+  abertas=abertas.slice().sort((a,b)=>{
+    const da=diasAtraso(a),db=diasAtraso(b);
+    if(da!==db)return db-da;
+    return (a.dataPrevDev||'9999-99-99').localeCompare(b.dataPrevDev||'9999-99-99');
+  });
   const colHd=s=>`<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#5A7280;border-bottom:1px solid #E2E8ED;background:#F4F6F8;white-space:nowrap">${s}</th>`;
   const dataFmt=d=>d?d.split('-').reverse().join('/'):'—';
-  const itensCell=itens=>{if(!itens||!itens.length)return'—';return itens.map(it=>`<div style="font-size:11px;font-family:monospace"><span style="font-weight:700;color:#dc2626">${it.pn||'—'}</span> <span style="color:#64748b">×${it.qtd||1}</span>${it.desc?` <span style="color:#475569">${it.desc}</span>`:''}</div>`).join('');};
+  const itensCell=itens=>{if(!itens||!itens.length)return'—';return itens.map(it=>`<div style="font-size:11px;font-family:monospace"><span style="font-weight:700;color:#1A2E35">${it.pn||'—'}</span> <span style="color:#64748b">×${it.qtd||1}</span>${it.desc?` <span style="color:#475569">${it.desc}</span>`:''}</div>`).join('');};
+  const prevDevCell=r=>{
+    const d=diasAtraso(r);
+    return d>0
+      ?`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;background:#FEE2E2;color:#B91C1C;font-size:11px;font-weight:700;white-space:nowrap">${dataFmt(r.dataPrevDev)} · ${d}d ⚠</span>`
+      :`<span style="font-size:12px;color:#5A7280">${dataFmt(r.dataPrevDev)}</span>`;
+  };
+
+  // Resumo — 4 números, só aparece havendo pendentes
+  const kpiEl=document.getElementById('vp-kpis');
+  if(kpiEl){
+    if(!abertas.length){kpiEl.style.display='none';}
+    else{
+      kpiEl.style.display='grid';
+      const atrasados=abertas.filter(r=>diasAtraso(r)>0);
+      const porOf={};abertas.forEach(r=>{const of=r.oficina||'—';porOf[of]=(porOf[of]||0)+1;});
+      const top=Object.entries(porOf).sort((a,b)=>b[1]-a[1])[0]||['—',0];
+      const atrasoMedio=atrasados.length?Math.round(atrasados.reduce((s,r)=>s+diasAtraso(r),0)/atrasados.length):0;
+      kpiEl.innerHTML=`
+        <div class="vp-kpi"><b>${abertas.length}</b><span>vale${abertas.length===1?'':'s'} pendente${abertas.length===1?'':'s'}</span></div>
+        <div class="vp-kpi"><b style="color:${atrasados.length?'#B91C1C':'#1A2E35'}">${atrasados.length}</b><span>atrasado${atrasados.length===1?'':'s'}</span></div>
+        <div class="vp-kpi"><b style="font-size:16px">${top[1]?top[0]:'—'}</b><span>oficina com mais pendências${top[1]?' ('+top[1]+')':''}</span></div>
+        <div class="vp-kpi"><b>${atrasoMedio}d</b><span>atraso médio dos vencidos</span></div>`;
+    }
+  }
 
   // Pendentes
   const laEl=document.getElementById('vp-lista-abertas');
   if(laEl){
     if(!abertas.length){laEl.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhum vale pendente.</div>';}
     else{
-      const rows=abertas.map(r=>{
-        const atrasado=r.dataPrevDev&&r.dataPrevDev<hoje;
-        return`<tr style="border-bottom:1px solid #E2E8ED" onmouseenter="this.style.background='#F8FAFB'" onmouseleave="this.style.background=''">
+      const rows=abertas.map(r=>`<tr class="vp-row" style="border-bottom:1px solid #E2E8ED">
           <td style="padding:10px 12px;font-size:12px;white-space:nowrap;color:#1A2E35">${dataFmt(r.data)}</td>
           <td style="padding:10px 12px;font-family:monospace;font-weight:700;font-size:12px;color:#1A2E35">${r.equipRet||'—'}</td>
           <td style="padding:10px 12px;font-family:monospace;font-size:12px;color:#5A7280">${r.equipDest||'—'}</td>
@@ -14621,16 +14675,15 @@ function vpRender(){
           <td style="padding:10px 12px;font-size:12px;color:#5A7280">${r.om||'—'}</td>
           <td style="padding:10px 12px;font-size:12px;color:#5A7280">${r.rc||'—'}</td>
           <td style="padding:10px 12px;min-width:160px">${itensCell(r.itens)}</td>
-          <td style="padding:10px 12px;white-space:nowrap">${atrasado?`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;background:#FEE2E2;color:#B91C1C;font-size:11px;font-weight:600">${dataFmt(r.dataPrevDev)} ⚠</span>`:`<span style="font-size:12px;color:#5A7280">${dataFmt(r.dataPrevDev)}</span>`}</td>
+          <td style="padding:10px 12px;white-space:nowrap">${prevDevCell(r)}</td>
           <td style="padding:10px 12px;font-size:12px;color:#1A2E35">${r.operacao||'—'}</td>
           <td style="padding:10px 12px;font-size:12px;color:#1A2E35">${r.gestor||'—'}</td>
           <td style="padding:10px 12px;text-align:right;white-space:nowrap">
-            <button onclick="vpAbrirDevolucao('${r.id}')" style="padding:4px 10px;background:#E8F5EE;color:#1E8A4C;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin-right:4px">↩ Devolver</button>
-            <button onclick="vpEditar('${r.id}')" style="padding:4px 10px;background:#FDE8D8;color:#E8630A;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin-right:4px">Editar</button>
-            <button onclick="vpDeletar('${r.id}')" style="padding:4px 10px;background:#FEE2E2;color:#B91C1C;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer">Excluir</button>
+            <button class="vp-act" onclick="vpAbrirDevolucao('${r.id}')" title="Devolver">↩</button>
+            <button class="vp-act" onclick="vpEditar('${r.id}')" title="Editar">✎</button>
+            <button class="vp-act" onclick="vpDeletar('${r.id}')" title="Excluir">🗑</button>
           </td>
-        </tr>`;
-      }).join('');
+        </tr>`).join('');
       laEl.innerHTML=`<div style="margin-bottom:10px;font-size:12px;color:#8FA4AE;font-weight:500">${abertas.length} vale(s) pendente(s)</div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid #E2E8ED;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)">
       <thead><tr>${['Data','Equip. Ret.','Equip. Dest.','Oficina','Solicitante','O.M.','RC','Itens / Peças','Prev. Dev.','Operação','Gestor','Ações'].map(colHd).join('')}</tr></thead>
@@ -14642,7 +14695,7 @@ function vpRender(){
   if(ldEl){
     if(!devolvidas.length){ldEl.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8">Nenhuma devolução registrada.</div>';}
     else{
-      const rows=devolvidas.map(r=>`<tr style="border-bottom:1px solid #E2E8ED" onmouseenter="this.style.background='#F8FAFB'" onmouseleave="this.style.background=''">
+      const rows=devolvidas.map(r=>`<tr class="vp-row" style="border-bottom:1px solid #E2E8ED">
         <td style="padding:10px 12px;font-size:12px;white-space:nowrap;color:#1A2E35">${dataFmt(r.data)}</td>
         <td style="padding:10px 12px;font-family:monospace;font-weight:700;font-size:12px;color:#1A2E35">${r.equipRet||'—'}</td>
         <td style="padding:10px 12px;font-family:monospace;font-size:12px;color:#5A7280">${r.equipDest||'—'}</td>
@@ -14651,7 +14704,7 @@ function vpRender(){
         <td style="padding:10px 12px;min-width:140px">${itensCell(r.itens)}</td>
         <td style="padding:10px 12px;white-space:nowrap"><span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;background:#E8F5EE;color:#1E8A4C;font-size:11px;font-weight:600">${dataFmt(r.dataDevolucao)}</span></td>
         <td style="padding:10px 12px;font-size:12px;color:#5A7280">${r.obsDev||'—'}</td>
-        <td style="padding:10px 12px;text-align:right"><button onclick="vpDeletar('${r.id}')" style="padding:4px 10px;background:#FEE2E2;color:#B91C1C;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer">Excluir</button></td>
+        <td style="padding:10px 12px;text-align:right"><button class="vp-act" onclick="vpDeletar('${r.id}')" title="Excluir">🗑</button></td>
       </tr>`).join('');
       ldEl.innerHTML=`<div style="margin-bottom:10px;font-size:12px;color:#8FA4AE;font-weight:500">${devolvidas.length} devolução(ões)</div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid #E2E8ED;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)">
@@ -20753,24 +20806,34 @@ if ('serviceWorker' in navigator) {
 
 <!-- VALE PEÇAS -->
 <div id="page-valepecas" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;overflow-y:auto;background:#F4F6F8;z-index:100">
-  <div style="padding:24px 28px;max-width:1400px">
+  <div style="padding:22px 26px;max-width:1400px">
 
-    <!-- ── FORMULÁRIO (TOPO) ─────────────────────────────────────── -->
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
+    <!-- Barra de abertura do formulário (visível quando recolhido) -->
+    <div id="vp-form-toggle" onclick="vpFormExpandir()" style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:14px 18px;margin-bottom:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.06)'" onmouseout="this.style.boxShadow=''">
+      <span style="font-size:13px;font-weight:700;color:#1A2E35">+ Novo registro de vale</span>
+      <span style="background:#E8630A;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;border-radius:7px">+ Novo vale</span>
+    </div>
+
+    <!-- ── FORMULÁRIO (recolhível — some quando não está em uso) ─────────── -->
+    <div id="vp-form-body" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #E2E8ED">
         <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#5A7280" id="vp-form-label">Novo Registro</span>
-        <button class="gi-btn ghost" id="vp-cancelar-btn" style="display:none;font-size:11px;padding:5px 12px" onclick="vpCancelar()">✕ Cancelar edição</button>
+        <div style="display:flex;gap:8px">
+          <button class="gi-btn ghost" id="vp-cancelar-btn" style="display:none;font-size:11px;padding:5px 12px" onclick="vpCancelar()">✕ Cancelar edição</button>
+          <button type="button" onclick="vpFormRecolher()" style="background:#F4F6F8;color:#5A7280;border:1px solid #E2E8ED;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer">✕ Fechar</button>
+        </div>
       </div>
-      <!-- Linha 1: Dados principais -->
       <!-- datalists para autocomplete -->
       <datalist id="vp-dl-equips"></datalist>
       <datalist id="vp-dl-operacoes"></datalist>
       <datalist id="vp-dl-colabs"></datalist>
 
-      <div class="gi-form-row" style="grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:10px">
-        <div><label class="gi-label">Data</label><input class="gi-input" type="date" id="vp-data"></div>
+      <span class="vp-sec-tag">Equipamentos</span>
+      <div class="gi-form-row" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:14px">
         <div><label class="gi-label">Equip. Retirada (origem)</label>
           <input class="gi-input" id="vp-equip-ret" placeholder="Digite ID completo..." list="vp-dl-equips" autocomplete="off" oninput="this.value=this.value.toUpperCase();vpAutoFill(this,'ret')" onblur="pcmValidarEquipId(this)"></div>
+        <div><label class="gi-label">Equip. Destino</label>
+          <input class="gi-input" id="vp-equip-dest" placeholder="Digite ID completo..." list="vp-dl-equips" autocomplete="off" oninput="this.value=this.value.toUpperCase()" onblur="pcmValidarEquipId(this)"></div>
         <div><label class="gi-label">Oficina</label>
           <select class="gi-select" id="vp-oficina">
             <option value="">— Selecione —</option>
@@ -20779,25 +20842,27 @@ if ('serviceWorker' in navigator) {
             <option>São José dos Pinhais (PR)</option>
           </select>
         </div>
+      </div>
+
+      <span class="vp-sec-tag">Responsáveis e referências</span>
+      <div class="gi-form-row" style="grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:14px">
+        <div><label class="gi-label">Data</label><input class="gi-input" type="date" id="vp-data"></div>
         <div><label class="gi-label">Solicitante</label>
           <input class="gi-input" id="vp-solicitante" placeholder="Digite nome..." list="vp-dl-colabs" autocomplete="off"></div>
         <div><label class="gi-label">Gestor</label>
           <input class="gi-input" id="vp-gestor" placeholder="Digite nome..." list="vp-dl-colabs" autocomplete="off"></div>
-      </div>
-      <!-- Linha 2: Destino e documentação -->
-      <div class="gi-form-row" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:10px">
-        <div><label class="gi-label">Equip. Destino</label>
-          <input class="gi-input" id="vp-equip-dest" placeholder="Digite ID completo..." list="vp-dl-equips" autocomplete="off" oninput="this.value=this.value.toUpperCase()" onblur="pcmValidarEquipId(this)"></div>
         <div><label class="gi-label">Operação / Contrato</label>
           <input class="gi-input" id="vp-operacao" placeholder="Digite operação..." list="vp-dl-operacoes" autocomplete="off"></div>
-        <div><label class="gi-label">O.M.</label><input class="gi-input" id="vp-om" placeholder="Nº da O.M."></div>
-        <div><label class="gi-label">RC</label><input class="gi-input" id="vp-rc" placeholder="Nº do RC"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label class="gi-label">O.M.</label><input class="gi-input" id="vp-om" placeholder="Nº da O.M."></div>
+          <div><label class="gi-label">RC</label><input class="gi-input" id="vp-rc" placeholder="Nº do RC"></div>
+        </div>
       </div>
-      <!-- Linha 3: Itens / Peças -->
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#475569">Itens / Peças</span>
-          <button type="button" onclick="vpAddItem()" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer">+ Adicionar Item</button>
+
+      <span class="vp-sec-tag">Itens / Peças</span>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:14px">
+        <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:8px">
+          <button type="button" onclick="vpAddItem()" style="background:#fff;color:#5A7280;border:1px solid #E2E8ED;border-radius:6px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer">+ Adicionar Item</button>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:12px">
           <thead><tr style="background:#F4F6F8">
@@ -20809,20 +20874,24 @@ if ('serviceWorker' in navigator) {
           <tbody id="vp-itens-tbody"></tbody>
         </table>
       </div>
-      <!-- Linha 4: Prazo, obs e salvar -->
+
+      <span class="vp-sec-tag">Prazo</span>
       <div style="display:grid;grid-template-columns:180px 1fr auto;gap:12px;align-items:end">
         <div><label class="gi-label">Data Prev. Devolução</label><input class="gi-input" type="date" id="vp-data-prev-dev"></div>
         <div><label class="gi-label">Observação</label><input class="gi-input" id="vp-obs" placeholder="Contexto, detalhes..."></div>
         <div style="display:flex;gap:8px">
-          <button class="gi-btn" id="vp-salvar-btn" onclick="vpSalvar()" style="background:#dc2626;white-space:nowrap">💾 Registrar Vale</button>
+          <button class="gi-btn" id="vp-salvar-btn" onclick="vpSalvar()" style="background:#E8630A;white-space:nowrap">💾 Registrar Vale</button>
         </div>
       </div>
       <input type="hidden" id="vp-editing-id">
     </div>
 
+    <!-- Resumo — só aparece quando existe pelo menos 1 vale pendente -->
+    <div id="vp-kpis" style="display:none;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px"></div>
+
     <!-- ── VISUALIZAÇÃO (BAIXO) ──────────────────────────────────── -->
     <div style="display:flex;align-items:center;border-bottom:2px solid #E2E8ED;margin-bottom:16px">
-      <button id="vptab-abertas" onclick="vpMudarAba('abertas')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#dc2626;border-bottom:2px solid #dc2626;margin-bottom:-2px">Pendentes</button>
+      <button id="vptab-abertas" onclick="vpMudarAba('abertas')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#E8630A;border-bottom:2px solid #E8630A;margin-bottom:-2px">Pendentes</button>
       <button id="vptab-devolvidas" onclick="vpMudarAba('devolvidas')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:#8FA4AE;border-bottom:2px solid transparent;margin-bottom:-2px">Devolvidas</button>
       <div style="margin-left:auto;padding-bottom:6px">
         <select id="vp-fil-oficina" onchange="vpRender()" style="padding:7px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:13px;background:#fff;color:#1A2E35">
