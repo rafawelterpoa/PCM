@@ -409,7 +409,13 @@ input:focus,select:focus,textarea:focus{
 .tipo-bar-fill{height:100%;background:var(--verde2);border-radius:3px}
 .tipo-name{font-size:11px;color:var(--text2);min-width:140px}
 .tipo-n{font-size:13px;font-weight:700;color:var(--laranja);min-width:28px;text-align:right}
-
+/* Oficinas Steel - fixa hover dos cards */
+#page-oficinas #oficinas-resumo>div,#page-oficinas #oficinas-cards-grid>div,#page-oficinas #oficinas-cards-grid>div:hover,#page-oficinas div[onclick="navegarPara('manuterceiros')"],#page-oficinas div[onclick="navegarPara('valepecas')"],#page-oficinas div[onclick="navegarPara('manuterceiros')"]:hover,#page-oficinas div[onclick="navegarPara('valepecas')"]:hover{background:#2B3440!important;border-color:#44515F!important;color:#D0DAE4!important;box-shadow:0 8px 22px rgba(0,0,0,.12)!important}
+#page-oficinas #oficinas-cards-grid>div:hover,#page-oficinas div[onclick="navegarPara('manuterceiros')"]:hover,#page-oficinas div[onclick="navegarPara('valepecas')"]:hover{background:#343E4A!important;border-color:#506071!important}
+#page-oficinas #oficinas-cards-grid>div [style*="color:#1A2E35"],#page-oficinas #oficinas-cards-grid>div [style*="color:#8FA4AE"],#page-oficinas div[onclick="navegarPara('manuterceiros')"] [style*="color:#1A2E35"],#page-oficinas div[onclick="navegarPara('valepecas')"] [style*="color:#1A2E35"],#page-oficinas div[onclick="navegarPara('manuterceiros')"] [style*="color:#8FA4AE"],#page-oficinas div[onclick="navegarPara('valepecas')"] [style*="color:#8FA4AE"]{color:#D0DAE4!important}
+#page-oficinas #oficinas-cards-grid>div b{color:#F8FAFC!important}
+#page-oficinas #oficinas-cards-grid>div>div:last-child{background:#3C4855!important}
+#page-oficinas #oficinas-cards-grid>div>div:last-child>div{opacity:.95!important}
 /* ══ KANBAN ══ */
 .kanban-wrap{padding:14px 18px}
 /* Linha 1: título + count */
