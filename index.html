@@ -19315,14 +19315,13 @@ async function renderHomeRaioX(){
       <div style="display:flex;gap:14px;margin-top:8px;font-size:11px;color:#94A3B8"><span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#E8630A;margin-right:5px"></i>Mob <b style="color:#F1F5F9">${totM}</b></span><span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#5B7A8A;margin-right:5px"></i>Desmob <b style="color:#F1F5F9">${totD}</b></span><span style="color:#64748B">saldo ${totM-totD>=0?'+':''}${totM-totD}</span></div>`;
   }catch(e){console.warn('[RaioX] mobdesmob:',e);}
 
-  // 3) Movimentação de ativos — mês atual (compras/vendas/sinistros)
+  // 3) Movimentação de ativos — ano corrente (compras/vendas/sinistros)
   try{
-    const mesAtual=new Date().toISOString().slice(0,7);
-    const MN2=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-    const lbl=document.getElementById('hd-mov-mes');if(lbl)lbl.textContent=MN2[new Date().getMonth()];
-    const nC=evs.filter(e=>e.tipo==='compra'&&(e.data||'').startsWith(mesAtual)).length;
-    const nV=evs.filter(e=>e.tipo==='venda'&&(e.data||'').startsWith(mesAtual)).length;
-    const nS=evs.filter(e=>e.tipo==='sinistro'&&(e.data||'').startsWith(mesAtual)).length;
+    const anoAtual=String(new Date().getFullYear());
+    const lbl=document.getElementById('hd-mov-mes');if(lbl)lbl.textContent=anoAtual;
+    const nC=evs.filter(e=>e.tipo==='compra'&&(e.data||'').startsWith(anoAtual)).length;
+    const nV=evs.filter(e=>e.tipo==='venda'&&(e.data||'').startsWith(anoAtual)).length;
+    const nS=evs.filter(e=>e.tipo==='sinistro'&&(e.data||'').startsWith(anoAtual)).length;
     const saldo=nC-nV-nS;
     document.getElementById('hd-mov').innerHTML=
       `<div class="hd-trio">
@@ -19330,7 +19329,7 @@ async function renderHomeRaioX(){
         <div class="t"><div style="font-size:22px;font-weight:800;color:#F5A96D">${nV}</div><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748B;margin-top:4px">Vendas</div></div>
         <div class="t"><div style="font-size:22px;font-weight:800;color:#F87171">${nS}</div><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748B;margin-top:4px">Sinistros</div></div>
       </div>
-      <div style="margin-top:10px;font-size:11px;color:#94A3B8">Saldo da frota no mês: <b style="color:${saldo>=0?'#4ADE80':'#F87171'}">${saldo>=0?'+':''}${saldo} ativo${Math.abs(saldo)===1?'':'s'}</b></div>
+      <div style="margin-top:10px;font-size:11px;color:#94A3B8">Saldo da frota no ano: <b style="color:${saldo>=0?'#4ADE80':'#F87171'}">${saldo>=0?'+':''}${saldo} ativo${Math.abs(saldo)===1?'':'s'}</b></div>
       ${(nC+nV+nS)===0?'<div style="margin-top:4px;font-size:10px;color:#64748B">alimentado pelos uploads da base (coluna "Alterado em")</div>':''}`;
   }catch(e){console.warn('[RaioX] mov:',e);}
 
