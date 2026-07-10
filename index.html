@@ -279,6 +279,20 @@ input:focus,select:focus,textarea:focus{
 .hd-cols .g{flex:1;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:3px}
 .hd-cols .g i{width:10px;border-radius:3px 3px 0 0}
 
+/* ── PÁTIOS (opção B — light refinado) ── */
+#page-patio .pt-h5{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8FA4AE;margin-bottom:8px}
+#page-patio .pt-row td{padding:9px 12px;border-bottom:1px solid #EDF1F4;color:#37505C;vertical-align:middle}
+#page-patio .pt-row:hover td{background:#FDF3EA}
+#page-patio .pt-act{opacity:.35;background:none;border:none;font-size:15px;cursor:pointer;transition:opacity .12s;padding:2px 6px}
+#page-patio .pt-row:hover .pt-act{opacity:1}
+#page-patio .pt-fil{display:grid;grid-template-columns:140px 1fr 40px;align-items:center;gap:9px;font-size:11.5px;color:#5A7280;padding:3px 0}
+#page-patio .pt-fil .tr{height:8px;border-radius:4px;background:#EDF1F4;overflow:hidden}
+#page-patio .pt-fil .tr i{display:block;height:100%;border-radius:4px;background:#E8630A;transition:width .4s}
+#page-patio .pt-fil b{color:#1A2E35;text-align:right;font-variant-numeric:tabular-nums}
+#page-patio .pt-fil.clk{cursor:pointer;border-radius:6px}
+#page-patio .pt-fil.clk:hover{background:#FDF3EA}
+#page-patio .pt-badge{display:inline-block;font-size:10px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
+
 .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#5A7280;margin-bottom:12px;margin-top:20px;padding-bottom:6px;border-bottom:2px solid #E8630A;display:inline-block}
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:20px}
 .etapas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:14px}
@@ -1151,17 +1165,27 @@ input.filter-sel{padding:5px 10px;height:32px}
 
 <!-- PÁTIO SELECTOR -->
 <div class="page" id="page-patio">
-  <div style="padding:24px 28px;background:#F4F6F8;min-height:100%">
-    <!-- KPIs rápidos — cards grandes -->
-    <div id="patio-kpis" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:16px"></div>
-    <!-- Pátios por oficina — cards pequenos -->
-    <div id="patio-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px"></div>
-    <!-- Filtros — abaixo dos cards -->
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:18px;background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:8px 14px;box-shadow:0 1px 2px rgba(0,0,0,.04)">
+  <div style="padding:22px 26px;background:#F4F6F8;min-height:100%">
+    <div style="font-size:17px;font-weight:700;color:#1A2E35;margin-bottom:14px">Pátios — <span id="patio-titulo-n" style="color:#E8630A">—</span> prontos</div>
+
+    <!-- Composição + Tempo no pátio -->
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-bottom:10px">
+      <div id="patio-kpis" style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:14px 16px"></div>
+      <div id="patio-aging" style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:14px 16px"></div>
+    </div>
+
+    <!-- Por filial -->
+    <div style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:14px 16px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8FA4AE;margin-bottom:8px">Por filial <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#B7C4CC">— clique para filtrar</span></div>
+      <div id="patio-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:2px 28px"></div>
+    </div>
+
+    <!-- Filtros -->
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:8px 14px">
       <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FA4AE;flex-shrink:0;margin-right:4px">Filtros</span>
-      <input id="patio-busca" type="text" placeholder="Buscar equipamento..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;width:200px;flex-shrink:0;outline:none" oninput="patioRender()">
+      <input id="patio-busca" type="text" placeholder="Buscar equipamento..." style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;flex:1;min-width:160px;outline:none" oninput="patioRender()">
       <select id="patio-filtro-of" onchange="patioRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;background:#fff;cursor:pointer;flex-shrink:0;max-width:180px">
-        <option value="">Oficina — Todas</option>
+        <option value="">Filial — Todas</option>
       </select>
       <select id="patio-filtro-tipo" onchange="patioRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;background:#fff;cursor:pointer;flex-shrink:0;max-width:160px">
         <option value="">Tipo Frota — Todos</option>
@@ -1170,12 +1194,15 @@ input.filter-sel{padding:5px 10px;height:32px}
         <option value="standby">Standby</option>
         <option value="__sem__">Sem Identificação</option>
       </select>
+      <select id="patio-filtro-tempo" onchange="patioRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;background:#fff;cursor:pointer;flex-shrink:0">
+        <option value="">Tempo — Todos</option>
+        <option value="0-7">0–7 dias</option>
+        <option value="8-30">8–30 dias</option>
+        <option value="30+">+30 dias</option>
+      </select>
     </div>
-    <!-- Lista de equipamentos -->
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:10px;margin-top:4px">Lista de Equipamentos</div>
-    <div id="patio-lista" style="overflow-x:auto"></div>
-    <!-- Gráfico por família -->
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin:20px 0 10px">Por Família</div>
+
+    <div id="patio-lista" style="overflow-x:auto;margin-bottom:16px"></div>
     <div id="patio-familias" style="overflow-x:auto"></div>
   </div>
 </div>
@@ -17551,94 +17578,137 @@ function patioRender(){
   const busca=(document.getElementById('patio-busca')?.value||'').toLowerCase();
   const filtOf=document.getElementById('patio-filtro-of')?.value||'';
   const filtTipo=document.getElementById('patio-filtro-tipo')?.value||'';
+  const filtTempo=document.getElementById('patio-filtro-tempo')?.value||'';
+  const diasDe=e=>e.etapa_desde?Math.floor((Date.now()-e.etapa_desde)/86400000):0;
 
   let equips=Object.values(state).filter(e=>!e.baixado&&e.etapa==='pronto');
-  if(filtOf)equips=equips.filter(e=>e.oficina===filtOf);
   if(filtTipo==='__sem__'){
     const idsComTipo=new Set(EQUIPAMENTOS_ORIG.filter(o=>o.tipoFrota&&['locação','venda','standby'].includes(o.tipoFrota.toLowerCase())).map(o=>o.id));
     equips=equips.filter(e=>!idsComTipo.has(e.id));
   }else if(filtTipo){
     const ids=new Set(EQUIPAMENTOS_ORIG.filter(o=>o.tipoFrota===filtTipo).map(o=>o.id));equips=equips.filter(e=>ids.has(e.id));
   }
+  if(filtTempo==='0-7')equips=equips.filter(e=>diasDe(e)<=7);
+  else if(filtTempo==='8-30')equips=equips.filter(e=>{const d=diasDe(e);return d>7&&d<=30;});
+  else if(filtTempo==='30+')equips=equips.filter(e=>diasDe(e)>30);
   if(busca)equips=equips.filter(e=>(e.id||'').toLowerCase().includes(busca)||(e.equipamento||'').toLowerCase().includes(busca)||(e.modelo||'').toLowerCase().includes(busca));
+
+  // Barras de filial mostram TODAS as filiais (demais filtros aplicados), com a ativa destacada
+  const equipsSemFiltroFilial=equips;
+  if(filtOf)equips=equips.filter(e=>e.oficina===filtOf);
 
   const getTipoFrota=id=>{const o=EQUIPAMENTOS_ORIG.find(x=>x.id===id);return o?.tipoFrota||'';};
 
-  // KPIs
+  // Título
+  const tn=document.getElementById('patio-titulo-n');if(tn)tn.textContent=equips.length;
+
+  // Composição do pátio (barra empilhada)
   const kpisEl=document.getElementById('patio-kpis');
   if(kpisEl){
     const por_tipo=Counter_js(equips.map(e=>getTipoFrota(e.id)||'outros'));
-    const semClassif=equips.length-(por_tipo['locação']||0)-(por_tipo['venda']||0);
-    kpisEl.innerHTML=[
-      {l:'Total',v:equips.length,c:'#0f766e'},
-      {l:'Locação',v:por_tipo['locação']||0,c:'#2563eb'},
-      {l:'Venda',v:por_tipo['venda']||0,c:'#16a34a'},
-      ...(semClassif>0?[{l:'Sem Classif.',v:semClassif,c:'#94a3b8'}]:[]),
-    ].map(k=>`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;padding:20px 24px;border-left:4px solid ${k.c};box-shadow:0 1px 4px rgba(0,0,0,.06)"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8FA4AE;margin-bottom:10px">${k.l}</div><div style="font-size:36px;font-weight:900;color:${k.c};line-height:1;margin-bottom:6px">${k.v}</div><div style="font-size:11px;color:#8FA4AE">prontos no pátio</div></div>`).join('');
+    const nLoc=por_tipo['locação']||0;
+    const nVen=(por_tipo['venda']||0)+(por_tipo['standby']||0);
+    const nSem=Math.max(0,equips.length-nLoc-nVen);
+    const tot=equips.length||1;
+    const p=v=>Math.round(v/tot*100);
+    kpisEl.innerHTML=`<div class="pt-h5">Composição do pátio</div>
+      <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:30px;font-weight:800;color:#1A2E35">${equips.length}</span><span style="font-size:12px;color:#8FA4AE">prontos no pátio</span></div>
+      <div style="display:flex;height:12px;border-radius:6px;overflow:hidden;background:#EDF1F4;margin:8px 0">
+        <i style="width:${p(nLoc)}%;background:#E8630A"></i><i style="width:${p(nVen)}%;background:#5B7A8A"></i><i style="width:${p(nSem)}%;background:#F59E0B"></i>
+      </div>
+      <div style="display:flex;gap:14px;font-size:11px;color:#5A7280;flex-wrap:wrap">
+        <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#E8630A;margin-right:5px"></i>Locação <b style="color:#1A2E35">${nLoc}</b></span>
+        <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#5B7A8A;margin-right:5px"></i>Venda/Standby <b style="color:#1A2E35">${nVen}</b></span>
+        <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#F59E0B;margin-right:5px"></i>Sem classif. <b style="color:#1A2E35">${nSem}</b></span>
+      </div>`;
   }
 
-  // Cards por oficina
+  // Tempo no pátio (aging em 3 faixas)
+  const agEl=document.getElementById('patio-aging');
+  if(agEl){
+    const a1=equips.filter(e=>diasDe(e)<=7).length;
+    const a2=equips.filter(e=>{const d=diasDe(e);return d>7&&d<=30;}).length;
+    const a3=equips.filter(e=>diasDe(e)>30).length;
+    const mx=Math.max(a1,a2,a3,1);
+    const row=(lbl,cor,corBar,v)=>`<div class="pt-fil"><span style="color:${cor};font-weight:600">${lbl}</span><span class="tr"><i style="width:${Math.round(v/mx*100)}%;background:${corBar}"></i></span><b>${v}</b></div>`;
+    agEl.innerHTML=`<div class="pt-h5">Tempo no pátio</div>
+      ${row('0–7 dias','#1E8A4C','#22C55E',a1)}
+      ${row('8–30 dias','#B45309','#F59E0B',a2)}
+      ${row('+30 dias','#B91C1C','#EF4444',a3)}`;
+  }
+
+  // Por filial — barras proporcionais clicáveis
   const patioGrid=document.getElementById('patio-grid');
   if(patioGrid){
-    const ofs=[...new Set(equips.map(e=>e.oficina).filter(Boolean))].sort();
-    patioGrid.innerHTML=ofs.map(of=>{
-      const eq=equips.filter(e=>e.oficina===of);
-      return `<div style="background:#fff;border:1px solid #E2E8ED;border-left:3px solid #1D9E75;border-radius:8px;padding:10px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <div style="font-size:12px;font-weight:600;color:#1A2E35;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${of}</div>
-        <div style="font-size:22px;font-weight:900;color:#1D9E75;line-height:1;flex-shrink:0">${eq.length}</div>
+    const ofs=Object.entries(Counter_js(equipsSemFiltroFilial.map(e=>e.oficina).filter(Boolean))).sort((a,b)=>b[1]-a[1]);
+    const mx=ofs[0]?.[1]||1;
+    patioGrid.innerHTML=ofs.map(([of,n])=>{
+      const ativa=filtOf===of;
+      return `<div class="pt-fil clk" onclick="patioFiltrarFilial('${of.replace(/'/g,"\\'")}')" title="${ativa?'Remover filtro':'Filtrar por '+of}" style="${ativa?'background:#FDE8D8;border-radius:6px':''}">
+        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${ativa?'color:#C24003;font-weight:700':''}">${of}</span>
+        <span class="tr"><i style="width:${Math.round(n/mx*100)}%"></i></span><b>${n}</b>
       </div>`;
-    }).join('');
+    }).join('')||'<div style="font-size:12px;color:#8FA4AE">Nenhum equipamento com filial identificada.</div>';
   }
 
-  // Lista
+  // Lista — ordenada por tempo no pátio (mais antigos primeiro)
   const lista=document.getElementById('patio-lista');
   if(lista){
-    const rows=equips.sort((a,b)=>(a.oficina||'').localeCompare(b.oficina||'')).map((e,ki)=>{
+    const rows=equips.sort((a,b)=>diasDe(b)-diasDe(a)).map(e=>{
       const tf=getTipoFrota(e.id);
-      const cor_tf=tf==='locação'?'#2563eb':tf==='venda'?'#16a34a':tf==='standby'?'#7c3aed':'#94a3b8';
-      const diasPronto=e.etapa_desde?Math.floor((Date.now()-e.etapa_desde)/86400000):0;
-      return `<tr style="background:${ki%2?'#fff':'#f8fafc'};border-bottom:1px solid #f1f5f9">
-        <td style="padding:8px 12px;font-family:monospace;font-weight:700;font-size:12px">${e.id}</td>
-        <td style="padding:8px 12px;font-weight:600">${e.equipamento||'—'}</td>
-        <td style="padding:8px 12px;font-size:11px;color:#64748b">${e.modelo||'—'}</td>
-        <td style="padding:8px 12px">${e.oficina||'—'}</td>
-        <td style="padding:8px 12px;text-align:center"><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:${cor_tf}22;color:${cor_tf}">${tf||'—'}</span></td>
-        <td style="padding:8px 12px;text-align:center;color:${diasPronto>7?'#dc2626':diasPronto>3?'#d97706':'#16a34a'};font-weight:700">${diasPronto}d</td>
-        ${e.reservado?`<td style="padding:8px 12px"><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:#dbeafe;color:#1e40af">🔒 ${e.cliente||'Reservado'}</span></td>`:'<td style="padding:8px 12px;color:#94a3b8;font-size:11px">—</td>'}
-        <td style="padding:8px 12px;text-align:center">
-          <button onclick="patioVoltarManutenção('${e.id}')" title="Retornar para Manutenção" style="background:#fff3e6;border:1px solid #F37021;color:#F37021;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap">🔧 → Manutenção</button>
-        </td>
+      const d=diasDe(e);
+      const corD=d>30?'#B91C1C':d>7?'#B45309':'#1E8A4C';
+      const badge=tf==='locação'?'<span class="pt-badge" style="background:#FDE8D8;color:#C24003">locação</span>'
+        :tf==='venda'?'<span class="pt-badge" style="background:#F0F4F6;color:#5A7280">venda</span>'
+        :tf==='standby'?'<span class="pt-badge" style="background:#EDE9FE;color:#6D28D9">standby</span>'
+        :'<span class="pt-badge" style="background:#FEF3C7;color:#B45309">sem classif.</span>';
+      return `<tr class="pt-row">
+        <td style="font-family:Consolas,monospace;font-weight:700;font-size:12px;color:#1A2E35">${e.id}</td>
+        <td style="font-weight:600;color:#1A2E35">${e.equipamento||'—'}</td>
+        <td style="font-size:11px;color:#8FA4AE">${e.modelo||'—'}</td>
+        <td>${e.oficina||'<span style="color:#B7C4CC">—</span>'}</td>
+        <td style="text-align:center">${badge}</td>
+        <td style="text-align:right;color:${corD};font-weight:700">${d}d</td>
+        ${e.reservado?`<td><span class="pt-badge" style="background:#DBEAFE;color:#1E40AF">🔒 ${e.cliente||'Reservado'}</span></td>`:'<td style="color:#B7C4CC;font-size:11px">—</td>'}
+        <td style="text-align:center"><button class="pt-act" onclick="patioVoltarManutenção('${e.id}')" title="Retornar para manutenção">🔧</button></td>
       </tr>`;
     }).join('');
-    lista.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#f8fafc"><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">ID</th><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Equipamento</th><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Modelo</th><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Oficina</th><th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Tipo Frota</th><th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Dias Pronto</th><th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;border-bottom:1px solid #e2e8f0">Reserva</th><th style="padding:10px 14px;border-bottom:1px solid #e2e8f0"></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    const ths=['ID','Equipamento','Modelo','Filial','Tipo frota','Dias pronto','Reserva',''];
+    lista.innerHTML=`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;overflow:hidden"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>${ths.map((h,i)=>`<th style="padding:9px 12px;text-align:${i===5?'right':i===4?'center':'left'};font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8FA4AE;background:#F8FAFB;border-bottom:1px solid #E2E8ED">${h}</th>`).join('')}</tr></thead><tbody>${rows||'<tr><td colspan="8" style="padding:24px;text-align:center;color:#8FA4AE">Nenhum equipamento encontrado com os filtros atuais.</td></tr>'}</tbody></table></div>`;
   }
 
-  // Por família
+  // Por família — cor única (laranja Mills)
   const famEl=document.getElementById('patio-familias');
   if(famEl){
     const famMap={};
     equips.forEach(e=>{const o=EQUIPAMENTOS_ORIG.find(x=>x.id===e.id);const fam=o?.tipo||e.tipo||'Outros';if(!famMap[fam])famMap[fam]=0;famMap[fam]++;});
     const entries=Object.entries(famMap).sort((a,b)=>b[1]-a[1]);
     const maxN=entries[0]?.[1]||1;
-    const CORES=['#1D9E75','#2563eb','#7c3aed','#E8630A','#B91C1C','#B45309','#0e7490','#4f46e5','#15803d','#9333ea'];
-    const bars=entries.map(([f,n],i)=>{
-      const pct=Math.round(n/equips.length*100);
+    const bars=entries.map(([f,n])=>{
+      const pct=Math.round(n/(equips.length||1)*100);
       const barW=Math.round(n/maxN*100);
-      const cor=CORES[i%CORES.length];
-      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F4F6F8">
+      return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #F4F6F8">
         <div style="width:180px;font-size:12px;font-weight:600;color:#1A2E35;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${f}">${f}</div>
-        <div style="flex:1;background:#F4F6F8;border-radius:4px;height:18px;overflow:hidden">
-          <div style="background:${cor};height:100%;width:${barW}%;border-radius:4px;transition:width .4s ease"></div>
+        <div style="flex:1;background:#EDF1F4;border-radius:4px;height:14px;overflow:hidden">
+          <div style="background:#E8630A;height:100%;width:${barW}%;border-radius:4px;transition:width .4s ease"></div>
         </div>
-        <div style="width:28px;font-size:13px;font-weight:800;color:${cor};text-align:right;flex-shrink:0">${n}</div>
+        <div style="width:28px;font-size:13px;font-weight:800;color:#1A2E35;text-align:right;flex-shrink:0">${n}</div>
         <div style="width:34px;font-size:11px;color:#8FA4AE;text-align:right;flex-shrink:0">${pct}%</div>
       </div>`;
     }).join('');
-    famEl.innerHTML=`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8FA4AE;margin-bottom:12px">Distribuição por família — ${equips.length} equipamentos</div>
+    famEl.innerHTML=`<div style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:14px 16px">
+      <div class="pt-h5">Distribuição por família — ${equips.length} equipamentos</div>
       ${bars}
     </div>`;
   }
+}
+
+function patioFiltrarFilial(of){
+  const sel=document.getElementById('patio-filtro-of');if(!sel)return;
+  // Garante que a opção exista (o select é populado só na abertura da página)
+  if(![...sel.options].some(o=>o.value===of)){const o=document.createElement('option');o.value=of;o.textContent=of;sel.appendChild(o);}
+  sel.value=(sel.value===of)?'':of;
+  patioRender();
 }
 
 function Counter_js(arr){const m={};arr.forEach(x=>{m[x]=(m[x]||0)+1;});return m;}
