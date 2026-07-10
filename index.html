@@ -13756,16 +13756,17 @@ function rcdRenderTratamento() {
   const STATUS_COR = { aguardando_inspecao:'#1D4ED8', em_orcamento:'#B45309', aguardando_cliente:'#1E8A4C', aguardando_faturamento:'#6D28D9' };
   const STATUS_LABEL = { aguardando_inspecao:'Ag. Inspeção', em_orcamento:'Em Orçamento', aguardando_cliente:'Ag. Cliente', aguardando_faturamento:'Ag. Faturamento' };
 
-  // Tempos médios por fase (baseado em registros concluídos)
-  const _toDays = ms => Math.round(ms / 86400000);
-  const _conclT = Object.values(_rcdRegistros).filter(r => r.ts_conclusao && r.ts_triagem);
+  // Tempo médio "vivo" por fase — média de dias-na-fase dos cards ATUALMENTE ativos em cada status
+  // (o cálculo anterior usava só registros concluídos, histórico raro → sempre mostrava ~1d)
+  const _tsEntradaFase = (r, status) => ({aguardando_inspecao:r.ts_triagem, em_orcamento:r.ts_em_orcamento, aguardando_cliente:r.ts_aguardando_cliente, aguardando_faturamento:r.ts_aguardando_faturamento}[status]);
   function _avgD(arr) { return arr.length ? Math.round(arr.reduce((s,x)=>s+x,0)/arr.length) : null; }
-  const avgFaseDias = {
-    aguardando_inspecao:  _avgD(_conclT.filter(r=>r.ts_em_orcamento).map(r=>_toDays(r.ts_em_orcamento-r.ts_triagem))),
-    em_orcamento:         _avgD(_conclT.filter(r=>r.ts_em_orcamento&&r.ts_aguardando_cliente).map(r=>_toDays(r.ts_aguardando_cliente-r.ts_em_orcamento))),
-    aguardando_cliente:   _avgD(_conclT.filter(r=>r.ts_aguardando_cliente&&r.ts_aguardando_faturamento).map(r=>_toDays(r.ts_aguardando_faturamento-r.ts_aguardando_cliente))),
-    aguardando_faturamento:_avgD(_conclT.filter(r=>r.ts_aguardando_faturamento&&r.ts_conclusao).map(r=>_toDays(r.ts_conclusao-r.ts_aguardando_faturamento))),
-  };
+  const contagemFase = {}, avgFaseDias = {};
+  Object.keys(fases).forEach(status => {
+    const ativos = Object.values(_rcdRegistros).filter(r => r.status === status);
+    contagemFase[status] = ativos.length;
+    const dias = ativos.map(r => { const ts = _tsEntradaFase(r,status); return ts ? Math.floor((Date.now()-ts)/86400000) : null; }).filter(d => d!==null);
+    avgFaseDias[status] = _avgD(dias);
+  });
 
   Object.entries(fases).forEach(([status, colId]) => {
     const col = document.getElementById(colId); if(!col) return;
@@ -13821,16 +13822,22 @@ function rcdRenderTratamento() {
     }).join('');
   });
 
-  // Atualiza cabeçalhos das colunas com tempo médio
+  // Atualiza cabeçalhos das colunas com quantidade de cards + tempo médio na fase
   const _hdrCfg = {
-    'rcd-hdr-inspecao':    {label:'Ag. Inspeção',     avg:avgFaseDias.aguardando_inspecao,   cor:'#1D4ED8', bg:'#DBEAFE'},
-    'rcd-hdr-orcamento':   {label:'Em Orçamento',     avg:avgFaseDias.em_orcamento,          cor:'#B45309', bg:'#FEF3C7'},
-    'rcd-hdr-cliente':     {label:'Ag. Cliente',      avg:avgFaseDias.aguardando_cliente,    cor:'#1E8A4C', bg:'#E8F5EE'},
-    'rcd-hdr-faturamento': {label:'Ag. Faturamento',  avg:avgFaseDias.aguardando_faturamento,cor:'#6D28D9', bg:'#EDE9FE'},
+    'rcd-hdr-inspecao':    {label:'Ag. Inspeção',     status:'aguardando_inspecao',    cor:'#1D4ED8'},
+    'rcd-hdr-orcamento':   {label:'Em Orçamento',     status:'em_orcamento',           cor:'#B45309'},
+    'rcd-hdr-cliente':     {label:'Ag. Cliente',      status:'aguardando_cliente',     cor:'#1E8A4C'},
+    'rcd-hdr-faturamento': {label:'Ag. Faturamento',  status:'aguardando_faturamento', cor:'#6D28D9'},
   };
-  Object.entries(_hdrCfg).forEach(([id,{label,avg,cor}]) => {
+  Object.entries(_hdrCfg).forEach(([id,{label,status,cor}]) => {
     const el = document.getElementById(id); if(!el) return;
-    el.innerHTML = `<span style="width:7px;height:7px;border-radius:50%;background:${cor};flex-shrink:0"></span>${label}${avg!==null?`<span style="margin-left:auto;font-size:9px;font-weight:500;opacity:.75;background:rgba(0,0,0,.07);padding:2px 6px;border-radius:99px">méd. ${avg}d</span>`:''}`;
+    const n = contagemFase[status]||0;
+    const avg = avgFaseDias[status];
+    el.innerHTML = `<span style="width:7px;height:7px;border-radius:50%;background:${cor};flex-shrink:0"></span>${label}
+      <span style="margin-left:auto;display:flex;align-items:center;gap:5px">
+        ${avg!==null?`<span title="Média de dias na fase" style="font-size:9px;font-weight:600;opacity:.85;background:rgba(0,0,0,.07);padding:2px 7px;border-radius:99px;white-space:nowrap">méd. ${avg}d</span>`:''}
+        <span title="Quantidade de equipamentos" style="font-size:10px;font-weight:800;background:rgba(0,0,0,.12);padding:2px 8px;border-radius:99px;min-width:16px;text-align:center">${n}</span>
+      </span>`;
   });
 }
 
