@@ -19541,15 +19541,19 @@ async function renderHomeRaioX(){
       const pts=vals.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
       const first=vals[0],last=vals[vals.length-1];
       const MN=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-      const dots=vals.map((v,i)=>{const ult=i===vals.length-1;return `<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${ult?4:2.6}" fill="${ult?'#F5A96D':'#E8630A'}"/>`;}).join('');
+      // Bolinhas como overlay HTML (círculos perfeitos) — o SVG usa preserveAspectRatio=none
+      // e distorceria <circle> em elipse. A linha usa non-scaling-stroke p/ peso constante.
+      const dotsHtml=vals.map((v,i)=>{const ult=i===vals.length-1;const sz=ult?10:6;return `<div style="position:absolute;left:${(X(i)/240*100).toFixed(2)}%;top:${(Y(v)/72*100).toFixed(2)}%;width:${sz}px;height:${sz}px;border-radius:50%;background:${ult?'#F5A96D':'#E8630A'};transform:translate(-50%,-50%);box-shadow:0 0 0 2px #0F172A"></div>`;}).join('');
       el.innerHTML=`<div style="width:100%">
-        <svg viewBox="0 0 240 72" preserveAspectRatio="none" style="width:100%;height:56px;display:block">
-          <line x1="8" y1="68" x2="232" y2="68" stroke="#2E3D52" stroke-width="1"/>
-          <polyline points="${pts}" fill="none" stroke="#E8630A" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-          ${dots}
-        </svg>
-        <div style="display:flex;justify-content:space-between;margin-top:4px;padding:0 2px">${meses.map((m,i)=>`<span style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1"><b style="font-size:10px;color:${i===vals.length-1?'#F5A96D':'#94A3B8'}">${vals[i]}%</b><span style="font-size:9px;color:#64748B">${MN[parseInt(m.slice(5,7),10)-1]}</span></span>`).join('')}</div>
-        <div style="margin-top:8px;font-size:11.5px;font-weight:700;color:${last>=first?'#4ADE80':'#F87171'}">${last>=first?'▲':'▼'} ${Math.abs(last-first)} p.p. no período · atual ${last}%</div>
+        <div style="position:relative;width:100%;height:58px">
+          <svg viewBox="0 0 240 72" preserveAspectRatio="none" style="width:100%;height:58px;display:block">
+            <line x1="0" y1="68" x2="240" y2="68" stroke="#2E3D52" stroke-width="1" vector-effect="non-scaling-stroke"/>
+            <polyline points="${pts}" fill="none" stroke="#E8630A" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>
+          </svg>
+          ${dotsHtml}
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;padding:0 2px">${meses.map((m,i)=>`<span style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1"><b style="font-size:12px;color:${i===vals.length-1?'#F5A96D':'#CBD5E1'}">${vals[i]}%</b><span style="font-size:10px;color:#64748B">${MN[parseInt(m.slice(5,7),10)-1]}</span></span>`).join('')}</div>
+        <div style="margin-top:10px;font-size:12px;font-weight:700;color:${last>=first?'#4ADE80':'#F87171'}">${last>=first?'▲':'▼'} ${Math.abs(last-first)} p.p. no período · atual ${last}%</div>
       </div>`;
     } else el.textContent='coletando histórico…';
   }catch(e){console.warn('[RaioX] trend:',e);}
@@ -19637,6 +19641,11 @@ async function renderHomeRaioX(){
 
 // ══════════ MODAL — Movimentação de ativos (compras / vendas / sinistros) ══════════
 let _movDim='familia';
+let _movTipo=''; // '' | compra | venda | sinistro
+const _MOV_TXT={compra:'#15803d',venda:'#c2610a',sinistro:'#dc2626'};
+const _MOV_BAR={compra:'#22c55e',venda:'#E8630A',sinistro:'#ef4444'};
+const _MOV_LBL={compra:'Compras',venda:'Vendas',sinistro:'Sinistros'};
+const _MOV_KEY={compra:'c',venda:'v',sinistro:'s'};
 async function abrirMovModal(){
   let evObj=(typeof _raioxCache!=='undefined'&&_raioxCache&&_raioxCache.ev)||null;
   if(!evObj){try{const r=await fetch(FB_BASE+'/frota_eventos.json');evObj=await r.json();if(typeof _raioxCache!=='undefined'&&_raioxCache)_raioxCache.ev=evObj;}catch(e){}}
@@ -19652,127 +19661,129 @@ async function abrirMovModal(){
     return {tipo:e.tipo,data:e.data||'',ano:(e.data||'').slice(0,4),mes:(e.data||'').slice(0,7),familia,marca,modelo};
   }).filter(m=>/^\d{4}-\d{2}/.test(m.mes));
   window._movData=movs;
+  _movTipo='';_movDim='familia';
   const old=document.getElementById('mov-modal');if(old)old.remove();
   const anos=[...new Set(movs.map(m=>m.ano))].sort();
   const anoDefault=anos.length?anos[anos.length-1]:'';
   const familias=[...new Set(movs.map(m=>m.familia))].filter(x=>x&&x!=='—').sort();
   const marcas=[...new Set(movs.map(m=>m.marca))].filter(x=>x&&x!=='—').sort();
-  const selCss='background:#0F172A;color:#F1F5F9;border:1px solid #2E3D52;border-radius:7px;padding:6px 10px;font-size:11px;outline:none;cursor:pointer';
+  const selCss='background:#fff;color:#101820;border:1px solid #a8b4bf;border-radius:7px;padding:7px 11px;font-size:12.5px;outline:none;cursor:pointer';
   const div=document.createElement('div');
   div.id='mov-modal';
-  div.style.cssText='position:fixed;inset:0;z-index:1300;background:rgba(2,6,23,.74);display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto';
+  div.style.cssText='position:fixed;inset:0;z-index:1300;background:rgba(16,24,32,.5);display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto';
   div.onclick=(ev)=>{if(ev.target===div)fecharMovModal();};
   div.innerHTML=`
-    <div style="background:#0F172A;border:1px solid #2E3D52;border-radius:14px;width:980px;max-width:100%;box-shadow:0 24px 70px rgba(0,0,0,.55)">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #2E3D52;background:#1E293B;border-radius:14px 14px 0 0">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:3px;height:24px;background:#E8630A;border-radius:2px"></div>
+    <div style="background:#f4f6f8;border:1px solid #a8b4bf;border-radius:14px;width:1000px;max-width:100%;box-shadow:0 24px 70px rgba(16,24,32,.42)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #a8b4bf;background:linear-gradient(180deg,#ffffff,#e9edf1);border-radius:14px 14px 0 0">
+        <div style="display:flex;align-items:center;gap:11px">
+          <div style="width:4px;height:28px;background:#E8630A;border-radius:2px"></div>
           <div>
-            <div style="font-size:16px;font-weight:700;color:#F1F5F9;line-height:1.2">Movimentação de ativos</div>
-            <div style="font-size:11px;color:#64748B;margin-top:2px">Compras, vendas e sinistros — fonte: uploads da base</div>
+            <div style="font-size:18px;font-weight:800;color:#101820;line-height:1.2">Movimentação de ativos</div>
+            <div style="font-size:12.5px;color:#52616d;margin-top:3px">Compras, vendas e sinistros — fonte: uploads da base</div>
           </div>
         </div>
-        <button onclick="fecharMovModal()" style="background:none;border:none;color:#64748B;font-size:26px;cursor:pointer;line-height:1;padding:0 6px">×</button>
+        <button onclick="fecharMovModal()" style="background:none;border:none;color:#52616d;font-size:28px;cursor:pointer;line-height:1;padding:0 6px">×</button>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 20px;border-bottom:1px solid #2E3D52">
-        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748B">Filtros:</span>
-        <select id="mov-f-ano" onchange="_movRender()" style="${selCss}">${anos.map(a=>`<option value="${a}"${a===anoDefault?' selected':''}>${a}</option>`).join('')}<option value="">Todos os anos</option></select>
-        <select id="mov-f-fam" onchange="_movRender()" style="${selCss}"><option value="">Família — Todas</option>${familias.map(f=>`<option value="${_escHtml(f)}">${_escHtml(f)}</option>`).join('')}</select>
-        <select id="mov-f-marca" onchange="_movRender()" style="${selCss}"><option value="">Marca — Todas</option>${marcas.map(f=>`<option value="${_escHtml(f)}">${_escHtml(f)}</option>`).join('')}</select>
-        <input id="mov-f-modelo" oninput="_movRender()" placeholder="Modelo contém…" style="${selCss};width:150px">
+      <div style="padding:14px 22px;border-bottom:1px solid #cbd3da">
+        <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:11px">
+          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#52616d">Filtros:</span>
+          <select id="mov-f-ano" onchange="_movRender()" style="${selCss}">${anos.map(a=>`<option value="${a}"${a===anoDefault?' selected':''}>${a}</option>`).join('')}<option value="">Todos os anos</option></select>
+          <select id="mov-f-fam" onchange="_movRender()" style="${selCss}"><option value="">Família — Todas</option>${familias.map(f=>`<option value="${_escHtml(f)}">${_escHtml(f)}</option>`).join('')}</select>
+          <select id="mov-f-marca" onchange="_movRender()" style="${selCss}"><option value="">Marca — Todas</option>${marcas.map(f=>`<option value="${_escHtml(f)}">${_escHtml(f)}</option>`).join('')}</select>
+          <input id="mov-f-modelo" oninput="_movRender()" placeholder="Modelo contém…" style="${selCss};width:160px">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#52616d">Tipo:</span>
+          <div id="mov-tipo-pills" style="display:flex;gap:7px;flex-wrap:wrap"></div>
+        </div>
       </div>
-      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:18px">
+      <div style="padding:18px 22px;display:flex;flex-direction:column;gap:20px">
         <div id="mov-mensal"></div>
         <div id="mov-dimensao"></div>
       </div>
     </div>`;
   document.body.appendChild(div);
+  _movRenderTipoPills();
   _movRender();
 }
 function fecharMovModal(){const el=document.getElementById('mov-modal');if(el)el.remove();}
 function setMovDim(d){_movDim=d;_movRender();}
+function setMovTipo(t){_movTipo=t;_movRenderTipoPills();_movRender();}
+function _movRenderTipoPills(){
+  const wrap=document.getElementById('mov-tipo-pills');if(!wrap)return;
+  const pills=[['','Todos','#52616d'],['compra','Compras',_MOV_TXT.compra],['venda','Vendas',_MOV_TXT.venda],['sinistro','Sinistros',_MOV_TXT.sinistro]];
+  wrap.innerHTML=pills.map(([v,l,c])=>{
+    const on=_movTipo===v;
+    return `<button onclick="setMovTipo('${v}')" style="padding:6px 16px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;border:1.5px solid ${on?'#E8630A':'#a8b4bf'};background:${on?'rgba(232,99,10,.12)':'#fff'};color:${on?'#b5561e':c}">${l}</button>`;
+  }).join('');
+}
 function _movFiltered(){
   const g=id=>{const el=document.getElementById(id);return el?el.value:'';};
   const ano=g('mov-f-ano'),fam=g('mov-f-fam'),marca=g('mov-f-marca'),mod=(g('mov-f-modelo')||'').trim().toLowerCase();
-  return (window._movData||[]).filter(m=>(!ano||m.ano===ano)&&(!fam||m.familia===fam)&&(!marca||m.marca===marca)&&(!mod||m.modelo.toLowerCase().includes(mod)));
+  return (window._movData||[]).filter(m=>(!ano||m.ano===ano)&&(!fam||m.familia===fam)&&(!marca||m.marca===marca)&&(!mod||m.modelo.toLowerCase().includes(mod))&&(!_movTipo||m.tipo===_movTipo));
 }
 function _movRender(){
   if(!document.getElementById('mov-modal'))return;
   const MN=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   const ano=(document.getElementById('mov-f-ano')||{}).value||'';
   const set=_movFiltered();
+  const tipos=_movTipo?[_movTipo]:['compra','venda','sinistro'];
   // ── Mês a mês ──
   let meses;
   if(ano){meses=Array.from({length:12},(_,i)=>ano+'-'+String(i+1).padStart(2,'0'));}
   else{meses=[...new Set(set.map(m=>m.mes))].sort();}
   const agg={};meses.forEach(k=>agg[k]={c:0,v:0,s:0});
-  set.forEach(m=>{if(!agg[m.mes])agg[m.mes]={c:0,v:0,s:0};if(m.tipo==='compra')agg[m.mes].c++;else if(m.tipo==='venda')agg[m.mes].v++;else agg[m.mes].s++;});
-  let tC=0,tV=0,tS=0;meses.forEach(k=>{tC+=agg[k].c;tV+=agg[k].v;tS+=agg[k].s;});
-  const mx=Math.max(1,...meses.map(k=>agg[k].c+agg[k].v+agg[k].s));
+  set.forEach(m=>{if(!agg[m.mes])agg[m.mes]={c:0,v:0,s:0};agg[m.mes][_MOV_KEY[m.tipo]]++;});
+  const tot={c:0,v:0,s:0};meses.forEach(k=>{tot.c+=agg[k].c;tot.v+=agg[k].v;tot.s+=agg[k].s;});
+  const mx=Math.max(1,...meses.map(k=>tipos.reduce((s,t)=>s+agg[k][_MOV_KEY[t]],0)));
   const rowsHtml=meses.map(k=>{
-    const a=agg[k];const saldo=a.c-a.v-a.s;
+    const a=agg[k];
     const mesLbl=MN[parseInt(k.slice(5,7),10)-1]+'/'+k.slice(2,4);
-    const bar=`<div style="display:flex;height:10px;border-radius:3px;overflow:hidden;background:#1E293B;min-width:90px">`+
-      `<div style="width:${(a.c/mx*100).toFixed(1)}%;background:#4ADE80"></div><div style="width:${(a.v/mx*100).toFixed(1)}%;background:#F5A96D"></div><div style="width:${(a.s/mx*100).toFixed(1)}%;background:#F87171"></div></div>`;
-    return `<tr style="border-top:1px solid #1E293B">
-      <td style="padding:6px 8px;color:#94A3B8;white-space:nowrap">${mesLbl}</td>
-      <td style="padding:6px 8px">${bar}</td>
-      <td style="padding:6px 8px;text-align:right;color:#4ADE80;font-weight:600">${a.c||''}</td>
-      <td style="padding:6px 8px;text-align:right;color:#F5A96D;font-weight:600">${a.v||''}</td>
-      <td style="padding:6px 8px;text-align:right;color:#F87171;font-weight:600">${a.s||''}</td>
-      <td style="padding:6px 8px;text-align:right;color:${saldo>=0?'#4ADE80':'#F87171'};font-weight:700">${saldo>=0?'+':''}${saldo}</td>
-    </tr>`;
+    const seg=tipos.map(t=>`<div style="width:${(a[_MOV_KEY[t]]/mx*100).toFixed(1)}%;background:${_MOV_BAR[t]}"></div>`).join('');
+    const bar=`<div style="display:flex;height:12px;border-radius:3px;overflow:hidden;background:#dbe2e8;min-width:110px">${seg}</div>`;
+    const valCells=tipos.map(t=>`<td style="padding:8px 10px;text-align:right;color:${_MOV_TXT[t]};font-weight:700;font-size:13.5px">${a[_MOV_KEY[t]]||''}</td>`).join('');
+    const saldo=a.c-a.v-a.s;
+    const saldoCell=_movTipo?'':`<td style="padding:8px 10px;text-align:right;font-weight:800;font-size:13.5px;color:${saldo>=0?'#15803d':'#dc2626'}">${saldo>=0?'+':''}${saldo}</td>`;
+    return `<tr style="border-top:1px solid #dfe5ea"><td style="padding:8px 10px;color:#52616d;white-space:nowrap;font-size:13px;font-weight:600">${mesLbl}</td><td style="padding:8px 10px">${bar}</td>${valCells}${saldoCell}</tr>`;
   }).join('');
-  const saldoT=tC-tV-tS;
+  const saldoT=tot.c-tot.v-tot.s;
+  const legenda=tipos.map(t=>`<span style="color:#52616d;font-size:12.5px"><i style="display:inline-block;width:11px;height:11px;border-radius:2px;background:${_MOV_BAR[t]};margin-right:6px"></i>${_MOV_LBL[t]} <b style="color:#101820;font-size:14px">${tot[_MOV_KEY[t]]}</b></span>`).join('');
+  const thTipos=tipos.map(t=>`<th style="padding:9px 10px;text-align:right;color:#52616d;font-weight:700;font-size:11.5px;text-transform:uppercase">${_MOV_LBL[t]}</th>`).join('');
   document.getElementById('mov-mensal').innerHTML=`
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94A3B8;margin-bottom:8px">Mês a mês ${ano?'· '+ano:'· todos os anos'}</div>
-    <div style="display:flex;gap:16px;margin-bottom:10px;font-size:11px;flex-wrap:wrap">
-      <span style="color:#94A3B8"><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#4ADE80;margin-right:5px"></i>Compras <b style="color:#F1F5F9">${tC}</b></span>
-      <span style="color:#94A3B8"><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#F5A96D;margin-right:5px"></i>Vendas <b style="color:#F1F5F9">${tV}</b></span>
-      <span style="color:#94A3B8"><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#F87171;margin-right:5px"></i>Sinistros <b style="color:#F1F5F9">${tS}</b></span>
-      <span style="color:#64748B">saldo <b style="color:${saldoT>=0?'#4ADE80':'#F87171'}">${saldoT>=0?'+':''}${saldoT}</b></span>
-    </div>
-    <div style="max-height:250px;overflow:auto;border:1px solid #1E293B;border-radius:8px">
-      <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:#1E293B;position:sticky;top:0;z-index:1">
-          <th style="padding:7px 8px;text-align:left;color:#64748B;font-weight:700">Mês</th>
-          <th style="padding:7px 8px;text-align:left;color:#64748B;font-weight:700">Distribuição</th>
-          <th style="padding:7px 8px;text-align:right;color:#64748B;font-weight:700">Compras</th>
-          <th style="padding:7px 8px;text-align:right;color:#64748B;font-weight:700">Vendas</th>
-          <th style="padding:7px 8px;text-align:right;color:#64748B;font-weight:700">Sinistros</th>
-          <th style="padding:7px 8px;text-align:right;color:#64748B;font-weight:700">Saldo</th>
+    <div style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#101820;margin-bottom:10px">Mês a mês ${ano?'· '+ano:'· todos os anos'}</div>
+    <div style="display:flex;gap:20px;margin-bottom:12px;flex-wrap:wrap;align-items:center">${legenda}${_movTipo?'':`<span style="color:#52616d;font-size:12.5px">saldo <b style="color:${saldoT>=0?'#15803d':'#dc2626'};font-size:14px">${saldoT>=0?'+':''}${saldoT}</b></span>`}</div>
+    <div style="max-height:290px;overflow:auto;border:1px solid #cbd3da;border-radius:9px;background:#fff">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="background:#cfd8df;position:sticky;top:0;z-index:1">
+          <th style="padding:9px 10px;text-align:left;color:#52616d;font-weight:700;font-size:11.5px;text-transform:uppercase">Mês</th>
+          <th style="padding:9px 10px;text-align:left;color:#52616d;font-weight:700;font-size:11.5px;text-transform:uppercase">Distribuição</th>
+          ${thTipos}
+          ${_movTipo?'':'<th style="padding:9px 10px;text-align:right;color:#52616d;font-weight:700;font-size:11.5px;text-transform:uppercase">Saldo</th>'}
         </tr></thead>
-        <tbody>${rowsHtml||'<tr><td colspan="6" style="padding:14px;text-align:center;color:#64748B">Sem movimentações no período</td></tr>'}</tbody>
+        <tbody>${rowsHtml||`<tr><td colspan="6" style="padding:16px;text-align:center;color:#52616d;font-size:13px">Sem movimentações no período</td></tr>`}</tbody>
       </table>
     </div>`;
   // ── Por dimensão (família / marca / modelo) ──
   const dimKey=_movDim;
   const grp={};
-  set.forEach(m=>{const key=m[dimKey]||'—';if(!grp[key])grp[key]={c:0,v:0,s:0};if(m.tipo==='compra')grp[key].c++;else if(m.tipo==='venda')grp[key].v++;else grp[key].s++;});
-  const rows=Object.entries(grp).map(([k,a])=>({k,c:a.c,v:a.v,s:a.s,tot:a.c+a.v+a.s})).sort((x,y)=>y.tot-x.tot).slice(0,40);
-  const btn=(d,l)=>`<button onclick="setMovDim('${d}')" style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid ${_movDim===d?'#E8630A':'#2E3D52'};background:${_movDim===d?'rgba(232,99,10,.16)':'#0F172A'};color:${_movDim===d?'#F5A96D':'#94A3B8'}">${l}</button>`;
-  const dimRows=rows.map(r=>`<tr style="border-top:1px solid #1E293B">
-    <td style="padding:6px 8px;color:#F1F5F9">${_escHtml(r.k)}</td>
-    <td style="padding:6px 8px;text-align:right;color:#4ADE80">${r.c||''}</td>
-    <td style="padding:6px 8px;text-align:right;color:#F5A96D">${r.v||''}</td>
-    <td style="padding:6px 8px;text-align:right;color:#F87171">${r.s||''}</td>
-    <td style="padding:6px 8px;text-align:right;color:#F1F5F9;font-weight:700">${r.tot}</td>
-  </tr>`).join('');
+  set.forEach(m=>{const key=m[dimKey]||'—';if(!grp[key])grp[key]={c:0,v:0,s:0};grp[key][_MOV_KEY[m.tipo]]++;});
+  const rows=Object.entries(grp).map(([k,a])=>({k,c:a.c,v:a.v,s:a.s,tot:tipos.reduce((s,t)=>s+a[_MOV_KEY[t]],0)})).filter(r=>r.tot>0).sort((x,y)=>y.tot-x.tot).slice(0,40);
+  const btn=(d,l)=>`<button onclick="setMovDim('${d}')" style="padding:6px 15px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;border:1.5px solid ${_movDim===d?'#E8630A':'#a8b4bf'};background:${_movDim===d?'rgba(232,99,10,.12)':'#fff'};color:${_movDim===d?'#b5561e':'#52616d'}">${l}</button>`;
+  const dimValCells=r=>tipos.map(t=>`<td style="padding:8px 10px;text-align:right;color:${_MOV_TXT[t]};font-size:13px">${r[_MOV_KEY[t]]||''}</td>`).join('');
+  const dimRows=rows.map(r=>`<tr style="border-top:1px solid #dfe5ea"><td style="padding:8px 10px;color:#101820;font-size:13px;font-weight:600">${_escHtml(r.k)}</td>${dimValCells(r)}<td style="padding:8px 10px;text-align:right;color:#101820;font-weight:800;font-size:13.5px">${r.tot}</td></tr>`).join('');
   document.getElementById('mov-dimensao').innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94A3B8">Por dimensão</div>
-      <div style="display:flex;gap:6px">${btn('familia','Família')}${btn('marca','Marca')}${btn('modelo','Modelo')}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#101820">Por dimensão</div>
+      <div style="display:flex;gap:7px">${btn('familia','Família')}${btn('marca','Marca')}${btn('modelo','Modelo')}</div>
     </div>
-    <div style="max-height:250px;overflow:auto;border:1px solid #1E293B;border-radius:8px">
-      <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:#1E293B;position:sticky;top:0;z-index:1">
-          <th style="padding:7px 8px;text-align:left;color:#64748B;font-weight:700">${dimKey==='familia'?'Família':dimKey==='marca'?'Marca':'Modelo'}</th>
-          <th style="padding:7px 8px;text-align:right;color:#64748B;font-weight:700">Compras</th>
-          <th style="padding:7px 8px;text-align:right;color:#64748B;font-weight:700">Vendas</th>
-          <th style="padding:7px 8px;text-align:right;color:#64748B;font-weight:700">Sinistros</th>
-          <th style="padding:7px 8px;text-align:right;color:#64748B;font-weight:700">Total</th>
+    <div style="max-height:290px;overflow:auto;border:1px solid #cbd3da;border-radius:9px;background:#fff">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="background:#cfd8df;position:sticky;top:0;z-index:1">
+          <th style="padding:9px 10px;text-align:left;color:#52616d;font-weight:700;font-size:11.5px;text-transform:uppercase">${dimKey==='familia'?'Família':dimKey==='marca'?'Marca':'Modelo'}</th>
+          ${thTipos}
+          <th style="padding:9px 10px;text-align:right;color:#52616d;font-weight:700;font-size:11.5px;text-transform:uppercase">Total</th>
         </tr></thead>
-        <tbody>${dimRows||'<tr><td colspan="5" style="padding:14px;text-align:center;color:#64748B">Sem dados</td></tr>'}</tbody>
+        <tbody>${dimRows||`<tr><td colspan="5" style="padding:16px;text-align:center;color:#52616d;font-size:13px">Sem dados</td></tr>`}</tbody>
       </table>
     </div>`;
 }
