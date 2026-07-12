@@ -2367,13 +2367,15 @@ async function loadFromFirebase(){
     const rem=await fbGetAll();
     console.log("[FB Load] equipamentos recebidos:",rem?Object.keys(rem).length:0);
     if(rem&&Object.keys(rem).length>0){
+      // Mapa de ID p/ evitar O(n²) (EQUIPAMENTOS_ORIG.find dentro do loop de ~2800 itens)
+      const _origMap={};EQUIPAMENTOS_ORIG.forEach(e=>{_origMap[e.id]=e;});
       Object.entries(rem).forEach(([id,d])=>{
         if(!d||!d.equipamento)return;
         const _eq=(d.equipamento||'').toLowerCase().trim();
         if(['sim','não','nao','yes','no'].includes(_eq))return;
         if(state[id]){
           // Firebase é sempre fonte de verdade no carregamento inicial
-          const _orig=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
+          const _orig=_origMap[id];
           Object.assign(state[id],{
             equipamento:d.equipamento||state[id].equipamento,
             modelo:d.modelo||state[id].modelo,
@@ -2424,7 +2426,7 @@ async function loadFromFirebase(){
           });
         } else {
           // Equipamento novo — não está no EQUIPAMENTOS_ORIG (adicionado via Nova base)
-          const _origNew=EQUIPAMENTOS_ORIG.find(e=>e.id===id);
+          const _origNew=_origMap[id];
           state[id]={
             id:d.id||id,equipamento:d.equipamento,modelo:d.modelo||'',
             tipo:d.tipo||'',oficina:d.oficina||'',status:d.status||'Disponível',
@@ -2682,11 +2684,15 @@ function doLogin(){
   if(user.perfil==='master'){
     ['snav-bd','snav-bd-divider','snav-bd-label'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
   }
+  // Home instantânea: pinta os cards do cache (state + csv_stats do localStorage) e dispara o
+  // raio-X ANTES do fetch pesado (3 MB) — conexões livres, SSEs ainda não abertas.
+  try{rgUpdateHomeKpis();}catch(e){}
+  try{renderHomeRaioX();}catch(e){}
   loadFromFirebase();renderAdminUsers();rsCheckAcesso();pmpCarregarLayout(user.uid);
   setTimeout(mostrarNotifBemVindo, 1800);
   iniciarMonitorSolicitacoes();
   setTimeout(registrarSnapshotDiario, 5000); // série diária do T.U. (1x/dia, idempotente)
-  setTimeout(function(){try{renderHomeRaioX();}catch(e){}}, 6000); // cards do raio-x na home
+  setTimeout(function(){try{rgUpdateHomeKpis();renderHomeRaioX();}catch(e){}}, 2500); // reforço após dados frescos
 }
 
 function mostrarNotifBemVindo(){
