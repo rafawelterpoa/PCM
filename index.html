@@ -17902,6 +17902,10 @@ window.BD_HISTORICO_PM      = {}; // equip_id → { [intervalo_h]: {data,horimet
 window.BD_MANUSIS           = []; // array de registros diários do Manusis (upload diário)
 window.BD_META              = {}; // timestamps e contagens
 
+// ── Pendências (snapshot gerado pelo upload no card da BD) ────────────────────
+const PEND_FB = FB_BASE + '/pendencias';   // pcm/pendencias/atual + /historico/<stamp>
+window._PEND_ATUAL = null;                 // último snapshot em memória (para prévia)
+
 // ── PMP globals ───────────────────────────────────────────────────────────────
 const PMP_FB = FB_BASE + '/pmp';
 window.PMP_EQUIP = {}; // frota_id → {data_ultima_revisao, horimetro_ultima_revisao, semana_planejada, om}
@@ -17981,6 +17985,12 @@ function bdRenderStatus() {
     bdSetInfo('manusis', `Atualizado em ${fmt(m.manusis_ts)}`);
     bdEnablePreview('manusis');
     bdRenderPreviewManusis();
+  }
+  if(m.pend_ts) {
+    bdSetBadge('pend', `${m.pend_total||0} pend · ${m.pend_equips||0} equip`, 'ok');
+    bdSetInfo('pend', `Atualizado em ${fmt(m.pend_ts)}` + (m.pend_novas!=null ? ` · +${m.pend_novas} entradas · −${m.pend_baixaram||0} saídas` : ''));
+    bdEnablePreview('pend');
+    bdRenderPreviewPend();
   }
 }
 
@@ -18191,6 +18201,8 @@ function bdUploadResponsaveis(file) {
 
       localStorage.setItem('mills_bd_responsaveis', JSON.stringify(resp));
       window.BD_RESPONSAVEIS = resp;
+      // Persiste o array no Firebase para ficar disponível a qualquer master (não só neste navegador)
+      await fetch(`${BD_FB}/responsaveis.json`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(resp)});
 
       const ts = Date.now();
       const meta = {...(window.BD_META||{}), resp_ts:ts, resp_total:resp.length};
@@ -18208,6 +18220,136 @@ function bdUploadResponsaveis(file) {
     }
   };
   reader.readAsArrayBuffer(file);
+}
+
+// ── UPLOAD: Pendências (export Manusis → filtra Pendente → cruza programador) ──
+function bdUploadPendencias(file) {
+  if(!file) return;
+  bdSetBadge('pend','Processando…','info');
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    try {
+      // Base Unidade→Programador: memória → Firebase (fica disponível a qualquer master)
+      let base = window.BD_RESPONSAVEIS || [];
+      if(!base.length){
+        try{ const rr=await fetch(`${BD_FB}/responsaveis.json`); const rd=await rr.json();
+          if(rd){ base = Array.isArray(rd)?rd:Object.values(rd); window.BD_RESPONSAVEIS = base;
+            try{ localStorage.setItem('mills_bd_responsaveis', JSON.stringify(base)); }catch(e){} } }catch(e){}
+      }
+      if(!base.length) throw new Error('Base "Responsáveis" ausente — carregue-a uma vez no card ao lado (ela passa a ficar salva no banco).');
+      const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
+      const sh = wb.Sheets['Pendências'] || wb.Sheets['Pendencias'] || wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sh, {defval:'', raw:false});
+      if(!rows.length) throw new Error('Planilha vazia');
+
+      // ── normalização e mapa Unidade → Programador ──
+      const norm = s => String(s||'').trim().toLowerCase().replace(/\s*-\s*/g,'-').replace(/\s+/g,' ').trim();
+      const baseMap = {}, baseFilial = {};
+      base.forEach(r=>{ if(!r.unidade) return; const k=norm(r.unidade);
+        baseMap[k] = {programador:r.programador||'', encarregado:r.encarregado||''};
+        if(k.startsWith('filial ')) baseFilial[k] = baseMap[k];
+      });
+      const lookup = (uniName, uniCol) => {
+        const k = norm(uniName);
+        if(k && baseMap[k]) return {rec:baseMap[k], uni:String(uniName).trim()};
+        const m = String(uniCol||'').toLowerCase().match(/mills\s+(.*)$/);
+        if(m){ const town=m[1].trim();
+          for(const bk in baseFilial){ const body=bk.slice(7); if(body.split('-')[0].trim()===town) return {rec:baseFilial[bk], uni:String(uniName).trim()||('Filial '+town)}; }
+        }
+        return {rec:null, uni:String(uniName||'').trim()};
+      };
+      const col = (r,...names)=>{ for(const n of names){ if(r[n]!=null && r[n]!=='') return r[n]; } return ''; };
+      const uniFromRow = r => { const l3=String(col(r,'Localização 3','Localizacao 3')); const mm=l3.match(/-U\d+-(.*)$/); return (mm?mm[1]:l3).trim(); };
+      const clean = s => { s=String(s||'').trim(); if(s[0]==="'") s=s.slice(1); return s.trim(); };
+
+      // ── snapshot anterior (para entradas × saídas) ──
+      let prevNums = new Set();
+      try {
+        const pr = await fetch(`${PEND_FB}/atual.json`);
+        const pd = await pr.json();
+        if(pd && pd.veiculos) pd.veiculos.forEach(v=>(v.pendencias||[]).forEach(p=>prevNums.add(String(p.num))));
+      } catch(e){}
+      const temBase = prevNums.size > 0;
+
+      // ── varre linhas: atribui programador a TODO número; agrega Pendente por veículo ──
+      const byVeic = {}, numProg = {}, pendNums = new Set();
+      rows.forEach(r=>{
+        const num = String(col(r,'Número','Numero')).trim(); if(!num) return;
+        const uniName = uniFromRow(r);
+        const {rec, uni} = lookup(uniName, col(r,'Unidade'));
+        const prog = (rec && rec.programador) ? rec.programador : '(não mapeado)';
+        numProg[num] = prog;
+        if(String(col(r,'Status')).trim() !== 'Pendente') return;
+        pendNums.add(num);
+        const veic = String(col(r,'Veículo','Veiculo')||'(sem veículo)').trim();
+        if(!byVeic[veic]) byVeic[veic] = {veiculo:veic, unidade:uni, programador:prog, encarregado:(rec&&rec.encarregado)||'', pendencias:[]};
+        byVeic[veic].pendencias.push({
+          num,
+          dt:   String(col(r,'Data de abertura')).trim(),
+          desc: clean(col(r,'Descrição','Descricao')).slice(0,240),
+          cat:  (clean(col(r,'Categoria')) || '—'),
+        });
+      });
+
+      const veiculos = Object.values(byVeic).map(v=>{
+        let novas=0; v.pendencias.forEach(p=>{ p.nova = (temBase && !prevNums.has(p.num))?1:0; if(p.nova) novas++; });
+        v.total = v.pendencias.length; v.novas = novas; return v;
+      }).sort((a,b)=>b.total-a.total);
+
+      // ── movimento por programador (entradas/saídas vs. carga anterior) ──
+      const ant={}, nov={}, novasBy={}, baixaBy={};
+      prevNums.forEach(n=>{ const p=numProg[n]||'(não mapeado)'; ant[p]=(ant[p]||0)+1; if(!pendNums.has(n)) baixaBy[p]=(baixaBy[p]||0)+1; });
+      pendNums.forEach(n=>{ const p=numProg[n]||'(não mapeado)'; nov[p]=(nov[p]||0)+1; if(temBase && !prevNums.has(n)) novasBy[p]=(novasBy[p]||0)+1; });
+      const prog = [...new Set([...Object.keys(ant),...Object.keys(nov)])].map(p=>({
+        prog:p, ant:ant[p]||0, novo:nov[p]||0, novas:novasBy[p]||0, baixaram:baixaBy[p]||0, delta:(nov[p]||0)-(ant[p]||0)
+      })).sort((a,b)=>a.delta-b.delta);
+
+      const total = pendNums.size, equips = veiculos.length;
+      const novasTot  = temBase ? [...pendNums].filter(n=>!prevNums.has(n)).length : 0;
+      const baixaTot  = temBase ? [...prevNums].filter(n=>!pendNums.has(n)).length : 0;
+      const naoMap    = prog.filter(p=>p.prog==='(não mapeado)').reduce((s,p)=>s+p.novo,0);
+      const ts = Date.now();
+
+      const snapshot = {ts, arquivo:file.name, total, equips, total_ant:prevNums.size, novas:novasTot, baixaram:baixaTot, nao_mapeado:naoMap, veiculos, prog};
+
+      // ── grava no RTDB: atual + histórico ──
+      const w = async (p,d)=>{ const r=await fetch(`${PEND_FB}/${p}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}); if(!r.ok) throw new Error('Firebase '+r.status); };
+      await w('atual', snapshot);
+      const stamp = new Date(ts).toISOString().slice(0,16).replace('T','_').replace(/:/g,'-');
+      await w('historico/'+stamp, {ts, arquivo:file.name, total, equips, novas:novasTot, baixaram:baixaTot,
+        prog: prog.map(p=>({prog:p.prog, novo:p.novo, novas:p.novas, baixaram:p.baixaram, delta:p.delta}))});
+
+      // ── meta (badges) ──
+      const meta = {...(window.BD_META||{}), pend_ts:ts, pend_total:total, pend_equips:equips, pend_novas:novasTot, pend_baixaram:baixaTot};
+      window.BD_META = meta;
+      await fetch(`${BD_FB}/meta.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(meta)});
+
+      window._PEND_ATUAL = snapshot;
+      bdSetBadge('pend', `${total} pend · ${equips} equip`, 'ok');
+      bdSetInfo('pend', temBase ? `Atualizado agora — +${novasTot} entradas · −${baixaTot} saídas (vs. carga anterior)` : `Primeira carga — ${total} pendências (baseline)`);
+      bdEnablePreview('pend'); bdRenderPreviewPend();
+      showToast(`✓ Pendências: ${total}${temBase?` (+${novasTot}/−${baixaTot})`:''}`);
+    } catch(err) {
+      bdSetBadge('pend','Erro','warn');
+      bdSetInfo('pend','Erro: '+err.message);
+      showToast('Erro ao processar pendências: '+err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function bdRenderPreviewPend() {
+  const el = document.getElementById('bd-preview-pend'); if(!el) return;
+  let snap = window._PEND_ATUAL;
+  if(!snap){ try{ const r=await fetch(`${PEND_FB}/atual.json`); snap=await r.json(); window._PEND_ATUAL=snap; }catch(e){} }
+  if(!snap || !snap.prog){ el.innerHTML='<div style="padding:14px;color:#8FA4AE;font-size:11px">Sem dados carregados.</div>'; return; }
+  const rows = [...snap.prog].sort((a,b)=>(b.novas+b.baixaram)-(a.novas+a.baixaram)).slice(0,12).map(p=>[
+    p.prog, p.ant, p.novo,
+    p.novas?('+'+p.novas):'—',
+    p.baixaram?('−'+p.baixaram):'—',
+    (p.delta>0?'+':'')+p.delta
+  ]);
+  el.innerHTML = _bdTable(['Programador','Antes','Agora','Entradas','Saídas','Δ'], rows);
 }
 
 // ── UPLOAD: Histórico de PMs ──────────────────────────────────────────────────
@@ -20518,6 +20660,33 @@ if ('serviceWorker' in navigator) {
               <button onclick="document.getElementById('bd-file-manusis').click()" style="flex:1;padding:8px 14px;background:#5B21B6;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">⬆ Carregar arquivo</button>
               <button id="bd-btn-prev-manusis" onclick="bdTogglePreview('manusis')" disabled style="padding:8px 14px;background:#F4F6F8;color:#8FA4AE;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;font-weight:600;cursor:not-allowed">Prévia</button>
               <input type="file" id="bd-file-manusis" accept=".xlsx,.xls,.csv" style="display:none" onchange="bdUploadManusis(this.files[0]);this.value=''">
+            </div>
+          </div>
+
+          <!-- ── PAINEL 5: Pendências ── -->
+          <div style="background:#fff;border:1px solid #E2E8ED;border-radius:14px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:44px;height:44px;border-radius:10px;background:#FFE4CC;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C2410C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:15px;font-weight:700;color:#1A2E35">Pendências</div>
+                  <div style="font-size:11px;color:#8FA4AE;margin-top:2px">Filtra Pendente · cruza programador · entradas/saídas</div>
+                </div>
+              </div>
+              <span id="bd-badge-pend" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:#F4F6F8;color:#8FA4AE;white-space:nowrap;flex-shrink:0">Não carregado</span>
+            </div>
+            <div style="background:#F8FAFC;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#5A7280;line-height:1.7">
+              <strong>Arquivo:</strong> export padrão de pendências (<code style="background:#EEF2F7;padding:1px 5px;border-radius:4px">pendencias_mills_*.xlsx</code>)<br>
+              <strong>Processa:</strong> mantém só <strong>Pendente</strong> · cruza <strong>Unidade → Programador</strong> · calcula entradas/saídas vs. carga anterior
+            </div>
+            <div id="bd-info-pend" style="font-size:11px;color:#8FA4AE;margin-bottom:14px;min-height:16px"></div>
+            <div id="bd-preview-pend" style="display:none;max-height:220px;overflow-y:auto;border:1px solid #E2E8ED;border-radius:8px;margin-bottom:14px;font-size:11px"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="document.getElementById('bd-file-pend').click()" style="flex:1;padding:8px 14px;background:#C2410C;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">⬆ Carregar arquivo</button>
+              <button id="bd-btn-prev-pend" onclick="bdTogglePreview('pend')" disabled style="padding:8px 14px;background:#F4F6F8;color:#8FA4AE;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;font-weight:600;cursor:not-allowed">Prévia</button>
+              <input type="file" id="bd-file-pend" accept=".xlsx,.xls" style="display:none" onchange="bdUploadPendencias(this.files[0]);this.value=''">
             </div>
           </div>
 
