@@ -20759,7 +20759,7 @@ if ('serviceWorker' in navigator) {
 #page-pendencias .pmain tbody tr.eq.open{background:#e3e9ee}
 #page-pendencias .pmain .cod{color:#101820;font-weight:700}
 #page-pendencias .pmain .cod small{display:block;color:#52616d;font-weight:400;font-size:11px}
-#page-pendencias .pmain .bar-wrap{display:flex;align-items:center;gap:8px}
+#page-pendencias .pmain .bar-wrap{display:inline-flex;align-items:center;gap:8px;width:210px;vertical-align:middle}
 #page-pendencias .pmain .bar-bg{flex:1;height:6px;background:#c3ccd3;border-radius:3px;overflow:hidden;min-width:60px}
 #page-pendencias .pmain .bar-fill{height:100%;border-radius:3px}
 #page-pendencias .pmain .bar-num{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;min-width:26px;text-align:right}
@@ -20819,6 +20819,7 @@ if ('serviceWorker' in navigator) {
       <div class="fg"><label>Programador</label><select id="pf-prog" onchange="pendSetFiltro('prog',this.value)"><option value="">Todos</option></select></div>
       <div class="fg"><label>Tipo de inspeção</label><select id="pf-cat" onchange="pendSetFiltro('cat',this.value)"><option value="">Todos</option></select></div>
       <div class="fg"><label>Unidade</label><select id="pf-uni" onchange="pendSetFiltro('uni',this.value)"><option value="">Todas</option></select></div>
+      <div class="fg"><label>Status Frota</label><select id="pf-loc" onchange="pendSetFiltro('loc',this.value)" style="min-width:140px"><option value="">Todos</option><option value="locado">Locado</option><option value="nao_locado">Não locado</option></select></div>
       <div class="fg"><label>Buscar veículo</label><input id="pf-veic" placeholder="Código…" oninput="pendSetFiltro('veic',this.value)"></div>
       <label class="chk"><input type="checkbox" id="pf-novas" onchange="pendSetFiltro('novas',this.checked)"> Só com novas</label>
       <button class="btn-clr" onclick="pendLimpar()">Limpar</button>
@@ -20831,7 +20832,7 @@ if ('serviceWorker' in navigator) {
           <th onclick="pendSortCol('veiculo')">Veículo</th>
           <th onclick="pendSortCol('programador')">Programador</th>
           <th onclick="pendSortCol('unidade')">Unidade</th>
-          <th onclick="pendSortCol('total')" class="sorted" style="text-align:right">Pendências</th>
+          <th onclick="pendSortCol('total')" class="sorted" style="text-align:center">Pendências</th>
         </tr></thead>
         <tbody id="pend-tbody"></tbody>
       </table>
@@ -20842,7 +20843,7 @@ if ('serviceWorker' in navigator) {
 // ══ PENDÊNCIAS — VISUALIZAÇÃO (lê de pcm/pendencias/atual; fetch único + botão Atualizar, sem SSE) ══
 window._pendSnap = null;
 let _pendLoadedAt = 0;
-let _pendFiltros = {prog:'',cat:'',uni:'',veic:'',novas:false};
+let _pendFiltros = {prog:'',cat:'',uni:'',loc:'',veic:'',novas:false};
 let _pendSort = {col:'total',dir:-1};
 let _pendProgSort = {col:'delta',dir:1};
 let _pendRows = [];
@@ -20889,8 +20890,8 @@ function pendBuildFiltros(){
 }
 function pendSetFiltro(k,v){ _pendFiltros[k]=v; if(k==='prog'){ const el=document.getElementById('pf-prog'); if(el&&el.value!==v) el.value=v; } pendRenderTudo(); }
 function pendPickProgRow(p){ _pendFiltros.prog = (_pendFiltros.prog===p ? '' : p); const el=document.getElementById('pf-prog'); if(el) el.value=_pendFiltros.prog; pendRenderTudo(); }
-function pendLimpar(){ _pendFiltros={prog:'',cat:'',uni:'',veic:'',novas:false};
-  ['pf-prog','pf-cat','pf-uni'].forEach(id=>{const e=document.getElementById(id); if(e)e.value='';});
+function pendLimpar(){ _pendFiltros={prog:'',cat:'',uni:'',loc:'',veic:'',novas:false};
+  ['pf-prog','pf-cat','pf-uni','pf-loc'].forEach(id=>{const e=document.getElementById(id); if(e)e.value='';});
   const v=document.getElementById('pf-veic'); if(v)v.value=''; const n=document.getElementById('pf-novas'); if(n)n.checked=false;
   pendRenderTudo(); }
 function pendSortCol(col){ if(_pendSort.col===col) _pendSort.dir*=-1; else { _pendSort.col=col; _pendSort.dir=(col==='total')?-1:1; } pendRenderTabela(); }
@@ -20944,6 +20945,7 @@ function pendFiltrados(){
   return s.veiculos.filter(v=>{
     if(f.prog && v.programador!==f.prog) return false;
     if(f.uni && v.unidade!==f.uni) return false;
+    if(f.loc){ const fil=String(v.unidade||'').toLowerCase().startsWith('filial'); if(f.loc==='locado'&&fil) return false; if(f.loc==='nao_locado'&&!fil) return false; }
     if(f.veic && !String(v.veiculo).toLowerCase().includes(f.veic.toLowerCase())) return false;
     if(f.cat && _pendEff(v)===0) return false;
     if(f.novas && _pendEffNovas(v)===0) return false;
@@ -20975,7 +20977,7 @@ function pendRenderTabela(){
       <td class="cod">${_pendEsc(cod)}${nv?`<span class="badge-nv">+${nv} nova${nv>1?'s':''}</span>`:''}<small>${_pendEsc(nome.substring(0,36))}</small></td>
       <td style="color:#2b3842">${_pendEsc(v.programador||'—')}</td>
       <td style="color:#52616d;font-size:11px">${_pendEsc(v.unidade||'—')}</td>
-      <td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${cor}"></div></div><span class="bar-num" style="color:${cor}">${t}</span></div></td></tr>`;
+      <td style="text-align:center"><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${cor}"></div></div><span class="bar-num" style="color:${cor}">${t}</span></div></td></tr>`;
     const dr=`<tr class="pdrow" data-i="${i}" id="pdrow-${i}"><td colspan="5"><div class="pdinner" id="pdinner-${i}"></div></td></tr>`;
     return eq+dr;
   }).join('');
