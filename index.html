@@ -247,10 +247,9 @@ input:focus,select:focus,textarea:focus{
 
 /* ── HOME DARK — raio-x da frota (escopado em #page-home) ── */
 #page-home{background:#0F172A;min-height:calc(100vh - 56px)}
-#page-home .home-wrap{max-width:1520px;margin:0 auto;padding:22px 26px 34px}
+#page-home .home-wrap{max-width:min(1900px,96vw);margin:0 auto;padding:22px clamp(18px,2.4vw,40px) 34px}
 .hd-title{font-size:18px;font-weight:700;color:#F1F5F9}
-.hd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;align-items:stretch}
-@media(max-width:1100px){.hd-grid{grid-template-columns:repeat(2,1fr)}}
+.hd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:12px;align-items:stretch}
 .hd-card{background:#1E293B;border:1px solid #2E3D52;border-radius:10px;padding:15px 17px;display:flex;flex-direction:column;gap:8px;min-width:0}
 .hd-card.clickable{cursor:pointer;transition:border-color .15s,transform .15s}
 .hd-card.clickable:hover{border-color:#E8630A;transform:translateY(-2px)}
@@ -20744,6 +20743,24 @@ if ('serviceWorker' in navigator) {
 #page-pendencias select,#page-pendencias input{background:#fff;border:1px solid #9ca9b4;border-radius:7px;color:#101820;font-size:12px;padding:6px 9px;outline:none}
 #page-pendencias select{min-width:170px;cursor:pointer}
 #page-pendencias select:focus,#page-pendencias input:focus{border-color:#0f8fa0}
+#page-pendencias .msel{position:relative}
+#page-pendencias .msel-btn{background:#fff;border:1px solid #9ca9b4;border-radius:7px;color:#101820;font-size:12px;padding:6px 10px;min-width:180px;max-width:220px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:6px}
+#page-pendencias .msel-btn span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#page-pendencias .msel-btn.filtered{border-color:#0f8fa0;color:#0b5f6b;font-weight:700;background:#eaf6f7}
+#page-pendencias .msel.open .msel-btn{border-color:#0f8fa0}
+#page-pendencias .msel-pop{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:80;background:#fff;border:1px solid #a8b4bf;border-radius:9px;box-shadow:0 10px 28px rgba(16,24,32,.2);width:270px;padding:8px}
+#page-pendencias .msel.open .msel-pop{display:block}
+#page-pendencias .msel-search{width:100%;box-sizing:border-box;margin-bottom:6px;padding:6px 9px!important}
+#page-pendencias .msel-actions{display:flex;gap:6px;margin-bottom:6px}
+#page-pendencias .msel-actions button{flex:1;background:#eef3f6;border:1px solid #a8b4bf;border-radius:6px;font-size:11px;padding:4px 6px;cursor:pointer;color:#2b3842}
+#page-pendencias .msel-actions button:hover{border-color:#0f8fa0;color:#0f8fa0}
+#page-pendencias .msel-list{max-height:230px;overflow-y:auto;display:flex;flex-direction:column;gap:1px}
+#page-pendencias .msel-item{display:flex;align-items:center;gap:7px;font-size:12px;color:#2b3842;padding:4px 6px;border-radius:5px;cursor:pointer}
+#page-pendencias .msel-item:hover{background:#eef3f6}
+#page-pendencias .msel-item input{accent-color:#0f8fa0;flex-shrink:0}
+#page-pendencias .msel-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#page-pendencias .msel-empty{font-size:11px;color:#8FA4AE;padding:6px}
+#page-pendencias .pcard .tagf{font-size:9px;font-weight:700;color:#0b5f6b;background:#d9eef2;padding:1px 6px;border-radius:99px;margin-left:6px;vertical-align:middle}
 #page-pendencias .btn-clr{background:#eef3f6;border:1px solid #a8b4bf;border-radius:7px;color:#2b3842;font-size:11px;padding:7px 12px;cursor:pointer;align-self:flex-end}
 #page-pendencias .btn-clr:hover{border-color:#0f8fa0;color:#0f8fa0}
 #page-pendencias .chk{display:flex;align-items:center;gap:6px;font-size:11px;color:#52616d;cursor:pointer;padding-bottom:7px}
@@ -20816,9 +20833,36 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
     <div class="pfilt">
-      <div class="fg"><label>Programador</label><select id="pf-prog" onchange="pendSetFiltro('prog',this.value)"><option value="">Todos</option></select></div>
-      <div class="fg"><label>Tipo de inspeção</label><select id="pf-cat" onchange="pendSetFiltro('cat',this.value)"><option value="">Todos</option></select></div>
-      <div class="fg"><label>Unidade</label><select id="pf-uni" onchange="pendSetFiltro('uni',this.value)"><option value="">Todas</option></select></div>
+      <div class="fg"><label>Programador</label>
+        <div class="msel" id="msel-prog">
+          <button type="button" class="msel-btn" id="msel-btn-prog" onclick="pendMselToggleOpen('prog')"><span>Todos</span><span>▾</span></button>
+          <div class="msel-pop" id="msel-pop-prog">
+            <input class="msel-search" type="text" placeholder="Buscar…" oninput="pendMselRenderList('prog',this.value)">
+            <div class="msel-actions"><button type="button" onclick="pendMselAll('prog')">Marcar todos</button><button type="button" onclick="pendMselNone('prog')">Limpar</button></div>
+            <div class="msel-list" id="msel-list-prog"></div>
+          </div>
+        </div>
+      </div>
+      <div class="fg"><label>Tipo de inspeção</label>
+        <div class="msel" id="msel-cat">
+          <button type="button" class="msel-btn" id="msel-btn-cat" onclick="pendMselToggleOpen('cat')"><span>Todos</span><span>▾</span></button>
+          <div class="msel-pop" id="msel-pop-cat">
+            <input class="msel-search" type="text" placeholder="Buscar…" oninput="pendMselRenderList('cat',this.value)">
+            <div class="msel-actions"><button type="button" onclick="pendMselAll('cat')">Marcar todos</button><button type="button" onclick="pendMselNone('cat')">Limpar</button></div>
+            <div class="msel-list" id="msel-list-cat"></div>
+          </div>
+        </div>
+      </div>
+      <div class="fg"><label>Unidade</label>
+        <div class="msel" id="msel-uni">
+          <button type="button" class="msel-btn" id="msel-btn-uni" onclick="pendMselToggleOpen('uni')"><span>Todas</span><span>▾</span></button>
+          <div class="msel-pop" id="msel-pop-uni">
+            <input class="msel-search" type="text" placeholder="Buscar…" oninput="pendMselRenderList('uni',this.value)">
+            <div class="msel-actions"><button type="button" onclick="pendMselAll('uni')">Marcar todas</button><button type="button" onclick="pendMselNone('uni')">Limpar</button></div>
+            <div class="msel-list" id="msel-list-uni"></div>
+          </div>
+        </div>
+      </div>
       <div class="fg"><label>Status Frota</label><select id="pf-loc" onchange="pendSetFiltro('loc',this.value)" style="min-width:140px"><option value="">Todos</option><option value="locado">Locado</option><option value="nao_locado">Não locado</option></select></div>
       <div class="fg"><label>Buscar veículo</label><input id="pf-veic" placeholder="Código…" oninput="pendSetFiltro('veic',this.value)"></div>
       <label class="chk"><input type="checkbox" id="pf-novas" onchange="pendSetFiltro('novas',this.checked)"> Só com novas</label>
@@ -20843,11 +20887,18 @@ if ('serviceWorker' in navigator) {
 // ══ PENDÊNCIAS — VISUALIZAÇÃO (lê de pcm/pendencias/atual; fetch único + botão Atualizar, sem SSE) ══
 window._pendSnap = null;
 let _pendLoadedAt = 0;
-let _pendFiltros = {prog:'',cat:'',uni:'',loc:'',veic:'',novas:false};
+let _pendOptions = {prog:[],cat:[],uni:[]};
+let _pendFiltros = {prog:new Set(),cat:new Set(),uni:new Set(),loc:'',veic:'',novas:false};
 let _pendSort = {col:'total',dir:-1};
 let _pendProgSort = {col:'delta',dir:1};
 let _pendRows = [];
 let _pendExp = null;
+
+document.addEventListener('click', function(e){
+  if(!document.getElementById('page-pendencias')) return;
+  if(e.target.closest && e.target.closest('#page-pendencias .msel')) return;
+  document.querySelectorAll('#page-pendencias .msel.open').forEach(o=>o.classList.remove('open'));
+});
 
 function paginaPendencias(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -20865,13 +20916,17 @@ async function pendCarregar(force){
   pendRenderTudo();
 }
 function _pendEsc(s){ return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function _pendEscAttr(s){ return _pendEsc(s).replace(/"/g,'&quot;'); }
 function _pendBarColor(n,max){ const p=n/(max||1); if(p>.7)return '#a33a26'; if(p>.4)return '#b3541e'; return '#0f8fa0'; }
 function _pendCatClass(c){ const l=(c||'').toLowerCase();
   if(l.includes('saíd')||l.includes('said'))return 'saida';
   if(l.includes('retorno'))return 'retorno';
   if(l.includes('corretiva')||l.includes('risco'))return 'corr';
   return 'cat'; }
-function _pendPends(v){ return _pendFiltros.cat ? (v.pendencias||[]).filter(p=>p.cat===_pendFiltros.cat) : (v.pendencias||[]); }
+function _pendCatAtivo(){ return _pendFiltros.cat.size < (_pendOptions.cat||[]).length; }
+function _pendProgAtivo(){ return _pendFiltros.prog.size < (_pendOptions.prog||[]).length; }
+function _pendUniAtivo(){ return _pendFiltros.uni.size < (_pendOptions.uni||[]).length; }
+function _pendPends(v){ return _pendCatAtivo() ? (v.pendencias||[]).filter(p=>_pendFiltros.cat.has(p.cat)) : (v.pendencias||[]); }
 function _pendEff(v){ return _pendPends(v).length; }
 function _pendEffNovas(v){ return _pendPends(v).filter(p=>p.nova).length; }
 function _pendFmtDt(s){ if(!s)return '—'; return String(s).includes('/')?String(s).split(' ')[0]:s; }
@@ -20879,39 +20934,122 @@ function _pendFmtDt(s){ if(!s)return '—'; return String(s).includes('/')?Strin
 function pendBuildFiltros(){
   const s=window._pendSnap; if(!s) return;
   const veics=s.veiculos||[];
-  const fill=(id,vals,firstLabel)=>{ const el=document.getElementById(id); if(!el) return; const cur=el.value;
-    el.innerHTML=''; const o0=document.createElement('option'); o0.value=''; o0.textContent=firstLabel; el.appendChild(o0);
-    vals.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; el.appendChild(o); });
-    if(vals.includes(cur)) el.value=cur; };
   const progs=[...new Set((s.prog||[]).map(p=>p.prog))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
   const cats=[...new Set(veics.flatMap(v=>(v.pendencias||[]).map(p=>p.cat)).filter(c=>c&&c!=='—'))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
   const unis=[...new Set(veics.map(v=>v.unidade).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
-  fill('pf-prog',progs,'Todos'); fill('pf-cat',cats,'Todos'); fill('pf-uni',unis,'Todas');
+  _pendOptions = {prog:progs, cat:cats, uni:unis};
+  _pendFiltros.prog = new Set(progs);
+  _pendFiltros.cat = new Set(cats);
+  _pendFiltros.uni = new Set(unis);
+  ['prog','cat','uni'].forEach(k=>{ pendMselUpdateBtn(k); pendMselRenderList(k,''); });
 }
-function pendSetFiltro(k,v){ _pendFiltros[k]=v; if(k==='prog'){ const el=document.getElementById('pf-prog'); if(el&&el.value!==v) el.value=v; } pendRenderTudo(); }
-function pendPickProgRow(p){ _pendFiltros.prog = (_pendFiltros.prog===p ? '' : p); const el=document.getElementById('pf-prog'); if(el) el.value=_pendFiltros.prog; pendRenderTudo(); }
-function pendLimpar(){ _pendFiltros={prog:'',cat:'',uni:'',loc:'',veic:'',novas:false};
-  ['pf-prog','pf-cat','pf-uni','pf-loc'].forEach(id=>{const e=document.getElementById(id); if(e)e.value='';});
-  const v=document.getElementById('pf-veic'); if(v)v.value=''; const n=document.getElementById('pf-novas'); if(n)n.checked=false;
-  pendRenderTudo(); }
+function pendSetFiltro(k,v){ _pendFiltros[k]=v; pendRenderTudo(); }
+
+// ── Dropdown multi-seleção (estilo Excel) para Programador / Tipo / Unidade ──
+function pendMselToggleOpen(key){
+  const el=document.getElementById('msel-'+key); if(!el) return;
+  const wasOpen=el.classList.contains('open');
+  document.querySelectorAll('#page-pendencias .msel.open').forEach(o=>o.classList.remove('open'));
+  if(!wasOpen){
+    el.classList.add('open');
+    const inp=el.querySelector('.msel-search'); if(inp){ inp.value=''; setTimeout(()=>inp.focus(),0); }
+    pendMselRenderList(key,'');
+  }
+}
+function pendMselRenderList(key, filtroTxt){
+  const opts=_pendOptions[key]||[]; const sel=_pendFiltros[key]||new Set();
+  const q=(filtroTxt||'').toLowerCase();
+  const list=document.getElementById('msel-list-'+key); if(!list) return;
+  const filtrados = q ? opts.filter(o=>o.toLowerCase().includes(q)) : opts;
+  if(!filtrados.length){ list.innerHTML='<div class="msel-empty">Nenhum resultado</div>'; return; }
+  list.innerHTML = filtrados.map(o=>`<label class="msel-item"><input type="checkbox" ${sel.has(o)?'checked':''} data-v="${_pendEscAttr(o)}" onchange="pendMselToggleItem('${key}',this)"><span title="${_pendEscAttr(o)}">${_pendEsc(o)}</span></label>`).join('');
+}
+function pendMselToggleItem(key, checkbox){
+  const val=checkbox.dataset.v; const set=_pendFiltros[key];
+  if(checkbox.checked) set.add(val); else set.delete(val);
+  pendMselUpdateBtn(key); pendRenderTudo();
+}
+function pendMselAll(key){
+  _pendFiltros[key] = new Set(_pendOptions[key]||[]);
+  const inp=document.querySelector('#msel-'+key+' .msel-search');
+  pendMselRenderList(key, inp?inp.value:''); pendMselUpdateBtn(key); pendRenderTudo();
+}
+function pendMselNone(key){
+  _pendFiltros[key] = new Set();
+  const inp=document.querySelector('#msel-'+key+' .msel-search');
+  pendMselRenderList(key, inp?inp.value:''); pendMselUpdateBtn(key); pendRenderTudo();
+}
+function pendMselUpdateBtn(key){
+  const btn=document.getElementById('msel-btn-'+key); if(!btn) return;
+  const set=_pendFiltros[key]||new Set(); const all=_pendOptions[key]||[];
+  const allWord = key==='uni' ? 'Todas' : 'Todos';
+  let label;
+  if(!all.length) label=allWord;
+  else if(set.size===0) label='Nenhum selecionado';
+  else if(set.size===all.length) label=allWord;
+  else if(set.size===1) label=[...set][0];
+  else label=`${set.size} selecionados`;
+  btn.innerHTML = `<span>${_pendEsc(label)}</span><span style="flex-shrink:0;color:#52616d">▾</span>`;
+  btn.classList.toggle('filtered', set.size<all.length);
+}
+function pendPickProgRow(p){
+  const set=_pendFiltros.prog;
+  if(set.size===1 && set.has(p)) _pendFiltros.prog = new Set(_pendOptions.prog||[]);
+  else _pendFiltros.prog = new Set([p]);
+  pendMselUpdateBtn('prog'); pendMselRenderList('prog',''); pendRenderTudo();
+}
+function pendLimpar(){
+  _pendFiltros = {prog:new Set(_pendOptions.prog||[]), cat:new Set(_pendOptions.cat||[]), uni:new Set(_pendOptions.uni||[]), loc:'', veic:'', novas:false};
+  ['prog','cat','uni'].forEach(k=>{ pendMselUpdateBtn(k); pendMselRenderList(k,''); });
+  document.querySelectorAll('#page-pendencias .msel.open').forEach(o=>o.classList.remove('open'));
+  const locEl=document.getElementById('pf-loc'); if(locEl) locEl.value='';
+  const v=document.getElementById('pf-veic'); if(v) v.value='';
+  const n=document.getElementById('pf-novas'); if(n) n.checked=false;
+  pendRenderTudo();
+}
 function pendSortCol(col){ if(_pendSort.col===col) _pendSort.dir*=-1; else { _pendSort.col=col; _pendSort.dir=(col==='total')?-1:1; } pendRenderTabela(); }
 function pendProgSortCol(col){ if(col==='rank')return; if(_pendProgSort.col===col) _pendProgSort.dir*=-1; else { _pendProgSort.col=col; _pendProgSort.dir=(col==='prog')?1:-1; } pendRenderProg(); }
 
 function pendRenderTudo(){ pendRenderCards(); pendRenderProg(); pendRenderTabela(); }
 
+function pendCardsData(){
+  const s=window._pendSnap; if(!s||!s.veiculos) return null;
+  const f=_pendFiltros;
+  const rows=pendFiltrados();
+  const total=rows.reduce((t,v)=>t+_pendEff(v),0);
+  const entradas=rows.reduce((t,v)=>t+_pendEffNovas(v),0);
+  const base=(s.total_ant||0)>0;
+  const catAtivo=_pendCatAtivo(), uniAtivo=_pendUniAtivo(), progAtivo=_pendProgAtivo();
+  const outrosFiltros = catAtivo||uniAtivo||!!f.loc||!!f.veic||!!f.novas;
+  const filtroAtivo = outrosFiltros||progAtivo;
+  let saidas=null, saldo=null;
+  if(base && !outrosFiltros){
+    const progsSel = progAtivo ? (s.prog||[]).filter(p=>f.prog.has(p.prog)) : (s.prog||[]);
+    const antes = progsSel.reduce((t,p)=>t+(p.ant||0),0);
+    saidas = progsSel.reduce((t,p)=>t+(p.baixaram||0),0);
+    saldo = total-antes;
+  }
+  return {total,entradas,saidas,saldo,base,filtroAtivo,outrosFiltros};
+}
 function pendRenderCards(){
   const s=window._pendSnap; const nf=n=>Number(n||0).toLocaleString('pt-BR');
   const sub=document.getElementById('pend-sub'); const box=document.getElementById('pend-cards');
   if(!s||!s.veiculos){ if(sub)sub.textContent='Nenhuma carga encontrada no banco. Suba a planilha no card "Pendências" da Base de Dados.'; if(box)box.innerHTML=''; return; }
   const dt=s.ts?new Date(s.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
-  const base=s.total_ant>0;
   sub.innerHTML=`${nf(s.equips)} equipamentos · atualizado em <b>${dt}</b>${s.arquivo?` · ${_pendEsc(s.arquivo)}`:''}`;
-  const saldo=(s.total||0)-(s.total_ant||0);
+  const d=pendCardsData(); if(!d){ box.innerHTML=''; return; }
+  const tag = d.filtroAtivo ? '<span class="tagf">FILTRADO</span>' : '';
+  const entVal = d.base ? (d.entradas?('+'+nf(d.entradas)):'0') : '—';
+  const saiVal = !d.base ? '—' : (d.saidas==null ? '—' : (d.saidas?('−'+nf(d.saidas)):'0'));
+  const saiSub = !d.base ? 'baixadas (concl./canc./exec.)' : (d.saidas==null ? 'indisponível com este filtro' : 'baixadas (concl./canc./exec.)');
+  const saldoVal = !d.base ? 'baseline' : (d.saldo==null ? '—' : ((d.saldo>0?'+':'')+nf(d.saldo)));
+  const saldoSub = !d.base ? 'primeira carga' : (d.saldo==null ? 'indisponível com este filtro' : 'saldo no recorte selecionado');
+  const saldoCls = d.saldo==null ? 'teal' : (d.saldo<0?'down':(d.saldo>0?'up':'teal'));
   box.innerHTML=`
-    <div class="pcard"><div class="lbl">Total de Pendências</div><div class="val teal">${nf(s.total)}</div><div class="sub">status Pendente</div></div>
-    <div class="pcard"><div class="lbl">Entradas</div><div class="val up">${base?'+'+nf(s.novas):'—'}</div><div class="sub">novas desde a carga anterior</div></div>
-    <div class="pcard"><div class="lbl">Saídas</div><div class="val down">${base?'−'+nf(s.baixaram):'—'}</div><div class="sub">baixadas (concl./canc./exec.)</div></div>
-    <div class="pcard"><div class="lbl">Saldo vs. anterior</div><div class="val ${saldo<0?'down':(saldo>0?'up':'teal')}">${base?((saldo>0?'+':'')+nf(saldo)):'baseline'}</div><div class="sub">${base?`${nf(s.total_ant)} → ${nf(s.total)}`:'primeira carga'}</div></div>`;
+    <div class="pcard"><div class="lbl">Total de Pendências${tag}</div><div class="val teal">${nf(d.total)}</div><div class="sub">${d.filtroAtivo?'no recorte selecionado':'status Pendente'}</div></div>
+    <div class="pcard"><div class="lbl">Entradas</div><div class="val up">${entVal}</div><div class="sub">novas desde a carga anterior</div></div>
+    <div class="pcard"><div class="lbl">Saídas</div><div class="val down">${saiVal}</div><div class="sub">${saiSub}</div></div>
+    <div class="pcard"><div class="lbl">Saldo vs. anterior</div><div class="val ${saldoCls}">${saldoVal}</div><div class="sub">${saldoSub}</div></div>`;
 }
 
 function pendRenderProg(){
@@ -20929,7 +21067,7 @@ function pendRenderProg(){
     const cls=p.delta<0?'d':(p.delta>0?'u':'z'); const sign=p.delta>0?'+':'';
     const ws=Math.round((p.baixaram||0)*U), we=Math.round((p.novas||0)*U);
     const bar=`<div style="display:flex;align-items:center"><div style="width:66px;text-align:right;line-height:0"><span class="mbar" style="width:${ws}px;background:#0b7e57;border-radius:2px 0 0 2px"></span></div><div style="width:1px;height:12px;background:#a8b4bf"></div><div style="width:66px;text-align:left;line-height:0"><span class="mbar" style="width:${we}px;background:#b3541e;border-radius:0 2px 2px 0"></span></div></div>`;
-    const active=_pendFiltros.prog===p.prog?'active':'';
+    const active=(_pendFiltros.prog.size===1 && _pendFiltros.prog.has(p.prog))?'active':'';
     return `<tr class="${active}" data-p="${_pendEsc(p.prog)}" onclick="pendPickProgRow(this.dataset.p)">
       <td>${i+1}</td><td class="nome">${_pendEsc(p.prog)}</td><td>${nf(p.ant)}</td><td>${nf(p.novo)}</td>
       <td style="color:#b3541e;font-weight:700">${p.novas?'+'+p.novas:'—'}</td>
@@ -20942,12 +21080,13 @@ function pendRenderProg(){
 function pendFiltrados(){
   const s=window._pendSnap; if(!s||!s.veiculos) return [];
   const f=_pendFiltros;
+  const progAtivo=_pendProgAtivo(), uniAtivo=_pendUniAtivo(), catAtivo=_pendCatAtivo();
   return s.veiculos.filter(v=>{
-    if(f.prog && v.programador!==f.prog) return false;
-    if(f.uni && v.unidade!==f.uni) return false;
+    if(progAtivo && !f.prog.has(v.programador)) return false;
+    if(uniAtivo && !f.uni.has(v.unidade)) return false;
     if(f.loc){ const fil=String(v.unidade||'').toLowerCase().startsWith('filial'); if(f.loc==='locado'&&fil) return false; if(f.loc==='nao_locado'&&!fil) return false; }
     if(f.veic && !String(v.veiculo).toLowerCase().includes(f.veic.toLowerCase())) return false;
-    if(f.cat && _pendEff(v)===0) return false;
+    if(catAtivo && _pendEff(v)===0) return false;
     if(f.novas && _pendEffNovas(v)===0) return false;
     return true;
   });
@@ -20965,7 +21104,9 @@ function pendRenderTabela(){
   const totalPend=rows.reduce((t,v)=>t+_pendEff(v),0);
   const totalNovas=rows.reduce((t,v)=>t+_pendEffNovas(v),0);
   const ri=document.getElementById('pend-result');
-  ri.innerHTML=`<b>${rows.length}</b> equipamentos · <b>${nf(totalPend)}</b> pendências`+(_pendFiltros.cat?` de <b>${_pendEsc(_pendFiltros.cat)}</b>`:'')+(totalNovas?` · <span style="color:#0b7e57">${nf(totalNovas)} novas</span>`:'');
+  let catTxt='';
+  if(_pendCatAtivo()){ const sel=[..._pendFiltros.cat]; catTxt = sel.length===1 ? ` de <b>${_pendEsc(sel[0])}</b>` : ` de <b>${sel.length} tipos selecionados</b>`; }
+  ri.innerHTML=`<b>${rows.length}</b> equipamentos · <b>${nf(totalPend)}</b> pendências${catTxt}`+(totalNovas?` · <span style="color:#0b7e57">${nf(totalNovas)} novas</span>`:'');
   if(!rows.length){ tb.innerHTML=`<tr><td colspan="5" class="empty">Nenhum equipamento encontrado.</td></tr>`; return; }
   const maxTotal=Math.max(1,...(s.veiculos||[]).map(v=>v.total||0));
   tb.innerHTML=rows.map((v,i)=>{
