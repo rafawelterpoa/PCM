@@ -1143,13 +1143,79 @@ input.filter-sel{padding:5px 10px;height:32px}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
     <span class="snav-label">RCD — Avarias</span>
   </div>
-  <div class="snav-item" id="snav-pmp" onclick="navegarPara('pmp')" title="Planejamento e Programação PMP">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
-    <span class="snav-label">PMP</span>
-  </div>
   <div class="snav-item" id="snav-garantias" onclick="navegarPara('garantias')" title="Garantias">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
     <span class="snav-label">Garantias</span>
+  </div>
+
+  <div class="snav-section-label">PMP</div>
+
+  <div class="snav-item" id="snav-pmp-planejamento" onclick="pmpNavSidebar('planejamento','gerencial')" title="Planejamento">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span class="snav-label">Planejamento</span>
+    <span class="snav-chev" id="snav-chev-pmp-planejamento" onclick="event.stopPropagation();pmpToggleSub('planejamento')" title="Expandir subáreas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>
+  </div>
+  <div class="snav-sub" id="snav-sub-pmp-planejamento">
+    <div class="snav-item snav-subitem" id="snav-pmp-plan-gerencial" onclick="pmpNavSidebar('planejamento','gerencial')" title="Visão Gerencial">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span class="snav-label">Visão Gerencial</span>
+    </div>
+    <div class="snav-item snav-subitem" id="snav-pmp-plan-analitica" onclick="pmpNavSidebar('planejamento','analitica')" title="Área Analítica">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span class="snav-label">Área Analítica</span>
+    </div>
+    <div class="snav-item snav-subitem" id="snav-pmp-plan-execucao" onclick="pmpNavSidebar('planejamento','execucao','fila')" title="Execução">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+      <span class="snav-label">Execução</span>
+      <span class="snav-chev" id="snav-chev-pmp-execucao" onclick="event.stopPropagation();pmpToggleSub('execucao')" title="Expandir subáreas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>
+    </div>
+    <div class="snav-sub" id="snav-sub-pmp-execucao">
+      <div class="snav-item snav-subitem" id="snav-pmp-exec-fila" onclick="pmpNavSidebar('planejamento','execucao','fila')" title="Fila de Planejamento">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <span class="snav-label">Fila de Planejamento</span>
+      </div>
+      <div class="snav-item snav-subitem" id="snav-pmp-exec-triagem" onclick="pmpNavSidebar('planejamento','execucao','triagem')" title="Triagem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <span class="snav-label">Triagem</span>
+      </div>
+      <div class="snav-item snav-subitem" id="snav-pmp-exec-tratamento" onclick="pmpNavSidebar('planejamento','execucao','tratamento')" title="Em Tratamento">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="snav-label">Em Tratamento</span>
+      </div>
+      <div class="snav-item snav-subitem" id="snav-pmp-exec-historico" onclick="pmpNavSidebar('planejamento','execucao','historico')" title="Histórico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span class="snav-label">Histórico</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="snav-item" id="snav-pmp-programacao" onclick="pmpNavSidebar('programacao','acao')" title="Programação">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+    <span class="snav-label">Programação</span>
+    <span class="snav-chev" id="snav-chev-pmp-programacao" onclick="event.stopPropagation();pmpToggleSub('programacao')" title="Expandir subáreas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>
+  </div>
+  <div class="snav-sub" id="snav-sub-pmp-programacao">
+    <div class="snav-item snav-subitem" id="snav-pmp-prog-acao" onclick="pmpNavSidebar('programacao','acao')" title="Ação">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+      <span class="snav-label">Ação</span>
+    </div>
+    <div class="snav-item snav-subitem" id="snav-pmp-prog-pendencias" onclick="pmpNavSidebar('programacao','pendencias')" title="Pendências">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span class="snav-label">Pendências</span>
+    </div>
+    <div class="snav-item snav-subitem" id="snav-pmp-prog-historico" onclick="pmpNavSidebar('programacao','historico')" title="Histórico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span class="snav-label">Histórico</span>
+    </div>
+  </div>
+
+  <div class="snav-item" id="snav-pmp-indicadores" onclick="pmpNavSidebar('indicadores')" title="Indicadores">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span class="snav-label">Indicadores</span>
+  </div>
+  <div class="snav-item" id="snav-pmp-relatorios" onclick="pmpNavSidebar('relatorios')" title="Relatórios">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <span class="snav-label">Relatórios</span>
   </div>
 
   <div class="snav-section-label">Análise</div>
@@ -16055,7 +16121,7 @@ function navegarPara(destino){
   if(destino==='rcd'){paginaRcd();snavSetActive('snav-rcd');return;}
   if(destino==='solrcd'){paginaSolRcd();snavSetActive('snav-solrcd');return;}
   if(destino==='bd'){paginaBd();snavSetActive('snav-bd');return;}
-  if(destino==='pmp'){paginaPmp();snavSetActive('snav-pmp');return;}
+  if(destino==='pmp'){paginaPmp();return;}
 }
 
 // ── FOTOS DE ORÇAMENTO (compartilhado entre RCD Desmob e Sol. RCD) ───────────
@@ -18526,6 +18592,8 @@ let _pmpFiltroStatus='', _pmpFiltroOp='', _pmpBusca='', _pmpFiltroEnc='', _pmpFi
 let _pmpProgFiltroGestor='', _pmpProgFiltroProgr='', _pmpProgFiltroPolo='', _pmpProgFiltroOp='';
 let _pmpSortCol='', _pmpSortDir=1;
 let _pmpColFiltros={};
+let _pmpAnaFiltros={}; // colKey -> {type:'set',vals:Set} (marcados) ou {type:'range',min,max}
+function pmpUniqVals(col,src){return [...new Set((src||[]).map(e=>String(e[col]??'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));}
 
 // ── PMP — Fluxo Planejamento/Programação/Execução (motivos padronizados) ────
 const PMP_MOTIVOS_REPROGRAMAR=["Ativo não liberado pela operação","Equipamento desmobilizado - cliente","Equipamento em corretiva (parado)","Equipamento desmobilizado - Assis","Equipamento desmobilizado - Sumaré","Equipamento movimentado","Indisponibilidade de M.O.","Atraso na entrega de materiais","Condições climáticas","Divergência de material entregue","Execução pendente pelo cliente","Mecânico sem integração","Sem retorno - operação"];
@@ -18565,34 +18633,84 @@ const _PMP_COLS_DEF=[
 ];
 let _pmpLayoutCols=['frota','polo','centro','encarregado','hor_atual','ritmo_diario','hor_ult_rev','hor_execucao','hor_prox','h_para_pmp','semana_plan','status','severidade','h_pmp_s1','dias_vencimento','om','status_material'];
 
-function paginaPmp(){
+function paginaPmp(){ pmpNavSidebar(); }
+
+function pmpBreadcrumb(txt){ const el=document.getElementById('pmp-breadcrumb'); if(el) el.textContent=txt; }
+
+let _pmpSubAberto={planejamento:false,programacao:false,execucao:false};
+function pmpAtualizarSubsSidebar(){
+  ['planejamento','programacao','execucao'].forEach(id=>{
+    const sub=document.getElementById('snav-sub-pmp-'+id);
+    const chev=document.getElementById('snav-chev-pmp-'+id);
+    if(sub) sub.classList.toggle('aberto',!!_pmpSubAberto[id]);
+    if(chev) chev.classList.toggle('aberto',!!_pmpSubAberto[id]);
+  });
+}
+function pmpToggleSub(id){ _pmpSubAberto[id]=!_pmpSubAberto[id]; pmpAtualizarSubsSidebar(); }
+
+const PMP_BREADCRUMBS={
+  'planejamento|gerencial':'Planejamento › Visão Gerencial',
+  'planejamento|analitica':'Planejamento › Área Analítica',
+  'planejamento|execucao|fila':'Planejamento › Execução › Fila de Planejamento',
+  'planejamento|execucao|triagem':'Planejamento › Execução › Triagem',
+  'planejamento|execucao|tratamento':'Planejamento › Execução › Em Tratamento',
+  'planejamento|execucao|historico':'Planejamento › Execução › Histórico',
+  'programacao|acao':'Programação › Ação',
+  'programacao|pendencias':'Programação › Pendências',
+  'programacao|historico':'Programação › Histórico',
+  'indicadores':'Indicadores',
+  'relatorios':'Relatórios'
+};
+
+function pmpNavSidebar(aba,sub,subsub){
+  if(typeof _acessoBloqueado==='function'&&_acessoBloqueado('pmp')){_paginaBloqueada('PMP');return;}
+  aba = aba || _pmpAba || 'planejamento';
+  if(aba==='planejamento'){ sub = sub || _pmpSubAba || 'gerencial'; if(sub==='execucao') subsub = subsub || _pmpExecSub || 'fila'; }
+  else if(aba==='programacao'){ sub = sub || _pmpProgSub || 'acao'; }
+
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('[style*="position:fixed"][id^="page-"]').forEach(p=>{if(p.id!=='page-pmp')p.style.display='none';});
-  const pg=document.getElementById('page-pmp');
-  if(pg) pg.style.display='flex';
-  pmpSetAba(_pmpAba||'planejamento');
+  const pg=document.getElementById('page-pmp'); if(pg) pg.style.display='flex';
+
+  _pmpAba=aba;
+  ['planejamento','programacao','indicadores','relatorios'].forEach(a=>{
+    const cont=document.getElementById('pmp-content-'+a);
+    if(cont) cont.style.display=a===aba?'flex':'none';
+  });
+  if(aba==='planejamento'){ _pmpSubAba=sub; if(sub==='execucao') _pmpExecSub=subsub; pmpSetSubAba(sub); }
+  else if(aba==='programacao'){ _pmpProgSub=sub; pmpRenderProgramacao(); }
+  else if(aba==='indicadores'){ pmpRenderIndicadores(); }
+  else { pmpRenderRelatorios(); }
+
+  const key=[aba,sub,subsub].filter(Boolean).join('|');
+  pmpBreadcrumb(PMP_BREADCRUMBS[key]||'PMP');
+
+  _pmpSubAberto.planejamento=(aba==='planejamento');
+  _pmpSubAberto.programacao=(aba==='programacao');
+  _pmpSubAberto.execucao=(aba==='planejamento'&&sub==='execucao');
+  pmpAtualizarSubsSidebar();
+  document.querySelectorAll('.snav-item').forEach(el=>el.classList.remove('active'));
+  let ativarId;
+  if(subsub) ativarId='snav-pmp-exec-'+subsub;
+  else if(sub) ativarId = aba==='planejamento' ? 'snav-pmp-plan-'+sub : 'snav-pmp-prog-'+sub;
+  else ativarId='snav-pmp-'+aba;
+  document.getElementById(ativarId)?.classList.add('active');
 }
 
 function pmpSetAba(aba){
   _pmpAba=aba;
-  ['planejamento','programacao','evolucao','indicadores'].forEach(a=>{
-    const tab=document.getElementById('pmp-tab-'+a);
+  ['planejamento','programacao','indicadores','relatorios'].forEach(a=>{
     const cont=document.getElementById('pmp-content-'+a);
-    if(tab){tab.style.color=a===aba?'#E8630A':'rgba(255,255,255,.55)';tab.style.borderBottomColor=a===aba?'#E8630A':'transparent';}
     if(cont) cont.style.display=a===aba?'flex':'none';
   });
   if(aba==='planejamento') pmpRenderPlanejamento();
   else if(aba==='programacao') pmpRenderProgramacao();
-  else if(aba==='evolucao') pmpRenderEvolucao();
-  else pmpRenderIndicadores();
+  else if(aba==='indicadores') pmpRenderIndicadores();
+  else pmpRenderRelatorios();
 }
 
 function pmpSetSubAba(sub){
   _pmpSubAba=sub;
-  ['gerencial','analitica','execucao'].forEach(a=>{
-    const tab=document.getElementById('pmp-sub-'+a);
-    if(tab){tab.style.color=a===sub?'#E8630A':'#5A7280';tab.style.borderBottomColor=a===sub?'#E8630A':'transparent';}
-  });
   const dados=document.getElementById('pmp-plan-dados');
   const exec=document.getElementById('pmp-plan-execucao');
   if(sub==='execucao'){
@@ -18625,9 +18743,9 @@ function pmpMontarEquips(){
     return bestScore>=2?best:{};
   };
   const _manus=window.BD_MANUSIS||{};
-  const _fidOf=x=>String(x.frota||x.id||'');
   let fonteEquips=EQUIPAMENTOS_ORIG.filter(e=>e.status==='Alugado'&&opContratoEquip(e)!=='Gestão de frota'&&frotaClassificar(e.tipo)==='equipamento');
-  const _idsAtivos=new Set(fonteEquips.map(_fidOf));
+  const _idsAtivos=new Set();
+  fonteEquips.forEach(x=>{if(x.frota)_idsAtivos.add(String(x.frota));if(x.id)_idsAtivos.add(String(x.id));});
   const _foraSet=new Set();
   const _pmpAll=window.PMP_EQUIP||{};
   Object.keys(_pmpAll).forEach(fid=>{
@@ -18635,7 +18753,7 @@ function pmpMontarEquips(){
     const fb=_pmpAll[fid]||{};
     const ativoWf=!!fb.semana_planejada||!!fb.wf_acao||(fb.wf_validacao&&fb.wf_validacao!=='fechada'&&fb.wf_validacao!=='tratada');
     if(!ativoWf) return;
-    const orig=EQUIPAMENTOS_ORIG.find(x=>_fidOf(x)===fid);
+    const orig=EQUIPAMENTOS_ORIG.find(x=>String(x.id)===fid||String(x.frota)===fid);
     fonteEquips.push(orig||{id:fid,frota:fid,status:'',tipoContrato:''});
     _foraSet.add(fid);
   });
@@ -18720,12 +18838,24 @@ function pmpMontarEquips(){
 }
 
 function pmpFiltrarEquips(list){
+  const _univAll=list;
   if(_pmpFiltroStatus) list=list.filter(e=>e.status===_pmpFiltroStatus);
   if(_pmpFiltroOp) list=list.filter(e=>e.operacao===_pmpFiltroOp);
   if(_pmpFiltroEnc) list=list.filter(e=>e.encarregado===_pmpFiltroEnc);
   if(_pmpFiltroProgr) list=list.filter(e=>e.programador===_pmpFiltroProgr);
   if(_pmpBusca){const q=_pmpBusca.toLowerCase();list=list.filter(e=>e.frota.toLowerCase().includes(q)||(e.serie||'').toLowerCase().includes(q)||e.modelo.toLowerCase().includes(q));}
   Object.entries(_pmpColFiltros).forEach(([col,val])=>{if(val) list=list.filter(e=>String(e[col]||'')=== val);});
+  Object.entries(_pmpAnaFiltros).forEach(([col,f])=>{
+    if(!f) return;
+    if(f.type==='set'){
+      const universo=pmpUniqVals(col,_univAll);
+      if(f.vals.size<universo.length) list=list.filter(e=>f.vals.has(String(e[col]??'').trim()));
+    } else if(f.type==='range'){
+      const min=(f.min!==''&&f.min!=null)?parseFloat(f.min):null;
+      const max=(f.max!==''&&f.max!=null)?parseFloat(f.max):null;
+      if(min!==null||max!==null) list=list.filter(e=>{const v=parseFloat(e[col]);if(isNaN(v))return false;if(min!==null&&v<min)return false;if(max!==null&&v>max)return false;return true;});
+    }
+  });
   if(_pmpSortCol){const d=_pmpSortDir;list=[...list].sort((a,b)=>{const va=a[_pmpSortCol]??'',vb=b[_pmpSortCol]??'';return typeof va==='number'?(va-vb)*d:String(va).localeCompare(String(vb),undefined,{numeric:true})*d;});}
   return list;
 }
@@ -18830,19 +18960,28 @@ function pmpRenderGerencial(equips,all){
   </tr>`;}).join('')}</tbody></table></div>`;
 }
 
+const _PMP_CAMPO_FB={data_ult_rev:'data_ultima_revisao',hor_ult_rev:'horimetro_ultima_revisao',semana_plan:'semana_planejada'};
 function pmpRenderAnalitica(equips,all){
   const el=document.getElementById('pmp-plan-analitica'); if(!el) return;
   if(!equips.length){el.innerHTML='<div style="padding:40px;text-align:center;color:#8FA4AE">Nenhum equipamento encontrado</div>';return;}
   const _ed=(e,campo,val)=>`<td class="pmp-edit" onclick="pmpEditCell(this,'${e.frota}','${campo}','${String(val||'').replace(/'/g,"&#39;")}')" style="background:#FFFDE7;font-size:12px;cursor:pointer;text-align:center">${val||`<span style="color:#C8D4DA;font-size:11px">—</span>`}</td>`;
-  const _thA=(label,col,bg='#BDD7EE')=>{const act=_pmpSortCol===col;const arr=act?(_pmpSortDir>0?' ↑':' ↓'):'';return `<th style="background:${bg};cursor:pointer;user-select:none;white-space:nowrap;${act?'color:#E8630A;':''}" onclick="_pmpSortCol='${col}';_pmpSortDir=${act?-_pmpSortDir:1};pmpRenderPlanejamento()">${label}${arr}</th>`;};
-  const _thE=(label,col)=>_thA(label,col,'#FFF9C4');
+  const _thA=(label,colDef,bg='#BDD7EE')=>{
+    const col=colDef.key;
+    const act=_pmpSortCol===col;const arr=act?(_pmpSortDir>0?' ↑':' ↓'):'';
+    const fAtivo=pmpAnaFiltroAtivo(col,all);
+    return `<th style="background:${bg};white-space:nowrap;${act?'color:#E8630A;':''}">
+      <span style="cursor:pointer;user-select:none" onclick="_pmpSortCol='${col}';_pmpSortDir=${act?-_pmpSortDir:1};pmpRenderPlanejamento()">${label}${arr}</span>
+      <span class="pmp-ana-filtro-btn" onclick="event.stopPropagation();pmpAnaAbrirFiltro(event,'${col}',${!!colDef.num})" style="cursor:pointer;margin-left:4px;font-size:9px;color:${fAtivo?'#E8630A':'#94A8B2'}" title="Filtrar">▾</span>
+    </th>`;
+  };
+  const _thE=(label,colDef)=>_thA(label,colDef,'#FFF9C4');
   const visCols=_pmpLayoutCols.map(k=>_PMP_COLS_DEF.find(c=>c.key===k)).filter(Boolean);
-  const headers=visCols.map(c=>c.edit?_thE(c.label.toUpperCase()+(c.edit?' ✏':''),c.key):_thA(c.label.toUpperCase(),c.key)).join('');
+  const headers=visCols.map(c=>c.edit?_thE(c.label.toUpperCase()+(c.edit?' ✏':''),c):_thA(c.label.toUpperCase(),c)).join('');
   const rows=equips.map(e=>{
     const dv=e.dias_vencimento;
     const dvCor=dv===null?'#8FA4AE':dv<0?'#B91C1C':dv<=7?'#B45309':'#1E8A4C';
     const cells=visCols.map(c=>{
-      if(c.edit) return _ed(e,c.key,e[c.key]||'');
+      if(c.edit) return _ed(e,_PMP_CAMPO_FB[c.key]||c.key,e[c.key]||'');
       const bg='#EBF3FB'; const val=e[c.key];
       if(c.key==='frota') return `<td style="background:${bg}"><strong style="font-size:12px">${e.frota}</strong></td>`;
       if(c.key==='serie') return `<td style="font-size:11px;color:#5A7280;background:${bg}">${val||'—'}</td>`;
@@ -18857,6 +18996,103 @@ function pmpRenderAnalitica(equips,all){
     return `<tr>${cells}<td><button onclick="pmpAbrirModal('${e.frota}')" style="padding:3px 8px;font-size:11px;background:#F4F6F8;border:1px solid #E2E8ED;border-radius:5px;cursor:pointer">✏</button></td></tr>`;
   }).join('');
   el.innerHTML=`<div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>${headers}<th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+// ── PMP — Filtro estilo Excel (Área Analítica) ───────────────────────────────
+function pmpAnaFiltroAtivo(col,all){
+  const f=_pmpAnaFiltros[col]; if(!f) return false;
+  if(f.type==='set') return f.vals.size<pmpUniqVals(col,all).length;
+  if(f.type==='range') return (f.min!==''&&f.min!=null)||(f.max!==''&&f.max!=null);
+  return false;
+}
+function _pmpAnaFecharPopup(){
+  document.getElementById('pmp-ana-filtro-popup')?.remove();
+  document.removeEventListener('click',_pmpAnaOutsideClick);
+}
+function _pmpAnaOutsideClick(ev){
+  if(!ev.target.closest('#pmp-ana-filtro-popup')&&!ev.target.closest('.pmp-ana-filtro-btn')) _pmpAnaFecharPopup();
+}
+function pmpAnaAbrirFiltro(ev,col,isNum){
+  const jaAberto=document.getElementById('pmp-ana-filtro-popup');
+  _pmpAnaFecharPopup();
+  if(jaAberto&&jaAberto.dataset.col===col) return; // clique de novo no mesmo = fecha
+  const rect=ev.target.getBoundingClientRect();
+  const all=pmpMontarEquips();
+  if(!_pmpAnaFiltros[col]){
+    _pmpAnaFiltros[col]=isNum?{type:'range',min:'',max:''}:{type:'set',vals:new Set(pmpUniqVals(col,all))};
+  }
+  const f=_pmpAnaFiltros[col];
+  const pop=document.createElement('div');
+  pop.id='pmp-ana-filtro-popup';
+  pop.dataset.col=col;
+  pop.style.cssText=`position:fixed;top:${rect.bottom+4}px;left:${Math.min(rect.left,window.innerWidth-250)}px;width:220px;background:#fff;border:1px solid #C8D4DA;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.18);z-index:2000;font-size:12px;overflow:hidden`;
+  if(f.type==='range'){
+    pop.innerHTML=`
+      <div style="padding:10px 12px">
+        <label style="font-size:10px;color:#8FA4AE;display:block;margin-bottom:3px">De</label>
+        <input type="number" id="pmp-ana-min" value="${f.min??''}" style="width:100%;padding:5px 7px;border:1px solid #E2E8ED;border-radius:5px;font-size:12px;margin-bottom:8px;box-sizing:border-box">
+        <label style="font-size:10px;color:#8FA4AE;display:block;margin-bottom:3px">Até</label>
+        <input type="number" id="pmp-ana-max" value="${f.max??''}" style="width:100%;padding:5px 7px;border:1px solid #E2E8ED;border-radius:5px;font-size:12px;box-sizing:border-box">
+      </div>
+      <div style="padding:8px 10px;border-top:1px solid #F0F4F6;display:flex;justify-content:space-between">
+        <button onclick="pmpAnaLimparFiltro('${col}')" style="font-size:11px;padding:4px 10px;border:1px solid #E2E8ED;border-radius:5px;background:#fff;color:#5A7280;cursor:pointer">Limpar</button>
+        <button onclick="pmpAnaAplicarRange('${col}')" style="font-size:11px;padding:4px 12px;border:none;border-radius:5px;background:#E8630A;color:#fff;font-weight:600;cursor:pointer">Aplicar</button>
+      </div>`;
+  } else {
+    const universo=pmpUniqVals(col,all);
+    pop.innerHTML=`
+      <div style="padding:8px 10px;border-bottom:1px solid #F0F4F6"><input type="text" placeholder="Buscar…" oninput="pmpAnaFiltroBusca(this)" style="width:100%;padding:5px 7px;border:1px solid #E2E8ED;border-radius:5px;font-size:12px;box-sizing:border-box"></div>
+      <div style="padding:6px 8px;display:flex;gap:4px;border-bottom:1px solid #F0F4F6">
+        <button onclick="pmpAnaMarcarTodosPopup()" style="flex:1;font-size:10px;padding:4px;border:1px solid #E2E8ED;border-radius:5px;background:#fff;color:#5A7280;cursor:pointer">Marcar todos</button>
+        <button onclick="pmpAnaLimparPopup()" style="flex:1;font-size:10px;padding:4px;border:1px solid #E2E8ED;border-radius:5px;background:#fff;color:#5A7280;cursor:pointer">Limpar</button>
+      </div>
+      <div class="pmp-ana-lista" style="max-height:220px;overflow-y:auto">
+        ${universo.map(v=>`<label class="pmp-ana-opt${f.vals.has(v)?' selected':''}" data-val="${v.replace(/"/g,'&quot;')}" style="display:flex;align-items:center;gap:7px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" ${f.vals.has(v)?'checked':''} onchange="this.closest('.pmp-ana-opt').classList.toggle('selected',this.checked)" style="cursor:pointer;flex-shrink:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v}</span></label>`).join('')}
+      </div>
+      <div style="padding:8px 10px;border-top:1px solid #F0F4F6;display:flex;justify-content:space-between;align-items:center">
+        <span id="pmp-ana-count" style="font-size:10px;color:#8FA4AE">${f.vals.size} de ${universo.length}</span>
+        <button onclick="pmpAnaAplicarSet('${col}')" style="font-size:11px;padding:4px 14px;border:none;border-radius:5px;background:#E8630A;color:#fff;font-weight:600;cursor:pointer">Aplicar</button>
+      </div>`;
+  }
+  document.body.appendChild(pop);
+  document.addEventListener('click',_pmpAnaOutsideClick);
+}
+function pmpAnaFiltroBusca(input){
+  const q=input.value.toLowerCase();
+  document.querySelectorAll('.pmp-ana-opt').forEach(el=>{el.style.display=el.dataset.val.toLowerCase().includes(q)?'':'none';});
+}
+function _pmpAnaUpdateCount(){
+  const cnt=document.getElementById('pmp-ana-count'); if(!cnt) return;
+  const opts=document.querySelectorAll('#pmp-ana-filtro-popup .pmp-ana-opt');
+  const marcados=document.querySelectorAll('#pmp-ana-filtro-popup .pmp-ana-opt input:checked').length;
+  cnt.textContent=`${marcados} de ${opts.length}`;
+}
+function pmpAnaMarcarTodosPopup(){
+  document.querySelectorAll('#pmp-ana-filtro-popup .pmp-ana-opt').forEach(o=>{o.classList.add('selected');o.querySelector('input').checked=true;});
+  _pmpAnaUpdateCount();
+}
+function pmpAnaLimparPopup(){
+  document.querySelectorAll('#pmp-ana-filtro-popup .pmp-ana-opt').forEach(o=>{o.classList.remove('selected');o.querySelector('input').checked=false;});
+  _pmpAnaUpdateCount();
+}
+function pmpAnaAplicarSet(col){
+  const vals=new Set();
+  document.querySelectorAll('#pmp-ana-filtro-popup .pmp-ana-opt').forEach(o=>{if(o.querySelector('input').checked) vals.add(o.dataset.val);});
+  _pmpAnaFiltros[col]={type:'set',vals};
+  _pmpAnaFecharPopup();
+  pmpRenderPlanejamento();
+}
+function pmpAnaLimparFiltro(col){
+  _pmpAnaFiltros[col]={type:'range',min:'',max:''};
+  _pmpAnaFecharPopup();
+  pmpRenderPlanejamento();
+}
+function pmpAnaAplicarRange(col){
+  const min=document.getElementById('pmp-ana-min')?.value??'';
+  const max=document.getElementById('pmp-ana-max')?.value??'';
+  _pmpAnaFiltros[col]={type:'range',min,max};
+  _pmpAnaFecharPopup();
+  pmpRenderPlanejamento();
 }
 
 let _pmpLayState={exibidas:[],selExib:null,selDisp:null};
@@ -19056,13 +19292,11 @@ function pmpSetProgSub(sub){ _pmpProgSub=sub; pmpRenderProgramacao(); }
 function pmpRenderProgramacao(){
   const el=document.getElementById('pmp-content-programacao'); if(!el) return;
   const all=pmpMontarEquips();
-  const _pill=(label,key)=>`<span onclick="pmpSetProgSub('${key}')" style="padding:7px 16px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid ${_pmpProgSub===key?'#E8630A':'#E2E8ED'};background:${_pmpProgSub===key?'#E8630A':'#fff'};color:${_pmpProgSub===key?'#fff':'#5A7280'};margin-right:8px;display:inline-block">${label}</span>`;
   let body='';
   if(_pmpProgSub==='pendencias') body=pmpProgRenderPendencias(all);
   else if(_pmpProgSub==='historico') body=pmpProgRenderHistorico(all);
   else body=pmpProgRenderAcao(all);
-  el.innerHTML=`<div style="padding:16px 28px 0;flex-shrink:0">${_pill('Ação','acao')}${_pill('Pendências','pendencias')}${_pill('Histórico','historico')}</div>
-    <div style="padding:16px 28px 24px;overflow-y:auto;flex:1">${body}</div>`;
+  el.innerHTML=`<div style="padding:16px 28px 24px;overflow-y:auto;flex:1">${body}</div>`;
 }
 
 function pmpProgSetSemana(s){ _pmpProgSemanaSel=_pmpProgSemanaSel===s?'':s; pmpRenderProgramacao(); }
@@ -19256,13 +19490,12 @@ function pmpSetExecSub(sub){ _pmpExecSub=sub; pmpRenderExecucao(); }
 function pmpRenderExecucao(){
   const el=document.getElementById('pmp-plan-execucao'); if(!el) return;
   const all=pmpMontarEquips();
-  const _pill=(label,key)=>`<span onclick="pmpSetExecSub('${key}')" style="padding:7px 16px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid ${_pmpExecSub===key?'#E8630A':'#E2E8ED'};background:${_pmpExecSub===key?'#E8630A':'#fff'};color:${_pmpExecSub===key?'#fff':'#5A7280'};margin-right:8px;display:inline-block">${label}</span>`;
   let body='';
   if(_pmpExecSub==='triagem') body=pmpExecRenderTriagem(all);
   else if(_pmpExecSub==='tratamento') body=pmpExecRenderTratamento(all);
   else if(_pmpExecSub==='historico') body=pmpExecRenderHistorico(all);
   else body=pmpExecRenderFila(all);
-  el.innerHTML=`<div style="margin-bottom:16px">${_pill('Fila de Planejamento','fila')}${_pill('Triagem','triagem')}${_pill('Em Tratamento','tratamento')}${_pill('Histórico','historico')}</div>${body}`;
+  el.innerHTML=body;
 }
 
 function pmpExecRenderFila(all){
@@ -19440,16 +19673,17 @@ async function pmpSnapshotEvolucao(all){
   }catch(e){_pmpSnapDone=false;}
 }
 
-function pmpRenderEvolucao(){
-  const el=document.getElementById('pmp-content-evolucao'); if(!el) return;
+function pmpRenderEvolucaoInline(){
+  const el=document.getElementById('pmp-ind-evolucao'); if(!el) return;
   const evo=window.PMP_EVOLUCAO||{}, ader=window.PMP_ADERENCIA||{};
   const chaves=Object.keys(evo).sort();
   const chavesAd=Object.keys(ader).sort();
   if(!chaves.length&&!chavesAd.length){
-    el.innerHTML='<div style="text-align:center;padding:48px;color:#8FA4AE;font-size:14px">Ainda sem histórico registrado.<br><span style="font-size:12px">O histórico é gravado automaticamente, uma vez por semana, ao acessar a aba Planejamento.</span></div>';
+    el.innerHTML='<div style="text-align:center;padding:48px;color:#8FA4AE;font-size:14px">Ainda sem histórico registrado.<br><span style="font-size:12px">O histórico é gravado automaticamente, uma vez por semana, ao acessar Planejamento.</span></div>';
     return;
   }
   el.innerHTML=`
+    <div style="font-size:14px;font-weight:700;color:#1A2E35;margin-bottom:12px">Evolução histórica</div>`+`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
       <div style="background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:16px">
         <div style="font-size:13px;font-weight:700;color:#1A2E35;margin-bottom:10px">Evolução — Em Dia x Vencidas</div>
@@ -19480,31 +19714,34 @@ function pmpRenderEvolucao(){
 }
 
 // ── PMP — Indicadores ───────────────────────────────────────────────────────
-function pmpRenderIndicadores(){
-  const el=document.getElementById('pmp-content-indicadores'); if(!el) return;
+function pmpIndFiltrarEquips(){
   const all=pmpMontarEquips();
-  const ops=[...new Set(all.map(e=>e.operacao).filter(Boolean))].sort();
-  const gestores=[...new Set(all.map(e=>e.gestor).filter(Boolean))].sort();
-  const progrs=[...new Set(all.map(e=>e.programador).filter(Boolean))].sort();
   let f=all;
   if(_pmpIndFiltroOp) f=f.filter(e=>e.operacao===_pmpIndFiltroOp);
   if(_pmpIndFiltroGestor) f=f.filter(e=>e.gestor===_pmpIndFiltroGestor);
   if(_pmpIndFiltroProgr) f=f.filter(e=>e.programador===_pmpIndFiltroProgr);
+  return {all,f};
+}
+function pmpIndFiltrosHtml(renderFn){
+  const {all}=pmpIndFiltrarEquips();
+  const ops=[...new Set(all.map(e=>e.operacao).filter(Boolean))].sort();
+  const gestores=[...new Set(all.map(e=>e.gestor).filter(Boolean))].sort();
+  const progrs=[...new Set(all.map(e=>e.programador).filter(Boolean))].sort();
+  const _sel=(label,cur,vals,fn)=>`<select onchange="${fn}=this.value;${renderFn}()" style="padding:7px 12px;border:1px solid ${cur?'#E8630A':'#E2E8ED'};border-radius:8px;font-size:13px;color:#1A2E35;background:#fff;cursor:pointer;max-width:200px"><option value="">${label}</option>${vals.map(v=>`<option value="${v}"${cur===v?' selected':''}>${v}</option>`).join('')}</select>`;
+  return `${_sel('Todas as operações',_pmpIndFiltroOp,ops,'_pmpIndFiltroOp')}${_sel('Todos os gestores',_pmpIndFiltroGestor,gestores,'_pmpIndFiltroGestor')}${_sel('Todos os programadores',_pmpIndFiltroProgr,progrs,'_pmpIndFiltroProgr')}`;
+}
+
+function pmpRenderIndicadores(){
+  const el=document.getElementById('pmp-content-indicadores'); if(!el) return;
+  const {f}=pmpIndFiltrarEquips();
   const total=f.length;
   const c={};f.forEach(e=>{c[e.status]=(c[e.status]||0)+1;});
   const emDia=c['Em Dia']||0, vencidas=c['Vencida']||0, atencao=c['Atenção']||0, programado=c['Programado']||0;
+  const semDados=(c['Sem Revisão']||0)+(c['Sem Plano']||0);
   const _pct=n=>total?Math.round(n/total*1000)/10:0;
-  const _sel=(label,cur,vals,fn)=>`<select onchange="${fn}=this.value;pmpRenderIndicadores()" style="padding:7px 12px;border:1px solid ${cur?'#E8630A':'#E2E8ED'};border-radius:8px;font-size:13px;color:#1A2E35;background:#fff;cursor:pointer;max-width:200px"><option value="">${label}</option>${vals.map(v=>`<option value="${v}"${cur===v?' selected':''}>${v}</option>`).join('')}</select>`;
   const _kpi=(cor,val,lbl,sub)=>`<div class="pmp-kpi" style="border-top:4px solid ${cor};padding:20px 18px"><div class="pmp-kpi-val" style="font-size:34px;color:${cor}">${val}</div><div class="pmp-kpi-lbl" style="font-size:12px">${lbl}</div>${sub?`<div style="font-size:11px;color:#8FA4AE;margin-top:4px">${sub}</div>`:''}</div>`;
   el.innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:18px">
-      <div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${_sel('Todas as operações',_pmpIndFiltroOp,ops,'_pmpIndFiltroOp')}
-        ${_sel('Todos os gestores',_pmpIndFiltroGestor,gestores,'_pmpIndFiltroGestor')}
-        ${_sel('Todos os programadores',_pmpIndFiltroProgr,progrs,'_pmpIndFiltroProgr')}
-      </div>
-      <button onclick="pmpExportarCSV()" style="padding:8px 16px;border:none;border-radius:8px;background:#1A2E35;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">⬇ Exportar CSV</button>
-    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">${pmpIndFiltrosHtml('pmpRenderIndicadores')}</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:24px">
       ${_kpi('#1A2E35',total,'Total no escopo')}
       ${_kpi('#1E8A4C',emDia,'Em Dia',_pct(emDia)+'% do total')}
@@ -19512,6 +19749,44 @@ function pmpRenderIndicadores(){
       ${_kpi('#B91C1C',vencidas,'Vencidas',_pct(vencidas)+'% do total')}
       ${_kpi('#6366F1',programado,'Programadas',_pct(programado)+'% do total')}
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+      <div style="background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:16px">
+        <div style="font-size:13px;font-weight:700;color:#1A2E35;margin-bottom:10px">Status das preventivas</div>
+        <canvas id="pmp-ind-chart-status" height="200"></canvas>
+      </div>
+      <div style="background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:16px">
+        <div style="font-size:13px;font-weight:700;color:#1A2E35;margin-bottom:10px">Vencidas por operação (top 8)</div>
+        <canvas id="pmp-ind-chart-op" height="200"></canvas>
+      </div>
+    </div>
+    <div id="pmp-ind-evolucao"></div>`;
+  const cS=document.getElementById('pmp-ind-chart-status');
+  if(cS){
+    const prev=Chart.getChart(cS); if(prev) prev.destroy();
+    new Chart(cS,{type:'doughnut',data:{labels:['Em Dia','Atenção','Vencida','Programado','Sem Dados'],
+      datasets:[{data:[emDia,atencao,vencidas,programado,semDados],backgroundColor:['#1E8A4C','#B45309','#B91C1C','#6366F1','#8FA4AE'],borderWidth:2,borderColor:'#fff'}]},
+      options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11}}},tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed} (${_pct(c.parsed)}%)`}}}}});
+  }
+  const cO=document.getElementById('pmp-ind-chart-op');
+  if(cO){
+    const byOp={}; f.filter(e=>e.status==='Vencida').forEach(e=>{const k=e.operacao||'—'; byOp[k]=(byOp[k]||0)+1;});
+    const top=Object.entries(byOp).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const prev=Chart.getChart(cO); if(prev) prev.destroy();
+    new Chart(cO,{type:'bar',data:{labels:top.map(t=>t[0]),datasets:[{label:'Vencidas',data:top.map(t=>t[1]),backgroundColor:'#B91C1C'}]},
+      options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{precision:0}}}}});
+  }
+  pmpRenderEvolucaoInline();
+}
+
+function pmpRenderRelatorios(){
+  const el=document.getElementById('pmp-content-relatorios'); if(!el) return;
+  const {f}=pmpIndFiltrarEquips();
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:18px">
+      <div style="display:flex;flex-wrap:wrap;gap:8px">${pmpIndFiltrosHtml('pmpRenderRelatorios')}</div>
+      <button onclick="pmpExportarCSV()" style="padding:8px 16px;border:none;border-radius:8px;background:#1A2E35;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">⬇ Exportar CSV</button>
+    </div>
+    <div style="font-size:12px;color:#8FA4AE;margin-bottom:10px">${f.length} equipamento(s) no filtro atual</div>
     <div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>
       <th>FROTA</th><th>UNIDADE</th><th>ENCARREGADO</th><th>GESTOR</th><th>PROGRAMADOR</th><th>STATUS</th><th>H/PMP</th><th>SEM. PLAN.</th><th>OM</th>
     </tr></thead><tbody>${f.map(e=>`<tr>
@@ -21670,45 +21945,13 @@ function pendToggle(i){
 </style>
 <div id="page-pmp" style="display:none;position:fixed;left:220px;top:56px;right:0;bottom:0;z-index:100;flex-direction:column;background:#F4F6F8">
 
-  <!-- Top nav bar -->
-  <div style="background:#1A2E35;padding:0 28px;display:flex;align-items:center;gap:0;flex-shrink:0;height:44px">
-    <span style="font-size:12px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.1em;margin-right:28px;opacity:.7">PMP</span>
-    <button id="pmp-tab-planejamento" onclick="pmpSetAba('planejamento')"
-      style="padding:0 20px;height:44px;background:none;border:none;border-bottom:3px solid #E8630A;color:#E8630A;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s">
-      Planejamento
-    </button>
-    <button id="pmp-tab-programacao" onclick="pmpSetAba('programacao')"
-      style="padding:0 20px;height:44px;background:none;border:none;border-bottom:3px solid transparent;color:rgba(255,255,255,.55);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s">
-      Programação
-    </button>
-    <button id="pmp-tab-evolucao" onclick="pmpSetAba('evolucao')"
-      style="padding:0 20px;height:44px;background:none;border:none;border-bottom:3px solid transparent;color:rgba(255,255,255,.55);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s">
-      Evolução
-    </button>
-    <button id="pmp-tab-indicadores" onclick="pmpSetAba('indicadores')"
-      style="padding:0 20px;height:44px;background:none;border:none;border-bottom:3px solid transparent;color:rgba(255,255,255,.55);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s">
-      Indicadores
-    </button>
+  <div style="background:#fff;border-bottom:1px solid #E2E8ED;padding:14px 28px;flex-shrink:0">
+    <div style="font-size:20px;font-weight:800;color:#1A2E35">PMP</div>
+    <div id="pmp-breadcrumb" style="font-size:12px;color:#8FA4AE;margin-top:2px">Planejamento › Visão Gerencial</div>
   </div>
 
   <!-- ── PLANEJAMENTO ── -->
   <div id="pmp-content-planejamento" style="flex:1;overflow:hidden;flex-direction:column;display:flex">
-
-    <!-- Sub-tabs -->
-    <div style="background:#fff;padding:0 28px;border-bottom:1px solid #E2E8ED;display:flex;align-items:center;gap:0;flex-shrink:0">
-      <button id="pmp-sub-gerencial" onclick="pmpSetSubAba('gerencial')"
-        style="padding:10px 20px;background:none;border:none;border-bottom:2px solid #E8630A;color:#E8630A;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:-1px;transition:all .15s">
-        Visão Gerencial
-      </button>
-      <button id="pmp-sub-analitica" onclick="pmpSetSubAba('analitica')"
-        style="padding:10px 20px;background:none;border:none;border-bottom:2px solid transparent;color:#5A7280;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:-1px;transition:all .15s">
-        Área Analítica
-      </button>
-      <button id="pmp-sub-execucao" onclick="pmpSetSubAba('execucao')"
-        style="padding:10px 20px;background:none;border:none;border-bottom:2px solid transparent;color:#5A7280;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:-1px;transition:all .15s">
-        Execução
-      </button>
-    </div>
 
     <div id="pmp-plan-dados" style="flex:1;overflow:hidden;flex-direction:column;display:flex">
       <!-- KPIs -->
@@ -21730,11 +21973,11 @@ function pendToggle(i){
   <!-- ── PROGRAMAÇÃO ── -->
   <div id="pmp-content-programacao" style="flex:1;overflow:hidden;flex-direction:column;display:none"></div>
 
-  <!-- ── EVOLUÇÃO ── -->
-  <div id="pmp-content-evolucao" style="flex:1;overflow:auto;flex-direction:column;display:none;padding:20px 28px"></div>
-
-  <!-- ── INDICADORES ── -->
+  <!-- ── INDICADORES (KPIs + gráficos + evolução) ── -->
   <div id="pmp-content-indicadores" style="flex:1;overflow:auto;flex-direction:column;display:none;padding:20px 28px"></div>
+
+  <!-- ── RELATÓRIOS (tabela + exportar) ── -->
+  <div id="pmp-content-relatorios" style="flex:1;overflow:auto;flex-direction:column;display:none;padding:20px 28px"></div>
 
 </div>
 
