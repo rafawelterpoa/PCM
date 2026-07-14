@@ -18626,7 +18626,7 @@ function pmpMontarEquips(){
   };
   const _manus=window.BD_MANUSIS||{};
   const _fidOf=x=>String(x.frota||x.id||'');
-  let fonteEquips=EQUIPAMENTOS_ORIG.filter(e=>e.status==='Alugado'&&opContratoEquip(e)!=='Gestão de frota');
+  let fonteEquips=EQUIPAMENTOS_ORIG.filter(e=>e.status==='Alugado'&&opContratoEquip(e)!=='Gestão de frota'&&frotaClassificar(e.tipo)==='equipamento');
   const _idsAtivos=new Set(fonteEquips.map(_fidOf));
   const _foraSet=new Set();
   const _pmpAll=window.PMP_EQUIP||{};
