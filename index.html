@@ -18511,6 +18511,14 @@ async function pmpCarregar() {
     const r = await fetch(`${PMP_FB}/equip.json`);
     if(r.ok){ const d=await r.json(); if(d) window.PMP_EQUIP=d; }
   } catch(e){}
+  try {
+    const r2 = await fetch(`${PMP_FB}/evolucao.json`);
+    if(r2.ok){ const d2=await r2.json(); window.PMP_EVOLUCAO=d2||{}; }
+  } catch(e){}
+  try {
+    const r3 = await fetch(`${PMP_FB}/evolucao_aderencia.json`);
+    if(r3.ok){ const d3=await r3.json(); window.PMP_ADERENCIA=d3||{}; }
+  } catch(e){}
 }
 
 let _pmpAba='planejamento', _pmpSubAba='gerencial';
@@ -18518,6 +18526,14 @@ let _pmpFiltroStatus='', _pmpFiltroOp='', _pmpBusca='', _pmpFiltroEnc='', _pmpFi
 let _pmpProgFiltroGestor='', _pmpProgFiltroProgr='', _pmpProgFiltroPolo='', _pmpProgFiltroOp='';
 let _pmpSortCol='', _pmpSortDir=1;
 let _pmpColFiltros={};
+
+// ── PMP — Fluxo Planejamento/Programação/Execução (motivos padronizados) ────
+const PMP_MOTIVOS_REPROGRAMAR=["Ativo não liberado pela operação","Equipamento desmobilizado - cliente","Equipamento em corretiva (parado)","Equipamento desmobilizado - Assis","Equipamento desmobilizado - Sumaré","Equipamento movimentado","Indisponibilidade de M.O.","Atraso na entrega de materiais","Condições climáticas","Divergência de material entregue","Execução pendente pelo cliente","Mecânico sem integração","Sem retorno - operação"];
+const PMP_MOTIVOS_REPLANEJAR=["Atraso na entrega de materiais","Falta de material","Divergência de material entregue","Falta de M.O.","Mecânico sem integração","Sem retorno - operação"];
+const PMP_MOTIVOS_PENDENCIA=["Pendente evidências","Pendente Migo/Miro","Pendente baixa materiais","Pendente inserir materiais","Pendente aprovação","Pendente apontamento"];
+let _pmpExecSub='fila', _pmpProgSub='acao';
+let _pmpSelPlanejar=new Set();
+let _pmpProgSemanaSel='';
 const _PMP_COLS_DEF=[
   {key:'frota',     label:'Frota',        fixo:true},
   {key:'serie',     label:'Série'},
@@ -18538,6 +18554,7 @@ const _PMP_COLS_DEF=[
   {key:'semana_plan',label:'Sem. Plan.',  num:true,edit:true},
   {key:'pmp_vencido',label:'PMP Venc.'},
   {key:'status',    label:'Status'},
+  {key:'severidade',label:'Severidade'},
   {key:'period',    label:'Period.(h)',   num:true},
   {key:'dia_vencimento',label:'Dia Venc.',num:true},
   {key:'h_pmp_s1',  label:'H/PMP S+1',   num:true,hCor:true},
@@ -18545,7 +18562,7 @@ const _PMP_COLS_DEF=[
   {key:'om',        label:'OM',         edit:true},
   {key:'status_material',label:'Material'},
 ];
-let _pmpLayoutCols=['frota','polo','centro','encarregado','hor_atual','ritmo_diario','hor_ult_rev','hor_execucao','hor_prox','h_para_pmp','semana_plan','status','h_pmp_s1','dias_vencimento','om','status_material'];
+let _pmpLayoutCols=['frota','polo','centro','encarregado','hor_atual','ritmo_diario','hor_ult_rev','hor_execucao','hor_prox','h_para_pmp','semana_plan','status','severidade','h_pmp_s1','dias_vencimento','om','status_material'];
 
 function paginaPmp(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -18557,25 +18574,37 @@ function paginaPmp(){
 
 function pmpSetAba(aba){
   _pmpAba=aba;
-  ['planejamento','programacao'].forEach(a=>{
+  ['planejamento','programacao','evolucao'].forEach(a=>{
     const tab=document.getElementById('pmp-tab-'+a);
     const cont=document.getElementById('pmp-content-'+a);
     if(tab){tab.style.color=a===aba?'#E8630A':'rgba(255,255,255,.55)';tab.style.borderBottomColor=a===aba?'#E8630A':'transparent';}
     if(cont) cont.style.display=a===aba?'flex':'none';
   });
   if(aba==='planejamento') pmpRenderPlanejamento();
-  else pmpRenderProgramacao();
+  else if(aba==='programacao') pmpRenderProgramacao();
+  else pmpRenderEvolucao();
 }
 
 function pmpSetSubAba(sub){
   _pmpSubAba=sub;
-  ['gerencial','analitica'].forEach(a=>{
+  ['gerencial','analitica','execucao'].forEach(a=>{
     const tab=document.getElementById('pmp-sub-'+a);
-    const cont=document.getElementById('pmp-plan-'+a);
     if(tab){tab.style.color=a===sub?'#E8630A':'#5A7280';tab.style.borderBottomColor=a===sub?'#E8630A':'transparent';}
-    if(cont) cont.style.display=a===sub?'block':'none';
   });
-  pmpRenderPlanejamento();
+  const dados=document.getElementById('pmp-plan-dados');
+  const exec=document.getElementById('pmp-plan-execucao');
+  if(sub==='execucao'){
+    if(dados) dados.style.display='none';
+    if(exec) exec.style.display='block';
+    pmpRenderExecucao();
+  } else {
+    if(dados) dados.style.display='flex';
+    if(exec) exec.style.display='none';
+    const ger=document.getElementById('pmp-plan-gerencial'), ana=document.getElementById('pmp-plan-analitica');
+    if(ger) ger.style.display=sub==='gerencial'?'block':'none';
+    if(ana) ana.style.display=sub==='analitica'?'block':'none';
+    pmpRenderPlanejamento();
+  }
 }
 
 function pmpMontarEquips(){
@@ -18594,7 +18623,7 @@ function pmpMontarEquips(){
     return bestScore>=2?best:{};
   };
   const _manus=window.BD_MANUSIS||{};
-  return EQUIPAMENTOS_ORIG.filter(e=>e.status==='Alugado').map(e=>{
+  return EQUIPAMENTOS_ORIG.filter(e=>e.status==='Alugado'&&opContratoEquip(e)!=='Gestão de frota').map(e=>{
     const fid=String(e.frota||e.id||'');
     const _numSuf=String(e.id||'').replace(/^[A-Za-z]+0*/,'');
     const _bp=window.BD_PLANOS_FROTA||{};
@@ -18620,6 +18649,11 @@ function pmpMontarEquips(){
       }catch(ex){}
     }
     if(hParaPmp!==null&&ritmoSemanal>0) hPmpS1=hParaPmp-ritmoSemanal;
+    let horasVencidas=null, severidade='';
+    if(hParaPmp!==null&&hParaPmp<0){
+      horasVencidas=-hParaPmp;
+      severidade=horasVencidas<50?'Leve':horasVencidas<150?'Crítico':'Supercrítico';
+    }
     let status='Sem Plano';
     if(plano&&period>0){
       if(fb.semana_planejada) status='Programado';
@@ -18651,12 +18685,16 @@ function pmpMontarEquips(){
       hor_execucao:horExecucao, dia_vencimento:diaVencimento,
       dias_vencimento:diasVencimento, h_pmp_s1:hPmpS1,
       pmp_vencido:hParaPmp!==null&&hParaPmp<0,
+      horas_vencidas:horasVencidas, severidade,
       status, semana_plan:fb.semana_planejada||'', om:omNum,
       status_om:statusOm, requisicao, pte,
       status_v:fb.status_v||'', status_prog:fb.status_prog||'',
       data_conclusao:fb.data_conclusao||'', mantenedor:fb.mantenedor||'',
       data_req:fb.data_req||'',
-      status_material:requisicao||fb.status_material||''
+      status_material:requisicao||fb.status_material||'',
+      wf_acao:fb.wf_acao||'', wf_motivo_acao:fb.wf_motivo_acao||'', wf_execucao:fb.wf_execucao||'',
+      wf_validacao:fb.wf_validacao||'', wf_motivo_pendencia:fb.wf_motivo_pendencia||'',
+      wf_obs_pendencia:fb.wf_obs_pendencia||'', wf_tratativa_resposta:fb.wf_tratativa_resposta||''
     };
   }).sort((a,b)=>{
     const o={'Vencida':0,'Atenção':1,'Sem Revisão':2,'Programado':3,'Em Dia':4,'Sem Plano':5};
@@ -18677,6 +18715,7 @@ function pmpFiltrarEquips(list){
 
 function pmpRenderPlanejamento(){
   const all=pmpMontarEquips();
+  pmpSnapshotEvolucao(all);
   pmpRenderFiltros(all);
   const equips=pmpFiltrarEquips(all);
   pmpRenderKPIs(equips);
@@ -18688,11 +18727,18 @@ function pmpRenderKPIs(equips){
   const el=document.getElementById('pmp-kpis'); if(!el) return;
   const c={};equips.forEach(e=>{c[e.status]=(c[e.status]||0)+1;});
   const total=equips.length;
+  const vencSev={};equips.forEach(e=>{if(e.status==='Vencida'&&e.severidade)vencSev[e.severidade]=(vencSev[e.severidade]||0)+1;});
+  const vencSevLine=['Leve','Crítico','Supercrítico'].map(s=>vencSev[s]?`${s} ${vencSev[s]}`:'').filter(Boolean).join(' · ');
+  const _todosAlug=(EQUIPAMENTOS_ORIG||[]).filter(e=>e.status==='Alugado');
+  const _excluidos=_todosAlug.length-total;
   el.innerHTML=`
-    <div class="pmp-kpi" style="border-top:3px solid #1A2E35"><div class="pmp-kpi-val">${total}</div><div class="pmp-kpi-lbl">Total Alugados</div></div>
+    <div class="pmp-kpi" style="border-top:3px solid #1A2E35">
+      <div class="pmp-kpi-val">${total}</div><div class="pmp-kpi-lbl">Total Alugados (PMP)</div>
+      <div style="font-size:10px;color:#8FA4AE;margin-top:2px">${_todosAlug.length} alugados no total · ${_excluidos} excluídos (Gestão de Frota)</div>
+    </div>
     <div class="pmp-kpi" style="border-top:3px solid #1E8A4C"><div class="pmp-kpi-val" style="color:#1E8A4C">${c['Em Dia']||0}</div><div class="pmp-kpi-lbl">Em Dia</div></div>
     <div class="pmp-kpi" style="border-top:3px solid #B45309"><div class="pmp-kpi-val" style="color:#B45309">${c['Atenção']||0}</div><div class="pmp-kpi-lbl">Atenção &lt;50h</div></div>
-    <div class="pmp-kpi" style="border-top:3px solid #B91C1C"><div class="pmp-kpi-val" style="color:#B91C1C">${c['Vencida']||0}</div><div class="pmp-kpi-lbl">Vencidas</div></div>
+    <div class="pmp-kpi" style="border-top:3px solid #B91C1C"><div class="pmp-kpi-val" style="color:#B91C1C">${c['Vencida']||0}</div><div class="pmp-kpi-lbl">Vencidas</div>${vencSevLine?`<div style="font-size:10px;color:#8FA4AE;margin-top:2px">${vencSevLine}</div>`:''}</div>
     <div class="pmp-kpi" style="border-top:3px solid #6366F1"><div class="pmp-kpi-val" style="color:#6366F1">${c['Programado']||0}</div><div class="pmp-kpi-lbl">Programadas</div></div>
     <div class="pmp-kpi" style="border-top:3px solid #8FA4AE"><div class="pmp-kpi-val" style="color:#8FA4AE">${(c['Sem Revisão']||0)+(c['Sem Plano']||0)}</div><div class="pmp-kpi-lbl">Sem Dados</div></div>`;
 }
@@ -18716,6 +18762,8 @@ function pmpRenderFiltros(equips){
 
 const _pmpCor={'Vencida':{bg:'#FEE2E2',c:'#B91C1C'},'Atenção':{bg:'#FEF3C7',c:'#B45309'},'Em Dia':{bg:'#D1FAE5',c:'#065F46'},'Programado':{bg:'#EDE9FE',c:'#5B21B6'},'Sem Revisão':{bg:'#F0F4F6',c:'#5A7280'},'Sem Plano':{bg:'#F4F6F8',c:'#8FA4AE'}};
 function pmpBadge(s){const c=_pmpCor[s]||{bg:'#F4F6F8',c:'#8FA4AE'};return `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;background:${c.bg};color:${c.c}">${s}</span>`;}
+const _pmpSevCor={'Leve':{bg:'#FEF3C7',c:'#B45309'},'Crítico':{bg:'#FFEDD5',c:'#C2410C'},'Supercrítico':{bg:'#FEE2E2',c:'#B91C1C'}};
+function pmpSevBadge(s){if(!s)return '<span style="color:#C8D4DA;font-size:11px">—</span>';const c=_pmpSevCor[s]||{bg:'#F4F6F8',c:'#8FA4AE'};return `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;background:${c.bg};color:${c.c}">${s}</span>`;}
 function _pmpHCor(h){return h===null?'#8FA4AE':h<0?'#B91C1C':h<=50?'#B45309':'#1E8A4C';}
 function _pmpHFmt(h){return h===null?'—':(h>0?'+':'')+Math.round(h);}
 
@@ -18781,6 +18829,7 @@ function pmpRenderAnalitica(equips,all){
       if(c.key==='frota') return `<td style="background:${bg}"><strong style="font-size:12px">${e.frota}</strong></td>`;
       if(c.key==='serie') return `<td style="font-size:11px;color:#5A7280;background:${bg}">${val||'—'}</td>`;
       if(c.key==='status') return `<td style="background:${bg}">${pmpBadge(e.status)}</td>`;
+      if(c.key==='severidade') return `<td style="text-align:center;background:${bg}">${pmpSevBadge(e.severidade)}</td>`;
       if(c.key==='pmp_vencido') return `<td style="text-align:center;background:${bg}">${val?`<span style="color:#B91C1C;font-weight:700">SIM</span>`:'—'}</td>`;
       if(c.hCor) return `<td style="text-align:center;font-weight:700;background:${bg};color:${_pmpHCor(val)}">${_pmpHFmt(val)}</td>`;
       if(c.dvCor) return `<td style="text-align:center;font-weight:700;background:${bg};color:${dvCor}">${dv===null?'—':dv}</td>`;
@@ -18837,7 +18886,7 @@ function pmpLayMoverLado(para){
 }
 
 function pmpLayReset(){
-  _pmpLayState.exibidas=['frota','polo','centro','encarregado','hor_atual','ritmo_diario','hor_ult_rev','hor_execucao','hor_prox','h_para_pmp','semana_plan','status','h_pmp_s1','dias_vencimento','om','status_material'];
+  _pmpLayState.exibidas=['frota','polo','centro','encarregado','hor_atual','ritmo_diario','hor_ult_rev','hor_execucao','hor_prox','h_para_pmp','semana_plan','status','severidade','h_pmp_s1','dias_vencimento','om','status_material'];
   _pmpLayState.selExib=null;_pmpLayState.selDisp=null;
   _pmpLayRender();
 }
@@ -18984,9 +19033,36 @@ async function pmpSalvarModal(){
   }catch(e){showToast('Erro: '+e.message);}
 }
 
+function pmpSetProgSub(sub){ _pmpProgSub=sub; pmpRenderProgramacao(); }
+
 function pmpRenderProgramacao(){
   const el=document.getElementById('pmp-content-programacao'); if(!el) return;
   const all=pmpMontarEquips();
+  const _pill=(label,key)=>`<span onclick="pmpSetProgSub('${key}')" style="padding:7px 16px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid ${_pmpProgSub===key?'#E8630A':'#E2E8ED'};background:${_pmpProgSub===key?'#E8630A':'#fff'};color:${_pmpProgSub===key?'#fff':'#5A7280'};margin-right:8px;display:inline-block">${label}</span>`;
+  let body='';
+  if(_pmpProgSub==='pendencias') body=pmpProgRenderPendencias(all);
+  else if(_pmpProgSub==='historico') body=pmpProgRenderHistorico(all);
+  else body=pmpProgRenderAcao(all);
+  el.innerHTML=`<div style="padding:16px 28px 0;flex-shrink:0">${_pill('Ação','acao')}${_pill('Pendências','pendencias')}${_pill('Histórico','historico')}</div>
+    <div style="padding:16px 28px 24px;overflow-y:auto;flex:1">${body}</div>`;
+}
+
+function pmpProgSetSemana(s){ _pmpProgSemanaSel=_pmpProgSemanaSel===s?'':s; pmpRenderProgramacao(); }
+
+let _pmpProgEditando=null;
+function pmpProgToggleEditar(frota){ _pmpProgEditando=_pmpProgEditando===frota?null:frota; pmpRenderProgramacao(); }
+
+const _PMP_ACAO_MAP={
+  programado:{c:'#3B6D11',bg:'#E9F3E2',l:'Programado'},
+  replanejar:{c:'#854F0B',bg:'#F0E2C5',l:'Replanejar'},
+  reprogramado:{c:'#A32D2D',bg:'#FBEAEA',l:'Reprogramado'}
+};
+function pmpAcaoBadge(acao){
+  const m=_PMP_ACAO_MAP[acao]; if(!m) return '';
+  return `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;background:${m.bg};color:${m.c}">${m.l}</span>`;
+}
+
+function pmpProgRenderAcao(all){
   const _sel=(label,cur,vals,fn)=>`<select onchange="${fn}=this.value;pmpRenderProgramacao()" style="padding:6px 10px;border:1px solid ${cur?'#E8630A':'#E2E8ED'};border-radius:8px;font-size:12px;color:#1A2E35;background:#fff;cursor:pointer;max-width:180px"><option value="">${label}</option>${vals.map(v=>`<option value="${v}"${cur===v?' selected':''}>${v}</option>`).join('')}</select>`;
   const gestores=[...new Set(all.map(e=>e.gestor).filter(Boolean))].sort();
   const progrs=[...new Set(all.map(e=>e.programador).filter(Boolean))].sort();
@@ -18999,9 +19075,64 @@ function pmpRenderProgramacao(){
   if(_pmpProgFiltroOp)     prog=prog.filter(e=>e.operacao===_pmpProgFiltroOp);
   const porSemana={};
   prog.forEach(e=>{const s=e.semana_plan;if(!porSemana[s])porSemana[s]=[];porSemana[s].push(e);});
-  const semanas=Object.keys(porSemana).sort((a,b)=>Number(a)-Number(b));
-  const vencidas=all.filter(e=>e.status==='Vencida');
-  el.innerHTML=`<div style="padding:20px 28px;overflow-y:auto;flex:1">
+  const semanasTodas=Object.keys(porSemana).sort((a,b)=>Number(a)-Number(b));
+  const programadoCount=prog.filter(e=>e.wf_acao==='programado').length;
+  const aguardandoCount=prog.filter(e=>!e.wf_acao).length;
+  const reprogramadoCount=prog.filter(e=>e.wf_acao==='reprogramado').length;
+  const _acaoBtn=(e,val,label,cor)=>{const on=e.wf_acao===val;return `<button onclick="pmpProgSetAcao('${e.frota}','${val}')" style="padding:4px 8px;font-size:10px;border-radius:5px;cursor:pointer;border:1px solid ${on?cor:'#E2E8ED'};background:${on?cor:'#fff'};color:${on?'#fff':'#5A7280'}">${label}</button>`;};
+  const _motivoSel=e=>{
+    if(e.wf_acao==='replanejar') return `<select onchange="pmpProgSetMotivoAcao('${e.frota}',this.value)" style="margin-top:4px;padding:4px;font-size:10px;border:1px solid #E2E8ED;border-radius:5px;width:100%">${PMP_MOTIVOS_REPLANEJAR.map(m=>`<option ${e.wf_motivo_acao===m?'selected':''}>${m}</option>`).join('')}</select>`;
+    if(e.wf_acao==='reprogramado') return `<select onchange="pmpProgSetMotivoAcao('${e.frota}',this.value)" style="margin-top:4px;padding:4px;font-size:10px;border:1px solid #E2E8ED;border-radius:5px;width:100%">${PMP_MOTIVOS_REPROGRAMAR.map(m=>`<option ${e.wf_motivo_acao===m?'selected':''}>${m}</option>`).join('')}</select>`;
+    return '';
+  };
+  const _linhaFrota=e=>`<td><strong style="font-size:13px">${e.frota}</strong><div style="font-size:11px;color:#8FA4AE">${e.modelo||'—'}${e.operacao?' · '+e.operacao:''}</div></td>`;
+  const _tabelaAberta=lista=>lista.length?`
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;margin-bottom:6px">Aguardando ação do programador — ${lista.length}</div>
+      <div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>
+        <th>FROTA</th><th>STATUS</th><th>H/PMP</th><th>OM</th><th>AÇÃO</th>
+      </tr></thead><tbody>${lista.map(e=>`<tr>
+        ${_linhaFrota(e)}
+        <td>${pmpBadge(e.status)}</td>
+        <td style="text-align:right;font-weight:700;color:${_pmpHCor(e.h_para_pmp)}">${_pmpHFmt(e.h_para_pmp)}</td>
+        <td>${e.om||'—'}</td>
+        <td style="min-width:200px">
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            ${_acaoBtn(e,'programado','Programado','#3B6D11')}
+            ${_acaoBtn(e,'replanejar','Replanejar','#854F0B')}
+            ${_acaoBtn(e,'reprogramado','Reprogramado','#A32D2D')}
+          </div>
+        </td>
+      </tr>`).join('')}</tbody></table></div>
+    </div>`:'';
+  const _tabelaDefinida=lista=>lista.length?`
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#5A7280;margin-bottom:6px">Já com ação definida — ${lista.length}</div>
+      <div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>
+        <th>FROTA</th><th>STATUS</th><th>OM</th><th>AÇÃO</th>
+      </tr></thead><tbody>${lista.map(e=>`<tr>
+        ${_linhaFrota(e)}
+        <td>${pmpBadge(e.status)}</td>
+        <td>${e.om||'—'}</td>
+        <td style="min-width:200px">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            ${pmpAcaoBadge(e.wf_acao)}
+            ${e.wf_motivo_acao?`<span style="font-size:10px;color:#8FA4AE">${e.wf_motivo_acao}</span>`:''}
+            <span onclick="pmpProgToggleEditar('${e.frota}')" style="font-size:10px;color:#5A7280;text-decoration:underline;cursor:pointer">trocar</span>
+          </div>
+          ${_pmpProgEditando===e.frota?`<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">
+            ${_acaoBtn(e,'programado','Programado','#3B6D11')}
+            ${_acaoBtn(e,'replanejar','Replanejar','#854F0B')}
+            ${_acaoBtn(e,'reprogramado','Reprogramado','#A32D2D')}
+          </div>${_motivoSel(e)}`:''}
+          ${e.wf_acao==='programado'?(e.wf_execucao==='concluida'
+            ?'<div style="margin-top:6px;font-size:10px;padding:3px 8px;border-radius:99px;background:#EDE9FE;color:#5B21B6;display:inline-block">✓ aguardando validação PCM</div>'
+            :`<button onclick="pmpProgConcluirExecucao('${e.frota}')" style="margin-top:6px;padding:4px 10px;font-size:10px;border:none;border-radius:5px;background:#1A2E35;color:#fff;cursor:pointer;white-space:nowrap">✓ Concluir manutenção</button>`):''}
+        </td>
+      </tr>`).join('')}</tbody></table></div>
+    </div>`:'';
+  const semanasExibir=_pmpProgSemanaSel?[_pmpProgSemanaSel]:semanasTodas;
+  return `
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center">
       ${_sel('Todos os gestores',_pmpProgFiltroGestor,gestores,'_pmpProgFiltroGestor')}
       ${_sel('Todos os programadores',_pmpProgFiltroProgr,progrs,'_pmpProgFiltroProgr')}
@@ -19009,28 +19140,325 @@ function pmpRenderProgramacao(){
       ${_sel('Todas as operações',_pmpProgFiltroOp,ops,'_pmpProgFiltroOp')}
       ${(_pmpProgFiltroGestor||_pmpProgFiltroProgr||_pmpProgFiltroPolo||_pmpProgFiltroOp)?`<button onclick="_pmpProgFiltroGestor='';_pmpProgFiltroProgr='';_pmpProgFiltroPolo='';_pmpProgFiltroOp='';pmpRenderProgramacao()" style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;background:#fff;color:#5A7280;cursor:pointer">✕ Limpar</button>`:''}
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px">
-      <div class="pmp-kpi" style="border-top:3px solid #6366F1"><div class="pmp-kpi-val" style="color:#6366F1">${prog.length}</div><div class="pmp-kpi-lbl">Programadas</div></div>
-      <div class="pmp-kpi" style="border-top:3px solid #B91C1C"><div class="pmp-kpi-val" style="color:#B91C1C">${vencidas.length}</div><div class="pmp-kpi-lbl">Vencidas</div></div>
-      ${semanas.slice(0,3).map(s=>`<div class="pmp-kpi" style="border-top:3px solid #1A2E35"><div class="pmp-kpi-val">${porSemana[s].length}</div><div class="pmp-kpi-lbl">Semana ${s}</div></div>`).join('')}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px">
+      <div class="pmp-kpi" style="border-top:3px solid #6366F1"><div class="pmp-kpi-val" style="color:#6366F1">${prog.length}</div><div class="pmp-kpi-lbl">Planejado (total)</div></div>
+      <div class="pmp-kpi" style="border-top:3px solid #3B6D11"><div class="pmp-kpi-val" style="color:#3B6D11">${programadoCount}</div><div class="pmp-kpi-lbl">Programado</div></div>
+      <div class="pmp-kpi" style="border-top:3px solid #B45309"><div class="pmp-kpi-val" style="color:#B45309">${aguardandoCount}</div><div class="pmp-kpi-lbl">Sem ação</div></div>
+      <div class="pmp-kpi" style="border-top:3px solid #A32D2D"><div class="pmp-kpi-val" style="color:#A32D2D">${reprogramadoCount}</div><div class="pmp-kpi-lbl">Reprogramado</div></div>
     </div>
-    ${semanas.length?semanas.map(s=>`
-      <div style="margin-bottom:24px">
+    ${semanasTodas.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px">
+      <span onclick="pmpProgSetSemana('')" style="padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid ${!_pmpProgSemanaSel?'#E8630A':'#E2E8ED'};background:${!_pmpProgSemanaSel?'#E8630A':'#fff'};color:${!_pmpProgSemanaSel?'#fff':'#5A7280'}">Todas</span>
+      ${semanasTodas.map(s=>`<span onclick="pmpProgSetSemana('${s}')" style="padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid ${_pmpProgSemanaSel===s?'#E8630A':'#E2E8ED'};background:${_pmpProgSemanaSel===s?'#E8630A':'#fff'};color:${_pmpProgSemanaSel===s?'#fff':'#5A7280'}">Sem. ${s} · ${porSemana[s].length}</span>`).join('')}
+    </div>`:''}
+    ${semanasExibir.length?semanasExibir.map(s=>`
+      <div style="margin-bottom:26px">
         <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#1A2E35;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #E2E8ED">
           Semana ${s} — ${porSemana[s].length} equipamentos
         </div>
-        <div class="pmp-twrap"><table class="pmp-tbl"><thead><tr>
-          <th>FROTA</th><th>MODELO</th><th>OPERAÇÃO</th><th>PLANO</th><th>HOR.PRÓX.</th><th>H/PMP</th><th>STATUS</th><th>OM</th>
-        </tr></thead><tbody>${porSemana[s].map(e=>`<tr>
-          <td><strong>${e.frota}</strong></td><td>${e.modelo||'—'}</td><td>${e.operacao||'—'}</td>
-          <td style="font-size:11px">${e.plano_desc||'—'}</td>
-          <td style="text-align:right">${e.hor_prox||'—'}</td>
-          <td style="text-align:right;font-weight:700;color:${_pmpHCor(e.h_para_pmp)}">${_pmpHFmt(e.h_para_pmp)}</td>
-          <td>${pmpBadge(e.status)}</td><td>${e.om||'—'}</td>
-        </tr>`).join('')}</tbody></table></div>
+        ${_tabelaAberta(porSemana[s].filter(e=>!e.wf_acao))}
+        ${_tabelaDefinida(porSemana[s].filter(e=>e.wf_acao))}
       </div>`).join('')
-    :'<div style="text-align:center;padding:48px;color:#8FA4AE;font-size:14px">Nenhuma preventiva programada ainda.<br><span style="font-size:12px">Use a aba Planejamento → Área Analítica para definir a semana planejada.</span></div>'}
-  </div>`;
+    :'<div style="text-align:center;padding:48px;color:#8FA4AE;font-size:14px">Nenhuma preventiva programada ainda.<br><span style="font-size:12px">Use a aba Planejamento → Execução → Fila de Planejamento para definir a semana planejada.</span></div>'}`;
+}
+
+async function pmpProgSetAcao(frota,val){
+  const dados={wf_acao:val};
+  if(val==='programado') dados.wf_motivo_acao='';
+  else if(val==='replanejar'){ dados.wf_motivo_acao=PMP_MOTIVOS_REPLANEJAR[0]; dados.semana_planejada=''; }
+  else if(val==='reprogramado'){ dados.wf_motivo_acao=PMP_MOTIVOS_REPROGRAMAR[0]; }
+  await pmpWfPatch(frota,dados);
+  _pmpProgEditando=null;
+  showToast('Ação registrada: '+val);
+  pmpRenderProgramacao();
+}
+async function pmpProgSetMotivoAcao(frota,val){
+  await pmpWfPatch(frota,{wf_motivo_acao:val});
+}
+async function pmpProgConcluirExecucao(frota){
+  await pmpWfPatch(frota,{wf_execucao:'concluida'});
+  showToast('✓ Execução concluída — enviado para triagem do PCM');
+  pmpRenderProgramacao();
+}
+
+function pmpProgRenderPendencias(all){
+  const pend=all.filter(e=>e.wf_validacao==='pendente');
+  let html=`<div class="hint" style="font-size:12px;color:#8FA4AE;margin-bottom:12px">Somente leitura — o encerramento é feito pelo PCM</div>`;
+  html+=pend.length?pend.map(e=>`
+    <div style="background:#FEF7F7;border:1px solid #F0997B;border-left:3px solid #D85A30;border-radius:8px;padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+        <div><strong style="font-size:13px">${e.frota}</strong> <span style="color:#8FA4AE;font-size:12px">— ${e.operacao||'—'}</span></div>
+        <span style="font-size:11px;padding:2px 9px;border-radius:99px;background:#FBEAEA;color:#A32D2D">pendência</span>
+      </div>
+      <div style="font-size:11px;color:#8FA4AE;margin-top:4px">OM ${e.om||'—'} · motivo: ${e.wf_motivo_pendencia}</div>
+      ${e.wf_obs_pendencia?`<div style="font-size:11px;color:#A32D2D;margin-top:4px">${e.wf_obs_pendencia}</div>`:''}
+      <div style="border-top:1px solid #F0F4F6;margin-top:8px;padding-top:8px">
+        <label style="font-size:11px;color:#8FA4AE;display:block;margin-bottom:4px">O que foi feito para tratar</label>
+        <textarea id="pmp-trat-${e.frota}" rows="2" placeholder="Descreva a tratativa" style="width:100%;padding:6px;border:1px solid #E2E8ED;border-radius:6px;font-size:12px;margin-bottom:6px"></textarea>
+        <button onclick="pmpProgEnviarTratativa('${e.frota}')" style="padding:6px 14px;border:none;border-radius:6px;background:#B45309;color:#fff;font-size:12px;font-weight:600;cursor:pointer">✓ Enviar tratativa para o PCM</button>
+      </div>
+    </div>`).join(''):`<div style="text-align:center;padding:24px;color:#8FA4AE;font-size:12px;font-style:italic">Nenhuma pendência no momento.</div>`;
+  return html;
+}
+async function pmpProgEnviarTratativa(frota){
+  const resp=document.getElementById('pmp-trat-'+frota)?.value||'';
+  if(!resp.trim()) return;
+  await pmpWfPatch(frota,{wf_validacao:'tratada_aguardando',wf_tratativa_resposta:resp});
+  showToast('Tratativa enviada ao PCM');
+  pmpRenderProgramacao();
+}
+
+function pmpProgRenderHistorico(all){
+  const hist=all.filter(e=>e.wf_validacao==='fechada'||e.wf_validacao==='tratada');
+  let html=`<div class="hint" style="font-size:12px;color:#8FA4AE;margin-bottom:12px">Encerradas pelo PCM</div>`;
+  html+=hist.length?hist.map(e=>`
+    <div style="background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+      <div><strong style="font-size:13px">${e.frota}</strong> <span style="color:#8FA4AE;font-size:12px">— OM ${e.om||'—'}</span></div>
+      <span style="font-size:11px;padding:2px 9px;border-radius:99px;background:${e.wf_validacao==='fechada'?'#E9F3E2':'#F0E2C5'};color:${e.wf_validacao==='fechada'?'#3B6D11':'#854F0B'}">${e.wf_validacao}</span>
+    </div>`).join(''):`<div style="text-align:center;padding:24px;color:#8FA4AE;font-size:12px;font-style:italic">Ainda não há histórico.</div>`;
+  return html;
+}
+
+// ── PMP — Fluxo Execução (Fila/Triagem/Tratamento/Histórico do PCM) ─────────
+async function pmpWfPatch(frota,dados){
+  const fid=String(frota);
+  if(!window.PMP_EQUIP) window.PMP_EQUIP={};
+  if(!window.PMP_EQUIP[fid]) window.PMP_EQUIP[fid]={};
+  Object.assign(window.PMP_EQUIP[fid],dados);
+  try{ await fetch(`${PMP_FB}/equip/${fid}.json`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)}); }
+  catch(e){ showToast('Erro ao salvar'); }
+}
+
+function pmpExecSemanasProximas(){
+  const base=parseInt(semanaAtual().split('-W')[1],10);
+  return [0,1,2,3].map(i=>String(base+i));
+}
+
+function pmpSetExecSub(sub){ _pmpExecSub=sub; pmpRenderExecucao(); }
+
+function pmpRenderExecucao(){
+  const el=document.getElementById('pmp-plan-execucao'); if(!el) return;
+  const all=pmpMontarEquips();
+  const _pill=(label,key)=>`<span onclick="pmpSetExecSub('${key}')" style="padding:7px 16px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid ${_pmpExecSub===key?'#E8630A':'#E2E8ED'};background:${_pmpExecSub===key?'#E8630A':'#fff'};color:${_pmpExecSub===key?'#fff':'#5A7280'};margin-right:8px;display:inline-block">${label}</span>`;
+  let body='';
+  if(_pmpExecSub==='triagem') body=pmpExecRenderTriagem(all);
+  else if(_pmpExecSub==='tratamento') body=pmpExecRenderTratamento(all);
+  else if(_pmpExecSub==='historico') body=pmpExecRenderHistorico(all);
+  else body=pmpExecRenderFila(all);
+  el.innerHTML=`<div style="margin-bottom:16px">${_pill('Fila de Planejamento','fila')}${_pill('Triagem','triagem')}${_pill('Em Tratamento','tratamento')}${_pill('Histórico','historico')}</div>${body}`;
+}
+
+function pmpExecRenderFila(all){
+  const semanas=pmpExecSemanasProximas();
+  const naoPlanejados=all.filter(e=>(e.status==='Vencida'||e.status==='Atenção')&&!e.semana_plan);
+  const jaPlanejados=all.filter(e=>e.semana_plan&&!e.wf_acao);
+  let html=`<div class="hint" style="font-size:12px;color:#8FA4AE;margin-bottom:12px">Equipamentos aguardando entrar no planejamento das próximas 4 semanas (Vencidas/Atenção sem semana definida)</div>`;
+  if(naoPlanejados.length){
+    html+=`<div style="background:#FFFDE7;border:1px solid #FFF3C4;border-radius:8px;padding:12px 14px;margin-bottom:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1A2E35"><input type="checkbox" id="pmp-exec-sel-all" onchange="pmpExecSelAll(this.checked)" style="width:auto">Selecionar todos</label>
+      <span style="font-size:12px;color:#8FA4AE">${_pmpSelPlanejar.size} selecionado(s)</span>
+      <select id="pmp-exec-lote-semana" style="width:auto;flex:1;min-width:160px;padding:6px 10px;border:1px solid #E2E8ED;border-radius:6px;font-size:12px">${semanas.map(s=>`<option value="${s}">Semana ${s}</option>`).join('')}</select>
+      <button onclick="pmpExecPlanejarLote()" style="padding:7px 14px;border:none;border-radius:6px;background:#B45309;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Planejar selecionados</button>
+    </div>`;
+    html+=naoPlanejados.map(e=>`
+      <div style="background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <input type="checkbox" class="pmp-exec-item" data-frota="${e.frota}" onchange="pmpExecToggleSel('${e.frota}',this.checked)" ${_pmpSelPlanejar.has(e.frota)?'checked':''} style="width:auto;margin-top:3px">
+          <div><strong style="font-size:13px">${e.frota}</strong> <span style="color:#8FA4AE;font-size:12px">— ${e.operacao||'—'}</span><br>
+          <span style="font-size:11px;color:#8FA4AE">OM ${e.om||'—'} · ${e.encarregado||'sem encarregado'} · ${pmpBadge(e.status)}</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="pmp-exec-sem-${e.frota}" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:6px;font-size:12px">${semanas.map(s=>`<option value="${s}">Semana ${s}</option>`).join('')}</select>
+          <button onclick="pmpExecPlanejar('${e.frota}')" style="padding:6px 12px;border:none;border-radius:6px;background:#B45309;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Planejar</button>
+        </div>
+      </div>`).join('');
+  } else {
+    html+=`<div style="text-align:center;padding:24px;color:#8FA4AE;font-size:12px;font-style:italic">Todos os equipamentos elegíveis já foram planejados.</div>`;
+  }
+  html+=`<div class="hint" style="font-size:12px;color:#8FA4AE;margin:20px 0 12px">Já planejados — aguardando ação do programador (somente leitura)</div>`;
+  html+=jaPlanejados.length?jaPlanejados.map(e=>`
+    <div style="background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div><strong style="font-size:13px">${e.frota}</strong> <span style="color:#8FA4AE;font-size:12px">— ${e.operacao||'—'}</span>
+      <span style="font-size:11px;padding:2px 9px;border-radius:99px;background:#EDE9FE;color:#5B21B6;margin-left:8px">Semana ${e.semana_plan}</span></div>
+      <span style="font-size:11px;color:#8FA4AE">aguardando programador</span>
+    </div>`).join(''):`<div style="text-align:center;padding:20px;color:#8FA4AE;font-size:12px;font-style:italic">Nenhum equipamento planejado ainda.</div>`;
+  return html;
+}
+
+function pmpExecToggleSel(frota,checked){ if(checked) _pmpSelPlanejar.add(frota); else _pmpSelPlanejar.delete(frota); pmpRenderExecucao(); }
+function pmpExecSelAll(checked){
+  const all=pmpMontarEquips().filter(e=>(e.status==='Vencida'||e.status==='Atenção')&&!e.semana_plan);
+  if(checked) all.forEach(e=>_pmpSelPlanejar.add(e.frota)); else _pmpSelPlanejar.clear();
+  pmpRenderExecucao();
+}
+async function pmpExecPlanejar(frota){
+  const sel=document.getElementById('pmp-exec-sem-'+frota);
+  const semana=sel?sel.value:'';
+  if(!semana) return;
+  await pmpWfPatch(frota,{semana_planejada:semana,wf_acao:'',wf_motivo_acao:''});
+  _pmpSelPlanejar.delete(frota);
+  showToast('✓ Planejado para semana '+semana);
+  pmpRenderExecucao();
+}
+async function pmpExecPlanejarLote(){
+  if(!_pmpSelPlanejar.size) return;
+  const sel=document.getElementById('pmp-exec-lote-semana');
+  const semana=sel?sel.value:'';
+  if(!semana) return;
+  const frotas=[..._pmpSelPlanejar];
+  await Promise.all(frotas.map(f=>pmpWfPatch(f,{semana_planejada:semana,wf_acao:'',wf_motivo_acao:''})));
+  _pmpSelPlanejar.clear();
+  showToast(`✓ ${frotas.length} equipamentos planejados para semana ${semana}`);
+  pmpRenderExecucao();
+}
+
+let _pmpTriagemAberta=null;
+function pmpExecRenderTriagem(all){
+  const list=all.filter(e=>e.wf_execucao==='concluida'&&!e.wf_validacao);
+  let html=`<div class="hint" style="font-size:12px;color:#8FA4AE;margin-bottom:12px">Ordens com apontamento concluído aguardando validação do PCM</div>`;
+  html+=list.length?list.map(e=>`
+    <div style="background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div><strong style="font-size:13px">${e.frota}</strong> <span style="color:#8FA4AE;font-size:12px">— ${e.operacao||'—'}</span><br>
+        <span style="font-size:11px;color:#8FA4AE">OM ${e.om||'—'} · ${e.encarregado||'—'}${e.status_om?` · Manusis: ${e.status_om}`:''}</span></div>
+        <div style="display:flex;gap:8px">
+          <button onclick="pmpExecFechar('${e.frota}')" style="padding:6px 14px;border:1px solid #8FBF6A;border-radius:6px;background:#E9F3E2;color:#3B6D11;font-size:12px;font-weight:600;cursor:pointer">✓ Fechar</button>
+          <button onclick="pmpExecTogglePendBox('${e.frota}')" style="padding:6px 14px;border:1px solid #E79A9A;border-radius:6px;background:#FBEAEA;color:#A32D2D;font-size:12px;font-weight:600;cursor:pointer">! Pendência</button>
+        </div>
+      </div>
+      <div id="pmp-pend-box-${e.frota}" style="display:${_pmpTriagemAberta===e.frota?'block':'none'};border-top:1px solid #F0F4F6;margin-top:10px;padding-top:10px">
+        <label style="font-size:11px;color:#8FA4AE;display:block;margin-bottom:4px">Motivo da pendência (validação OM)</label>
+        <select id="pmp-pend-motivo-${e.frota}" style="width:100%;padding:6px;border:1px solid #E2E8ED;border-radius:6px;font-size:12px;margin-bottom:8px">${PMP_MOTIVOS_PENDENCIA.map(m=>`<option>${m}</option>`).join('')}</select>
+        <label style="font-size:11px;color:#8FA4AE;display:block;margin-bottom:4px">Observação para quem for tratar</label>
+        <textarea id="pmp-pend-obs-${e.frota}" rows="2" placeholder="Descreva o que falta" style="width:100%;padding:6px;border:1px solid #E2E8ED;border-radius:6px;font-size:12px;margin-bottom:8px"></textarea>
+        <button onclick="pmpExecEnviarPendencia('${e.frota}')" style="padding:6px 14px;border:none;border-radius:6px;background:#A32D2D;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Enviar pendência</button>
+      </div>
+    </div>`).join(''):`<div style="text-align:center;padding:24px;color:#8FA4AE;font-size:12px;font-style:italic">Nenhuma ordem aguardando triagem.</div>`;
+  return html;
+}
+function pmpExecTogglePendBox(frota){ _pmpTriagemAberta=_pmpTriagemAberta===frota?null:frota; pmpRenderExecucao(); }
+async function pmpExecFechar(frota){
+  await pmpWfPatch(frota,{wf_validacao:'fechada',wf_acao:'',wf_execucao:'',semana_planejada:''});
+  showToast('✓ OM fechada');
+  pmpRenderExecucao();
+}
+async function pmpExecEnviarPendencia(frota){
+  const motivo=document.getElementById('pmp-pend-motivo-'+frota)?.value||'';
+  const obs=document.getElementById('pmp-pend-obs-'+frota)?.value||'';
+  await pmpWfPatch(frota,{wf_validacao:'pendente',wf_motivo_pendencia:motivo,wf_obs_pendencia:obs});
+  _pmpTriagemAberta=null;
+  showToast('Pendência registrada');
+  pmpRenderExecucao();
+}
+
+function pmpExecRenderTratamento(all){
+  const pend=all.filter(e=>e.wf_validacao==='pendente');
+  const wait=all.filter(e=>e.wf_validacao==='tratada_aguardando');
+  let html=`<div class="hint" style="font-size:12px;color:#8FA4AE;margin-bottom:12px">Pendências visíveis também para o encarregado e o programador</div>`;
+  html+=pend.map(e=>`
+    <div style="background:#FEF7F7;border:1px solid #F0997B;border-left:3px solid #D85A30;border-radius:8px;padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between"><strong style="font-size:13px">${e.frota}</strong><span style="font-size:11px;padding:2px 9px;border-radius:99px;background:#FBEAEA;color:#A32D2D">pendência</span></div>
+      <div style="font-size:11px;color:#8FA4AE;margin-top:4px">OM ${e.om||'—'} · encarregado ${e.encarregado||'—'} · motivo: ${e.wf_motivo_pendencia}</div>
+      ${e.wf_obs_pendencia?`<div style="font-size:11px;color:#A32D2D;margin-top:4px">${e.wf_obs_pendencia}</div>`:''}
+    </div>`).join('');
+  if(wait.length){
+    html+=`<div class="hint" style="font-size:12px;color:#8FA4AE;margin:16px 0 10px">Tratativas enviadas pelo programador, aguardando confirmação do PCM</div>`;
+    html+=wait.map(e=>`
+      <div style="background:#FFFBF0;border:1px solid #F0E2C5;border-left:3px solid #854F0B;border-radius:8px;padding:12px 14px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between"><strong style="font-size:13px">${e.frota}</strong><span style="font-size:11px;padding:2px 9px;border-radius:99px;background:#F0E2C5;color:#854F0B">tratada · aguardando validação</span></div>
+        <div style="font-size:11px;color:#8FA4AE;margin-top:4px">OM ${e.om||'—'} · motivo original: ${e.wf_motivo_pendencia}</div>
+        <div style="font-size:11px;color:#854F0B;margin-top:4px">Programador: ${e.wf_tratativa_resposta}</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button onclick="pmpExecConfirmarFecha('${e.frota}')" style="padding:6px 14px;border:none;border-radius:6px;background:#3B6D11;color:#fff;font-size:12px;font-weight:600;cursor:pointer">✓ Confirmar e fechar</button>
+          <button onclick="pmpExecReabrir('${e.frota}')" style="padding:6px 14px;border:1px solid #E79A9A;border-radius:6px;background:#FBEAEA;color:#A32D2D;font-size:12px;font-weight:600;cursor:pointer">↺ Reabrir pendência</button>
+        </div>
+      </div>`).join('');
+  }
+  if(!pend.length&&!wait.length) html+=`<div style="text-align:center;padding:24px;color:#8FA4AE;font-size:12px;font-style:italic">Nenhuma pendência em aberto.</div>`;
+  return html;
+}
+async function pmpExecConfirmarFecha(frota){
+  await pmpWfPatch(frota,{wf_validacao:'tratada',wf_acao:'',wf_execucao:'',semana_planejada:''});
+  showToast('✓ Confirmado e fechado');
+  pmpRenderExecucao();
+}
+async function pmpExecReabrir(frota){
+  await pmpWfPatch(frota,{wf_validacao:'pendente'});
+  showToast('Pendência reaberta');
+  pmpRenderExecucao();
+}
+
+function pmpExecRenderHistorico(all){
+  const hist=all.filter(e=>e.wf_validacao==='fechada'||e.wf_validacao==='tratada');
+  if(!hist.length) return `<div style="text-align:center;padding:24px;color:#8FA4AE;font-size:12px;font-style:italic">Ainda não há ordens encerradas.</div>`;
+  return hist.map(e=>`
+    <div style="background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+      <div><strong style="font-size:13px">${e.frota}</strong> <span style="color:#8FA4AE;font-size:12px">— OM ${e.om||'—'}</span></div>
+      <span style="font-size:11px;padding:2px 9px;border-radius:99px;background:${e.wf_validacao==='fechada'?'#E9F3E2':'#F0E2C5'};color:${e.wf_validacao==='fechada'?'#3B6D11':'#854F0B'}">${e.wf_validacao}</span>
+    </div>`).join('');
+}
+
+let _pmpSnapDone=false;
+async function pmpSnapshotEvolucao(all){
+  if(_pmpSnapDone||!all||!all.length) return;
+  _pmpSnapDone=true;
+  try{
+    const semanaKey=semanaAtual();
+    const semanaNum=parseInt(semanaKey.split('-W')[1],10);
+    const c={};all.forEach(e=>{c[e.status]=(c[e.status]||0)+1;});
+    const total=all.length, emDia=c['Em Dia']||0, vencidas=c['Vencida']||0;
+    const pctVencidas=total?vencidas/total:0;
+    const snapEvo={data:new Date().toISOString().slice(0,10),semana:semanaNum,em_dia:emDia,vencidas,total,pct_vencidas:pctVencidas};
+    fetch(`${PMP_FB}/evolucao/${semanaKey}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(snapEvo)}).catch(()=>{});
+    if(!window.PMP_EVOLUCAO) window.PMP_EVOLUCAO={};
+    window.PMP_EVOLUCAO[semanaKey]=snapEvo;
+
+    const programadas=all.filter(e=>e.semana_plan&&Number(e.semana_plan)===semanaNum);
+    const progCount=programadas.length;
+    const realCount=programadas.filter(e=>/conclu[ií]d/i.test(e.status_prog||'')).length;
+    const snapAd={semana:semanaNum,programadas:progCount,realizadas:realCount,aderencia:progCount?realCount/progCount:0};
+    fetch(`${PMP_FB}/evolucao_aderencia/${semanaKey}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(snapAd)}).catch(()=>{});
+    if(!window.PMP_ADERENCIA) window.PMP_ADERENCIA={};
+    window.PMP_ADERENCIA[semanaKey]=snapAd;
+  }catch(e){_pmpSnapDone=false;}
+}
+
+function pmpRenderEvolucao(){
+  const el=document.getElementById('pmp-content-evolucao'); if(!el) return;
+  const evo=window.PMP_EVOLUCAO||{}, ader=window.PMP_ADERENCIA||{};
+  const chaves=Object.keys(evo).sort();
+  const chavesAd=Object.keys(ader).sort();
+  if(!chaves.length&&!chavesAd.length){
+    el.innerHTML='<div style="text-align:center;padding:48px;color:#8FA4AE;font-size:14px">Ainda sem histórico registrado.<br><span style="font-size:12px">O histórico é gravado automaticamente, uma vez por semana, ao acessar a aba Planejamento.</span></div>';
+    return;
+  }
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div style="background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:16px">
+        <div style="font-size:13px;font-weight:700;color:#1A2E35;margin-bottom:10px">Evolução — Em Dia x Vencidas</div>
+        <canvas id="pmp-evo-chart-status" height="220"></canvas>
+      </div>
+      <div style="background:#fff;border:1px solid #E2E8ED;border-radius:8px;padding:16px">
+        <div style="font-size:13px;font-weight:700;color:#1A2E35;margin-bottom:10px">Aderência semanal (Programado x Realizado)</div>
+        <canvas id="pmp-evo-chart-aderencia" height="220"></canvas>
+      </div>
+    </div>`;
+  const cS=document.getElementById('pmp-evo-chart-status');
+  if(cS){
+    const prev=Chart.getChart(cS); if(prev) prev.destroy();
+    new Chart(cS,{type:'line',data:{labels:chaves,datasets:[
+      {label:'Em Dia',data:chaves.map(k=>evo[k].em_dia),borderColor:'#1E8A4C',backgroundColor:'rgba(30,138,76,.1)',fill:true,tension:.3,pointRadius:3},
+      {label:'Vencidas',data:chaves.map(k=>evo[k].vencidas),borderColor:'#B91C1C',backgroundColor:'rgba(185,28,28,.1)',fill:true,tension:.3,pointRadius:3}
+    ]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},scales:{x:{ticks:{font:{size:10}}}}}});
+  }
+  const cA=document.getElementById('pmp-evo-chart-aderencia');
+  if(cA){
+    const prev=Chart.getChart(cA); if(prev) prev.destroy();
+    new Chart(cA,{type:'bar',data:{labels:chavesAd,datasets:[
+      {label:'Programadas',data:chavesAd.map(k=>ader[k].programadas),backgroundColor:'#BDD7EE'},
+      {label:'Realizadas',data:chavesAd.map(k=>ader[k].realizadas),backgroundColor:'#1A2E35'},
+      {label:'Meta 80%',data:chavesAd.map(k=>(ader[k].programadas||0)*0.8),type:'line',borderColor:'#E8630A',borderDash:[6,4],borderWidth:1.5,pointRadius:0,fill:false}
+    ]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},scales:{x:{ticks:{font:{size:10}}}}}});
+  }
 }
 
 // ── OPERAÇÕES ─────────────────────────────────────────────────────────────────
@@ -21171,6 +21599,10 @@ function pendToggle(i){
       style="padding:0 20px;height:44px;background:none;border:none;border-bottom:3px solid transparent;color:rgba(255,255,255,.55);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s">
       Programação
     </button>
+    <button id="pmp-tab-evolucao" onclick="pmpSetAba('evolucao')"
+      style="padding:0 20px;height:44px;background:none;border:none;border-bottom:3px solid transparent;color:rgba(255,255,255,.55);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s">
+      Evolução
+    </button>
   </div>
 
   <!-- ── PLANEJAMENTO ── -->
@@ -21186,23 +21618,34 @@ function pendToggle(i){
         style="padding:10px 20px;background:none;border:none;border-bottom:2px solid transparent;color:#5A7280;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:-1px;transition:all .15s">
         Área Analítica
       </button>
+      <button id="pmp-sub-execucao" onclick="pmpSetSubAba('execucao')"
+        style="padding:10px 20px;background:none;border:none;border-bottom:2px solid transparent;color:#5A7280;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:-1px;transition:all .15s">
+        Execução
+      </button>
     </div>
 
-    <!-- KPIs -->
-    <div id="pmp-kpis" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:16px 28px;flex-shrink:0;background:#F4F6F8"></div>
+    <div id="pmp-plan-dados" style="flex:1;overflow:hidden;flex-direction:column;display:flex">
+      <!-- KPIs -->
+      <div id="pmp-kpis" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:16px 28px;flex-shrink:0;background:#F4F6F8"></div>
 
-    <!-- Filtros -->
-    <div id="pmp-filtros-wrap" style="display:flex;align-items:center;gap:10px;padding:0 28px 14px;flex-shrink:0;flex-wrap:wrap"></div>
+      <!-- Filtros -->
+      <div id="pmp-filtros-wrap" style="display:flex;align-items:center;gap:10px;padding:0 28px 14px;flex-shrink:0;flex-wrap:wrap"></div>
 
-    <!-- Tabelas scrolláveis -->
-    <div style="flex:1;overflow:auto;padding:0 28px 24px">
-      <div id="pmp-plan-gerencial"></div>
-      <div id="pmp-plan-analitica" style="display:none"></div>
+      <!-- Tabelas scrolláveis -->
+      <div style="flex:1;overflow:auto;padding:0 28px 24px">
+        <div id="pmp-plan-gerencial"></div>
+        <div id="pmp-plan-analitica" style="display:none"></div>
+      </div>
     </div>
+
+    <div id="pmp-plan-execucao" style="flex:1;overflow:auto;padding:16px 28px 24px;display:none"></div>
   </div>
 
   <!-- ── PROGRAMAÇÃO ── -->
   <div id="pmp-content-programacao" style="flex:1;overflow:hidden;flex-direction:column;display:none"></div>
+
+  <!-- ── EVOLUÇÃO ── -->
+  <div id="pmp-content-evolucao" style="flex:1;overflow:auto;flex-direction:column;display:none;padding:20px 28px"></div>
 
 </div>
 
