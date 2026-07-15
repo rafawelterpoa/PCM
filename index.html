@@ -1155,12 +1155,16 @@ input.filter-sel{padding:5px 10px;height:32px}
     <span class="snav-label">Meu Painel</span>
   </div>
 
-  <div class="snav-item" id="snav-pmp-planejamento" onclick="pmpNavSidebar('planejamento','gerencial')" title="Planejamento">
+  <div class="snav-item" id="snav-pmp-planejamento" onclick="pmpNavSidebar('planejamento','visaogeral')" title="Planejamento">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     <span class="snav-label">Planejamento</span>
     <span class="snav-chev" id="snav-chev-pmp-planejamento" onclick="event.stopPropagation();pmpToggleSub('planejamento')" title="Expandir subáreas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>
   </div>
   <div class="snav-sub" id="snav-sub-pmp-planejamento">
+    <div class="snav-item snav-subitem" id="snav-pmp-plan-visaogeral" onclick="pmpNavSidebar('planejamento','visaogeral')" title="Visão Geral">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+      <span class="snav-label">Visão Geral</span>
+    </div>
     <div class="snav-item snav-subitem" id="snav-pmp-plan-gerencial" onclick="pmpNavSidebar('planejamento','gerencial')" title="Visão Gerencial">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       <span class="snav-label">Visão Gerencial</span>
@@ -18857,6 +18861,7 @@ function pmpAtualizarSubsSidebar(){
 function pmpToggleSub(id){ _pmpSubAberto[id]=!_pmpSubAberto[id]; pmpAtualizarSubsSidebar(); }
 
 const PMP_BREADCRUMBS={
+  'planejamento|visaogeral':'Planejamento › Visão Geral',
   'planejamento|gerencial':'Planejamento › Visão Gerencial',
   'planejamento|analitica':'Planejamento › Área Analítica',
   'planejamento|execucao|fila':'Planejamento › Execução › Fila de Planejamento',
@@ -18874,7 +18879,7 @@ const PMP_BREADCRUMBS={
 function pmpNavSidebar(aba,sub,subsub){
   if(typeof _acessoBloqueado==='function'&&_acessoBloqueado('pmp')){_paginaBloqueada('PMP');return;}
   aba = aba || _pmpAba || 'planejamento';
-  if(aba==='planejamento'){ sub = sub || _pmpSubAba || 'gerencial'; if(sub==='execucao') subsub = subsub || _pmpExecSub || 'fila'; }
+  if(aba==='planejamento'){ sub = sub || _pmpSubAba || 'visaogeral'; if(sub==='execucao') subsub = subsub || _pmpExecSub || 'fila'; }
   else if(aba==='programacao'){ sub = sub || _pmpProgSub || 'acao'; }
 
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -18920,19 +18925,40 @@ function pmpSetAba(aba){
   else pmpRenderRelatorios();
 }
 
-// ── PMP — Meu Painel (entrada do Programador) ───────────────────────────────
+// ── PMP — Meu Painel (entrada do Programador / visão geral p/ demais perfis) ─
 let _pmpPainelFiltro='todas';
+let _pmpPainelFiltroOp='', _pmpPainelFiltroGestor='', _pmpPainelFiltroProg='';
 function pmpMinhasMaquinas(){
   const nome=(currentUser&&currentUser.nome)||'';
   if(!nome) return [];
   return pmpMontarEquips().filter(e=>e.programador===nome);
 }
+function pmpPainelEhProgramador(){
+  return !!(currentUser&&currentUser.setor==='PCM'&&currentUser.perfil==='Programação');
+}
 function pmpPainelSetFiltro(f){ _pmpPainelFiltro=f; pmpRenderPainelProgramador(); }
+function pmpPainelSetFiltroCampo(campo,val){
+  if(campo==='operacao') _pmpPainelFiltroOp=val;
+  else if(campo==='gestor') _pmpPainelFiltroGestor=val;
+  else if(campo==='programador') _pmpPainelFiltroProg=val;
+  pmpRenderPainelProgramador();
+}
+function pmpPainelLimparFiltros(){
+  _pmpPainelFiltroOp=''; _pmpPainelFiltroGestor=''; _pmpPainelFiltroProg='';
+  pmpRenderPainelProgramador();
+}
 
 function pmpRenderPainelProgramador(){
   const el=document.getElementById('pmp-content-painel'); if(!el) return;
   const nome=(currentUser&&currentUser.nome)||'Programador';
-  const minhas=pmpMinhasMaquinas();
+  const souProgramador=pmpPainelEhProgramador();
+  const universoTotal=souProgramador?[]:pmpMontarEquips();
+  let minhas=souProgramador?pmpMinhasMaquinas():universoTotal;
+  if(!souProgramador){
+    if(_pmpPainelFiltroOp) minhas=minhas.filter(e=>e.operacao===_pmpPainelFiltroOp);
+    if(_pmpPainelFiltroGestor) minhas=minhas.filter(e=>e.gestor===_pmpPainelFiltroGestor);
+    if(_pmpPainelFiltroProg) minhas=minhas.filter(e=>e.programador===_pmpPainelFiltroProg);
+  }
   const total=minhas.length;
   const c={}; minhas.forEach(e=>{c[e.status]=(c[e.status]||0)+1;});
   const emDia=c['Em Dia']||0, atencao=c['Atenção']||0, vencidas=c['Vencida']||0, programado=c['Programado']||0;
@@ -18974,13 +19000,36 @@ function pmpRenderPainelProgramador(){
       <div class="act"><a onclick="${i.dest}" class="${i.primary?'primary':''}">${i.acaoTxt}</a></div>
     </div>`;
 
+  const subLabel=souProgramador?'Programador · PCM':`${currentUser?.perfil||''} · ${currentUser?.setor||''}`;
+  const badgeTxt=(!souProgramador&&total!==universoTotal.length)?`${total} DE ${universoTotal.length} MÁQUINAS`:`${total} MÁQUINA${total===1?'':'S'}`;
+  const opsAll=souProgramador?[]:[...new Set(universoTotal.map(e=>e.operacao).filter(Boolean))].sort();
+  const gestoresAll=souProgramador?[]:[...new Set(universoTotal.map(e=>e.gestor).filter(Boolean))].sort();
+  const progsAll=souProgramador?[]:[...new Set(universoTotal.map(e=>e.programador).filter(Boolean))].sort();
+  const filtrosAtivos=!!(_pmpPainelFiltroOp||_pmpPainelFiltroGestor||_pmpPainelFiltroProg);
+
   el.innerHTML=`
     <div class="pnl">
       <div class="pnl-console">
         <div class="pnl-chdr">
-          <div class="who">${nome}<span>Programador · PCM</span></div>
-          <div class="badge">${total} MÁQUINA${total===1?'':'S'}</div>
+          <div class="who">${nome}<span>${subLabel}</span></div>
+          <div class="badge">${badgeTxt}</div>
         </div>
+        ${souProgramador?'':`
+        <div class="pnl-filters">
+          <select onchange="pmpPainelSetFiltroCampo('operacao',this.value)">
+            <option value="">Todas as operações</option>
+            ${opsAll.map(o=>`<option value="${o}"${_pmpPainelFiltroOp===o?' selected':''}>${o}</option>`).join('')}
+          </select>
+          <select onchange="pmpPainelSetFiltroCampo('gestor',this.value)">
+            <option value="">Todos os gestores</option>
+            ${gestoresAll.map(g=>`<option value="${g}"${_pmpPainelFiltroGestor===g?' selected':''}>${g}</option>`).join('')}
+          </select>
+          <select onchange="pmpPainelSetFiltroCampo('programador',this.value)">
+            <option value="">Todos os programadores</option>
+            ${progsAll.map(p=>`<option value="${p}"${_pmpPainelFiltroProg===p?' selected':''}>${p}</option>`).join('')}
+          </select>
+          ${filtrosAtivos?`<span class="f" onclick="pmpPainelLimparFiltros()">Limpar filtros ✕</span>`:''}
+        </div>`}
         <div class="pnl-score">
           <div class="cell"><div class="n">${total}</div><div class="lbl">Total</div></div>
           <div class="cell ok"><div class="n">${emDia}</div><div class="lbl">Em dia</div></div>
@@ -18996,7 +19045,7 @@ function pmpRenderPainelProgramador(){
             ${proximas.length?proximas.map(e=>`<div class="pnl-prow"><span class="t">${e.frota}<small>${e.operacao||''}</small></span><span class="s ${e.wf_acao==='programado'?'go':'wait'}">${e.wf_acao==='programado'?'programado':'aguardando'}</span></div>`).join(''):'<div class="pnl-empty">Nada planejado pra essa semana ainda.</div>'}
           </div>
           <div class="col">
-            <h3>Suas operações — ${Object.keys(opCount).length} unidade${Object.keys(opCount).length===1?'':'s'}</h3>
+            <h3>${souProgramador?'Suas operações':'Operações'} — ${Object.keys(opCount).length} unidade${Object.keys(opCount).length===1?'':'s'}</h3>
             ${opsOrdenadas.length?opsOrdenadas.map(([op,n])=>`<div class="pnl-oprow"><span class="nm">${op}</span><div class="track"><div class="fill" style="width:${Math.round(n/opMax*100)}%"></div></div><span class="n">${n}</span></div>`).join(''):'<div class="pnl-empty">Sem operações identificadas.</div>'}
           </div>
         </div>
@@ -19010,15 +19059,91 @@ function pmpRenderPainelProgramador(){
     </div>`;
 }
 
+// ── PMP — Planejamento › Visão Geral (painel agregado da frota) ────────────
+function pmpRenderVisaoGeralPlanejamento(){
+  const el=document.getElementById('pmp-plan-visaogeral'); if(!el) return;
+  const all=pmpMontarEquips();
+  const total=all.length;
+  const c={}; all.forEach(e=>{c[e.status]=(c[e.status]||0)+1;});
+  const emDia=c['Em Dia']||0, atencao=c['Atenção']||0, vencidas=c['Vencida']||0, programado=c['Programado']||0;
+  const ordensAbertas=all.filter(e=>e.om).length;
+  const planejadas=all.filter(e=>e.semana_plan).length;
+  const pct=n=>total?Math.round(n/total*100):0;
+  const pctPlan=pct(planejadas), pctVenc=pct(vencidas), pctEmDia=pct(emDia);
+
+  const vencSev={}; all.forEach(e=>{if(e.status==='Vencida'&&e.severidade) vencSev[e.severidade]=(vencSev[e.severidade]||0)+1;});
+  const sevMax=Math.max(vencidas,1);
+  const _sevCor={'Leve':'var(--pnl-warn)','Crítico':'#C2410C','Supercrítico':'var(--pnl-crit)'};
+
+  const opCount={}; all.forEach(e=>{ if(e.operacao) opCount[e.operacao]=(opCount[e.operacao]||0)+1; });
+  const opsOrdenadas=Object.entries(opCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const opMax=opsOrdenadas.length?opsOrdenadas[0][1]:1;
+
+  const progVenc={}; all.forEach(e=>{ if(e.status==='Vencida'&&e.programador) progVenc[e.programador]=(progVenc[e.programador]||0)+1; });
+  const progOrdenados=Object.entries(progVenc).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const progMax=progOrdenados.length?progOrdenados[0][1]:1;
+
+  el.innerHTML=`
+    <div class="pnl">
+      <div class="pnl-console">
+        <div class="pnl-chdr">
+          <div class="who">Visão Geral<span>Planejamento · PCM</span></div>
+          <div class="badge">${total} MÁQUINA${total===1?'':'S'} NO ESCOPO</div>
+        </div>
+        <div class="pnl-score">
+          <div class="cell"><div class="n">${total}</div><div class="lbl">Máquinas</div></div>
+          <div class="cell info"><div class="n">${ordensAbertas}</div><div class="lbl">Ordens abertas</div></div>
+          <div class="cell ${pctPlan>=70?'ok':pctPlan>=40?'warn':'crit'}"><div class="n">${pctPlan}%</div><div class="lbl">Planejada</div></div>
+          <div class="cell ${pctVenc>15?'crit':pctVenc>5?'warn':'ok'}"><div class="n">${pctVenc}%</div><div class="lbl">PMP Atrasada</div></div>
+          <div class="cell ok"><div class="n">${pctEmDia}%</div><div class="lbl">Em dia</div></div>
+        </div>
+
+        <div class="pnl-sec"><h3>Vencidas por severidade <span class="cnt">${vencidas} no total</span></h3></div>
+        <div style="padding:6px 24px 18px">
+          ${['Leve','Crítico','Supercrítico'].map(s=>{
+            const n=vencSev[s]||0;
+            return `<div class="pnl-oprow"><span class="nm">${s}</span><div class="track"><div class="fill" style="width:${Math.round(n/sevMax*100)}%;background:${_sevCor[s]}"></div></div><span class="n">${n}</span></div>`;
+          }).join('')}
+          ${vencidas===0?'<div class="pnl-empty">Nenhuma máquina vencida no momento 🎉</div>':''}
+        </div>
+
+        <div class="pnl-pair">
+          <div class="col">
+            <h3>Por operação — top ${opsOrdenadas.length} de ${Object.keys(opCount).length}</h3>
+            ${opsOrdenadas.length?opsOrdenadas.map(([op,n])=>`<div class="pnl-oprow"><span class="nm">${op}</span><div class="track"><div class="fill" style="width:${Math.round(n/opMax*100)}%"></div></div><span class="n">${n}</span></div>`).join(''):'<div class="pnl-empty">Sem operações identificadas.</div>'}
+          </div>
+          <div class="col">
+            <h3>Programadores — carga de vencidas</h3>
+            ${progOrdenados.length?progOrdenados.map(([p,n])=>`<div class="pnl-oprow"><span class="nm">${p}</span><div class="track"><div class="fill" style="width:${Math.round(n/progMax*100)}%;background:var(--pnl-crit)"></div></div><span class="n">${n}</span></div>`).join(''):'<div class="pnl-empty">Nenhuma vencida atribuída a programador.</div>'}
+          </div>
+        </div>
+
+        <div class="pnl-foot">
+          <span class="f" onclick="pmpNavSidebar('planejamento','analitica')">Área Analítica</span>
+          <span class="f" onclick="pmpNavSidebar('indicadores')">Indicadores</span>
+          <button class="go" onclick="pmpNavSidebar('planejamento','execucao','fila')">Ir para a Fila de Planejamento →</button>
+        </div>
+      </div>
+    </div>`;
+}
+
 function pmpSetSubAba(sub){
   _pmpSubAba=sub;
   const dados=document.getElementById('pmp-plan-dados');
   const exec=document.getElementById('pmp-plan-execucao');
-  if(sub==='execucao'){
+  const geral=document.getElementById('pmp-plan-visaogeral');
+  if(sub==='visaogeral'){
+    if(dados) dados.style.display='none';
+    if(exec) exec.style.display='none';
+    if(geral) geral.style.display='block';
+    pmpRenderVisaoGeralPlanejamento();
+  } else if(sub==='execucao'){
+    if(geral) geral.style.display='none';
     if(dados) dados.style.display='none';
     if(exec) exec.style.display='block';
     pmpRenderExecucao();
   } else {
+    if(geral) geral.style.display='none';
     if(dados) dados.style.display='flex';
     if(exec) exec.style.display='none';
     const ger=document.getElementById('pmp-plan-gerencial'), ana=document.getElementById('pmp-plan-analitica');
@@ -22256,6 +22381,9 @@ function pendToggle(i){
 .pnl-score .cell.warn .n{color:var(--pnl-warn)}
 .pnl-score .cell.ok .n{color:var(--pnl-ok)}
 .pnl-score .cell.info .n{color:var(--pnl-info)}
+.pnl-filters{display:flex;align-items:center;gap:8px;padding:14px 24px;border-bottom:1px solid var(--pnl-line);flex-wrap:wrap}
+.pnl-filters select{padding:6px 10px;border:1px solid var(--pnl-line);border-radius:5px;font-size:12px;color:var(--pnl-ink);background:#fff;cursor:pointer;max-width:190px}
+.pnl-filters .f{font-size:12px;color:var(--pnl-muted);border:1px solid var(--pnl-line);padding:5px 12px;cursor:pointer;background:#fff;border-radius:5px}
 .pnl-sec{padding:18px 24px 6px}
 .pnl-sec h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pnl-muted);margin:0;display:flex;align-items:baseline;gap:8px}
 .pnl-sec h3 .cnt{font-family:var(--pnl-mono);color:var(--pnl-faint);font-weight:400;text-transform:none}
@@ -22307,6 +22435,8 @@ function pendToggle(i){
 
   <!-- ── PLANEJAMENTO ── -->
   <div id="pmp-content-planejamento" style="flex:1;overflow:hidden;flex-direction:column;display:flex">
+
+    <div id="pmp-plan-visaogeral" style="flex:1;overflow:auto;display:none"></div>
 
     <div id="pmp-plan-dados" style="flex:1;overflow:hidden;flex-direction:column;display:flex">
       <!-- KPIs -->
