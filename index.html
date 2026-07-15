@@ -1150,6 +1150,11 @@ input.filter-sel{padding:5px 10px;height:32px}
 
   <div class="snav-section-label">PMP</div>
 
+  <div class="snav-item" id="snav-pmp-painel" onclick="pmpNavSidebar('painel')" title="Meu Painel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+    <span class="snav-label">Meu Painel</span>
+  </div>
+
   <div class="snav-item" id="snav-pmp-planejamento" onclick="pmpNavSidebar('planejamento','gerencial')" title="Planejamento">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     <span class="snav-label">Planejamento</span>
@@ -2781,6 +2786,11 @@ function doLogin(){
   iniciarMonitorSolicitacoes();
   setTimeout(registrarSnapshotDiario, 5000); // série diária do T.U. (1x/dia, idempotente)
   setTimeout(function(){try{rgUpdateHomeKpis();renderHomeRaioX();}catch(e){}}, 2500); // reforço após dados frescos
+  // Programador do PCM cai direto no painel dele em vez da Home
+  if(user.setor==='PCM'&&user.perfil==='Programação'){
+    try{ pmpNavSidebar('painel'); }catch(e){}
+    setTimeout(function(){try{ if(_pmpAba==='painel') pmpRenderPainelProgramador(); }catch(e){}}, 2500); // reforço após dados frescos (base_atual/BD_RESPONSAVEIS chegam via loadFromFirebase)
+  }
 }
 
 function mostrarNotifBemVindo(){
@@ -18857,7 +18867,8 @@ const PMP_BREADCRUMBS={
   'programacao|pendencias':'Programação › Pendências',
   'programacao|historico':'Programação › Histórico',
   'indicadores':'Indicadores',
-  'relatorios':'Relatórios'
+  'relatorios':'Relatórios',
+  'painel':'Meu Painel'
 };
 
 function pmpNavSidebar(aba,sub,subsub){
@@ -18871,16 +18882,17 @@ function pmpNavSidebar(aba,sub,subsub){
   const pg=document.getElementById('page-pmp'); if(pg) pg.style.display='flex';
 
   _pmpAba=aba;
-  ['planejamento','programacao','indicadores','relatorios'].forEach(a=>{
+  ['painel','planejamento','programacao','indicadores','relatorios'].forEach(a=>{
     const cont=document.getElementById('pmp-content-'+a);
     if(cont) cont.style.display=a===aba?'flex':'none';
   });
-  if(aba==='planejamento'){ _pmpSubAba=sub; if(sub==='execucao') _pmpExecSub=subsub; pmpSetSubAba(sub); }
+  if(aba==='painel'){ pmpRenderPainelProgramador(); }
+  else if(aba==='planejamento'){ _pmpSubAba=sub; if(sub==='execucao') _pmpExecSub=subsub; pmpSetSubAba(sub); }
   else if(aba==='programacao'){ _pmpProgSub=sub; pmpRenderProgramacao(); }
   else if(aba==='indicadores'){ pmpRenderIndicadores(); }
   else { pmpRenderRelatorios(); }
 
-  const key=[aba,sub,subsub].filter(Boolean).join('|');
+  const key=aba==='painel'?'painel':[aba,sub,subsub].filter(Boolean).join('|');
   pmpBreadcrumb(PMP_BREADCRUMBS[key]||'PMP');
 
   _pmpSubAberto.planejamento=(aba==='planejamento');
@@ -18897,14 +18909,105 @@ function pmpNavSidebar(aba,sub,subsub){
 
 function pmpSetAba(aba){
   _pmpAba=aba;
-  ['planejamento','programacao','indicadores','relatorios'].forEach(a=>{
+  ['painel','planejamento','programacao','indicadores','relatorios'].forEach(a=>{
     const cont=document.getElementById('pmp-content-'+a);
     if(cont) cont.style.display=a===aba?'flex':'none';
   });
-  if(aba==='planejamento') pmpRenderPlanejamento();
+  if(aba==='painel') pmpRenderPainelProgramador();
+  else if(aba==='planejamento') pmpRenderPlanejamento();
   else if(aba==='programacao') pmpRenderProgramacao();
   else if(aba==='indicadores') pmpRenderIndicadores();
   else pmpRenderRelatorios();
+}
+
+// ── PMP — Meu Painel (entrada do Programador) ───────────────────────────────
+let _pmpPainelFiltro='todas';
+function pmpMinhasMaquinas(){
+  const nome=(currentUser&&currentUser.nome)||'';
+  if(!nome) return [];
+  return pmpMontarEquips().filter(e=>e.programador===nome);
+}
+function pmpPainelSetFiltro(f){ _pmpPainelFiltro=f; pmpRenderPainelProgramador(); }
+
+function pmpRenderPainelProgramador(){
+  const el=document.getElementById('pmp-content-painel'); if(!el) return;
+  const nome=(currentUser&&currentUser.nome)||'Programador';
+  const minhas=pmpMinhasMaquinas();
+  const total=minhas.length;
+  const c={}; minhas.forEach(e=>{c[e.status]=(c[e.status]||0)+1;});
+  const emDia=c['Em Dia']||0, atencao=c['Atenção']||0, vencidas=c['Vencida']||0, programado=c['Programado']||0;
+  let semanaNum=null;
+  try{ semanaNum=parseInt(semanaAtual().split('-W')[1],10); }catch(e){}
+
+  const itensFila=[];
+  minhas.filter(e=>e.status==='Vencida').sort((a,b)=>(b.horas_vencidas||0)-(a.horas_vencidas||0)).forEach(e=>{
+    itensFila.push({tipo:'vencida',e,cor:'var(--pnl-crit)',txt:_pmpHFmt(e.h_para_pmp),acaoTxt:'Programar →',primary:true,dest:"pmpNavSidebar('programacao','acao')"});
+  });
+  minhas.filter(e=>e.semana_plan&&!e.wf_acao).forEach(e=>{
+    itensFila.push({tipo:'aceite',e,cor:'var(--pnl-info)',txt:'aguard.',acaoTxt:'Aceitar',dest:"pmpNavSidebar('programacao','acao')"});
+  });
+  minhas.filter(e=>e.wf_validacao==='pendente').forEach(e=>{
+    itensFila.push({tipo:'pendencia',e,cor:'var(--pnl-warn)',txt:'tratar',acaoTxt:'Ver pendência',dest:"pmpNavSidebar('programacao','pendencias')"});
+  });
+  minhas.filter(e=>e.status==='Atenção').sort((a,b)=>(a.h_para_pmp??0)-(b.h_para_pmp??0)).forEach(e=>{
+    itensFila.push({tipo:'atencao',e,cor:'var(--pnl-warn)',txt:_pmpHFmt(e.h_para_pmp),acaoTxt:'Planejar',dest:"pmpNavSidebar('planejamento','execucao','fila')"});
+  });
+
+  let itensFiltrados=itensFila;
+  if(_pmpPainelFiltro==='vencidas') itensFiltrados=itensFila.filter(i=>i.tipo==='vencida');
+  else if(_pmpPainelFiltro==='aceite') itensFiltrados=itensFila.filter(i=>i.tipo==='aceite');
+  const itensMostrar=itensFiltrados.slice(0,10);
+
+  const proximas=semanaNum!==null?minhas.filter(e=>e.semana_plan&&Number(e.semana_plan)===semanaNum).slice(0,6):[];
+
+  const opCount={};
+  minhas.forEach(e=>{ if(e.operacao) opCount[e.operacao]=(opCount[e.operacao]||0)+1; });
+  const opsOrdenadas=Object.entries(opCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const opMax=opsOrdenadas.length?opsOrdenadas[0][1]:1;
+
+  const _queueRow=i=>`
+    <div class="pnl-qrow">
+      <div class="tick" style="background:${i.cor}"></div>
+      <div class="frota">${i.e.frota}<small>${i.e.modelo||i.e.operacao||''}</small></div>
+      <div class="op"><b>${i.e.operacao||'—'}</b>${i.e.om?'OM '+i.e.om:(i.tipo==='pendencia'?i.e.wf_motivo_pendencia||'':'')}</div>
+      <div class="hrs" style="color:${i.cor}">${i.txt}</div>
+      <div class="act"><a onclick="${i.dest}" class="${i.primary?'primary':''}">${i.acaoTxt}</a></div>
+    </div>`;
+
+  el.innerHTML=`
+    <div class="pnl">
+      <div class="pnl-console">
+        <div class="pnl-chdr">
+          <div class="who">${nome}<span>Programador · PCM</span></div>
+          <div class="badge">${total} MÁQUINA${total===1?'':'S'}</div>
+        </div>
+        <div class="pnl-score">
+          <div class="cell"><div class="n">${total}</div><div class="lbl">Total</div></div>
+          <div class="cell ok"><div class="n">${emDia}</div><div class="lbl">Em dia</div></div>
+          <div class="cell warn"><div class="n">${atencao}</div><div class="lbl">Atenção &lt;50h</div></div>
+          <div class="cell crit"><div class="n">${vencidas}</div><div class="lbl">Vencidas</div></div>
+          <div class="cell info"><div class="n">${programado}</div><div class="lbl">Programadas</div></div>
+        </div>
+        <div class="pnl-sec"><h3>Fila de prioridade <span class="cnt">${itensFiltrados.length} ite${itensFiltrados.length===1?'m':'ns'}</span></h3></div>
+        <div class="pnl-queue">${itensMostrar.length?itensMostrar.map(_queueRow).join(''):'<div class="pnl-empty">Nenhum item precisando de atenção agora — tudo em dia 🎉</div>'}</div>
+        <div class="pnl-pair">
+          <div class="col">
+            <h3>Próximas — semana ${semanaNum??'—'}</h3>
+            ${proximas.length?proximas.map(e=>`<div class="pnl-prow"><span class="t">${e.frota}<small>${e.operacao||''}</small></span><span class="s ${e.wf_acao==='programado'?'go':'wait'}">${e.wf_acao==='programado'?'programado':'aguardando'}</span></div>`).join(''):'<div class="pnl-empty">Nada planejado pra essa semana ainda.</div>'}
+          </div>
+          <div class="col">
+            <h3>Suas operações — ${Object.keys(opCount).length} unidade${Object.keys(opCount).length===1?'':'s'}</h3>
+            ${opsOrdenadas.length?opsOrdenadas.map(([op,n])=>`<div class="pnl-oprow"><span class="nm">${op}</span><div class="track"><div class="fill" style="width:${Math.round(n/opMax*100)}%"></div></div><span class="n">${n}</span></div>`).join(''):'<div class="pnl-empty">Sem operações identificadas.</div>'}
+          </div>
+        </div>
+        <div class="pnl-foot">
+          <span class="f ${_pmpPainelFiltro==='todas'?'on':''}" onclick="pmpPainelSetFiltro('todas')">Todas</span>
+          <span class="f ${_pmpPainelFiltro==='vencidas'?'on':''}" onclick="pmpPainelSetFiltro('vencidas')">Só vencidas</span>
+          <span class="f ${_pmpPainelFiltro==='aceite'?'on':''}" onclick="pmpPainelSetFiltro('aceite')">Aguardando aceite</span>
+          <button class="go" onclick="pmpNavSidebar('planejamento','execucao','fila')">Ir para a Fila de Planejamento →</button>
+        </div>
+      </div>
+    </div>`;
 }
 
 function pmpSetSubAba(sub){
@@ -22133,6 +22236,61 @@ function pendToggle(i){
 .pmp-tbl tbody tr:hover{background:#F8FAFC}
 .pmp-tbl tbody tr:last-child{border-bottom:none}
 .pmp-tbl tbody td{padding:8px 12px;vertical-align:middle}
+
+/* ── Meu Painel (Programador) ── */
+.pnl{--pnl-ink:#16232A;--pnl-line:#DCE3E7;--pnl-line-soft:#E8EDEF;--pnl-muted:#5C6F78;--pnl-faint:#93A3AB;
+  --pnl-ok:#1E7A46;--pnl-warn:#A85A0A;--pnl-crit:#B02A22;--pnl-info:#4B4FC4;
+  --pnl-mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Consolas,monospace;
+  padding:24px 28px 32px;color:var(--pnl-ink)}
+.pnl-console{background:#fff;border:1px solid var(--pnl-line);border-radius:8px;overflow:hidden}
+.pnl-chdr{background:var(--pnl-ink);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.pnl-chdr .who{font-size:14px;font-weight:600}
+.pnl-chdr .who span{color:#8b9aa1;font-weight:400;font-size:12px;margin-left:8px}
+.pnl-chdr .badge{margin-left:auto;font-family:var(--pnl-mono);font-size:11px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);padding:3px 9px;border-radius:3px;color:#d7dde0}
+.pnl-score{display:flex;padding:18px 24px;border-bottom:1px solid var(--pnl-line);flex-wrap:wrap;gap:14px}
+.pnl-score .cell{flex:1;min-width:110px;padding-right:18px;border-right:1px solid var(--pnl-line)}
+.pnl-score .cell:last-child{border-right:none;padding-right:0}
+.pnl-score .n{font-family:var(--pnl-mono);font-size:27px;font-weight:600;line-height:1}
+.pnl-score .lbl{font-size:10.5px;color:var(--pnl-muted);text-transform:uppercase;letter-spacing:.05em;margin-top:6px}
+.pnl-score .cell.crit .n{color:var(--pnl-crit)}
+.pnl-score .cell.warn .n{color:var(--pnl-warn)}
+.pnl-score .cell.ok .n{color:var(--pnl-ok)}
+.pnl-score .cell.info .n{color:var(--pnl-info)}
+.pnl-sec{padding:18px 24px 6px}
+.pnl-sec h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pnl-muted);margin:0;display:flex;align-items:baseline;gap:8px}
+.pnl-sec h3 .cnt{font-family:var(--pnl-mono);color:var(--pnl-faint);font-weight:400;text-transform:none}
+.pnl-queue{border-top:1px solid var(--pnl-line)}
+.pnl-qrow{display:grid;grid-template-columns:3px 110px 1fr 90px 120px;align-items:center;border-bottom:1px solid var(--pnl-line-soft);min-height:50px}
+.pnl-qrow .frota{font-family:var(--pnl-mono);font-size:12.5px;font-weight:600;padding-left:12px}
+.pnl-qrow .frota small{display:block;font-family:-apple-system,sans-serif;font-weight:400;font-size:10.5px;color:var(--pnl-faint);margin-top:1px}
+.pnl-qrow .op{font-size:12px;color:var(--pnl-muted);padding-right:8px;overflow:hidden}
+.pnl-qrow .op b{color:var(--pnl-ink);font-weight:600;display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pnl-qrow .hrs{font-family:var(--pnl-mono);font-size:14px;font-weight:600;text-align:right;padding-right:14px}
+.pnl-qrow .act{padding-right:12px;text-align:right}
+.pnl-qrow .act a{font-size:11px;font-weight:600;color:var(--pnl-muted);text-decoration:none;cursor:pointer;border-bottom:1px solid var(--pnl-line)}
+.pnl-qrow .act a.primary{color:#E8630A;border-color:transparent}
+.pnl-qrow .act a:hover{color:var(--pnl-ink)}
+.pnl-pair{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--pnl-line);margin-top:4px}
+.pnl-pair .col{padding:18px 24px}
+.pnl-pair .col:first-child{border-right:1px solid var(--pnl-line)}
+.pnl-pair h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pnl-muted);margin:0 0 10px}
+.pnl-prow{display:flex;align-items:baseline;gap:10px;padding:6px 0;border-bottom:1px solid var(--pnl-line-soft);font-size:12px}
+.pnl-prow:last-child{border-bottom:none}
+.pnl-prow .t{flex:1;color:var(--pnl-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pnl-prow .t small{color:var(--pnl-faint);font-size:10.5px;margin-left:6px}
+.pnl-prow .s{font-size:10px;font-weight:600;flex-shrink:0}
+.pnl-prow .s.wait{color:var(--pnl-warn)}
+.pnl-prow .s.go{color:var(--pnl-ok)}
+.pnl-oprow{display:flex;align-items:center;gap:10px;padding:6px 0}
+.pnl-oprow .nm{font-size:12px;width:150px;flex-shrink:0;color:var(--pnl-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pnl-oprow .track{flex:1;height:3px;background:var(--pnl-line-soft)}
+.pnl-oprow .fill{height:100%;background:var(--pnl-ink)}
+.pnl-oprow .n{font-family:var(--pnl-mono);font-size:11.5px;color:var(--pnl-muted);width:18px;text-align:right}
+.pnl-foot{display:flex;align-items:center;gap:8px;padding:16px 24px;border-top:1px solid var(--pnl-line);flex-wrap:wrap}
+.pnl-foot .f{font-size:12px;color:var(--pnl-muted);border:1px solid var(--pnl-line);padding:5px 12px;cursor:pointer;background:#fff;border-radius:5px}
+.pnl-foot .f.on{color:var(--pnl-ink);border-color:var(--pnl-ink);font-weight:600}
+.pnl-foot .go{margin-left:auto;background:#E8630A;color:#fff;font-size:12px;font-weight:600;padding:8px 16px;border:none;border-radius:6px;cursor:pointer}
+.pnl-empty{text-align:center;padding:30px;color:var(--pnl-faint);font-size:12.5px}
 .pmp-edit{cursor:pointer;border-radius:4px;transition:background .12s}
 .pmp-edit:hover{background:#FFF9C4!important;outline:1px dashed #E8630A}
 .pmp-editing{background:#FFF3CD!important}
@@ -22143,6 +22301,9 @@ function pendToggle(i){
     <div style="font-size:20px;font-weight:800;color:#1A2E35">PMP</div>
     <div id="pmp-breadcrumb" style="font-size:12px;color:#8FA4AE;margin-top:2px">Planejamento › Visão Gerencial</div>
   </div>
+
+  <!-- ── MEU PAINEL (Programador) ── -->
+  <div id="pmp-content-painel" style="flex:1;overflow:auto;flex-direction:column;display:none"></div>
 
   <!-- ── PLANEJAMENTO ── -->
   <div id="pmp-content-planejamento" style="flex:1;overflow:hidden;flex-direction:column;display:flex">
