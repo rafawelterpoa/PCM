@@ -18947,6 +18947,12 @@ function pmpPainelLimparFiltros(){
   _pmpPainelFiltroOp=''; _pmpPainelFiltroGestor=''; _pmpPainelFiltroProg='';
   pmpRenderPainelProgramador();
 }
+const _PNL_PRIO={
+  vencida:{label:'Alta',bg:'#FEE2E2',fg:'#B91C1C',icon:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>'},
+  pendencia:{label:'Alta',bg:'#FEF3C7',fg:'#B45309',icon:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>'},
+  aceite:{label:'Média',bg:'#EDE9FE',fg:'#5B21B6',icon:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'},
+  atencao:{label:'Baixa',bg:'#FEF3C7',fg:'#B45309',icon:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'}
+};
 
 function pmpRenderPainelProgramador(){
   const el=document.getElementById('pmp-content-painel'); if(!el) return;
@@ -18962,21 +18968,30 @@ function pmpRenderPainelProgramador(){
   const total=minhas.length;
   const c={}; minhas.forEach(e=>{c[e.status]=(c[e.status]||0)+1;});
   const emDia=c['Em Dia']||0, atencao=c['Atenção']||0, vencidas=c['Vencida']||0, programado=c['Programado']||0;
+  const totalOperacoes=new Set(minhas.map(e=>e.operacao).filter(Boolean)).size;
+  const totalMecanicos=new Set(minhas.map(e=>e.mantenedor).filter(Boolean)).size;
+  const agProgramacao=minhas.filter(e=>e.semana_plan&&!e.wf_acao).length;
+  const nPendencias=minhas.filter(e=>e.wf_validacao==='pendente').length;
+  const _frotasSet=new Set(minhas.map(e=>e.frota));
+  const _AVARIA_ABERTA=['aguardando_inspecao','em_orcamento','aguardando_cliente','aguardando_faturamento'];
+  const avariasAbertas=Object.values(window._rcdRegistros||{}).filter(r=>_frotasSet.has(r.equip_id)&&_AVARIA_ABERTA.includes(r.status));
+  const valorAvarias=avariasAbertas.reduce((s,r)=>s+(parseFloat(r.orc_valor)||0),0);
+  const paradasPorAvaria=new Set(avariasAbertas.map(r=>r.equip_id)).size;
   let semanaNum=null;
   try{ semanaNum=parseInt(semanaAtual().split('-W')[1],10); }catch(e){}
 
   const itensFila=[];
   minhas.filter(e=>e.status==='Vencida').sort((a,b)=>(b.horas_vencidas||0)-(a.horas_vencidas||0)).forEach(e=>{
-    itensFila.push({tipo:'vencida',e,cor:'var(--pnl-crit)',txt:_pmpHFmt(e.h_para_pmp),acaoTxt:'Programar →',primary:true,dest:"pmpNavSidebar('programacao','acao')"});
+    itensFila.push({tipo:'vencida',e,cor:'var(--pnl-crit)',txt:_pmpHFmt(e.h_para_pmp),acaoTxt:'Programar →',tipoLabel:'Vencida',primary:true,dest:"pmpNavSidebar('programacao','acao')"});
   });
   minhas.filter(e=>e.semana_plan&&!e.wf_acao).forEach(e=>{
-    itensFila.push({tipo:'aceite',e,cor:'var(--pnl-info)',txt:'aguard.',acaoTxt:'Aceitar',dest:"pmpNavSidebar('programacao','acao')"});
+    itensFila.push({tipo:'aceite',e,cor:'var(--pnl-info)',txt:'aguard.',acaoTxt:'Aceitar',tipoLabel:'Ag. aceite',dest:"pmpNavSidebar('programacao','acao')"});
   });
   minhas.filter(e=>e.wf_validacao==='pendente').forEach(e=>{
-    itensFila.push({tipo:'pendencia',e,cor:'var(--pnl-warn)',txt:'tratar',acaoTxt:'Ver pendência',dest:"pmpNavSidebar('programacao','pendencias')"});
+    itensFila.push({tipo:'pendencia',e,cor:'var(--pnl-warn)',txt:'tratar',acaoTxt:'Ver pendência',tipoLabel:'Pendência',dest:"pmpNavSidebar('programacao','pendencias')"});
   });
   minhas.filter(e=>e.status==='Atenção').sort((a,b)=>(a.h_para_pmp??0)-(b.h_para_pmp??0)).forEach(e=>{
-    itensFila.push({tipo:'atencao',e,cor:'var(--pnl-warn)',txt:_pmpHFmt(e.h_para_pmp),acaoTxt:'Planejar',dest:"pmpNavSidebar('planejamento','execucao','fila')"});
+    itensFila.push({tipo:'atencao',e,cor:'var(--pnl-warn)',txt:_pmpHFmt(e.h_para_pmp),acaoTxt:'Planejar',tipoLabel:'Atenção',dest:"pmpNavSidebar('planejamento','execucao','fila')"});
   });
 
   let itensFiltrados=itensFila;
@@ -18991,21 +19006,44 @@ function pmpRenderPainelProgramador(){
   const opsOrdenadas=Object.entries(opCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
   const opMax=opsOrdenadas.length?opsOrdenadas[0][1]:1;
 
-  const _queueRow=i=>`
+  const _queueRow=i=>{
+    const p=_PNL_PRIO[i.tipo]||{label:'',bg:'#F4F6F8',fg:'#8FA4AE',icon:''};
+    return `
     <div class="pnl-qrow">
       <div class="tick" style="background:${i.cor}"></div>
       <div class="frota">${i.e.frota}<small>${i.e.modelo||i.e.operacao||''}</small></div>
-      <div class="op"><b>${i.e.operacao||'—'}</b>${i.e.om?'OM '+i.e.om:(i.tipo==='pendencia'?i.e.wf_motivo_pendencia||'':'')}</div>
+      <div class="op"><b>${i.e.operacao||'—'}</b>${i.e.om?'OM '+i.e.om:(i.tipo==='pendencia'?i.e.wf_motivo_pendencia||'':'')}${(!souProgramador&&i.e.programador)?' · '+i.e.programador:''}</div>
       <div class="hrs" style="color:${i.cor}">${i.txt}</div>
-      <div class="act"><a onclick="${i.dest}" class="${i.primary?'primary':''}">${i.acaoTxt}</a></div>
+      <div class="prio" style="background:${p.bg};color:${p.fg}">${p.icon}${p.label}</div>
+      <div class="act">${souProgramador?`<a onclick="${i.dest}" class="${i.primary?'primary':''}">${i.acaoTxt}</a>`:''}</div>
     </div>`;
+  };
+
+  const _donutSegs=[
+    {n:emDia,cor:'var(--pnl-ok)',lbl:'Em dia'},
+    {n:atencao,cor:'var(--pnl-warn)',lbl:'Atenção <50h'},
+    {n:vencidas,cor:'var(--pnl-crit)',lbl:'Vencidas'},
+    {n:programado,cor:'var(--pnl-info)',lbl:'Programadas'},
+    {n:agProgramacao,cor:'#93A3AB',lbl:'Ag. programação'}
+  ];
+  let _accSeg=0;
+  const donutGrad=total?_donutSegs.map(s=>{
+    const de=_accSeg/total*100; _accSeg+=s.n; const ate=_accSeg/total*100;
+    return `${s.cor} ${de}% ${ate}%`;
+  }).join(','):'var(--pnl-line) 0% 100%';
+  const _pctOf=n=>total?Math.round(n/total*100):0;
+
+  const filtrosAtivos=!!(_pmpPainelFiltroOp||_pmpPainelFiltroGestor||_pmpPainelFiltroProg);
+  const mostrarEvolucao=!souProgramador&&!filtrosAtivos;
+  const vencSev={}; minhas.forEach(e=>{if(e.status==='Vencida'&&e.severidade) vencSev[e.severidade]=(vencSev[e.severidade]||0)+1;});
+  const sevMax=Math.max(vencidas,1);
+  const _sevCor={'Leve':'var(--pnl-warn)','Crítico':'#C2410C','Supercrítico':'var(--pnl-crit)'};
 
   const subLabel=souProgramador?'Programador · PCM':`${currentUser?.perfil||''} · ${currentUser?.setor||''}`;
   const badgeTxt=(!souProgramador&&total!==universoTotal.length)?`${total} DE ${universoTotal.length} MÁQUINAS`:`${total} MÁQUINA${total===1?'':'S'}`;
   const opsAll=souProgramador?[]:[...new Set(universoTotal.map(e=>e.operacao).filter(Boolean))].sort();
   const gestoresAll=souProgramador?[]:[...new Set(universoTotal.map(e=>e.gestor).filter(Boolean))].sort();
   const progsAll=souProgramador?[]:[...new Set(universoTotal.map(e=>e.programador).filter(Boolean))].sort();
-  const filtrosAtivos=!!(_pmpPainelFiltroOp||_pmpPainelFiltroGestor||_pmpPainelFiltroProg);
 
   el.innerHTML=`
     <div class="pnl">
@@ -19030,12 +19068,54 @@ function pmpRenderPainelProgramador(){
           </select>
           ${filtrosAtivos?`<span class="f" onclick="pmpPainelLimparFiltros()">Limpar filtros ✕</span>`:''}
         </div>`}
-        <div class="pnl-score">
-          <div class="cell"><div class="n">${total}</div><div class="lbl">Total</div></div>
-          <div class="cell ok"><div class="n">${emDia}</div><div class="lbl">Em dia</div></div>
-          <div class="cell warn"><div class="n">${atencao}</div><div class="lbl">Atenção &lt;50h</div></div>
-          <div class="cell crit"><div class="n">${vencidas}</div><div class="lbl">Vencidas</div></div>
-          <div class="cell info"><div class="n">${programado}</div><div class="lbl">Programadas</div></div>
+        <div class="row-2col" style="display:grid;grid-template-columns:1.4fr 1fr">
+          <div class="pnl-picons n4" style="border-right:1px solid var(--pnl-line)">
+            <div class="pnl-pistat">
+              <div class="pnl-picon" style="background:#E6F1FB"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="1.8"><rect x="1" y="7" width="14" height="9"/><path d="M15 10h4l3 3v3h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></div>
+              <div><div class="pn">${total}</div><div class="pl">Máquinas</div></div>
+            </div>
+            <div class="pnl-pistat">
+              <div class="pnl-picon" style="background:#EAF3DE"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B6D11" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
+              <div><div class="pn">${totalOperacoes}</div><div class="pl">Operações</div></div>
+            </div>
+            <div class="pnl-pistat">
+              <div class="pnl-picon" style="background:#EEEDFE"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#534AB7" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <div><div class="pn">${totalMecanicos}</div><div class="pl">Mecânicos</div></div>
+            </div>
+            <div class="pnl-pistat">
+              <div class="pnl-picon" style="background:#FEE2E2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B91C1C" stroke-width="1.8"><rect x="1" y="7" width="14" height="9"/><path d="M15 10h4l3 3v3h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><line x1="3" y1="3" x2="21" y2="21"/></svg></div>
+              <div><div class="pn" style="color:#B91C1C">${paradasPorAvaria}</div><div class="pl">Paradas p/ avaria</div></div>
+            </div>
+          </div>
+          <div class="pnl-picons n2">
+            <div class="pnl-pistat">
+              <div class="pnl-picon" style="background:#FEF3C7"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+              <div><div class="pn" style="color:#B45309">${nPendencias}</div><div class="pl">Pendências</div></div>
+            </div>
+            <div class="pnl-pistat">
+              <div class="pnl-picon" style="background:#FEE2E2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B91C1C" stroke-width="1.8"><path d="M12 1v6m0 6v10M4.2 4.2l4.2 4.2m7.2 7.2l4.2 4.2M1 12h6m6 0h10M4.2 19.8l4.2-4.2m7.2-7.2l4.2-4.2"/></svg></div>
+              <div><div class="pn" style="color:#B91C1C;font-size:15px">${fmtBRL(valorAvarias)}</div><div class="pl">Valor em aberto</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="pnl-sec"><h3>Preventivas</h3></div>
+        <div class="pnl-donutrow">
+          <div class="pnl-donut" style="background:conic-gradient(${donutGrad})">
+            <div class="hole"><b>${total}</b><span>máquinas</span></div>
+          </div>
+          <div class="pnl-legend">
+            ${_donutSegs.map(s=>`<div class="lrow"><span class="dot" style="background:${s.cor}"></span><span class="lbl">${s.lbl}</span><b>${s.n}</b><span class="pct">${_pctOf(s.n)}%</span></div>`).join('')}
+          </div>
+          ${mostrarEvolucao?`
+          <div class="pnl-sevbars">
+            <div style="font-size:11px;color:var(--pnl-muted);margin-bottom:8px">Evolução — em dia x vencidas</div>
+            <canvas id="pnl-painel-evo" height="120"></canvas>
+          </div>`:`
+          <div class="pnl-sevbars">
+            <div style="font-size:11px;color:var(--pnl-muted);margin-bottom:8px">Vencidas por severidade</div>
+            ${['Leve','Crítico','Supercrítico'].map(s=>{const n=vencSev[s]||0;return `<div class="oprow" style="display:flex;align-items:center;gap:8px;padding:4px 0"><span style="font-size:11.5px;width:78px;flex-shrink:0">${s}</span><div style="flex:1;height:5px;background:var(--pnl-line-soft);border-radius:99px"><div style="height:100%;border-radius:99px;width:${Math.round(n/sevMax*100)}%;background:${_sevCor[s]}"></div></div><span style="font-family:var(--pnl-mono);font-size:11.5px;width:16px;text-align:right">${n}</span></div>`;}).join('')}
+            ${vencidas===0?'<div class="pnl-empty" style="padding:12px 0">Nenhuma vencida no momento.</div>':''}
+          </div>`}
         </div>
         <div class="pnl-sec"><h3>Fila de prioridade <span class="cnt">${itensFiltrados.length} ite${itensFiltrados.length===1?'m':'ns'}</span></h3></div>
         <div class="pnl-queue">${itensMostrar.length?itensMostrar.map(_queueRow).join(''):'<div class="pnl-empty">Nenhum item precisando de atenção agora — tudo em dia 🎉</div>'}</div>
@@ -19057,6 +19137,21 @@ function pmpRenderPainelProgramador(){
         </div>
       </div>
     </div>`;
+
+  if(mostrarEvolucao){
+    const cEvo=document.getElementById('pnl-painel-evo');
+    if(cEvo&&typeof Chart!=='undefined'){
+      const evo=window.PMP_EVOLUCAO||{};
+      const chaves=Object.keys(evo).sort();
+      const prev=Chart.getChart(cEvo); if(prev) prev.destroy();
+      if(chaves.length){
+        new Chart(cEvo,{type:'line',data:{labels:chaves,datasets:[
+          {label:'Em Dia',data:chaves.map(k=>evo[k].em_dia),borderColor:'#1E8A4C',backgroundColor:'rgba(30,138,76,.08)',fill:true,tension:.3,pointRadius:2},
+          {label:'Vencidas',data:chaves.map(k=>evo[k].vencidas),borderColor:'#B91C1C',backgroundColor:'rgba(185,28,28,.08)',fill:true,tension:.3,pointRadius:2}
+        ]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:8}}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}});
+      }
+    }
+  }
 }
 
 // ── PMP — Planejamento › Visão Geral (painel agregado da frota) ────────────
@@ -22384,11 +22479,32 @@ function pendToggle(i){
 .pnl-filters{display:flex;align-items:center;gap:8px;padding:14px 24px;border-bottom:1px solid var(--pnl-line);flex-wrap:wrap}
 .pnl-filters select{padding:6px 10px;border:1px solid var(--pnl-line);border-radius:5px;font-size:12px;color:var(--pnl-ink);background:#fff;cursor:pointer;max-width:190px}
 .pnl-filters .f{font-size:12px;color:var(--pnl-muted);border:1px solid var(--pnl-line);padding:5px 12px;cursor:pointer;background:#fff;border-radius:5px}
+.pnl-picons{display:grid;gap:14px;padding:18px 24px;border-bottom:1px solid var(--pnl-line)}
+.pnl-picons.n2{grid-template-columns:repeat(2,1fr)}
+.pnl-picons.n3{grid-template-columns:repeat(3,1fr)}
+.pnl-picons.n4{grid-template-columns:repeat(4,1fr)}
+.pnl-pistat{display:flex;align-items:center;gap:10px;min-width:0}
+.pnl-picon{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pnl-pistat .pn{font-size:19px;font-weight:700;line-height:1.15;font-family:var(--pnl-mono);white-space:nowrap}
+.pnl-pistat .pl{font-size:10px;color:var(--pnl-muted);text-transform:uppercase;letter-spacing:.04em;margin-top:1px}
+.pnl-donutrow{display:flex;align-items:center;gap:20px;padding:18px 24px;border-bottom:1px solid var(--pnl-line);flex-wrap:wrap}
+.pnl-donut{position:relative;width:104px;height:104px;flex-shrink:0;border-radius:50%}
+.pnl-donut .hole{position:absolute;inset:16px;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.pnl-donut .hole b{font-size:18px;font-weight:700;font-family:var(--pnl-mono)}
+.pnl-donut .hole span{font-size:9px;color:var(--pnl-muted);text-transform:uppercase;letter-spacing:.03em}
+.pnl-legend{flex:1;display:flex;flex-direction:column;gap:7px;min-width:160px}
+.pnl-legend .lrow{display:flex;align-items:center;gap:8px;font-size:12px}
+.pnl-legend .dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.pnl-legend .lbl{flex:1;color:var(--pnl-ink)}
+.pnl-legend b{font-family:var(--pnl-mono)}
+.pnl-legend .pct{color:var(--pnl-faint);width:34px;text-align:right;font-family:var(--pnl-mono);font-size:11px}
+.pnl-sevbars{flex:1;min-width:220px}
+.pnl-qrow .prio{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 8px 3px 6px;border-radius:99px;white-space:nowrap;justify-content:center}
 .pnl-sec{padding:18px 24px 6px}
 .pnl-sec h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pnl-muted);margin:0;display:flex;align-items:baseline;gap:8px}
 .pnl-sec h3 .cnt{font-family:var(--pnl-mono);color:var(--pnl-faint);font-weight:400;text-transform:none}
 .pnl-queue{border-top:1px solid var(--pnl-line)}
-.pnl-qrow{display:grid;grid-template-columns:3px 110px 1fr 90px 120px;align-items:center;border-bottom:1px solid var(--pnl-line-soft);min-height:50px}
+.pnl-qrow{display:grid;grid-template-columns:3px 110px 1fr 80px 78px 120px;align-items:center;gap:6px;border-bottom:1px solid var(--pnl-line-soft);min-height:50px}
 .pnl-qrow .frota{font-family:var(--pnl-mono);font-size:12.5px;font-weight:600;padding-left:12px}
 .pnl-qrow .frota small{display:block;font-family:-apple-system,sans-serif;font-weight:400;font-size:10.5px;color:var(--pnl-faint);margin-top:1px}
 .pnl-qrow .op{font-size:12px;color:var(--pnl-muted);padding-right:8px;overflow:hidden}
