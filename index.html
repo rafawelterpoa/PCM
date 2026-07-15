@@ -1301,6 +1301,14 @@ input.filter-sel{padding:5px 10px;height:32px}
   <div style="padding:22px 26px;background:#F4F6F8;min-height:100%">
     <div style="font-size:17px;font-weight:700;color:#1A2E35;margin-bottom:14px">Pátios — <span id="patio-titulo-n" style="color:#E8630A">—</span> prontos</div>
 
+    <!-- Sub-abas -->
+    <div style="display:flex;gap:0;border-bottom:1px solid #E2E8ED;margin-bottom:14px">
+      <button id="patio-tab-resumo" onclick="patioAba('resumo')" style="padding:9px 18px;background:none;border:none;border-bottom:2px solid #E8630A;color:#E8630A;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:-1px">Resumo</button>
+      <button id="patio-tab-relatorios" onclick="patioAba('relatorios')" style="padding:9px 18px;background:none;border:none;border-bottom:2px solid transparent;color:#5A7280;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:-1px">Relatórios</button>
+    </div>
+
+    <div id="patio-aba-resumo">
+
     <!-- Composição + Tempo no pátio -->
     <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-bottom:10px">
       <div id="patio-kpis" style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:14px 16px"></div>
@@ -1337,6 +1345,15 @@ input.filter-sel{padding:5px 10px;height:32px}
 
     <div id="patio-lista" style="overflow-x:auto;margin-bottom:16px"></div>
     <div id="patio-familias" style="overflow-x:auto"></div>
+    </div>
+
+    <div id="patio-aba-relatorios" style="display:none">
+      <div style="font-size:15px;font-weight:700;color:#1A2E35;margin-bottom:4px">Histórico de movimentações — Manutenção ⇄ Disponível</div>
+      <div style="font-size:12px;color:#8FA4AE;margin-bottom:14px">Dia a dia: equipamentos que saíram de Manutenção para Disponível, e que voltaram de Disponível para Manutenção.</div>
+      <div id="patio-rel-filtros" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;background:#fff;border:1px solid #E2E8ED;border-radius:10px;padding:10px 14px"></div>
+      <div id="patio-rel-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px"></div>
+      <div id="patio-rel-lista"></div>
+    </div>
   </div>
 </div>
 
@@ -2042,6 +2059,8 @@ input.filter-sel{padding:5px 10px;height:32px}
       <span style="font-size:11px;font-weight:400;color:var(--text3)">Área exclusiva — senha master</span>
     </div>
     <div class="admin-body">
+      <div id="users-filtros-wrap" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+      <div id="users-count" style="font-size:11px;color:var(--text3);margin-bottom:8px"></div>
       <table class="user-table" id="users-table">
         <thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Setor</th><th>E-mail</th><th>Oficina</th><th>Ações</th></tr></thead>
         <tbody id="users-tbody"></tbody>
@@ -5414,10 +5433,35 @@ function fecharPopupSolicitacoes(marcarVisto){
   if(el){if(marcarVisto)_solicDismissKey=el.dataset.key||'';el.remove();}
 }
 
-function renderAdminPage(){renderAdminUsers();loadLogJson();carregarPendentes();}
+function renderAdminPage(){renderAdminUsersFiltros();renderAdminUsers();loadLogJson();carregarPendentes();}
+
+let _userFiltroTexto='', _userFiltroSetor='', _userFiltroPerfil='';
+function renderAdminUsersFiltros(){
+  const el=document.getElementById('users-filtros-wrap'); if(!el) return;
+  const setores=[...new Set(usuariosCache.map(u=>u.setor).filter(Boolean))].sort();
+  const perfis=[...new Set(usuariosCache.map(u=>u.perfil).filter(Boolean))].sort();
+  const _sel=(label,cur,vals,fn,lblFn)=>`<select onchange="${fn}=this.value;renderAdminUsersFiltros();renderAdminUsers()" style="padding:7px 12px;border:1px solid ${cur?'var(--laranja)':'#E2E8ED'};border-radius:8px;font-size:12px;color:var(--text);background:#fff;cursor:pointer;max-width:200px"><option value="">${label}</option>${vals.map(v=>`<option value="${v}"${cur===v?' selected':''}>${lblFn?lblFn(v):v}</option>`).join('')}</select>`;
+  const temFiltro=_userFiltroTexto||_userFiltroSetor||_userFiltroPerfil;
+  el.innerHTML=`
+    <input type="search" placeholder="Buscar nome, usuário ou e-mail…" value="${_userFiltroTexto||''}"
+      oninput="_userFiltroTexto=this.value;renderAdminUsers()"
+      style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;width:240px;outline:none;color:var(--text)">
+    ${_sel('Todos os setores',_userFiltroSetor,setores,'_userFiltroSetor')}
+    ${_sel('Todos os perfis',_userFiltroPerfil,perfis,'_userFiltroPerfil',perfilLabel)}
+    ${temFiltro?`<button onclick="_userFiltroTexto='';_userFiltroSetor='';_userFiltroPerfil='';renderAdminUsersFiltros();renderAdminUsers()" style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;background:#fff;color:var(--text3);cursor:pointer">✕ Limpar</button>`:''}`;
+}
+
 function renderAdminUsers(){
   const tbody=document.getElementById('users-tbody');if(!tbody)return;
-  tbody.innerHTML=usuariosCache.map((u,i)=>`<tr>
+  const q=(_userFiltroTexto||'').toLowerCase();
+  const filtrados=usuariosCache.map((u,i)=>({u,i})).filter(({u})=>{
+    if(_userFiltroSetor && u.setor!==_userFiltroSetor) return false;
+    if(_userFiltroPerfil && u.perfil!==_userFiltroPerfil) return false;
+    if(q && !((u.nome||'').toLowerCase().includes(q)||(u.login||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+  const cnt=document.getElementById('users-count'); if(cnt) cnt.textContent=`${filtrados.length} de ${usuariosCache.length} usuário(s)`;
+  tbody.innerHTML=filtrados.map(({u,i})=>`<tr>
     <td style="color:var(--text)">${u.nome}</td>
     <td><code style="font-size:11px;color:var(--laranja)">${u.login}</code></td>
     <td><span class="badge-perfil perfil-${u.perfil}">${perfilLabel(u.perfil)}</span></td>
@@ -5428,7 +5472,7 @@ function renderAdminUsers(){
       <button class="btn btn-outline btn-sm" onclick="openEditUser(${i})">✏️ Editar</button>
       ${u.login==='rafael'?'—':`<button class="del-btn" onclick="delUser(${i})">Remover</button>`}
     </td>
-  </tr>`).join('');
+  </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3);font-size:12px">Nenhum usuário encontrado com esse filtro.</td></tr>';
 }
 async function addUser(){
   const nome=document.getElementById('new-nome').value.trim();
@@ -13511,6 +13555,7 @@ async function rcdCarregar(force) {
   const sseAtiva = _rcdEs && _rcdEs.readyState !== 2; // 2 = CLOSED
   const recente = (Date.now() - _rcdLastLoad) < 300000; // 5 min
   if (!force && sseAtiva && recente && Object.keys(_rcdRegistros).length) {
+    rcdRenderFiltros();
     rcdRender();
     return;
   }
@@ -13520,6 +13565,7 @@ async function rcdCarregar(force) {
     _rcdRegistros = (d && typeof d === 'object') ? d : {};
     _rcdLastLoad = Date.now();
   } catch(e) { if (!Object.keys(_rcdRegistros).length) _rcdRegistros = {}; }
+  rcdRenderFiltros();
   rcdRender();
   rgUpdateHomeKpis();
   rcdListen();   // inicia/reinicia listener SSE após carga inicial
@@ -13626,6 +13672,7 @@ function rcdDesmobSub(sub) {
     const btn = document.getElementById('rcd-dsub-'+s);
     if(btn) { btn.style.background = s===sub ? '#b45309' : '#f1f5f9'; btn.style.color = s===sub ? '#fff' : '#64748b'; }
   });
+  rcdRenderFiltros();
   rcdRender();
 }
 
@@ -13634,6 +13681,40 @@ function rcdRender() {
   if(_rcdSubAtual === 'triagem') rcdRenderTriagem();
   else if(_rcdSubAtual === 'tratamento') rcdRenderTratamento();
   else rcdRenderHistorico();
+}
+
+let _rcdFiltros = {busca:'', oficina:'', cliente:''};
+function rcdFiltrarLista(list, campoCliente){
+  let l = list;
+  if(_rcdFiltros.oficina) l = l.filter(x => (x.oficina||'') === _rcdFiltros.oficina);
+  if(campoCliente && _rcdFiltros.cliente){
+    const q = _rcdFiltros.cliente.toLowerCase();
+    l = l.filter(x => (campoCliente(x)||'').toLowerCase().includes(q));
+  }
+  if(_rcdFiltros.busca){
+    const q = _rcdFiltros.busca.toLowerCase();
+    l = l.filter(x => (x.equip_id||x.id||'').toLowerCase().includes(q) || (x.equip_nome||x.equipamento||'').toLowerCase().includes(q));
+  }
+  return l;
+}
+function rcdRenderFiltros(){
+  const el = document.getElementById('rcd-filtros-wrap'); if(!el) return;
+  const oficinas = [...new Set([
+    ...Object.values(state||{}).map(e=>e.oficina),
+    ...Object.values(_rcdRegistros||{}).map(r=>r.oficina)
+  ].filter(Boolean))].sort();
+  const temFiltro = _rcdFiltros.busca || _rcdFiltros.oficina || _rcdFiltros.cliente;
+  el.innerHTML = `
+    <input type="search" placeholder="Buscar frota / equipamento…" value="${_rcdFiltros.busca||''}"
+      oninput="_rcdFiltros.busca=this.value;rcdRender()"
+      style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;width:200px;outline:none;color:#1A2E35">
+    <input type="text" placeholder="Cliente / planta…" value="${_rcdFiltros.cliente||''}"
+      oninput="_rcdFiltros.cliente=this.value;rcdRender()"
+      style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;width:180px;outline:none;color:#1A2E35">
+    <select onchange="_rcdFiltros.oficina=this.value;rcdRenderFiltros();rcdRender()" style="padding:7px 12px;border:1px solid ${_rcdFiltros.oficina?'#E8630A':'#E2E8ED'};border-radius:8px;font-size:12px;color:#1A2E35;background:#fff;cursor:pointer;max-width:200px">
+      <option value="">Todas as oficinas</option>${oficinas.map(o=>`<option value="${o}"${_rcdFiltros.oficina===o?' selected':''}>${o}</option>`).join('')}
+    </select>
+    ${temFiltro?`<button onclick="_rcdFiltros={busca:'',oficina:'',cliente:''};rcdRenderFiltros();rcdRender()" style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:12px;background:#fff;color:#5A7280;cursor:pointer">✕ Limpar</button>`:''}`;
 }
 
 function rcdRenderIndicadores() {
@@ -13734,12 +13815,13 @@ function rcdRenderTriagem() {
   // Filtra todos que já têm algum registro (independente do status)
   const idsAtivos = new Set(Object.values(_rcdRegistros).map(r => r.equip_id + '|' + r.chegada_ts));
 
-  const pendentes = chegadas.filter(e => {
+  let pendentes = chegadas.filter(e => {
     const key = e.id + '|' + (e.etapa_desde || '');
     return !idsAtivos.has(key);
   });
+  pendentes = rcdFiltrarLista(pendentes);
 
-  if(!pendentes.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px">Nenhum equipamento aguardando triagem.</div>'; return; }
+  if(!pendentes.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px">Nenhum equipamento aguardando triagem (ou nenhum bate com o filtro).</div>'; return; }
 
   el.innerHTML = pendentes.map(e => {
     const desde = e.etapa_desde ? new Date(e.etapa_desde).toLocaleDateString('pt-BR') : '—';
@@ -13921,10 +14003,12 @@ function rcdRenderTratamento() {
     avgFaseDias[status] = _avgD(dias);
   });
 
+  const _cliCard = r => r.rcd_cliente || (state[r.equip_id]||{}).cliente || (state[r.equip_id]||{}).planta || '';
+  const regsFiltrados = rcdFiltrarLista(Object.values(_rcdRegistros), _cliCard);
   Object.entries(fases).forEach(([status, colId]) => {
     const col = document.getElementById(colId); if(!col) return;
-    const regs = Object.values(_rcdRegistros).filter(r => r.status === status);
-    if(!regs.length) { col.innerHTML = '<div style="padding:16px;text-align:center;color:#cbd5e1;font-size:11px">Nenhum registro</div>'; return; }
+    const regs = regsFiltrados.filter(r => r.status === status);
+    if(!regs.length) { col.innerHTML = '<div style="padding:16px;text-align:center;color:#cbd5e1;font-size:11px">Nenhum registro (ou nenhum bate com o filtro)</div>'; return; }
     col.innerHTML = regs.map(r => {
       const cor = STATUS_COR[status];
       const prox = proxima[status];
@@ -14497,9 +14581,10 @@ async function rcdReverter(id){
 
 function rcdRenderHistorico() {
   const el = document.getElementById('rcd-historico-lista'); if(!el) return;
-  const regs = Object.values(_rcdRegistros).filter(r => ['faturado','encerrado','concluido_sem_avaria'].includes(r.status))
+  const _cliCard = r => r.rcd_cliente || (state[r.equip_id]||{}).cliente || (state[r.equip_id]||{}).planta || '';
+  const regs = rcdFiltrarLista(Object.values(_rcdRegistros).filter(r => ['faturado','encerrado','concluido_sem_avaria'].includes(r.status)), _cliCard)
     .sort((a,b) => (b.ts_conclusao||0) - (a.ts_conclusao||0));
-  if(!regs.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px">Nenhum registro concluído.</div>'; return; }
+  if(!regs.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px">Nenhum registro concluído (ou nenhum bate com o filtro).</div>'; return; }
   const STATUS_COR   = { faturado:'#16a34a', encerrado:'#64748b', concluido_sem_avaria:'#6366f1' };
   const STATUS_LABEL = { faturado:'Faturado', encerrado:'Encerrado s/ fat.', concluido_sem_avaria:'Sem Avaria' };
   el.innerHTML = regs.map(r => {
@@ -17822,6 +17907,111 @@ function paginaPatio(){
   if(pg){pg.classList.add('active');patioPopularFiltros();patioRender();}
 }
 
+// ── PÁTIO — Relatório de movimentações (Manutenção ⇄ Disponível) ────────────
+function patioAba(aba){
+  ['resumo','relatorios'].forEach(a=>{
+    const cont=document.getElementById('patio-aba-'+a);
+    const btn=document.getElementById('patio-tab-'+a);
+    if(cont) cont.style.display=a===aba?'block':'none';
+    if(btn){btn.style.color=a===aba?'#E8630A':'#5A7280';btn.style.borderBottomColor=a===aba?'#E8630A':'transparent';}
+  });
+  if(aba==='relatorios') patioRelatorioAbrir();
+}
+
+let _patioLogs=null;
+async function patioCarregarLogs(){
+  if(_patioLogs) return;
+  try{
+    const r=await fetch(FB_BASE+'/logs.json');
+    const d=await r.json();
+    _patioLogs=(d&&typeof d==='object')?Object.values(d):[];
+  }catch(e){ _patioLogs=[]; }
+}
+
+let _patioRelFiltros={de:'',ate:'',tipo:''};
+async function patioRelatorioAbrir(){
+  const listaEl=document.getElementById('patio-rel-lista');
+  if(listaEl) listaEl.innerHTML='<div style="text-align:center;padding:40px;color:#8FA4AE;font-size:13px">Carregando…</div>';
+  await patioCarregarLogs();
+  patioRelatorioRenderFiltros();
+  patioRelatorioRender();
+}
+
+function patioRelatorioRenderFiltros(){
+  const el=document.getElementById('patio-rel-filtros'); if(!el) return;
+  const tipos=['Garantia','Sinistro','Preparação para Mobilização','Corretiva de contrato','Retorno de contrato','Manutenção para Venda'];
+  const f=_patioRelFiltros;
+  const temFiltro=f.de||f.ate||f.tipo;
+  el.innerHTML=`
+    <label style="font-size:11px;color:#8FA4AE">De</label>
+    <input type="date" value="${f.de}" onchange="_patioRelFiltros.de=this.value;patioRelatorioRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px">
+    <label style="font-size:11px;color:#8FA4AE">Até</label>
+    <input type="date" value="${f.ate}" onchange="_patioRelFiltros.ate=this.value;patioRelatorioRender()" style="padding:6px 10px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px">
+    <select onchange="_patioRelFiltros.tipo=this.value;patioRelatorioRender()" style="padding:6px 10px;border:1px solid ${f.tipo?'#E8630A':'#E2E8ED'};border-radius:7px;font-size:12px;cursor:pointer">
+      <option value="">Tipo de Manutenção — Todos</option>
+      ${tipos.map(t=>`<option value="${t}"${f.tipo===t?' selected':''}>${t}</option>`).join('')}
+    </select>
+    ${temFiltro?`<button onclick="_patioRelFiltros={de:'',ate:'',tipo:''};patioRelatorioRenderFiltros();patioRelatorioRender()" style="padding:6px 12px;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;background:#fff;color:#5A7280;cursor:pointer">✕ Limpar</button>`:''}
+    <span style="font-size:10px;color:#B7C4CC;margin-left:auto">* Tipo de Manutenção reflete o valor atual do equipamento, não necessariamente o de cada movimento passado</span>`;
+}
+
+function patioRelatorioRender(){
+  const kpiEl=document.getElementById('patio-rel-kpis');
+  const listaEl=document.getElementById('patio-rel-lista');
+  if(!listaEl) return;
+  const f=_patioRelFiltros;
+  const deTs = f.de ? new Date(f.de+'T00:00:00').getTime() : null;
+  const ateTs = f.ate ? new Date(f.ate+'T23:59:59').getTime() : null;
+  let logs=(_patioLogs||[]).filter(l=>l&&l.ts);
+  if(deTs!==null) logs=logs.filter(l=>l.ts>=deTs);
+  if(ateTs!==null) logs=logs.filter(l=>l.ts<=ateTs);
+  if(f.tipo) logs=logs.filter(l=>(state[l.eqId]||{}).tipoManut===f.tipo);
+
+  const saidas = logs.filter(l=>l.from==='Manutenção' && (l.to==='Pronto / Estoque'||l.to==='Pronto/Pátio'));
+  const retornos = logs.filter(l=>(l.from==='Pronto / Estoque'||l.from==='Pronto/Pátio'));
+
+  if(kpiEl){
+    const kpi=(label,val,cor)=>`<div style="background:#fff;border-radius:10px;border:1px solid #E2E8ED;border-left:3px solid ${cor};padding:12px 16px"><div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#5A7280;margin-bottom:4px">${label}</div><div style="font-size:22px;font-weight:800;color:${cor}">${val}</div></div>`;
+    kpiEl.innerHTML = kpi('Manutenção → Disponível', saidas.length, '#1E8A4C') + kpi('Disponível → Manutenção', retornos.length, '#B45309');
+  }
+
+  const porDia={};
+  const addDia=(l,tipo)=>{
+    const dia=l.data||'—';
+    if(!porDia[dia]) porDia[dia]={saidas:[],retornos:[]};
+    porDia[dia][tipo].push(l);
+  };
+  saidas.forEach(l=>addDia(l,'saidas'));
+  retornos.forEach(l=>addDia(l,'retornos'));
+  const dias=Object.keys(porDia).sort((a,b)=>{
+    const pa=a.split('/').reverse().join(''), pb=b.split('/').reverse().join('');
+    return pb.localeCompare(pa);
+  });
+
+  if(!dias.length){ listaEl.innerHTML='<div style="text-align:center;padding:40px;color:#8FA4AE;font-size:13px">Nenhuma movimentação encontrada nesse filtro.</div>'; return; }
+
+  const _linha=(l,cor,setaLabel)=>{
+    const eq=state[l.eqId]||{};
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #F0F4F6">
+      <div><strong style="font-size:12px;color:#1A2E35">${l.eqId}</strong> <span style="font-size:11px;color:#8FA4AE">${l.nome||eq.equipamento||''}</span></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${eq.tipoManut?`<span style="font-size:10px;color:#5A7280">${eq.tipoManut}</span>`:''}
+        <span style="font-size:11px;font-weight:700;color:${cor}">${setaLabel}</span>
+        <span style="font-size:10px;color:#B7C4CC">${l.hora||''}</span>
+      </div>
+    </div>`;
+  };
+
+  listaEl.innerHTML = dias.map(dia=>{
+    const {saidas:s,retornos:r}=porDia[dia];
+    return `<div style="background:#fff;border:1px solid #E2E8ED;border-radius:10px;margin-bottom:12px;overflow:hidden">
+      <div style="background:#F4F6F8;padding:8px 14px;font-size:12px;font-weight:700;color:#1A2E35">${dia} — ${s.length+r.length} movimentação(ões)</div>
+      ${s.length?`<div style="padding:6px 0"><div style="font-size:10px;font-weight:700;color:#1E8A4C;text-transform:uppercase;padding:4px 14px">Manutenção → Disponível (${s.length})</div>${s.map(l=>_linha(l,'#1E8A4C','→ Disponível')).join('')}</div>`:''}
+      ${r.length?`<div style="padding:6px 0"><div style="font-size:10px;font-weight:700;color:#B45309;text-transform:uppercase;padding:4px 14px">Disponível → Manutenção (${r.length})</div>${r.map(l=>_linha(l,'#B45309','→ Manutenção')).join('')}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
 function patioPopularFiltros(){
   const selOf=document.getElementById('patio-filtro-of');
   if(selOf&&selOf.options.length<=1){
@@ -21005,6 +21195,7 @@ if ('serviceWorker' in navigator) {
     <div id="rcd-aba-desmob">
       <!-- INDICADORES RCD — apenas na aba Desmobilização -->
       <div id="rcd-indicadores" style="margin-bottom:20px">
+        <div id="rcd-filtros-wrap" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
         <div id="rcd-kpi-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:12px"></div>
         <div id="rcd-ind-detalhe" style="display:none;background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:18px 20px">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
