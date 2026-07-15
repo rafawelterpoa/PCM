@@ -5280,7 +5280,7 @@ async function carregarPendentes(){
 const _PERFIS_POR_SETOR={
   'Master':['master'],
   'Oficinas':['Gestor','Analista'],
-  'PCM':['Programação','RCD','Planejamento'],
+  'PCM':['Programação','RCD','Planejamento','Gestor'],
   'Gestão de Ativos':['Gestor','Analista'],
   'Implantação':['Gestor','Analista'],
   'Operação':['Gestor','Analista'],
@@ -15323,6 +15323,14 @@ const _REGRAS_ACESSO = {
     soLeitura:['operacoes']
   },
 
+  // PCM Gestor — acesso full no PMP (Planejamento e Programação), mesmo alcance dos demais perfis PCM
+  'PCM/Gestor': {
+    navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd','snav-solrcd','snav-manuterceiros','snav-valepecas'],
+    navHide:['snav-oficinas','snav-patio','snav-gi','snav-bd','snav-bd-divider','snav-bd-label'],
+    bloqueado:['oficinas','patio','bd'],
+    soLeitura:['operacoes']
+  },
+
   // Gestão de Ativos Gestor — entra em tudo exceto oficinas/patio, sem ações em PMP/RCD/garantias
   'Gestão de Ativos/Gestor': {
     navShow:['snav-home','snav-operacoes','snav-pmp','snav-rcd','snav-manuterceiros','snav-valepecas'],
@@ -18864,24 +18872,33 @@ function pmpRenderPlanejamento(){
   const all=pmpMontarEquips();
   pmpSnapshotEvolucao(all);
   pmpRenderFiltros(all);
+  pmpRenderResultados(all);
+}
+
+function pmpRenderResultados(all){
+  all = all || pmpMontarEquips();
   const equips=pmpFiltrarEquips(all);
-  pmpRenderKPIs(equips);
+  pmpRenderKPIs(equips,all);
   if(_pmpSubAba==='gerencial') pmpRenderGerencial(equips,all);
   else pmpRenderAnalitica(equips,all);
 }
 
-function pmpRenderKPIs(equips){
+function pmpRenderKPIs(equips,all){
   const el=document.getElementById('pmp-kpis'); if(!el) return;
   const c={};equips.forEach(e=>{c[e.status]=(c[e.status]||0)+1;});
   const total=equips.length;
   const vencSev={};equips.forEach(e=>{if(e.status==='Vencida'&&e.severidade)vencSev[e.severidade]=(vencSev[e.severidade]||0)+1;});
   const vencSevLine=['Leve','Crítico','Supercrítico'].map(s=>vencSev[s]?`${s} ${vencSev[s]}`:'').filter(Boolean).join(' · ');
-  const _todosAlug=(EQUIPAMENTOS_ORIG||[]).filter(e=>e.status==='Alugado');
-  const _excluidos=_todosAlug.length-total;
+  const _todosAlugTodosTipos=(EQUIPAMENTOS_ORIG||[]).filter(e=>e.status==='Alugado');
+  const _semGestaoFrota=_todosAlugTodosTipos.filter(e=>opContratoEquip(e)!=='Gestão de frota');
+  const _excluidosGestao=_todosAlugTodosTipos.length-_semGestaoFrota.length;
+  const _totalEscopoPmp=(all||[]).length;
+  const _excluidosTipo=_semGestaoFrota.length-_totalEscopoPmp;
+  const _filtroAtivoTxt=total!==_totalEscopoPmp?` · filtro ativo: ${total} de ${_totalEscopoPmp}`:'';
   el.innerHTML=`
     <div class="pmp-kpi" style="border-top:3px solid #1A2E35">
       <div class="pmp-kpi-val">${total}</div><div class="pmp-kpi-lbl">Total Alugados (PMP)</div>
-      <div style="font-size:10px;color:#8FA4AE;margin-top:2px">${_todosAlug.length} alugados no total · ${_excluidos} excluídos (Gestão de Frota)</div>
+      <div style="font-size:10px;color:#8FA4AE;margin-top:2px">${_todosAlugTodosTipos.length} alugados no total · ${_excluidosGestao} excl. Gestão de Frota · ${_excluidosTipo} excl. Implemento/Acessório${_filtroAtivoTxt}</div>
     </div>
     <div class="pmp-kpi" style="border-top:3px solid #1E8A4C"><div class="pmp-kpi-val" style="color:#1E8A4C">${c['Em Dia']||0}</div><div class="pmp-kpi-lbl">Em Dia</div></div>
     <div class="pmp-kpi" style="border-top:3px solid #B45309"><div class="pmp-kpi-val" style="color:#B45309">${c['Atenção']||0}</div><div class="pmp-kpi-lbl">Atenção &lt;50h</div></div>
@@ -18898,7 +18915,7 @@ function pmpRenderFiltros(equips){
   const progrs=[...new Set(equips.map(e=>e.programador).filter(Boolean))].sort();
   el.innerHTML=`
     <input type="search" placeholder="Buscar frota / série / modelo…" value="${_pmpBusca||''}"
-      oninput="_pmpBusca=this.value;pmpRenderPlanejamento()"
+      oninput="_pmpBusca=this.value;pmpRenderResultados()"
       style="padding:7px 12px;border:1px solid #E2E8ED;border-radius:8px;font-size:13px;width:220px;outline:none;color:#1A2E35">
     ${_sel('Todos os status',_pmpFiltroStatus,['Vencida','Atenção','Em Dia','Programado','Sem Revisão','Sem Plano'],'_pmpFiltroStatus')}
     ${_sel('Todas as operações',_pmpFiltroOp,ops,'_pmpFiltroOp')}
@@ -18919,31 +18936,17 @@ function pmpRenderGerencial(equips,all){
   const el=document.getElementById('pmp-plan-gerencial'); if(!el) return;
   if(!equips.length){el.innerHTML='<div style="padding:40px;text-align:center;color:#8FA4AE">Nenhum equipamento encontrado</div>';return;}
   const src=all||equips;
-  const _uniq=col=>[...new Set(src.map(e=>String(e[col]||'')).filter(Boolean))].sort();
-  const _thG=(label,col,align='left')=>{
-    const act=_pmpSortCol===col; const arr=act?(_pmpSortDir>0?'↑':'↓'):'';
-    const fv=_pmpColFiltros[col]||''; const fActive=fv?'color:#E8630A':'color:#C8D4DA';
-    const vals=_uniq(col);
-    const selOpts=vals.map(v=>`<option value="${v}"${fv===v?' selected':''}>${v}</option>`).join('');
-    return `<th style="background:#BDD7EE;white-space:nowrap;padding:0">
-      <div style="display:flex;flex-direction:column">
-        <div style="display:flex;align-items:center;justify-content:${align==='center'?'center':'space-between'};gap:4px;padding:8px 12px 4px;cursor:pointer;user-select:none;${act?'color:#E8630A':''}"
-          onclick="_pmpSortCol='${col}';_pmpSortDir=${act?-_pmpSortDir:1};pmpRenderPlanejamento()">
-          <span style="font-size:11px;font-weight:700;letter-spacing:.03em">${label}</span>
-          <span style="font-size:10px;opacity:.7">${arr||'⇅'}</span>
-        </div>
-        <div style="padding:0 6px 6px">
-          <select onchange="_pmpColFiltros['${col}']=this.value;pmpRenderPlanejamento()"
-            style="width:100%;padding:3px 4px;border:1px solid ${fv?'#E8630A':'#C8D4DA'};border-radius:5px;font-size:10px;background:#fff;color:#1A2E35;cursor:pointer;outline:none">
-            <option value="">Todos</option>${selOpts}
-          </select>
-        </div>
-      </div>
+  const _thG=(label,col,align='left',isNum=false)=>{
+    const act=_pmpSortCol===col;const arr=act?(_pmpSortDir>0?' ↑':' ↓'):'';
+    const fAtivo=pmpAnaFiltroAtivo(col,src);
+    return `<th style="background:#BDD7EE;white-space:nowrap;text-align:${align};${act?'color:#E8630A;':''}">
+      <span style="cursor:pointer;user-select:none" onclick="_pmpSortCol='${col}';_pmpSortDir=${act?-_pmpSortDir:1};pmpRenderPlanejamento()">${label}${arr}</span>
+      <span class="pmp-ana-filtro-btn" onclick="event.stopPropagation();pmpAnaAbrirFiltro(event,'${col}',${isNum})" style="cursor:pointer;margin-left:4px;font-size:9px;color:${fAtivo?'#E8630A':'#5A7280'}" title="Filtrar">▾</span>
     </th>`;
   };
   el.innerHTML=`<div class="pmp-twrap"><table class="pmp-tbl" style="border-collapse:collapse"><thead><tr>
     ${_thG('FROTA','frota')}${_thG('UNIDADE','operacao')}${_thG('ENCARREGADO','encarregado')}
-    ${_thG('HOR.ATUAL','hor_atual','center')}${_thG('H/PMP S+1','h_pmp_s1','center')}${_thG('DIAS P/VENC.','dias_vencimento','center')}
+    ${_thG('HOR.ATUAL','hor_atual','center',true)}${_thG('H/PMP S+1','h_pmp_s1','center',true)}${_thG('DIAS P/VENC.','dias_vencimento','center',true)}
     ${_thG('OM','om')}${_thG('MATERIAL','status_material')}
   </tr></thead><tbody>${equips.map(e=>{
     const dv=e.dias_vencimento;
