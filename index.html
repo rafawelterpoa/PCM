@@ -14002,13 +14002,54 @@ async function rcdImportarConfirmar() {
 // ── RCD — Avaria manual retroativa (equipamento nunca passou pelo sistema) ──
 function rcdManualAbrir() {
   ['rcd-manual-id','rcd-manual-nome','rcd-manual-fabricante','rcd-manual-modelo','rcd-manual-serie','rcd-manual-placa','rcd-manual-grupo','rcd-manual-horimetro','rcd-manual-oficina','rcd-manual-obs'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-  const clientes=[...new Set((EQUIPAMENTOS_ORIG||[]).flatMap(e=>[e.cliente,e.clienteNfe]).map(c=>(c||'').trim()).filter(Boolean))].sort();
+  document.getElementById('rcd-manual-cliente').value='';
+  document.getElementById('rcd-manual-planta').value='';
+  const _achou=document.getElementById('rcd-manual-achou'); if(_achou) _achou.style.display='none';
+  // Cliente/Unidade precisam listar TODAS as opções conhecidas, não só quem tem máquina ativa agora —
+  // por isso junta a frota atual (EQUIPAMENTOS_ORIG) com o histórico da Solicitação RCD (sol_rcd, 4400+ registros).
+  const clientes=[...new Set([
+    ...(EQUIPAMENTOS_ORIG||[]).flatMap(e=>[e.cliente,e.clienteNfe]),
+    ...Object.values(state||{}).map(e=>e.cliente),
+    ...Object.values(_solRegistros||{}).map(r=>r.cliente),
+  ].map(c=>(c||'').trim()).filter(Boolean))].sort();
   const _cliSel=document.getElementById('rcd-manual-cliente');
   if(_cliSel) _cliSel.innerHTML='<option value="">— Selecione —</option>'+clientes.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const plantas=[...new Set([
+    ...(EQUIPAMENTOS_ORIG||[]).map(e=>e.planta),
+    ...Object.values(_solRegistros||{}).map(r=>r.equip_planta),
+  ].map(p=>(p||'').trim()).filter(Boolean))].sort();
+  const _plantaSel=document.getElementById('rcd-manual-planta');
+  if(_plantaSel) _plantaSel.innerHTML='<option value="">— Selecione —</option>'+plantas.map(p=>`<option value="${p}">${p}</option>`).join('');
   const oficinas=[...new Set([...Object.values(state||{}).map(e=>e.oficina),...Object.values(_rcdRegistros||{}).map(r=>r.oficina)].filter(Boolean))].sort();
   const _ofList=document.getElementById('rcd-manual-oficinas-list');
   if(_ofList) _ofList.innerHTML=oficinas.map(o=>`<option value="${o}">`).join('');
   document.getElementById('rcd-manual-modal').style.display='flex';
+}
+
+// Digitou/colou o Nº Interno e saiu do campo → puxa tudo que é cadastro do equipamento
+// automaticamente (nome, fabricante, modelo, série, placa, grupo, horímetro, oficina).
+// Cliente e Unidade continuam manuais (o objetivo do form é cobrir casos fora da base).
+function rcdManualBuscarEquip() {
+  const id=(document.getElementById('rcd-manual-id')?.value||'').trim().toUpperCase();
+  const _achou=document.getElementById('rcd-manual-achou');
+  if(!id) return;
+  const orig=(EQUIPAMENTOS_ORIG||[]).find(e=>e.id===id);
+  const eq=state[id];
+  if(!orig&&!eq){ if(_achou){_achou.textContent='⚠️ Não encontrado na base — preencha manualmente.';_achou.style.color='#B45309';_achou.style.display='block';} return; }
+  const set=(id_,val)=>{const el=document.getElementById(id_); if(el&&!el.value&&val) el.value=val;};
+  set('rcd-manual-nome',      eq?.equipamento || orig?.equipamento || '');
+  set('rcd-manual-fabricante',eq?.fabricante  || orig?.fabricante  || '');
+  set('rcd-manual-modelo',    eq?.modelo      || orig?.modelo      || '');
+  set('rcd-manual-serie',     eq?.serie       || orig?.serie       || '');
+  set('rcd-manual-placa',     eq?.placa       || orig?.placa       || '');
+  set('rcd-manual-grupo',     eq?.grupo       || orig?.grupo       || eq?.tipo || orig?.tipo || '');
+  set('rcd-manual-horimetro', eq?.horimetro   || orig?.horimetro   || '');
+  set('rcd-manual-oficina',   eq?.oficina     || orig?.oficina     || '');
+  const cliSel=document.getElementById('rcd-manual-cliente');
+  if(cliSel&&!cliSel.value){const c=(eq?.cliente||orig?.cliente||orig?.clienteNfe||'').trim(); if(c&&[...cliSel.options].some(o=>o.value===c)) cliSel.value=c;}
+  const plantaSel=document.getElementById('rcd-manual-planta');
+  if(plantaSel&&!plantaSel.value){const p=(orig?.planta||'').trim(); if(p&&[...plantaSel.options].some(o=>o.value===p)) plantaSel.value=p;}
+  if(_achou){_achou.textContent='✅ Encontrado na base — dados preenchidos automaticamente.';_achou.style.color='#1E8A4C';_achou.style.display='block';}
 }
 
 function rcdManualFechar() {
@@ -14019,9 +14060,11 @@ async function rcdManualSalvar() {
   const gv=id=>(document.getElementById(id)?.value||'').trim();
   const equipId=gv('rcd-manual-id').toUpperCase();
   const cliente=gv('rcd-manual-cliente');
+  const planta=gv('rcd-manual-planta');
   const nome=gv('rcd-manual-nome');
   if(!equipId){showToast('⚠️ Informe o Nº Interno / Frota');document.getElementById('rcd-manual-id').focus();return;}
   if(!cliente){showToast('⚠️ Selecione o cliente');return;}
+  if(!planta){showToast('⚠️ Selecione a Unidade (Planta/Obra)');return;}
   if(!nome){showToast('⚠️ Informe o equipamento / descrição');document.getElementById('rcd-manual-nome').focus();return;}
   const reg={
     id: 'rcd_manual_'+Date.now(),
@@ -14034,6 +14077,7 @@ async function rcdManualSalvar() {
     equip_grupo: gv('rcd-manual-grupo'),
     equip_horimetro: gv('rcd-manual-horimetro'),
     oficina: gv('rcd-manual-oficina'),
+    equip_planta: planta,
     rcd_cliente: cliente,
     status: 'em_orcamento',
     ts_em_orcamento: Date.now(),
@@ -18958,6 +19002,26 @@ async function pmpCarregar() {
     const r3 = await fetch(`${PMP_FB}/evolucao_aderencia.json`);
     if(r3.ok){ const d3=await r3.json(); window.PMP_ADERENCIA=d3||{}; }
   } catch(e){}
+  try {
+    const r4 = await fetch(`${FB_BASE}/gi_kpis/shared.json`);
+    if(r4.ok){ const d4=await r4.json(); window.GI_KPIS=d4||{}; }
+  } catch(e){}
+}
+
+// Série mensal (Jan..Dez) da "Aderência de Preventivas" lançada manualmente na Gestão Integrada —
+// único histórico anterior a semana_atual, até o PMP_EVOLUCAO semanal acumular dado suficiente.
+const MESES_ABREV=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+function pmpGiAderenciaSerie(){
+  const gik=Object.values(window.GI_KPIS||{});
+  const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const k=gik.find(x=>norm(x.name).includes('aderencia de preventivas'));
+  if(!k||!Array.isArray(k.meses)) return {labels:[],values:[],meta:null};
+  const labels=[],values=[];
+  k.meses.forEach((v,i)=>{
+    const n=parseFloat(String(v).replace(',','.'));
+    if(!isNaN(n)){ labels.push(MESES_ABREV[i]||('M'+(i+1))); values.push(n); }
+  });
+  return {labels,values,meta:{meta:parseFloat(k.meta)||null,ref2025:k.ref2025||''}};
 }
 
 let _pmpAba='planejamento', _pmpSubAba='gerencial';
@@ -19308,7 +19372,7 @@ function pmpRenderPainelProgramador(){
           </div>
           ${mostrarEvolucao?`
           <div class="pnl-sevbars">
-            <div style="font-size:11px;color:var(--pnl-muted);margin-bottom:8px">Evolução — em dia x vencidas</div>
+            <div style="font-size:11px;color:var(--pnl-muted);margin-bottom:8px">Aderência de Preventivas — histórico mensal (GI)</div>
             <canvas id="pnl-painel-evo" height="120"></canvas>
           </div>`:`
           <div class="pnl-sevbars">
@@ -19345,14 +19409,15 @@ function pmpRenderPainelProgramador(){
   if(mostrarEvolucao){
     const cEvo=document.getElementById('pnl-painel-evo');
     if(cEvo&&typeof Chart!=='undefined'){
-      const evo=window.PMP_EVOLUCAO||{};
-      const chaves=Object.keys(evo).sort();
+      const {labels,values,meta}=pmpGiAderenciaSerie();
       const prev=Chart.getChart(cEvo); if(prev) prev.destroy();
-      if(chaves.length){
-        new Chart(cEvo,{type:'line',data:{labels:chaves,datasets:[
-          {label:'Em Dia',data:chaves.map(k=>evo[k].em_dia),borderColor:'#1E8A4C',backgroundColor:'rgba(30,138,76,.08)',fill:true,tension:.3,pointRadius:2},
-          {label:'Vencidas',data:chaves.map(k=>evo[k].vencidas),borderColor:'#B91C1C',backgroundColor:'rgba(185,28,28,.08)',fill:true,tension:.3,pointRadius:2}
-        ]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:8}}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}});
+      if(labels.length){
+        new Chart(cEvo,{type:'line',data:{labels,datasets:[
+          {label:'Aderência (%)',data:values,borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,.08)',fill:true,tension:.3,pointRadius:3},
+          ...(meta&&meta.meta?[{label:'Meta',data:labels.map(()=>meta.meta),borderColor:'#94A3B8',borderDash:[4,4],pointRadius:0,fill:false}]:[])
+        ]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:8}}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}},suggestedMin:Math.max(0,Math.min(...values)-5),suggestedMax:100}}}});
+      } else {
+        cEvo.parentElement.innerHTML='<div style="font-size:11px;color:var(--pnl-muted);margin-bottom:8px">Aderência de Preventivas — histórico mensal (GI)</div><div class="pnl-empty" style="padding:12px 0">Sem meses lançados ainda na Gestão Integrada.</div>';
       }
     }
   }
@@ -21813,16 +21878,22 @@ if ('serviceWorker' in navigator) {
           <button onclick="rcdManualFechar()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#8FA4AE">✕</button>
         </div>
         <div style="padding:18px 24px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px">
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Nº Interno / Frota *</label>
+            <input id="rcd-manual-id" type="text" placeholder="Ex: MCP04700" oninput="this.value=this.value.toUpperCase()" onblur="rcdManualBuscarEquip()" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;text-transform:uppercase">
+            <div id="rcd-manual-achou" style="display:none;font-size:11px;margin-top:4px"></div>
+          </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div>
-              <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Nº Interno / Frota *</label>
-              <input id="rcd-manual-id" type="text" placeholder="Ex: MCP04700" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;text-transform:uppercase">
-            </div>
-            <div>
-              <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Cliente *</label>
+              <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Cliente * <span style="font-weight:400;color:#94a3b8">(manual)</span></label>
               <select id="rcd-manual-cliente" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;background:#fff"><option value="">— Selecione —</option></select>
             </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Unidade (Planta/Obra) * <span style="font-weight:400;color:#94a3b8">(manual)</span></label>
+              <select id="rcd-manual-planta" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;background:#fff"><option value="">— Selecione —</option></select>
+            </div>
           </div>
+          <div style="font-size:10.5px;color:#94a3b8;margin-top:-4px">Os campos abaixo vêm automaticamente do cadastro do equipamento ao sair do campo Nº Interno — ajuste se necessário.</div>
           <div>
             <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Equipamento / Descrição *</label>
             <input id="rcd-manual-nome" type="text" placeholder="Ex: Retroescavadeira" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
