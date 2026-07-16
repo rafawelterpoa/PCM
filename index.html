@@ -13562,6 +13562,29 @@ let _rcdRegistros = {};
 let _rcdSubAtual = 'triagem';
 let _rcdEs = null;          // EventSource ativo
 let _rcdLastLoad = 0;       // ts da última carga completa (cache)
+let _rcdDesmobIdx = {};     // equip_id -> ts(ms) do desmob mais recente (frota_eventos)
+let _rcdDesmobIdxTs = 0;
+
+// Índice de desmobilizações reais (voltou do cliente) a partir de frota_eventos.
+// A Triagem usa isto para não depender do estágio transitório 'chegada' do kanban:
+// uma máquina que desmobilizou e já foi avançada para cl_entrada/manutenção continua
+// visível para triagem. Reaproveita o cache do Raio-X quando fresco.
+async function rcdCarregarDesmobIdx(force){
+  if(!force && (Date.now()-_rcdDesmobIdxTs)<300000 && Object.keys(_rcdDesmobIdx).length) return _rcdDesmobIdx;
+  let evs=null;
+  try{ if(_raioxCache&&_raioxCache.ev&&(Date.now()-_raioxCache.ts)<300000) evs=_raioxCache.ev; }catch(e){}
+  if(!evs){ try{ const r=await fetch(FB_BASE+'/frota_eventos.json'); evs=await r.json(); }catch(e){ evs=null; } }
+  const idx={};
+  if(evs&&typeof evs==='object'){
+    Object.values(evs).forEach(v=>{
+      if(!v||v.tipo!=='desmob'||!v.id) return;
+      const ms=v.data?Date.parse(v.data+'T00:00:00'):(v.ts||0);
+      if(ms&&(!idx[v.id]||ms>idx[v.id])) idx[v.id]=ms;
+    });
+  }
+  _rcdDesmobIdx=idx; _rcdDesmobIdxTs=Date.now();
+  return idx;
+}
 
 async function rcdCarregar(force) {
   // Cache: a SSE já mantém _rcdRegistros vivo. Se ela está conectada e a carga é
@@ -13569,6 +13592,8 @@ async function rcdCarregar(force) {
   // SSE a cada navegação (o que ficava na fila atrás das outras 5+ conexões).
   const sseAtiva = _rcdEs && _rcdEs.readyState !== 2; // 2 = CLOSED
   const recente = (Date.now() - _rcdLastLoad) < 300000; // 5 min
+  // Índice de desmob é leve/cacheado — atualiza em paralelo e re-renderiza a triagem quando chega.
+  rcdCarregarDesmobIdx(force).then(()=>{ if(_rcdSubAtual==='triagem') rcdRenderTriagem(); }).catch(()=>{});
   if (!force && sseAtiva && recente && Object.keys(_rcdRegistros).length) {
     rcdRenderFiltros();
     rcdRender();
@@ -13823,34 +13848,53 @@ function rcdRenderIndicadores() {
   if (!mostrarDetalhe) detEl.style.display = 'none';
 }
 
+const _RCD_ETAPA_LBL = {chegada:'Aguardando movimentação', cl_entrada:'Check-list de entrada', manutencao:'Em manutenção', cl_saida:'Check-list de saída'};
 function rcdRenderTriagem() {
   const el = document.getElementById('rcd-triagem-lista'); if(!el) return;
-  // Equipamentos em 'chegada' no kanban
-  const chegadas = Object.values(state).filter(e => !e.baixado && e.etapa === 'chegada');
-  // Filtra todos que já têm algum registro (independente do status)
-  const idsAtivos = new Set(Object.values(_rcdRegistros).map(r => r.equip_id + '|' + r.chegada_ts));
+  // Candidatos = máquinas fisicamente na oficina (não em operação/pátio, não baixadas) que:
+  //  - estão em 'chegada' (comportamento antigo, sempre incluído), OU
+  //  - têm um evento de desmobilização real (voltaram do cliente) mesmo já avançadas p/ cl_entrada/manutenção/cl_saida.
+  // Isso desacopla a triagem do estágio transitório 'chegada' — o motivo de máquinas
+  // como a EHS01312 sumirem quando a oficina as avançava antes da triagem.
+  const _SHOP = new Set(['chegada','cl_entrada','manutencao','cl_saida']);
+  const candidatos = Object.values(state).filter(e => !e.baixado && _SHOP.has(e.etapa) &&
+    (e.etapa==='chegada' || _rcdDesmobIdx[e.id]));
 
-  let pendentes = chegadas.filter(e => {
-    const key = e.id + '|' + (e.etapa_desde || '');
-    return !idsAtivos.has(key);
+  // Registros existentes por equip_id (com o ts da triagem) — para dedup por RETORNO:
+  // já triado se existe um registro cuja triagem é posterior à desmobilização (ou à chegada).
+  const regsPorId = {};
+  Object.values(_rcdRegistros).forEach(r=>{ if(r.equip_id){ (regsPorId[r.equip_id]=regsPorId[r.equip_id]||[]).push(r); } });
+  const _retornoMs = e => _rcdDesmobIdx[e.id] || e.etapa_desde || 0;
+  const _tsTriagem = r => r.ts_triagem || Number(r.chegada_ts) || 0;
+
+  let pendentes = candidatos.filter(e => {
+    const ret = _retornoMs(e);
+    const regs = regsPorId[e.id] || [];
+    const jaTriado = regs.some(r => _tsTriagem(r) >= ret);
+    return !jaTriado;
   });
   pendentes = rcdFiltrarLista(pendentes, e=>e.cliente||e.planta||'');
+  pendentes.sort((a,b)=>_retornoMs(b)-_retornoMs(a)); // desmob mais recente primeiro
 
   if(!pendentes.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px">Nenhum equipamento aguardando triagem (ou nenhum bate com o filtro).</div>'; return; }
 
   el.innerHTML = pendentes.map(e => {
-    const desde = e.etapa_desde ? new Date(e.etapa_desde).toLocaleDateString('pt-BR') : '—';
+    const ret = _retornoMs(e);
+    const desmob = _rcdDesmobIdx[e.id];
+    const dataRet = ret ? new Date(ret).toLocaleDateString('pt-BR') : '—';
     const initials = (e.id||'').slice(0,2).toUpperCase();
+    const etapaLbl = _RCD_ETAPA_LBL[e.etapa] || e.etapa;
+    const etapaCor = e.etapa==='chegada' ? '#5A7280' : '#B45309'; // avançada na oficina = âmbar (alerta que já saiu de 'chegada')
     return `<div style="background:#fff;border:1px solid #E2E8ED;border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)">
       <div style="width:40px;height:40px;border-radius:10px;background:#FDE8D8;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#E8630A;flex-shrink:0">${initials}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:700;color:#1A2E35">${e.id}</div>
         <div style="font-size:12px;color:#5A7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.equipamento||'—'}</div>
-        <div style="font-size:11px;color:#8FA4AE;margin-top:3px">${e.oficina||'—'} &nbsp;·&nbsp; Chegada: ${desde}</div>
+        <div style="font-size:11px;color:#8FA4AE;margin-top:3px">${e.oficina||'—'} &nbsp;·&nbsp; ${desmob?'Desmob':'Chegada'}: ${dataRet} &nbsp;·&nbsp; <span style="color:${etapaCor};font-weight:600">${etapaLbl}</span></div>
       </div>
       <div style="display:flex;gap:8px;flex-shrink:0">
-        <button onclick="rcdTriagem('${e.id}','${e.etapa_desde||''}',true)" style="padding:7px 16px;background:#1E8A4C;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:background 120ms" onmouseover="this.style.background='#166a3a'" onmouseout="this.style.background='#1E8A4C'">✔ Elegível</button>
-        <button onclick="rcdTriagem('${e.id}','${e.etapa_desde||''}',false)" style="padding:7px 16px;background:#fff;color:#5A7280;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:background 120ms" onmouseover="this.style.background='#F4F6F8'" onmouseout="this.style.background='#fff'">✘ Não elegível</button>
+        <button onclick="rcdTriagem('${e.id}','${ret||''}',true)" style="padding:7px 16px;background:#1E8A4C;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:background 120ms" onmouseover="this.style.background='#166a3a'" onmouseout="this.style.background='#1E8A4C'">✔ Elegível</button>
+        <button onclick="rcdTriagem('${e.id}','${ret||''}',false)" style="padding:7px 16px;background:#fff;color:#5A7280;border:1px solid #E2E8ED;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:background 120ms" onmouseover="this.style.background='#F4F6F8'" onmouseout="this.style.background='#fff'">✘ Não elegível</button>
       </div>
     </div>`;
   }).join('');
@@ -13874,7 +13918,8 @@ async function rcdTriagem(equipId, chegadaTs, elegivel) {
   } else {
     const reg = { id: 'rcd_' + Date.now(), equip_id: equipId, ..._snapEq, oficina: eq.oficina||'', chegada_ts: chegadaTs, status: 'aguardando_inspecao', ts_triagem: Date.now() };
     await rcdSalvarRegistro(reg);
-    rcdDesmobSub('tratamento');
+    // NÃO trocar de página: o operador permanece na Triagem para triar os demais.
+    // O card triado sai da lista automaticamente (agora tem registro) via rcdRender() abaixo.
   }
   rcdRender();
   showToast(elegivel ? '✅ Encaminhado para tratamento' : '✘ Marcado como não elegível');
