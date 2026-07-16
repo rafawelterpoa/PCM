@@ -14637,16 +14637,47 @@ async function rcdAvancar(id, novoStatus) {
 async function rcdConcluir(id) {
   const reg = _rcdRegistros[id]; if(!reg) return;
   if(reg.status==='aguardando_faturamento'||reg.status==='aguardando_cliente'){
-    const fatura=prompt('Informe o número da fatura para concluir:');
-    if(fatura===null)return;
-    if(!fatura.trim()){showToast('⚠️ Número da fatura é obrigatório');return;}
-    reg.status='faturado';reg.fatura=fatura.trim();reg.ts_conclusao=Date.now();
-    await rcdSalvarRegistro(reg);rcdRender();showToast('💰 Faturado — Fatura: '+fatura.trim());
+    rcdConcluirAbrir(id);
   } else {
     const opcao=confirm('Faturado?\n\nOK = Faturado\nCancelar = Encerrado sem faturamento');
-    reg.status=opcao?'faturado':'encerrado';reg.ts_conclusao=Date.now();
-    await rcdSalvarRegistro(reg);rcdRender();showToast(opcao?'💰 Faturado':'🔒 Encerrado sem faturamento');
+    if(opcao){
+      rcdConcluirAbrir(id);
+    } else {
+      reg.status='encerrado';reg.ts_conclusao=Date.now();
+      await rcdSalvarRegistro(reg);rcdRender();showToast('🔒 Encerrado sem faturamento');
+    }
   }
+}
+
+function rcdConcluirAbrir(id) {
+  const reg = _rcdRegistros[id]; if(!reg) return;
+  document.getElementById('rcd-concluir-id').value = id;
+  document.getElementById('rcd-concluir-realizado').value = reg.data_realizado || '';
+  document.getElementById('rcd-concluir-faturamento').value = reg.data_faturamento || new Date().toISOString().slice(0,10);
+  document.getElementById('rcd-concluir-pc').value = reg.pedido_compras || '';
+  document.getElementById('rcd-concluir-fatura').value = reg.fatura || '';
+  document.getElementById('rcd-concluir-modal').style.display = 'flex';
+}
+
+function rcdConcluirFechar() {
+  document.getElementById('rcd-concluir-modal').style.display = 'none';
+}
+
+async function rcdConcluirSalvar() {
+  const id = document.getElementById('rcd-concluir-id').value;
+  const reg = _rcdRegistros[id]; if(!reg) return;
+  const dataFaturamento = document.getElementById('rcd-concluir-faturamento').value;
+  if(!dataFaturamento){ showToast('⚠️ Informe a data de faturamento'); document.getElementById('rcd-concluir-faturamento').focus(); return; }
+  reg.data_realizado = document.getElementById('rcd-concluir-realizado').value || '';
+  reg.data_faturamento = dataFaturamento;
+  reg.pedido_compras = document.getElementById('rcd-concluir-pc').value.trim();
+  reg.fatura = document.getElementById('rcd-concluir-fatura').value.trim();
+  reg.status = 'faturado';
+  reg.ts_conclusao = Date.now();
+  await rcdSalvarRegistro(reg);
+  rcdConcluirFechar();
+  rcdRender();
+  showToast('💰 Faturado');
 }
 async function rcdConcluirSemAvaria(id){
   const reg=_rcdRegistros[id];if(!reg)return;
@@ -14656,12 +14687,12 @@ async function rcdConcluirSemAvaria(id){
 }
 async function rcdReverter(id){
   const reg=_rcdRegistros[id];if(!reg)return;
-  const senha=prompt('Senha master para reverter:');
+  const senha=prompt('Senha de acesso (perfil RCD) para reverter o faturamento:');
   if(!senha)return;
   const ok=resolverPerfil(senha);
-  if(!ok||ok.nivel!=='master'){showToast('⛔ Senha master incorreta');return;}
-  reg.status='aguardando_cliente';delete reg.ts_conclusao;delete reg.fatura;
-  await rcdSalvarRegistro(reg);rcdRender();showToast('↩ Registro revertido para Aguardando Cliente');
+  if(!ok||!(ok.nivel==='master'||(ok.nivel||'').toLowerCase()==='rcd')){showToast('⛔ Senha inválida — só o perfil RCD pode reverter');return;}
+  reg.status='aguardando_cliente';delete reg.ts_conclusao;delete reg.fatura;delete reg.data_realizado;delete reg.data_faturamento;delete reg.pedido_compras;
+  await rcdSalvarRegistro(reg);rcdRender();showToast('↩ Registro revertido para Aguardando Cliente — sai da posição faturada e volta a contar na próxima conclusão');
 }
 
 function rcdRenderHistorico() {
@@ -14675,10 +14706,12 @@ function rcdRenderHistorico() {
   el.innerHTML = regs.map(r => {
     const cor = STATUS_COR[r.status]||'#888';
     const dt = r.ts_conclusao ? new Date(r.ts_conclusao).toLocaleDateString('pt-BR') : '—';
+    const dtRealizado = r.data_realizado ? new Date(r.data_realizado+'T12:00:00').toLocaleDateString('pt-BR') : '';
+    const dtFaturamento = r.data_faturamento ? new Date(r.data_faturamento+'T12:00:00').toLocaleDateString('pt-BR') : '';
     return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px">
       <div style="flex:1">
         <div style="font-size:12px;font-weight:700;color:#1e293b">${r.equip_id} <span style="font-weight:400;color:#64748b">— ${r.equip_nome}</span></div>
-        <div style="font-size:10px;color:#94a3b8;margin-top:3px">${r.oficina} · Concluído: ${dt}${r.fatura?' · Fatura: '+r.fatura:''}</div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:3px">${r.oficina} · Concluído: ${dt}${dtRealizado?' · Realizado: '+dtRealizado:''}${dtFaturamento?' · Faturamento: '+dtFaturamento:''}${r.pedido_compras?' · PC: '+r.pedido_compras:''}${r.fatura?' · Fatura: '+r.fatura:''}</div>
       </div>
       <span style="font-size:11px;font-weight:700;color:${cor};background:${cor}18;padding:4px 10px;border-radius:20px">${STATUS_LABEL[r.status]||r.status}</span>
       <button onclick="rcdReverter('${r.id}')" title="Reverter (requer senha master)" style="padding:4px 8px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer">↩ Reverter</button>
@@ -17498,15 +17531,15 @@ function solRcdRenderParadas(sfx=''){
 
 async function solRcdReverterConcluido(id){
   const reg=_solRegistros[id];if(!reg)return;
-  const senha=prompt('Senha master para reverter:');if(!senha)return;
+  const senha=prompt('Senha de acesso (perfil RCD) para reverter o faturamento:');if(!senha)return;
   const ok=resolverPerfil(senha);
-  if(!ok||ok.nivel!=='master'){showToast('⛔ Senha master incorreta');return;}
+  if(!ok||!(ok.nivel==='master'||(ok.nivel||'').toLowerCase()==='rcd')){showToast('⛔ Senha inválida — só o perfil RCD pode reverter');return;}
   reg.status='aguardando_faturamento';delete reg.ts_concluido;delete reg.fatura;
   reg.ts_aguardando_faturamento=Date.now();
   try{
     await solRcdSalvarReg(reg);
     solRcdRenderTodos();
-    showToast('↩ Revertido para Ag. Faturamento');
+    showToast('↩ Revertido para Ag. Faturamento — sai da posição faturada e volta a contar na próxima conclusão');
   }catch(e){
     showToast('⚠ Erro ao reverter: '+e.message);
   }
@@ -17611,17 +17644,22 @@ async function solRcdTrocarCliente(){
     const reg=_solRegistros[id];
     if(reg&&reg.status!=='em_aprovacao'){showToast('⛔ O cliente só pode ser trocado enquanto a solicitação está "Em Aprovação"');return;}
   }
-  const atual=(document.getElementById('sol-eq-cliente').textContent||'').replace('—','').trim();
-  const novoCliente=prompt('Novo cliente para esta solicitação:', atual);
+  const atualCliente=(document.getElementById('sol-eq-cliente').textContent||'').replace('—','').trim();
+  const novoCliente=prompt('Novo cliente para esta solicitação:', atualCliente);
   if(novoCliente==null) return;
   const nc=novoCliente.trim();
   if(!nc){showToast('⚠️ Informe o nome do cliente');return;}
-  const senha=prompt('Senha de acesso (perfil RCD) para confirmar a troca de cliente:');
+  const atualPlanta=(document.getElementById('sol-eq-planta').textContent||'').replace('—','').trim();
+  const novaPlanta=prompt('Nova planta/obra para esta solicitação:', atualPlanta);
+  if(novaPlanta==null) return;
+  const np=novaPlanta.trim();
+  const senha=prompt('Senha de acesso (perfil RCD) para confirmar a troca de cliente/planta:');
   if(!senha) return;
   const ok=resolverPerfil(senha);
   if(!ok||!(ok.nivel==='master'||(ok.nivel||'').toLowerCase()==='rcd')){showToast('⛔ Senha inválida — só o perfil RCD pode trocar o cliente');return;}
   document.getElementById('sol-eq-cliente').textContent=nc;
-  showToast('✅ Cliente atualizado para '+nc+' — clique em Salvar para confirmar');
+  document.getElementById('sol-eq-planta').textContent=np||'—';
+  showToast('✅ Cliente/planta atualizados — clique em Salvar para confirmar');
 }
 
 function solRcdBuscarEquip(force){
@@ -21805,6 +21843,39 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
 
+    <!-- MODAL CONCLUIR / FATURAR -->
+    <div id="rcd-concluir-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9300;align-items:center;justify-content:center" onclick="if(event.target===this)rcdConcluirFechar()">
+      <div style="background:#fff;border-radius:14px;width:440px;max-width:96vw;box-shadow:0 8px 40px rgba(0,0,0,.22);border-top:3px solid #16a34a">
+        <div style="padding:20px 24px 16px;border-bottom:1px solid #E2E8ED;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:14px;font-weight:700;color:#1A2E35">💰 Concluir — Faturado</div>
+          <button onclick="rcdConcluirFechar()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#8FA4AE">✕</button>
+        </div>
+        <div style="padding:18px 24px;display:flex;flex-direction:column;gap:12px">
+          <input type="hidden" id="rcd-concluir-id">
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Data de Realizado</label>
+            <input id="rcd-concluir-realizado" type="date" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Data de Faturamento *</label>
+            <input id="rcd-concluir-faturamento" type="date" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Nº do Pedido de Compras</label>
+            <input id="rcd-concluir-pc" type="text" placeholder="Ex: PC-4500123" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Nº da Fatura</label>
+            <input id="rcd-concluir-fatura" type="text" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+          </div>
+        </div>
+        <div style="padding:14px 24px;border-top:1px solid #E2E8ED;display:flex;justify-content:flex-end;gap:8px">
+          <button onclick="rcdConcluirFechar()" style="padding:8px 18px;border-radius:7px;font-size:12px;font-weight:600;border:1px solid #E2E8ED;background:#fff;color:#5A7280;cursor:pointer">Cancelar</button>
+          <button onclick="rcdConcluirSalvar()" style="padding:8px 18px;border-radius:7px;font-size:12px;font-weight:600;border:none;background:#16a34a;color:#fff;cursor:pointer">Concluir</button>
+        </div>
+      </div>
+    </div>
+
     <!-- MODAL OBSERVAÇÕES / FOLLOW-UP -->
     <div id="rcd-obs-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9400;align-items:center;justify-content:center" onclick="if(event.target===this)rcdObsFechar()">
       <div style="background:#fff;border-radius:14px;width:520px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.22)">
@@ -23161,7 +23232,7 @@ function pendToggle(i){
           <div><span style="color:#94a3b8">Linha de Produto:</span> <span id="sol-eq-linha" style="font-weight:600">—</span></div>
           <div><span style="color:#94a3b8">Filial:</span> <span id="sol-eq-filial" style="font-weight:600">—</span></div>
           <div><span style="color:#94a3b8">Tipo de Contrato:</span> <span id="sol-eq-contrato" style="font-weight:600">—</span></div>
-          <div><span style="color:#94a3b8">Cliente:</span> <span id="sol-eq-cliente" style="font-weight:600">—</span> <button id="sol-eq-cliente-btn" type="button" onclick="solRcdTrocarCliente()" title="Trocar cliente (perfil RCD, apenas durante Em Aprovação)" style="display:none;margin-left:2px;padding:1px 7px;border:1px solid #cbd5e1;border-radius:99px;background:#fff;color:#2563eb;font-size:10px;font-weight:600;cursor:pointer">✏ trocar</button></div>
+          <div><span style="color:#94a3b8">Cliente:</span> <span id="sol-eq-cliente" style="font-weight:600">—</span> <button id="sol-eq-cliente-btn" type="button" onclick="solRcdTrocarCliente()" title="Trocar cliente e planta/obra (perfil RCD, apenas durante Em Aprovação)" style="display:none;margin-left:2px;padding:1px 7px;border:1px solid #cbd5e1;border-radius:99px;background:#fff;color:#2563eb;font-size:10px;font-weight:600;cursor:pointer">✏ trocar</button></div>
           <div style="grid-column:2/-1"><span style="color:#94a3b8">Planta/Obra:</span> <span id="sol-eq-planta" style="font-weight:600">—</span></div>
           <div><span style="color:#94a3b8">Placa:</span> <input id="sol-eq-placa" type="text" style="width:100%;padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-weight:600"></div>
           <div><span style="color:#94a3b8">Horímetro:</span> <input id="sol-eq-hor" type="text" style="width:100%;padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-weight:600"></div>
