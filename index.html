@@ -14159,6 +14159,8 @@ function rcdOrcAbrir(id) {
   let cli = reg.rcd_cliente || eq.cliente || eq.planta || orig.planta || '';
   if(!cli){const _h=(eq.historico||[]).slice().reverse().find(h=>h.planta_obra||(h.from&&h.from.startsWith('Reservado:')));if(_h)cli=_h.planta_obra||_h.from.replace('Reservado:','').trim();}
   document.getElementById('rcd-orc-cliente').textContent = cli || '—';
+  const _cliBtn = document.getElementById('rcd-orc-cliente-btn');
+  if (_cliBtn) _cliBtn.style.display = reg.status === 'em_orcamento' ? '' : 'none';
   // Auto-fill dados do equipamento (prioriza snapshot gravado no registro)
   document.getElementById('rcd-orc-id-eq').textContent     = reg.equip_id || '—';
   document.getElementById('rcd-orc-serie').textContent     = reg.equip_serie     || eq.serie      || orig.serie      || '—';
@@ -14225,6 +14227,25 @@ function rcdOrcAbrir(id) {
 function rcdOrcFechar() {
   orcFotosInit('rcd-orc');
   document.getElementById('rcd-orc-modal').style.display = 'none';
+}
+
+async function rcdOrcTrocarCliente() {
+  const id = document.getElementById('rcd-orc-id').value;
+  const reg = _rcdRegistros[id]; if (!reg) return;
+  if (reg.status !== 'em_orcamento') { showToast('⛔ O cliente só pode ser trocado enquanto o orçamento está "Em Orçamento"'); return; }
+  const atual = document.getElementById('rcd-orc-cliente').textContent.replace('—','').trim();
+  const novoCliente = prompt('Novo cliente para este orçamento:', atual);
+  if (novoCliente == null) return;
+  const nc = novoCliente.trim();
+  if (!nc) { showToast('⚠️ Informe o nome do cliente'); return; }
+  const senha = prompt('Senha de acesso (perfil RCD) para confirmar a troca de cliente:');
+  if (!senha) return;
+  const ok = resolverPerfil(senha);
+  if (!ok || !(ok.nivel === 'master' || (ok.nivel||'').toLowerCase() === 'rcd')) { showToast('⛔ Senha inválida — só o perfil RCD pode trocar o cliente'); return; }
+  reg.rcd_cliente = nc;
+  await rcdSalvarRegistro(reg);
+  document.getElementById('rcd-orc-cliente').textContent = nc;
+  showToast('✅ Cliente atualizado para '+nc);
 }
 
 function rcdOrcAddLinha(it) {
@@ -17480,11 +17501,12 @@ function solRcdNovaAbrir(){
   const _dpW=document.getElementById('sol-data-parada-wrap');if(_dpW)_dpW.style.display='none';
   document.getElementById('sol-bdi').value='';
   document.getElementById('sol-valor').value='';
-  ['sol-eq-nome','sol-eq-fab','sol-eq-modelo','sol-eq-serie'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='—';});
+  ['sol-eq-nome','sol-eq-fab','sol-eq-modelo','sol-eq-serie','sol-eq-cliente'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='—';});
   ['sol-eq-placa','sol-eq-hor','sol-eq-cnpj','sol-contato-nome','sol-contato-tel','sol-contato-email'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   const tbody=document.getElementById('sol-itens-body');if(tbody)tbody.innerHTML='';
   solRcdAddLinha();solRcdCalcTotal();
   orcFotosInit('sol');
+  const _cliBtnNova=document.getElementById('sol-eq-cliente-btn');if(_cliBtnNova)_cliBtnNova.style.display='';
   el.style.display='flex';
 }
 
@@ -17510,6 +17532,7 @@ function solRcdEditarAbrir(id){
   txt('sol-eq-filial',   reg.equip_filial);
   txt('sol-eq-contrato', reg.equip_contrato);
   txt('sol-eq-cliente',  reg.equip_cliente);
+  const _cliBtnEd=document.getElementById('sol-eq-cliente-btn');if(_cliBtnEd)_cliBtnEd.style.display=reg.status==='em_aprovacao'?'':'none';
   txt('sol-eq-planta',   reg.equip_planta);
   inp('sol-eq-placa',    reg.equip_placa);
   inp('sol-eq-hor',      reg.equip_horimetro);
@@ -17531,6 +17554,25 @@ function solRcdEditarAbrir(id){
 }
 
 function solRcdFechar(){const el=document.getElementById('sol-modal');if(el)el.style.display='none';}
+
+async function solRcdTrocarCliente(){
+  const id=document.getElementById('sol-id')?.value;
+  if(id){
+    const reg=_solRegistros[id];
+    if(reg&&reg.status!=='em_aprovacao'){showToast('⛔ O cliente só pode ser trocado enquanto a solicitação está "Em Aprovação"');return;}
+  }
+  const atual=(document.getElementById('sol-eq-cliente').textContent||'').replace('—','').trim();
+  const novoCliente=prompt('Novo cliente para esta solicitação:', atual);
+  if(novoCliente==null) return;
+  const nc=novoCliente.trim();
+  if(!nc){showToast('⚠️ Informe o nome do cliente');return;}
+  const senha=prompt('Senha de acesso (perfil RCD) para confirmar a troca de cliente:');
+  if(!senha) return;
+  const ok=resolverPerfil(senha);
+  if(!ok||!(ok.nivel==='master'||(ok.nivel||'').toLowerCase()==='rcd')){showToast('⛔ Senha inválida — só o perfil RCD pode trocar o cliente');return;}
+  document.getElementById('sol-eq-cliente').textContent=nc;
+  showToast('✅ Cliente atualizado para '+nc+' — clique em Salvar para confirmar');
+}
 
 function solRcdBuscarEquip(force){
   const inp=document.getElementById('sol-equip-busca');
@@ -18977,27 +19019,55 @@ function pmpRenderPainelProgramador(){
   const avariasAbertas=Object.values(window._rcdRegistros||{}).filter(r=>_frotasSet.has(r.equip_id)&&_AVARIA_ABERTA.includes(r.status));
   const valorAvarias=avariasAbertas.reduce((s,r)=>s+(parseFloat(r.orc_valor)||0),0);
   const paradasPorAvaria=new Set(avariasAbertas.map(r=>r.equip_id)).size;
+  const programadoComMaterial=minhas.filter(e=>e.status==='Programado'&&e.status_material).length;
+  const programadoSemMaterial=programado-programadoComMaterial;
+  const semDados=(c['Sem Revisão']||0)+(c['Sem Plano']||0);
+  let escopoNota='';
+  if(!souProgramador){
+    const _todosAlugTodosTipos=(EQUIPAMENTOS_ORIG||[]).filter(e=>e.status==='Alugado');
+    const _semGestaoFrota=_todosAlugTodosTipos.filter(e=>opContratoEquip(e)!=='Gestão de frota');
+    const _excluidosGestao=_todosAlugTodosTipos.length-_semGestaoFrota.length;
+    const _excluidosTipo=_semGestaoFrota.length-universoTotal.length;
+    escopoNota=`${_todosAlugTodosTipos.length} alugados · ${_excluidosGestao} excl. gestão de frota · ${_excluidosTipo} excl. implemento/acessório`;
+  }
   let semanaNum=null;
   try{ semanaNum=parseInt(semanaAtual().split('-W')[1],10); }catch(e){}
 
   const itensFila=[];
-  minhas.filter(e=>e.status==='Vencida').sort((a,b)=>(b.horas_vencidas||0)-(a.horas_vencidas||0)).forEach(e=>{
-    itensFila.push({tipo:'vencida',e,cor:'var(--pnl-crit)',txt:_pmpHFmt(e.h_para_pmp),acaoTxt:'Programar →',tipoLabel:'Vencida',primary:true,dest:"pmpNavSidebar('programacao','acao')"});
-  });
-  minhas.filter(e=>e.semana_plan&&!e.wf_acao).forEach(e=>{
-    itensFila.push({tipo:'aceite',e,cor:'var(--pnl-info)',txt:'aguard.',acaoTxt:'Aceitar',tipoLabel:'Ag. aceite',dest:"pmpNavSidebar('programacao','acao')"});
-  });
-  minhas.filter(e=>e.wf_validacao==='pendente').forEach(e=>{
-    itensFila.push({tipo:'pendencia',e,cor:'var(--pnl-warn)',txt:'tratar',acaoTxt:'Ver pendência',tipoLabel:'Pendência',dest:"pmpNavSidebar('programacao','pendencias')"});
-  });
-  minhas.filter(e=>e.status==='Atenção').sort((a,b)=>(a.h_para_pmp??0)-(b.h_para_pmp??0)).forEach(e=>{
-    itensFila.push({tipo:'atencao',e,cor:'var(--pnl-warn)',txt:_pmpHFmt(e.h_para_pmp),acaoTxt:'Planejar',tipoLabel:'Atenção',dest:"pmpNavSidebar('planejamento','execucao','fila')"});
-  });
+  if(souProgramador){
+    minhas.filter(e=>e.status==='Vencida').sort((a,b)=>(b.horas_vencidas||0)-(a.horas_vencidas||0)).forEach(e=>{
+      itensFila.push({tipo:'vencida',e,cor:'var(--pnl-crit)',txt:_pmpHFmt(e.h_para_pmp),acaoTxt:'Programar →',tipoLabel:'Vencida',primary:true,dest:"pmpNavSidebar('programacao','acao')"});
+    });
+    minhas.filter(e=>e.semana_plan&&!e.wf_acao).forEach(e=>{
+      itensFila.push({tipo:'aceite',e,cor:'var(--pnl-info)',txt:'aguard.',acaoTxt:'Aceitar',tipoLabel:'Ag. aceite',dest:"pmpNavSidebar('programacao','acao')"});
+    });
+    minhas.filter(e=>e.wf_validacao==='pendente').forEach(e=>{
+      itensFila.push({tipo:'pendencia',e,cor:'var(--pnl-warn)',txt:'tratar',acaoTxt:'Ver pendência',tipoLabel:'Pendência',dest:"pmpNavSidebar('programacao','pendencias')"});
+    });
+    minhas.filter(e=>e.status==='Atenção').sort((a,b)=>(a.h_para_pmp??0)-(b.h_para_pmp??0)).forEach(e=>{
+      itensFila.push({tipo:'atencao',e,cor:'var(--pnl-warn)',txt:_pmpHFmt(e.h_para_pmp),acaoTxt:'Planejar',tipoLabel:'Atenção',dest:"pmpNavSidebar('planejamento','execucao','fila')"});
+    });
+  }
 
   let itensFiltrados=itensFila;
   if(_pmpPainelFiltro==='vencidas') itensFiltrados=itensFila.filter(i=>i.tipo==='vencida');
   else if(_pmpPainelFiltro==='aceite') itensFiltrados=itensFila.filter(i=>i.tipo==='aceite');
   const itensMostrar=itensFiltrados.slice(0,10);
+
+  const vencidasList=minhas.filter(e=>e.status==='Vencida').sort((a,b)=>(b.horas_vencidas||0)-(a.horas_vencidas||0));
+  const vencidasMostrar=vencidasList.slice(0,20);
+  const _vrow=e=>{
+    const sevCor=e.severidade==='Supercrítico'?'var(--pnl-crit)':e.severidade==='Crítico'?'#C2410C':'var(--pnl-warn)';
+    const sevBg=e.severidade==='Supercrítico'?'#FEE2E2':e.severidade==='Crítico'?'#FFEDD5':'#FEF3C7';
+    return `<div class="pnl-qrow">
+      <div class="tick" style="background:${sevCor}"></div>
+      <div class="frota">${e.frota}<small>${e.modelo||e.operacao||''}</small></div>
+      <div class="op"><b>${e.operacao||'—'}</b>${e.programador?'Programador: '+e.programador:''}</div>
+      <div class="hrs" style="color:${sevCor}">${_pmpHFmt(e.h_para_pmp)}</div>
+      <div class="prio" style="background:${sevBg};color:${sevCor}">${e.severidade||'—'}</div>
+      <div style="font-size:11px;color:var(--pnl-muted);text-align:right;white-space:nowrap;padding-right:12px">${e.om?'OM '+e.om:'—'}</div>
+    </div>`;
+  };
 
   const proximas=semanaNum!==null?minhas.filter(e=>e.semana_plan&&Number(e.semana_plan)===semanaNum).slice(0,6):[];
 
@@ -19024,7 +19094,8 @@ function pmpRenderPainelProgramador(){
     {n:atencao,cor:'var(--pnl-warn)',lbl:'Atenção <50h'},
     {n:vencidas,cor:'var(--pnl-crit)',lbl:'Vencidas'},
     {n:programado,cor:'var(--pnl-info)',lbl:'Programadas'},
-    {n:agProgramacao,cor:'#93A3AB',lbl:'Ag. programação'}
+    {n:agProgramacao,cor:'#93A3AB',lbl:'Ag. programação'},
+    {n:semDados,cor:'var(--pnl-line)',lbl:'Sem plano/revisão'}
   ];
   let _accSeg=0;
   const donutGrad=total?_donutSegs.map(s=>{
@@ -19068,11 +19139,11 @@ function pmpRenderPainelProgramador(){
           </select>
           ${filtrosAtivos?`<span class="f" onclick="pmpPainelLimparFiltros()">Limpar filtros ✕</span>`:''}
         </div>`}
-        <div class="row-2col" style="display:grid;grid-template-columns:1.4fr 1fr">
+        <div class="row-2col" style="display:grid;grid-template-columns:1.2fr 1fr 1fr">
           <div class="pnl-picons n4" style="border-right:1px solid var(--pnl-line)">
             <div class="pnl-pistat">
               <div class="pnl-picon" style="background:#E6F1FB"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="1.8"><rect x="1" y="7" width="14" height="9"/><path d="M15 10h4l3 3v3h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></div>
-              <div><div class="pn">${total}</div><div class="pl">Máquinas</div></div>
+              <div><div class="pn">${total}</div><div class="pl">Máquinas</div>${escopoNota?`<div style="font-size:9.5px;color:var(--pnl-faint);margin-top:1px">${escopoNota}</div>`:''}</div>
             </div>
             <div class="pnl-pistat">
               <div class="pnl-picon" style="background:#EAF3DE"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B6D11" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
@@ -19085,6 +19156,16 @@ function pmpRenderPainelProgramador(){
             <div class="pnl-pistat">
               <div class="pnl-picon" style="background:#FEE2E2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B91C1C" stroke-width="1.8"><rect x="1" y="7" width="14" height="9"/><path d="M15 10h4l3 3v3h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><line x1="3" y1="3" x2="21" y2="21"/></svg></div>
               <div><div class="pn" style="color:#B91C1C">${paradasPorAvaria}</div><div class="pl">Paradas p/ avaria</div></div>
+            </div>
+          </div>
+          <div class="pnl-picons n2" style="border-right:1px solid var(--pnl-line)">
+            <div class="pnl-pistat">
+              <div class="pnl-picon" style="background:#EDE9FE"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B21B6" stroke-width="1.8"><path d="M20 6L9 17l-5-5"/></svg></div>
+              <div><div class="pn" style="color:#5B21B6">${programadoComMaterial}</div><div class="pl">Program. c/ material</div></div>
+            </div>
+            <div class="pnl-pistat">
+              <div class="pnl-picon" style="background:#FEE2E2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B91C1C" stroke-width="1.8"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div>
+              <div><div class="pn" style="color:#B91C1C">${programadoSemMaterial}</div><div class="pl">Program. sem material</div></div>
             </div>
           </div>
           <div class="pnl-picons n2">
@@ -19117,8 +19198,11 @@ function pmpRenderPainelProgramador(){
             ${vencidas===0?'<div class="pnl-empty" style="padding:12px 0">Nenhuma vencida no momento.</div>':''}
           </div>`}
         </div>
+        ${souProgramador?`
         <div class="pnl-sec"><h3>Fila de prioridade <span class="cnt">${itensFiltrados.length} ite${itensFiltrados.length===1?'m':'ns'}</span></h3></div>
-        <div class="pnl-queue">${itensMostrar.length?itensMostrar.map(_queueRow).join(''):'<div class="pnl-empty">Nenhum item precisando de atenção agora — tudo em dia 🎉</div>'}</div>
+        <div class="pnl-queue">${itensMostrar.length?itensMostrar.map(_queueRow).join(''):'<div class="pnl-empty">Nenhum item precisando de atenção agora — tudo em dia 🎉</div>'}</div>`:`
+        <div class="pnl-sec"><h3>Máquinas com preventiva vencida <span class="cnt">${vencidasList.length}</span></h3></div>
+        <div class="pnl-queue">${vencidasMostrar.length?vencidasMostrar.map(_vrow).join(''):'<div class="pnl-empty">Nenhuma máquina vencida no momento 🎉</div>'}${vencidasList.length>20?`<div class="pnl-empty" style="padding:10px">mostrando as 20 mais críticas de ${vencidasList.length} — <a style="cursor:pointer;color:var(--pnl-ink);text-decoration:underline" onclick="pmpNavSidebar('relatorios')">ver todas em Relatórios</a></div>`:''}</div>`}
         <div class="pnl-pair">
           <div class="col">
             <h3>Próximas — semana ${semanaNum??'—'}</h3>
@@ -19130,9 +19214,10 @@ function pmpRenderPainelProgramador(){
           </div>
         </div>
         <div class="pnl-foot">
+          ${souProgramador?`
           <span class="f ${_pmpPainelFiltro==='todas'?'on':''}" onclick="pmpPainelSetFiltro('todas')">Todas</span>
           <span class="f ${_pmpPainelFiltro==='vencidas'?'on':''}" onclick="pmpPainelSetFiltro('vencidas')">Só vencidas</span>
-          <span class="f ${_pmpPainelFiltro==='aceite'?'on':''}" onclick="pmpPainelSetFiltro('aceite')">Aguardando aceite</span>
+          <span class="f ${_pmpPainelFiltro==='aceite'?'on':''}" onclick="pmpPainelSetFiltro('aceite')">Aguardando aceite</span>`:''}
           <button class="go" onclick="pmpNavSidebar('planejamento','execucao','fila')">Ir para a Fila de Planejamento →</button>
         </div>
       </div>
@@ -21632,7 +21717,7 @@ if ('serviceWorker' in navigator) {
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;margin-bottom:16px">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#94a3b8;margin-bottom:8px">Equipamento</div>
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px 16px;font-size:12px">
-            <div><span style="color:#94a3b8">Cliente:</span> <span id="rcd-orc-cliente" style="font-weight:600;color:#1e293b">—</span></div>
+            <div><span style="color:#94a3b8">Cliente:</span> <span id="rcd-orc-cliente" style="font-weight:600;color:#1e293b">—</span> <button id="rcd-orc-cliente-btn" type="button" onclick="rcdOrcTrocarCliente()" title="Trocar cliente (perfil RCD, apenas durante Em Orçamento)" style="display:none;margin-left:2px;padding:1px 7px;border:1px solid #cbd5e1;border-radius:99px;background:#fff;color:#2563eb;font-size:10px;font-weight:600;cursor:pointer">✏ trocar</button></div>
             <div><span style="color:#94a3b8">Nº Interno:</span> <span id="rcd-orc-id-eq" style="font-weight:600;color:#1e293b">—</span></div>
             <div><span style="color:#94a3b8">Nº Série:</span> <span id="rcd-orc-serie" style="font-weight:600;color:#1e293b">—</span></div>
             <div><span style="color:#94a3b8">Placa:</span> <span id="rcd-orc-placa" style="font-weight:600;color:#1e293b">—</span></div>
@@ -22954,7 +23039,7 @@ function pendToggle(i){
           <div><span style="color:#94a3b8">Linha de Produto:</span> <span id="sol-eq-linha" style="font-weight:600">—</span></div>
           <div><span style="color:#94a3b8">Filial:</span> <span id="sol-eq-filial" style="font-weight:600">—</span></div>
           <div><span style="color:#94a3b8">Tipo de Contrato:</span> <span id="sol-eq-contrato" style="font-weight:600">—</span></div>
-          <div><span style="color:#94a3b8">Cliente:</span> <span id="sol-eq-cliente" style="font-weight:600">—</span></div>
+          <div><span style="color:#94a3b8">Cliente:</span> <span id="sol-eq-cliente" style="font-weight:600">—</span> <button id="sol-eq-cliente-btn" type="button" onclick="solRcdTrocarCliente()" title="Trocar cliente (perfil RCD, apenas durante Em Aprovação)" style="display:none;margin-left:2px;padding:1px 7px;border:1px solid #cbd5e1;border-radius:99px;background:#fff;color:#2563eb;font-size:10px;font-weight:600;cursor:pointer">✏ trocar</button></div>
           <div style="grid-column:2/-1"><span style="color:#94a3b8">Planta/Obra:</span> <span id="sol-eq-planta" style="font-weight:600">—</span></div>
           <div><span style="color:#94a3b8">Placa:</span> <input id="sol-eq-placa" type="text" style="width:100%;padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-weight:600"></div>
           <div><span style="color:#94a3b8">Horímetro:</span> <input id="sol-eq-hor" type="text" style="width:100%;padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-weight:600"></div>
