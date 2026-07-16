@@ -13833,7 +13833,7 @@ function rcdRenderTriagem() {
     const key = e.id + '|' + (e.etapa_desde || '');
     return !idsAtivos.has(key);
   });
-  pendentes = rcdFiltrarLista(pendentes);
+  pendentes = rcdFiltrarLista(pendentes, e=>e.cliente||e.planta||'');
 
   if(!pendentes.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px">Nenhum equipamento aguardando triagem (ou nenhum bate com o filtro).</div>'; return; }
 
@@ -13996,6 +13996,56 @@ async function rcdImportarConfirmar() {
   showToast('✅ ' + n + ' registro(s) importado(s)');
   rcdDesmobSub('tratamento');
   rcdRender();
+}
+
+// ── RCD — Avaria manual retroativa (equipamento nunca passou pelo sistema) ──
+function rcdManualAbrir() {
+  ['rcd-manual-id','rcd-manual-nome','rcd-manual-fabricante','rcd-manual-modelo','rcd-manual-serie','rcd-manual-placa','rcd-manual-grupo','rcd-manual-horimetro','rcd-manual-oficina','rcd-manual-obs'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const clientes=[...new Set((EQUIPAMENTOS_ORIG||[]).flatMap(e=>[e.cliente,e.clienteNfe]).map(c=>(c||'').trim()).filter(Boolean))].sort();
+  const _cliSel=document.getElementById('rcd-manual-cliente');
+  if(_cliSel) _cliSel.innerHTML='<option value="">— Selecione —</option>'+clientes.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const oficinas=[...new Set([...Object.values(state||{}).map(e=>e.oficina),...Object.values(_rcdRegistros||{}).map(r=>r.oficina)].filter(Boolean))].sort();
+  const _ofList=document.getElementById('rcd-manual-oficinas-list');
+  if(_ofList) _ofList.innerHTML=oficinas.map(o=>`<option value="${o}">`).join('');
+  document.getElementById('rcd-manual-modal').style.display='flex';
+}
+
+function rcdManualFechar() {
+  document.getElementById('rcd-manual-modal').style.display='none';
+}
+
+async function rcdManualSalvar() {
+  const gv=id=>(document.getElementById(id)?.value||'').trim();
+  const equipId=gv('rcd-manual-id').toUpperCase();
+  const cliente=gv('rcd-manual-cliente');
+  const nome=gv('rcd-manual-nome');
+  if(!equipId){showToast('⚠️ Informe o Nº Interno / Frota');document.getElementById('rcd-manual-id').focus();return;}
+  if(!cliente){showToast('⚠️ Selecione o cliente');return;}
+  if(!nome){showToast('⚠️ Informe o equipamento / descrição');document.getElementById('rcd-manual-nome').focus();return;}
+  const reg={
+    id: 'rcd_manual_'+Date.now(),
+    equip_id: equipId,
+    equip_nome: nome,
+    equip_fabricante: gv('rcd-manual-fabricante'),
+    equip_modelo: gv('rcd-manual-modelo'),
+    equip_serie: gv('rcd-manual-serie'),
+    equip_placa: gv('rcd-manual-placa'),
+    equip_grupo: gv('rcd-manual-grupo'),
+    equip_horimetro: gv('rcd-manual-horimetro'),
+    oficina: gv('rcd-manual-oficina'),
+    rcd_cliente: cliente,
+    status: 'em_orcamento',
+    ts_em_orcamento: Date.now(),
+    ts_triagem: Date.now(),
+    origem: 'manual_retroativo',
+    obs_manual: gv('rcd-manual-obs'),
+  };
+  await rcdSalvarRegistro(reg);
+  rcdManualFechar();
+  rcdDesmobSub('tratamento');
+  rcdRender();
+  showToast('✅ Avaria manual criada — preencha o orçamento');
+  rcdOrcAbrir(reg.id);
 }
 
 function rcdRenderTratamento() {
@@ -21623,7 +21673,8 @@ if ('serviceWorker' in navigator) {
         <button id="rcd-dsub-triagem" onclick="rcdDesmobSub('triagem')" style="padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #E8630A;cursor:pointer;background:#FDE8D8;color:#E8630A">Triagem</button>
         <button id="rcd-dsub-tratamento" onclick="rcdDesmobSub('tratamento')" style="padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #E2E8ED;cursor:pointer;background:#fff;color:#5A7280">Em Tratamento</button>
         <button id="rcd-dsub-historico" onclick="rcdDesmobSub('historico')" style="padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #E2E8ED;cursor:pointer;background:#fff;color:#5A7280">Histórico</button>
-        <button onclick="rcdImportarAbrir()" style="margin-left:auto;padding:6px 14px;border-radius:7px;font-size:11px;font-weight:600;border:1px solid #4F46E5;cursor:pointer;background:#EEF2FF;color:#4F46E5">⬆ Importar planilha</button>
+        <button onclick="rcdManualAbrir()" style="margin-left:auto;padding:6px 14px;border-radius:7px;font-size:11px;font-weight:600;border:1px solid #B45309;cursor:pointer;background:#FEF3C7;color:#B45309" title="Para equipamentos desmobilizados antes do sistema existir — todos os dados são digitados na mão">+ Avaria Manual (retroativa)</button>
+        <button onclick="rcdImportarAbrir()" style="padding:6px 14px;border-radius:7px;font-size:11px;font-weight:600;border:1px solid #4F46E5;cursor:pointer;background:#EEF2FF;color:#4F46E5">⬆ Importar planilha</button>
         <button onclick="rcdCarregar(true)" style="padding:6px 14px;border-radius:7px;font-size:11px;font-weight:600;border:1px solid #E2E8ED;cursor:pointer;background:#fff;color:#5A7280">↻ Atualizar</button>
       </div>
 
@@ -21682,6 +21733,77 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
 
+    <!-- MODAL AVARIA MANUAL (RETROATIVA) -->
+    <div id="rcd-manual-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9300;align-items:center;justify-content:center" onclick="if(event.target===this)rcdManualFechar()">
+      <div style="background:#fff;border-radius:14px;width:600px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.22);border-top:3px solid #B45309">
+        <div style="padding:20px 24px 16px;border-bottom:1px solid #E2E8ED;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#1A2E35">+ Avaria Manual (retroativa)</div>
+            <div style="font-size:11px;color:#5A7280;margin-top:2px">Para equipamentos desmobilizados antes de existir o sistema — preencha os dados na mão para gerar o orçamento.</div>
+          </div>
+          <button onclick="rcdManualFechar()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#8FA4AE">✕</button>
+        </div>
+        <div style="padding:18px 24px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Nº Interno / Frota *</label>
+              <input id="rcd-manual-id" type="text" placeholder="Ex: MCP04700" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;text-transform:uppercase">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Cliente *</label>
+              <select id="rcd-manual-cliente" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;background:#fff"><option value="">— Selecione —</option></select>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Equipamento / Descrição *</label>
+            <input id="rcd-manual-nome" type="text" placeholder="Ex: Retroescavadeira" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Fabricante</label>
+              <input id="rcd-manual-fabricante" type="text" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Modelo</label>
+              <input id="rcd-manual-modelo" type="text" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Nº Série</label>
+              <input id="rcd-manual-serie" type="text" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Placa</label>
+              <input id="rcd-manual-placa" type="text" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Grupo / Família</label>
+              <input id="rcd-manual-grupo" type="text" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Horímetro (manual)</label>
+              <input id="rcd-manual-horimetro" type="text" placeholder="Ex: 12500" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Oficina</label>
+              <input id="rcd-manual-oficina" list="rcd-manual-oficinas-list" type="text" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+              <datalist id="rcd-manual-oficinas-list"></datalist>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Observação (opcional)</label>
+            <input id="rcd-manual-obs" type="text" placeholder="Ex: desmobilizado em 2021, antes do sistema" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
+          </div>
+        </div>
+        <div style="padding:14px 24px;border-top:1px solid #E2E8ED;display:flex;justify-content:flex-end;gap:8px">
+          <button onclick="rcdManualFechar()" style="padding:8px 18px;border-radius:7px;font-size:12px;font-weight:600;border:1px solid #E2E8ED;background:#fff;color:#5A7280;cursor:pointer">Cancelar</button>
+          <button onclick="rcdManualSalvar()" style="padding:8px 18px;border-radius:7px;font-size:12px;font-weight:600;border:none;background:#B45309;color:#fff;cursor:pointer">Criar e abrir orçamento →</button>
+        </div>
+      </div>
+    </div>
 
     <!-- MODAL OBSERVAÇÕES / FOLLOW-UP -->
     <div id="rcd-obs-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9400;align-items:center;justify-content:center" onclick="if(event.target===this)rcdObsFechar()">
