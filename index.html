@@ -13557,6 +13557,7 @@ function gpRenderAll(){gpRenderPeriodoChecks();gpRenderTabela();}
 
 // ── RCD — AVARIAS ─────────────────────────────────────────────────────────────
 const RCD_FB = `${FB_BASE}/rcd_desmob`;
+const RCD_FOTOS_FB = `${FB_BASE}/rcd_desmob_fotos`; // fotos ficam separadas do registro principal p/ não pesar o carregamento da lista
 let _rcdRegistros = {};
 let _rcdSubAtual = 'triagem';
 let _rcdEs = null;          // EventSource ativo
@@ -14270,8 +14271,9 @@ function rcdOrcAbrir(id) {
   const _itens = reg.orc_itens || [];
   if (_itens.length === 0) { rcdOrcAddLinha(); } else { _itens.forEach(it => rcdOrcAddLinha(it)); }
   rcdOrcCalcTotal();
-  orcFotosCarregar('rcd-orc', reg.orc_fotos||[]);
+  orcFotosInit('rcd-orc');
   document.getElementById('rcd-orc-modal').style.display = 'flex';
+  orcFotosCarregarRemoto(RCD_FOTOS_FB, id, 'rcd-orc');
 }
 
 function rcdOrcFechar() {
@@ -14409,11 +14411,14 @@ async function rcdOrcSalvar() {
   reg.orc_itens       = itens;
   reg.orc_responsavel  = document.getElementById('rcd-orc-responsavel').value.trim();
   reg.orc_descricao    = document.getElementById('rcd-orc-descricao').value.trim();
-  reg.orc_fotos        = (_orcFotos['rcd-orc']||[]).map(f=>({base64:f.base64,desc:f.desc||'',nome:f.nome||''}));
+  const _fotos = (_orcFotos['rcd-orc']||[]).map(f=>({base64:f.base64,desc:f.desc||'',nome:f.nome||''}));
+  reg.orc_fotos_count  = _fotos.length;
+  delete reg.orc_fotos; // fotos ficam em RCD_FOTOS_FB, não no registro principal
   const _h=document.getElementById('rcd-orc-horimetro');if(_h)reg.equip_horimetro=_h.value.trim();
   const _c=document.getElementById('rcd-orc-cnpj');if(_c)reg.equip_cnpj=_c.value.trim();
   if(reg.status==='aguardando_inspecao')reg.status='em_orcamento';
   await rcdSalvarRegistro(reg);
+  await orcFotosSalvarRemoto(RCD_FOTOS_FB, id, _fotos);
   rcdOrcFechar();
   rcdRender();
   showToast('📄 Orçamento salvo');
@@ -16343,6 +16348,26 @@ function orcFotosInit(pfx) {
   orcFotosRender(pfx);
 }
 
+// Fotos ficam em um nó Firebase separado do registro principal (RCD_FOTOS_FB / SOL_FOTOS_FB),
+// buscadas só quando o orçamento específico é aberto — evita baixar todas as fotos de todo
+// mundo só para carregar a listagem/kanban.
+async function orcFotosCarregarRemoto(fotosFb, id, pfx) {
+  if (!id) { orcFotosCarregar(pfx, []); return; }
+  try {
+    const r = await fetch(`${fotosFb}/${id}.json`);
+    const d = await r.json();
+    orcFotosCarregar(pfx, Array.isArray(d) ? d : (d ? Object.values(d) : []));
+  } catch(e) { orcFotosCarregar(pfx, []); }
+}
+
+async function orcFotosSalvarRemoto(fotosFb, id, fotos) {
+  if (fotos && fotos.length) {
+    await fetch(`${fotosFb}/${id}.json`, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(fotos)});
+  } else {
+    await fetch(`${fotosFb}/${id}.json`, {method:'DELETE'});
+  }
+}
+
 function orcFotosCarregar(pfx, fotos) {
   _orcFotos[pfx] = fotos ? JSON.parse(JSON.stringify(fotos)) : [];
   orcFotosRender(pfx);
@@ -16431,6 +16456,7 @@ function paginaRcd(){
 
 // ── SOLICITAÇÕES RCD ─────────────────────────────────────────────────────────
 const SOL_FB = `${FB_BASE}/sol_rcd`;
+const SOL_FOTOS_FB = `${FB_BASE}/sol_rcd_fotos`; // fotos ficam separadas do registro principal p/ não pesar o carregamento da lista
 let _solRegistros = {};
 let _solEs = null;
 let _solCarregado = false;
@@ -17629,7 +17655,7 @@ function solRcdEditarAbrir(id){
   const _dpW2=document.getElementById('sol-data-parada-wrap');if(_dpW2)_dpW2.style.display=reg.maquina_parada==='sim'?'':'none';
   const _mrEl=document.getElementById('sol-maquina-reserva');if(_mrEl)_mrEl.value=reg.maquina_reserva||'';
   const _irEl2=document.getElementById('sol-id-reserva');if(_irEl2)_irEl2.value=reg.id_maquina_reserva||'';
-  orcFotosCarregar('sol', reg.orc_fotos||[]);
+  orcFotosCarregarRemoto(SOL_FOTOS_FB, id, 'sol');
   const tbody=document.getElementById('sol-itens-body');if(tbody)tbody.innerHTML='';
   (reg.orc_itens||[]).forEach(it=>solRcdAddLinha(it));
   if(!(reg.orc_itens||[]).length)solRcdAddLinha();
@@ -17796,9 +17822,11 @@ async function solRcdSalvar(){
   reg.orc_itens=_solItens;
   reg.orc_bdi=parseFloat(document.getElementById('sol-bdi')?.value)||0;
   reg.orc_valor=parseFloat(document.getElementById('sol-valor')?.value)||0;
-  reg.orc_fotos=(_orcFotos['sol']||[]).map(f=>({base64:f.base64,desc:f.desc||'',nome:f.nome||''}));
+  const _fotosSol=(_orcFotos['sol']||[]).map(f=>({base64:f.base64,desc:f.desc||'',nome:f.nome||''}));
+  reg.orc_fotos_count=_fotosSol.length;
+  delete reg.orc_fotos; // fotos ficam em SOL_FOTOS_FB, não no registro principal
   solRcdFechar();
-  try{await solRcdSalvarReg(reg);}catch(e){showToast('⚠️ Erro ao salvar — verifique conexão');return;}
+  try{await solRcdSalvarReg(reg);await orcFotosSalvarRemoto(SOL_FOTOS_FB, reg.id, _fotosSol);}catch(e){showToast('⚠️ Erro ao salvar — verifique conexão');return;}
   solRcdRenderTodos();
   showToast('💾 Solicitação salva');
 }
@@ -17809,7 +17837,7 @@ async function solRcdEnviarAprovacao(){
   showToast('📨 Enviado para aprovação');
 }
 
-function solRcdGerarOrcamento(id){
+async function solRcdGerarOrcamento(id){
   const reg=_solRegistros[id];if(!reg){showToast('⚠️ Registro não encontrado');return;}
   // Gera orc_numero no padrão AAAADDMM-NN (igual ao Desmob) se ainda não existe
   if(!reg.orc_numero){
@@ -17853,8 +17881,11 @@ function solRcdGerarOrcamento(id){
       <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right">${fmt((parseFloat(it.vunit)||0)*_bdiMult)}</td>
       <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600">${fmt((parseFloat(it.total)||0)*_bdiMult)}</td>
     </tr>`).join(''):`<tr><td colspan="5" style="padding:16px;text-align:center;color:#94a3b8">Nenhum item</td></tr>`;
-  // Fotos
-  const fotos=reg.orc_fotos||[];
+  // Fotos — busca do nó separado (fotos não ficam mais embutidas no registro)
+  let fotos=reg.orc_fotos||[];
+  if(!fotos.length){
+    try{ const _r=await fetch(`${SOL_FOTOS_FB}/${id}.json`); const _d=await _r.json(); fotos=Array.isArray(_d)?_d:(_d?Object.values(_d):[]); }catch(e){}
+  }
   const _cabResumo=(pg,total)=>`
     <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:2px solid #F37021;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:10px">
