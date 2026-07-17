@@ -14745,6 +14745,7 @@ async function rcdConcluir(id) {
 
 function rcdConcluirAbrir(id) {
   const reg = _rcdRegistros[id]; if(!reg) return;
+  document.getElementById('rcd-concluir-modal').dataset.mode = 'desmob';
   document.getElementById('rcd-concluir-id').value = id;
   document.getElementById('rcd-concluir-realizado').value = reg.data_realizado || '';
   document.getElementById('rcd-concluir-faturamento').value = reg.data_faturamento || new Date().toISOString().slice(0,10);
@@ -14758,6 +14759,7 @@ function rcdConcluirFechar() {
 }
 
 async function rcdConcluirSalvar() {
+  if(document.getElementById('rcd-concluir-modal').dataset.mode === 'sol') return solRcdConcluirSalvar();
   const id = document.getElementById('rcd-concluir-id').value;
   const reg = _rcdRegistros[id]; if(!reg) return;
   const dataFaturamento = document.getElementById('rcd-concluir-faturamento').value;
@@ -17428,22 +17430,41 @@ async function solRcdVoltarCliente(id){
   showToast('↩ Retornou para Ag. Cliente — Aguardando PC');
 }
 
-async function solRcdConcluir(id){
+// Faturar (Solicitação RCD) — reusa o modal rcd-concluir-modal em modo 'sol'.
+// Data de Faturamento é obrigatória (é o que o BI usa p/ o mês correto de faturamento);
+// Data de Conclusão da Manutenção e Nº do Pedido são opcionais.
+function solRcdConcluir(id){
   const reg=_solRegistros[id];if(!reg)return;
-  const fatura=prompt('Nº da fatura para concluir:');
-  if(fatura===null)return;
-  if(!fatura.trim()){showToast('⚠️ Número da fatura obrigatório');return;}
+  const m=document.getElementById('rcd-concluir-modal');
+  m.dataset.mode='sol';
+  document.getElementById('rcd-concluir-id').value=id;
+  document.getElementById('rcd-concluir-realizado').value=reg.data_manutencao||reg.data_realizado||'';
+  document.getElementById('rcd-concluir-faturamento').value=reg.data_faturamento||new Date().toISOString().slice(0,10);
+  document.getElementById('rcd-concluir-pc').value=reg.pedido||reg.pedido_compras||'';
+  document.getElementById('rcd-concluir-fatura').value=reg.fatura||'';
+  m.style.display='flex';
+}
+async function solRcdConcluirSalvar(){
+  const id=document.getElementById('rcd-concluir-id').value;
+  const reg=_solRegistros[id];if(!reg)return;
+  const dataFaturamento=document.getElementById('rcd-concluir-faturamento').value;
+  if(!dataFaturamento){showToast('⚠️ Informe a data de faturamento');document.getElementById('rcd-concluir-faturamento').focus();return;}
   const agora=Date.now();
   if(!reg.dias)reg.dias={};
   const tsEnt=reg.ts_aguardando_faturamento||agora;
   reg.dias.aguardando_faturamento=(reg.dias.aguardando_faturamento||0)+Math.max(0,Math.round((agora-tsEnt)/86400000));
-  reg.status='concluido';reg.fatura=fatura.trim();reg.ts_concluido=agora;
+  reg.data_manutencao=document.getElementById('rcd-concluir-realizado').value||'';
+  reg.data_faturamento=dataFaturamento;
+  reg.pedido=document.getElementById('rcd-concluir-pc').value.trim();
+  reg.fatura=document.getElementById('rcd-concluir-fatura').value.trim();
+  reg.status='concluido';reg.ts_concluido=agora;
   try{
     await solRcdSalvarReg(reg);
+    rcdConcluirFechar();
     solRcdRenderTodos();
-    showToast('💰 Faturado — Fatura: '+fatura.trim());
+    showToast('💰 Faturado'+(reg.fatura?' — Fatura: '+reg.fatura:''));
   }catch(e){
-    reg.status='aguardando_faturamento';delete reg.fatura;delete reg.ts_concluido;
+    reg.status='aguardando_faturamento';delete reg.ts_concluido;
     showToast('⚠ Erro ao salvar: '+e.message);
   }
 }
@@ -22000,7 +22021,7 @@ if ('serviceWorker' in navigator) {
         <div style="padding:18px 24px;display:flex;flex-direction:column;gap:12px">
           <input type="hidden" id="rcd-concluir-id">
           <div>
-            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Data de Realizado</label>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Data de Conclusão da Manutenção</label>
             <input id="rcd-concluir-realizado" type="date" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box">
           </div>
           <div>
