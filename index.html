@@ -18452,8 +18452,31 @@ window.BD_PLANOS_FROTA      = {}; // N°Interno → { mascara, plano_desc, grupo
 window.BD_PLANOS_INTERVALOS = {}; // Lista_code → { descricao, intervalos:[] }
 window.BD_RESPONSAVEIS      = []; // [{unidade,gerente,coordenador,supervisor,encarregado,programador}]
 window.BD_HISTORICO_PM      = {}; // equip_id → { [intervalo_h]: {data,horimetro_exec,om} }
-window.BD_MANUSIS           = []; // array de registros diários do Manusis (upload diário)
+window.BD_MANUSIS           = {}; // {omPorNum, rqPorOM, ptePorOM} reconstruído do índice compacto
 window.BD_META              = {}; // timestamps e contagens
+
+// ── Manusis: índice compacto no Firebase (o arquivo cru tem ~76MB e estourava o localStorage) ──
+// Chave canônica de OM: só dígitos, sem zeros à esquerda. Normaliza tanto "OM 000004030613"
+// (Manusis) quanto "4024543.0" (campo om do PMP) para o mesmo formato, senão nunca casavam.
+function _omKey(v){ const m=String(v==null?'':v).match(/\d+/); return m ? (m[0].replace(/^0+/,'')||'0') : ''; }
+// Reconstrói os índices que o pmpMontarEquips espera a partir do índice compacto {omKey:{s,rc[],pte[]}}
+function _manusisRebuildFromCompacto(idx){
+  const omPorNum={}, rqPorOM={}, ptePorOM={};
+  Object.entries(idx||{}).forEach(([om,e])=>{
+    if(e&&e.s) omPorNum[om]={'Status do sistema':e.s};
+    if(e&&e.rc&&e.rc.length) rqPorOM[om]=e.rc.map(n=>({'Número da requisição':n}));
+    if(e&&e.pte&&e.pte.length) ptePorOM[om]=e.pte.map(n=>({'Número da requisição':n}));
+  });
+  return {omPorNum, rqPorOM, ptePorOM, _compacto:idx};
+}
+async function bdCarregarManusis(){
+  try{
+    const r=await fetch(`${FB_BASE}/manusis/om.json`);
+    if(!r.ok) return;
+    const idx=await r.json();
+    if(idx&&typeof idx==='object') window.BD_MANUSIS=_manusisRebuildFromCompacto(idx);
+  }catch(e){}
+}
 
 // ── Pendências (snapshot gerado pelo upload no card da BD) ────────────────────
 const PEND_FB = FB_BASE + '/pendencias';   // pcm/pendencias/atual + /historico/<stamp>
@@ -18489,8 +18512,9 @@ async function bdCarregar() {
     window.BD_PLANOS_INTERVALOS = JSON.parse(localStorage.getItem('mills_bd_planos_intervalos')||'{}');
     window.BD_RESPONSAVEIS      = JSON.parse(localStorage.getItem('mills_bd_responsaveis')||'[]');
     window.BD_HISTORICO_PM      = JSON.parse(localStorage.getItem('mills_bd_historico_pm')||'{}');
-    const _manusisSalvo = JSON.parse(localStorage.getItem('mills_bd_manusis')||'null');
-    if(_manusisSalvo) { window.BD_MANUSIS = _manusisSalvo; bdManusisReconstruirIndices(); }
+    // Manusis: índice compacto vem do Firebase (não cabe no localStorage). Carrega em paralelo
+    // e re-renderiza a análise do PMP quando chegar (assim status_material/OM cruzam de fato).
+    bdCarregarManusis().then(()=>{ try{ const pg=document.getElementById('page-pmp'); if(typeof pmpRenderPlanejamento==='function' && pg && pg.style.display!=='none') pmpRenderPlanejamento(); }catch(e){} });
   } catch(e) {}
 }
 
@@ -18977,53 +19001,46 @@ function bdUploadManusis(file) {
       const wsReqs = wb.Sheets[wb.SheetNames[1]];
       const rawReqs = XLSX.utils.sheet_to_json(wsReqs,{defval:''});
 
-      const requisicoes = [];
-      const ptes = [];
-      rawReqs.forEach(r => {
-        const num = String(r['Número da requisição']||'');
-        if(num.toUpperCase().includes('RC')) requisicoes.push(r);
-        else ptes.push(r);
-      });
-
-      // Indexa requisições e PTEs por OM vinculada para lookup rápido
-      const rqPorOM = {};
-      requisicoes.forEach(r => {
-        const om = String(r['Ordem de manutenção']||'').trim().replace(/^0+/,'');
-        if(om) { if(!rqPorOM[om]) rqPorOM[om]=[]; rqPorOM[om].push(r); }
-      });
-      const ptePorOM = {};
-      ptes.forEach(r => {
-        const om = String(r['Ordem de manutenção']||'').trim().replace(/^0+/,'');
-        if(om) { if(!ptePorOM[om]) ptePorOM[om]=[]; ptePorOM[om].push(r); }
-      });
-
-      // Indexa OMs por número (sem zeros à esquerda)
-      const omPorNum = {};
+      // Índice COMPACTO por OM (chave canônica): {omKey:{s:status, rc:[nums], pte:[nums]}}.
+      // Guardamos só o essencial — o arquivo cru (~76MB) não cabe no localStorage nem
+      // faz sentido no Firebase. Deduplicamos os números de requisição.
+      const idx = {};
       rawOMs.forEach(r => {
-        const num = String(r['Número de ordem']||'').trim().replace(/^0+/,'');
-        if(num) omPorNum[num] = r;
+        const k = _omKey(r['Número de ordem']); if(!k) return;
+        const st = String(r['Status do sistema']||r['Status']||'').trim();
+        if(!idx[k]) idx[k] = {};
+        if(st) idx[k].s = st;
       });
+      let nrc = 0, npte = 0;
+      rawReqs.forEach(r => {
+        const k = _omKey(r['Ordem de manutenção']); if(!k) return;
+        const num = String(r['Número da requisição']||'').trim(); if(!num) return;
+        const isRC = num.toUpperCase().includes('RC');
+        const arr = isRC ? 'rc' : 'pte';
+        if(!idx[k]) idx[k] = {};
+        if(!idx[k][arr]) idx[k][arr] = [];
+        if(!idx[k][arr].includes(num)) { idx[k][arr].push(num); if(isRC) nrc++; else npte++; }
+      });
+      Object.keys(idx).forEach(k => { if(!idx[k].s && !idx[k].rc && !idx[k].pte) delete idx[k]; });
+      const nOms = Object.keys(idx).length;
 
-      const dados = { oms: rawOMs, requisicoes, ptes, omPorNum, rqPorOM, ptePorOM };
-      window.BD_MANUSIS = dados;
-      // Salva apenas as listas (os índices são reconstruídos ao carregar)
-      localStorage.setItem('mills_bd_manusis', JSON.stringify({oms:rawOMs,requisicoes,ptes}));
-
+      // Grava o índice no Firebase (fonte compartilhada) — NÃO no localStorage.
+      bdSetBadge('manusis','Enviando ao Firebase…','info');
+      await fetch(`${FB_BASE}/manusis/om.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(idx)});
       const ts = Date.now();
-      const meta = {...(window.BD_META||{}),
-        manusis_ts: ts,
-        manusis_oms: rawOMs.length,
-        manusis_rc: requisicoes.length,
-        manusis_pte: ptes.length
-      };
-      window.BD_META = meta;
-      await fetch(`${BD_FB}/meta.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(meta)});
+      await fetch(`${FB_BASE}/manusis/meta.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({ts,oms:nOms,rc:nrc,pte:npte})});
+      const bdm = { manusis_ts: ts, manusis_oms: nOms, manusis_rc: nrc, manusis_pte: npte };
+      window.BD_META = {...(window.BD_META||{}), ...bdm};
+      await fetch(`${BD_FB}/meta.json`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(bdm)});
 
-      bdSetBadge('manusis',`${rawOMs.length} OMs · ${requisicoes.length} RC · ${ptes.length} PTE`,'ok');
-      bdSetInfo('manusis',`Atualizado agora — ${rawOMs.length} ordens de manutenção`);
+      // Reconstrói os índices em memória para uso imediato nesta sessão.
+      window.BD_MANUSIS = _manusisRebuildFromCompacto(idx);
+
+      bdSetBadge('manusis',`${nOms} OMs · ${nrc} RC · ${npte} PTE`,'ok');
+      bdSetInfo('manusis',`Atualizado agora — ${nOms} OMs (índice compacto no Firebase)`);
       bdEnablePreview('manusis');
       bdRenderPreviewManusis();
-      showToast('✓ Base Manusis carregada com sucesso');
+      showToast('✓ Base Manusis carregada no Firebase');
     } catch(err) {
       bdSetBadge('manusis','Erro','warn');
       bdSetInfo('manusis','Erro: '+err.message);
@@ -19031,26 +19048,22 @@ function bdUploadManusis(file) {
   };
   reader.readAsArrayBuffer(file);
 }
-function bdManusisReconstruirIndices() {
-  const d = window.BD_MANUSIS;
-  if(!d||!d.oms) return;
-  d.omPorNum={};
-  (d.oms||[]).forEach(r=>{ const n=String(r['Número de ordem']||'').trim().replace(/^0+/,''); if(n) d.omPorNum[n]=r; });
-  d.rqPorOM={};
-  (d.requisicoes||[]).forEach(r=>{ const om=String(r['Ordem de manutenção']||'').trim().replace(/^0+/,''); if(om){if(!d.rqPorOM[om])d.rqPorOM[om]=[];d.rqPorOM[om].push(r);} });
-  d.ptePorOM={};
-  (d.ptes||[]).forEach(r=>{ const om=String(r['Ordem de manutenção']||'').trim().replace(/^0+/,''); if(om){if(!d.ptePorOM[om])d.ptePorOM[om]=[];d.ptePorOM[om].push(r);} });
-}
 function bdRenderPreviewManusis() {
   const el=document.getElementById('bd-preview-manusis'); if(!el) return;
   const d=window.BD_MANUSIS||{};
-  const oms=(d.oms||[]).slice(0,8);
-  if(!oms.length){el.innerHTML='<div style="padding:12px;color:#8FA4AE;font-size:11px">Sem dados</div>';return;}
-  const cols=['Número de ordem','Status','Ativo','Família de ativos','Tipo de serviço','Data de abertura','Custo de material'];
-  el.innerHTML=`<div style="padding:8px 12px;background:#EDE9FE;font-size:11px;color:#5B21B6;font-weight:600;border-bottom:1px solid #E2E8ED">Ordens de Manutenção</div>
+  const om=d.omPorNum||{}, rc=d.rqPorOM||{}, pte=d.ptePorOM||{};
+  const keys=Object.keys(om);
+  if(!keys.length){el.innerHTML='<div style="padding:12px;color:#8FA4AE;font-size:11px">Sem dados</div>';return;}
+  const sample=keys.slice(0,8);
+  const cols=['OM','Status do sistema','RC','PTE'];
+  el.innerHTML=`<div style="padding:8px 12px;background:#EDE9FE;font-size:11px;color:#5B21B6;font-weight:600;border-bottom:1px solid #E2E8ED">Índice de OMs (Manusis) — ${keys.length} OMs</div>
   <table style="width:100%;border-collapse:collapse">
     <thead><tr>${cols.map(c=>`<th style="padding:6px 10px;background:#F8FAFC;border-bottom:1px solid #E2E8ED;font-size:10px;font-weight:700;color:#5A7280;text-align:left;white-space:nowrap">${c}</th>`).join('')}</tr></thead>
-    <tbody>${oms.map(r=>`<tr>${cols.map(c=>`<td style="padding:5px 10px;border-bottom:1px solid #F0F4F6;font-size:11px;color:#1A2E35;white-space:nowrap">${r[c]??''}</td>`).join('')}</tr>`).join('')}</tbody>
+    <tbody>${sample.map(k=>`<tr>
+      <td style="padding:5px 10px;border-bottom:1px solid #F0F4F6;font-size:11px;font-family:monospace;color:#1A2E35">${k}</td>
+      <td style="padding:5px 10px;border-bottom:1px solid #F0F4F6;font-size:11px;color:#1A2E35;white-space:nowrap">${(om[k]&&om[k]['Status do sistema'])||'—'}</td>
+      <td style="padding:5px 10px;border-bottom:1px solid #F0F4F6;font-size:11px;color:#1A2E35">${(rc[k]||[]).length}</td>
+      <td style="padding:5px 10px;border-bottom:1px solid #F0F4F6;font-size:11px;color:#1A2E35">${(pte[k]||[]).length}</td></tr>`).join('')}</tbody>
   </table>`;
 }
 
@@ -19654,8 +19667,8 @@ function pmpMontarEquips(){
     }
     // Responsáveis: Firebase (do upload PMPs) tem prioridade; fallback para fuzzy match por planta
     const resp=_findResp(e.planta)||{};
-    // Manusis: OM, status OM, requisições, PTEs
-    const omNum=String(fb.om||'');
+    // Manusis: OM, status OM, requisições, PTEs (chave canônica p/ casar com o índice)
+    const omNum=_omKey(fb.om);
     const omData=omNum?(_manus.omPorNum||{})[omNum]:null;
     const statusOm=omData?(omData['Status do sistema']||omData['Status do sistema']||omData['Status']||''):'';
     const rqs=omNum?((_manus.rqPorOM||{})[omNum]||[]):[];
